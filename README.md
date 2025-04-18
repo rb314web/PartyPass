@@ -1,46 +1,89 @@
-# Getting Started with Create React App
+# 🎉 PartyPass
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**PartyPass** to nowoczesna aplikacja do zarządzania gośćmi na imprezach. Umożliwia tworzenie list gości, wysyłanie zaproszeń z potwierdzeniem obecności (RSVP) oraz szybkie sprawdzanie wejścia gości dzięki kodom QR. Idealna dla organizatorów imprez prywatnych, firmowych, konferencji i eventów.
 
-## Available Scripts
+## 🚀 Funkcje
 
-In the project directory, you can run:
+- 📋 Zarządzanie listą gości
+- 📧 Wysyłanie zaproszeń e-mail z opcją RSVP
+- ✅ Skanowanie kodów QR przy wejściu
+- 📊 Statystyki obecności w czasie rzeczywistym
+- 👥 Konta organizatorów z różnymi poziomami dostępu
+- 🔔 Powiadomienia o nowych odpowiedziach
 
-### `npm start`
+## 🛠️ Technologie
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **Frontend:** React / TailwindCSS
+- **Backend:** Node.js / Express
+- **Baza danych:** MongoDB
+- **Autoryzacja:** JWT
+- **Inne:** QR Code Generator, Email Service (np. SendGrid)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 📦 Instalacja
 
-### `npm test`
+1. **Sklonuj repozytorium:**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+   ```bash
+   git clone https://github.com/twojanazwa/partypass.git
+   cd partypass
+   ```
 
-### `npm run build`
+2. **Zainstaluj zależności backendu:**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+   ```bash
+   npm install
+   ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+3. **Skonfiguruj plik `.env` na podstawie `.env.example`. Przykład:**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+   ```
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/partypass
+   JWT_SECRET=supersecret
+   EMAIL_API_KEY=your_sendgrid_key
+   ```
 
-### `npm run eject`
+4. **Uruchom serwer backendu:**
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+   ```bash
+   npm run dev
+   ```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+5. *(Opcjonalnie)* **Uruchom frontend:**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## 🧪 Testy
 
-## Learn More
+Aby uruchomić testy backendu:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+npm run test
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 📸 Zrzuty ekranu
+
+*Wkrótce dostępne – zrzuty z panelu zarządzania, formularza RSVP i skanowania QR.*
+
+## 🤝 Wkład
+
+Chcesz pomóc w rozwoju projektu? Zajrzyj do [CONTRIBUTING.md](CONTRIBUTING.md), aby dowiedzieć się, jak dołączyć.
+
+## 📄 Licencja
+
+Projekt dostępny na licencji [MIT](LICENSE).
+
+## 📬 Kontakt
+
+Masz pytania lub sugestie?
+
+- 📧 Email: kontakt@partypass.app
+- 🐛 Zgłoś błąd: [GitHub Issues](https://github.com/twojanazwa/partypass/issues)
+
+---
+
+Zorganizuj niezapomniane wydarzenia z **PartyPass** – bez stresu i chaosu! 🥳
