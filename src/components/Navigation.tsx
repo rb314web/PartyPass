@@ -2,8 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../assets/style/Navigation.scss';
 import logo from '../assets/images/logoweb.png';
+import { auth } from '../firebase'; // Importuj auth
+import { signOut } from 'firebase/auth'; // Importuj funkcję do wylogowania
+import { User } from 'firebase/auth'; // Importuj typ User
 
-const Navigation: React.FC = () => {
+interface NavigationProps {
+    currentUser: User | null;
+}
+
+const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -37,6 +44,18 @@ const Navigation: React.FC = () => {
         navigate(path);
     };
 
+    // Funkcja do wylogowania (podobna do tej w Dashboard)
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            // Po wylogowaniu przekieruj na stronę logowania
+            navigate('/login'); // Możesz przekierować gdzie indziej, np. na stronę główną
+        } catch (error) {
+            console.error('Błąd wylogowania:', error);
+            alert('Wystąpił błąd podczas wylogowania.');
+        }
+    };
+
     return (
         <nav className="navigation">
             <div className="navigation__container">
@@ -52,18 +71,30 @@ const Navigation: React.FC = () => {
                         <li><a href="#contact" onClick={(e) => handleNavClick(e, '#contact')}>Kontakt</a></li>
                     </ul>
                     <div className="cta-buttons nav__cta">
-                        <button
-                            className="cta-buttons__btn cta-buttons__btn--login"
-                            onClick={() => handleButtonClick('/login')}
-                        >
-                            Zaloguj
-                        </button>
-                        <button
-                            className="cta-buttons__btn cta-buttons__btn--register"
-                            onClick={() => handleButtonClick('/register')}
-                        >
-                            Zarejestruj się
-                        </button>
+                        {/* Warunkowe renderowanie: jeśli użytkownik zalogowany, pokaż Wyloguj, w przeciwnym razie pokaż Login/Register */}
+                        {currentUser ? (
+                            <button
+                                className="cta-buttons__btn cta-buttons__btn--logout"
+                                onClick={handleLogout}
+                            >
+                                Wyloguj
+                            </button>
+                        ) : (
+                            <>
+                                <button
+                                    className="cta-buttons__btn cta-buttons__btn--login"
+                                    onClick={() => handleButtonClick('/login')}
+                                >
+                                    Zaloguj
+                                </button>
+                                <button
+                                    className="cta-buttons__btn cta-buttons__btn--register"
+                                    onClick={() => handleButtonClick('/register')}
+                                >
+                                    Zarejestruj się
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
                 <button

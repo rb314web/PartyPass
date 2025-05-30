@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import ServiceDescription from './components/ServiceDescription';
@@ -9,6 +9,12 @@ import ContactForm from './components/ContactForm';
 import Footer from './components/Footer';
 import Login from './components/Login';
 import Register from './components/Register';
+import Dashboard from './components/Dashboard';
+import ResetPassword from './components/ResetPassword';
+import RegistrationSuccess from './components/RegistrationSuccess';
+import GuestConfirmation from './components/GuestConfirmation';
+import { auth } from './firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 const ScrollHandler = () => {
     const location = useLocation();
@@ -31,10 +37,26 @@ const ScrollHandler = () => {
 };
 
 function App() {
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setCurrentUser(user);
+            setLoading(false);
+        });
+
+        return unsubscribe;
+    }, []);
+
+    if (loading) {
+        return <div>Ładowanie aplikacji...</div>;
+    }
+
     return (
         <Router>
             <div className="app">
-                <Navigation />
+                <Navigation currentUser={currentUser} />
                 <ScrollHandler />
                 <main>
                     <Routes>
@@ -50,8 +72,15 @@ function App() {
                                 </>
                             }
                         />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
+                        <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <Login />} />
+                        <Route path="/register" element={currentUser ? <Navigate to="/dashboard" /> : <Register />} />
+                        <Route path="/registration-success" element={<RegistrationSuccess />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route 
+                            path="/dashboard"
+                            element={currentUser ? <Dashboard /> : <Navigate to="/login" replace />}
+                        />
+                        <Route path="/confirm/:id/:email" element={<GuestConfirmation />} />
                     </Routes>
                 </main>
                 <Footer />

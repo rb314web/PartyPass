@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../assets/style/Register.scss';
+import { auth } from '../firebase';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 
 interface PasswordRequirement {
     id: string;
@@ -49,6 +51,7 @@ const Register: React.FC = () => {
         password?: string;
         confirmPassword?: string;
         terms?: string;
+        general?: string;
     }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
@@ -201,11 +204,35 @@ const Register: React.FC = () => {
         if (!validateForm()) return;
 
         setIsSubmitting(true);
+        setErrors({});
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            navigate('/dashboard');
-        } catch (error) {
-            setErrors({ email: 'Wystąpił błąd podczas rejestracji' });
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                formData.email,
+                formData.password
+            );
+            const user = userCredential.user;
+            console.log('Użytkownik zarejestrowany pomyślnie:', user);
+
+            // Wyślij email weryfikacyjny
+            await sendEmailVerification(user);
+            console.log('Email weryfikacyjny wysłany.');
+            
+            // Wyloguj użytkownika
+            await auth.signOut();
+            
+            // Przekieruj do strony sukcesu
+            navigate('/registration-success');
+
+        } catch (error: any) {
+            console.error('Błąd rejestracji:', error.message);
+            setErrors(prev => ({
+                ...prev,
+                email: error.message.includes('email-already-in-use') ? 'Ten adres e-mail jest już zarejestrowany.' : undefined,
+                password: error.message.includes('weak-password') ? 'Hasło jest za słabe.' : undefined,
+                general: 'Wystąpił błąd podczas rejestracji. Spróbuj ponownie.'
+            }));
         } finally {
             setIsSubmitting(false);
         }
