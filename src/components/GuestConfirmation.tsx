@@ -10,6 +10,7 @@ interface Guest {
     email: string;
     status: 'confirmed' | 'pending' | 'declined';
     notes?: string;
+    userId: string;
 }
 
 const GuestConfirmation: React.FC = () => {
@@ -43,7 +44,11 @@ const GuestConfirmation: React.FC = () => {
                     return;
                 }
 
-                const guestData = guestDoc.data() as Guest;
+                const guestData = {
+                    id: guestDoc.id,
+                    ...guestDoc.data()
+                } as Guest;
+
                 console.log('Znalezione dane gościa:', {
                     id: guestData.id,
                     email: guestData.email,
@@ -74,14 +79,19 @@ const GuestConfirmation: React.FC = () => {
     }, [id, email]);
 
     const handleStatusChange = async (newStatus: 'confirmed' | 'declined') => {
-        if (!guest) return;
+        if (!guest || !guest.id) {
+            setError('Brak danych gościa');
+            return;
+        }
 
         try {
-            await updateDoc(doc(db, 'guests', guest.id), {
+            const guestRef = doc(db, 'guests', guest.id);
+            await updateDoc(guestRef, {
                 status: newStatus,
                 notes: notes.trim(),
                 updatedAt: Date.now()
             });
+            
             setIsSuccess(true);
             setTimeout(() => {
                 navigate('/');
@@ -89,6 +99,19 @@ const GuestConfirmation: React.FC = () => {
         } catch (error) {
             console.error('Błąd podczas aktualizacji statusu:', error);
             setError('Nie udało się zaktualizować statusu');
+        }
+    };
+
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'confirmed':
+                return 'Potwierdzona';
+            case 'declined':
+                return 'Odrzucona';
+            case 'pending':
+                return 'Oczekująca';
+            default:
+                return status;
         }
     };
 
@@ -128,37 +151,39 @@ const GuestConfirmation: React.FC = () => {
     return (
         <div className="guest-confirmation">
             <div className="guest-confirmation__content">
-                <h2>Witaj na stronie potwierdzenia!</h2>
-                <p className="guest-confirmation__email">{guest?.email}</p>
-                <div className="guest-confirmation__status">
-                    <p>Twój aktualny status: <strong>{guest?.status === 'pending' ? 'Oczekujący na odpowiedź' : 
-                        guest?.status === 'confirmed' ? 'Potwierdzony' : 'Odrzucony'}</strong></p>
-                </div>
-                <div className="guest-confirmation__notes">
-                    <label htmlFor="notes">Chcesz coś dodać? (opcjonalnie)</label>
+                <h2>Potwierdzenie obecności</h2>
+                <p>Witaj {guest?.name}!</p>
+                <p>Prosimy o potwierdzenie Twojej obecności na wydarzeniu.</p>
+                
+                {guest?.status !== 'pending' && (
+                    <div className="guest-confirmation__current-status">
+                        <p>Twój aktualny status: <strong>{getStatusText(guest?.status || '')}</strong></p>
+                        <p>Możesz zmienić swoją decyzję poniżej.</p>
+                    </div>
+                )}
+                
+                <div className="guest-confirmation__form">
                     <textarea
-                        id="notes"
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Napisz nam, czy masz jakieś pytania, uwagi lub specjalne potrzeby..."
-                        rows={4}
+                        placeholder="Dodaj notatkę (opcjonalnie)"
+                        className="guest-confirmation__notes"
                     />
-                </div>
-                <div className="guest-confirmation__actions">
-                    <button
-                        onClick={() => handleStatusChange('confirmed')}
-                        className="guest-confirmation__confirm-button"
-                    >
-                        <i className="fas fa-check-circle"></i>
-                        Tak, będę na imprezie!
-                    </button>
-                    <button
-                        onClick={() => handleStatusChange('declined')}
-                        className="guest-confirmation__decline-button"
-                    >
-                        <i className="fas fa-times-circle"></i>
-                        Niestety nie mogę przyjść
-                    </button>
+                    
+                    <div className="guest-confirmation__buttons">
+                        <button
+                            onClick={() => handleStatusChange('confirmed')}
+                            className="guest-confirmation__confirm-button"
+                        >
+                            Potwierdzam obecność
+                        </button>
+                        <button
+                            onClick={() => handleStatusChange('declined')}
+                            className="guest-confirmation__decline-button"
+                        >
+                            Nie mogę przyjść
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

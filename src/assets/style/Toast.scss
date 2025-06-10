@@ -1,0 +1,116 @@
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 320px;
+    max-width: 420px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    &--visible {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+
+    &--hidden {
+        opacity: 0;
+        transform: translateX(100%);
+        pointer-events: none;
+    }
+
+    &__icon {
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    &__message {
+        flex: 1;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+
+    &__close {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        margin-left: 1rem;
+        cursor: pointer;
+        color: inherit;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        i {
+            font-size: 1rem;
+        }
+    }
+
+    &--success {
+        background: linear-gradient(135deg, var(--success-color), var(--success-light));
+        color: white;
+    }
+
+    &--error {
+        background: linear-gradient(135deg, var(--error-color), var(--error-light));
+        color: white;
+    }
+
+    &--warning {
+        background: linear-gradient(135deg, var(--warning-color), var(--warning-light));
+        color: white;
+    }
+
+    &--info {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+    }
+}
+
+@media (max-width: 768px) {
+    .toast {
+        top: auto;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        min-width: auto;
+        max-width: none;
+        transform: translateY(100%);
+
+        &--visible {
+            transform: translateY(0);
+        }
+
+        &--hidden {
+            transform: translateY(100%);
+        }
+    }
+} 

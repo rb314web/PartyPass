@@ -5,10 +5,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e8eef7 0%, #d4e0f0 50%, #c5d5e8 100%);
+  padding: 2rem;
+  background: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
   position: relative;
   overflow: hidden;
-  padding: 1rem;
   animation: fadeIn 0.3s ease-out;
 
   @media (max-width: 768px) {
@@ -59,21 +61,30 @@
   &__container {
     width: 100%;
     max-width: 400px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    background: var(--card-bg);
     padding: 2rem;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 2px 4px var(--shadow-color);
     position: relative;
     z-index: 1;
     animation: slideUp 0.3s ease-out;
+    margin-top: -4rem;
   }
 
   &__header {
     text-align: center;
     margin-bottom: 2rem;
     animation: fadeIn 0.3s ease-out 0.1s both;
+
+    h1 {
+      margin: 0 0 0.5rem;
+      color: var(--text-color);
+    }
+
+    p {
+      margin: 0;
+      color: var(--text-secondary);
+    }
   }
 
   &__title {
@@ -93,16 +104,71 @@
     flex-direction: column;
     gap: 1rem;
     animation: fadeIn 0.3s ease-out 0.2s both;
+
+    .form-group {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 1rem;
+        background: var(--input-bg);
+        color: var(--text-color);
+        transition: border-color 0.3s ease;
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px var(--primary-shadow);
+        }
+      }
+    }
+
+    .submit-button {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+      }
+
+      &:disabled {
+        background: var(--text-secondary);
+        cursor: not-allowed;
+        transform: none;
+      }
+    }
   }
 
   &__input-group {
+    margin-bottom: 0.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0;
     position: relative;
-    min-height: 5.5rem;
     animation: slideUp 0.3s ease-out;
     animation-fill-mode: both;
+    min-height: 5.5rem;
+    overflow: visible;
+    z-index: 1;
 
     @for $i from 1 through 2 {
       &:nth-child(#{$i}) {
@@ -156,69 +222,67 @@
     }
   }
 
-  &__label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #475569;
+  &__label-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    position: relative;
   }
 
   &__input {
     padding: 0.75rem 1rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 0.875rem;
     transition: all 0.2s ease-out;
-    background: #fff;
+    background: var(--input-bg);
+    color: var(--text-color);
+    width: 100%;
+    box-sizing: border-box;
 
     &:focus {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-shadow);
     }
 
     &--error {
-      border-color: #f87171;
-      background: #fff5f5;
-      box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.1);
+      border-color: var(--border-color);
+      background: var(--input-bg);
+      box-shadow: none;
       
       &:focus {
-        border-color: #ef4444;
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-shadow);
       }
     }
   }
 
   &__error {
-    font-size: 0.75rem;
-    color: #ef4444;
-    display: flex;
+    display: none;
     align-items: center;
-    gap: 0.25rem;
-    opacity: 0;
+    gap: 0.5rem;
+    color: var(--error-color);
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--error-bg);
+    border-radius: 4px;
+    animation: fadeIn 0.3s ease-out;
+    max-width: 100%;
+    word-break: break-word;
+    margin: 0;
     position: absolute;
     right: 0;
-    top: -0.5rem;
-    transform: translateY(-3px);
-    animation: errorAppear 0.15s ease-out forwards;
-    height: 1rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    text-shadow: 0 0 1px rgba(239, 68, 68, 0.1);
-    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
-  @keyframes errorAppear {
-    from {
-      opacity: 0;
-      transform: translateY(-3px);
-    }
-    to {
-      opacity: 0.9;
-      transform: translateY(0);
-    }
+  &__error:not(:empty) {
+    display: flex;
   }
 
   &__options {
@@ -234,7 +298,53 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #64748b;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--input-bg);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+
+      &:checked {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+
+        &::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%) rotate(45deg);
+          width: 0.25rem;
+          height: 0.5rem;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+        }
+      }
+
+      &:hover:not(:checked) {
+        border-color: var(--primary-color);
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--primary-shadow);
+      }
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
   }
 
   &__forgot {
@@ -250,7 +360,7 @@
   &__button {
     width: 100%;
     padding: 0.75rem;
-    background: #3b82f6;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 8px;
@@ -258,9 +368,10 @@
     cursor: pointer;
     transition: all 0.2s;
     animation: fadeIn 0.3s ease-out 0.4s both;
+    margin-top: 0.5rem;
 
     &:hover {
-      background: #2563eb;
+      background: var(--primary-dark);
       transform: translateY(-1px);
     }
 
@@ -269,7 +380,7 @@
     }
 
     &:disabled {
-      background: #93c5fd;
+      background: var(--text-secondary);
       cursor: not-allowed;
       transform: none;
     }
@@ -329,19 +440,61 @@
   }
 
   &__footer {
+    margin-top: 2rem;
     text-align: center;
-    margin-top: 1.5rem;
-    font-size: 0.875rem;
-    color: #64748b;
-    animation: fadeIn 0.3s ease-out 0.7s both;
+    color: var(--text-secondary);
 
     a {
-      color: #3b82f6;
+      color: var(--primary-color);
       text-decoration: none;
       font-weight: 500;
 
       &:hover {
         text-decoration: underline;
+      }
+    }
+  }
+
+  &__password-requirements {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-out;
+    pointer-events: none;
+  }
+
+  &__password-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+
+    i {
+      font-size: 0.75rem;
+      width: 1rem;
+      text-align: center;
+
+      &.fa-check {
+        color: var(--success-color);
+      }
+
+      &.fa-times {
+        color: var(--error-color);
       }
     }
   }
