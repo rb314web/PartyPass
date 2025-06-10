@@ -1,0 +1,136 @@
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  position: relative;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .map-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .map-search {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .search-input-wrapper {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      padding: 8px;
+      font-size: 14px;
+      outline: none;
+      background: transparent;
+      color: #333;
+
+      &::placeholder {
+        color: #999;
+      }
+    }
+
+    .search-button {
+      background: none;
+      border: none;
+      padding: 8px;
+      color: #666;
+      cursor: pointer;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #000;
+      }
+    }
+
+    .search-loading {
+      padding: 8px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .search-results {
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      border-radius: 0 0 4px 4px;
+
+      .search-result-item {
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-size: 14px;
+        color: #333;
+
+        &:hover {
+          background-color: #f5f5f5;
+        }
+      }
+    }
+  }
+
+  .map-content {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+  }
+}
+
+// Leaflet specific styles
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  z-index: 1;
+}
+
+.leaflet-control-container {
+  z-index: 2;
+}
+
+.leaflet-pane {
+  z-index: 1;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 2;
+}
+
+.leaflet-control-container {
+  .leaflet-control-zoom {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    a {
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      
+      &:hover {
+        background-color: var(--hover-bg);
+      }
+    }
+  }
+} 

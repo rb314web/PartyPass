@@ -12,28 +12,35 @@ service cloud.firestore {
     }
 
     function isEventOwner(eventId) {
-      return isAuthenticated() && 
-        exists(/databases/$(database)/documents/events/$(eventId)) &&
-        get(/databases/$(database)/documents/events/$(eventId)).data.userId == request.auth.uid;
+      return isAuthenticated() && (
+        // Dla istniejących dokumentów
+        (exists(/databases/$(database)/documents/events/$(eventId)) &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.userId == request.auth.uid) ||
+        // Dla nowych dokumentów
+        (request.resource != null && request.resource.data.eventId == eventId)
+      );
     }
 
     // Reguły dla kolekcji events
     match /events/{eventId} {
-      allow read, create: if isAuthenticated();
+      // Pozwól na odczyt wydarzenia dla wszystkich (potrzebne do potwierdzania obecności)
+      allow read: if true;
+      allow create: if isAuthenticated();
       allow update, delete: if isOwner(resource.data.userId);
     }
 
     // Reguły dla kolekcji guests
     match /guests/{guestId} {
       // Pozwól na odczyt dokumentu gościa bez autoryzacji (potrzebne do potwierdzania obecności)
-      allow read: if isAuthenticated();
+      allow read: if true;
       
       // Pozwól na aktualizację statusu gościa bez autoryzacji
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
         .hasOnly(['status', 'notes', 'updatedAt']);
       
       // Pozwól na pełne zarządzanie gośćmi tylko dla zalogowanych właścicieli
-      allow create, delete: if isEventOwner(resource.data.eventId);
+      allow create: if isAuthenticated() && isEventOwner(request.resource.data.eventId);
+      allow delete: if isAuthenticated() && isEventOwner(resource.data.eventId);
     }
 
     // Reguły dla kolekcji subscriptions

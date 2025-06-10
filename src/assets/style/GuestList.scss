@@ -608,20 +608,34 @@
     }
 
     &__qr-link {
-        display: inline-block;
-        margin-bottom: 1.5rem;
-        padding: 0.5rem 1rem;
-        background: var(--bg-light);
-        color: var(--primary-color);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1rem 0;
+        padding: 0.75rem 1.5rem;
+        background: var(--primary-color);
+        color: white;
         text-decoration: none;
-        border-radius: 6px;
-        font-size: 0.875rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
         transition: all 0.2s;
-        border: 1px solid var(--border-color);
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        i {
+            font-size: 1.1rem;
+        }
 
         &:hover {
-            background: var(--bg-hover);
-            color: var(--primary-dark);
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        &:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     }
 

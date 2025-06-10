@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
-import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaQrcode, FaShare, FaEdit, FaTrash, FaPlus, FaTimes, FaArrowLeft, FaUserPlus, FaCopy } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaQrcode, FaShare, FaEdit, FaTrash, FaPlus, FaTimes, FaArrowLeft, FaUserPlus, FaCopy, FaExternalLinkAlt } from 'react-icons/fa';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, query, where, updateDoc } from 'firebase/firestore';
@@ -11,16 +11,34 @@ import { toast, ToastContainer } from 'react-toastify';
 import { QRCodeSVG } from 'qrcode.react';
 import 'react-toastify/dist/ReactToastify.css';
 import '../assets/style/Dashboard.scss';
+import Map from '../components/Map';
+
+const EVENT_THEMES = [
+  { id: 'wedding', label: 'Wesele' },
+  { id: 'birthday', label: 'Urodziny' },
+  { id: 'anniversary', label: 'Rocznica' },
+  { id: 'graduation', label: 'Ukończenie studiów' },
+  { id: 'christening', label: 'Chrzciny' },
+  { id: 'engagement', label: 'Zaręczyny' },
+  { id: 'other', label: 'Inne' }
+] as const;
+
+type EventTheme = typeof EVENT_THEMES[number]['id'];
 
 interface Event {
   id: string;
   name: string;
   date: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   description: string;
   maxGuests: number;
   userId: string;
   createdAt: string;
+  theme: EventTheme;
 }
 
 interface Guest {
@@ -54,6 +72,7 @@ export const Dashboard = () => {
     declined: 0
   });
   const [isAddingEvent, setIsAddingEvent] = useState(false);
+  const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isAddingGuest, setIsAddingGuest] = useState(false);
   const [isEditingGuest, setIsEditingGuest] = useState(false);
@@ -64,8 +83,10 @@ export const Dashboard = () => {
     name: '',
     date: '',
     location: '',
+    coordinates: undefined,
     description: '',
-    maxGuests: 0
+    maxGuests: 0,
+    theme: 'other'
   });
   const [newGuest, setNewGuest] = useState<Partial<Guest>>({
     name: '',
@@ -149,8 +170,10 @@ export const Dashboard = () => {
         name: '',
         date: '',
         location: '',
+        coordinates: undefined,
         description: '',
-        maxGuests: 0
+        maxGuests: 0,
+        theme: 'other'
       });
       toast.success('Wydarzenie zostało dodane');
     } catch (error) {
@@ -353,48 +376,274 @@ export const Dashboard = () => {
     }
   };
 
+  const handleEditEvent = async () => {
+    if (!currentUser || !selectedEvent) {
+      toast.error('Musisz być zalogowany, aby edytować wydarzenie');
+      return;
+    }
+
+    if (!newEvent.name || !newEvent.date || !newEvent.location) {
+      toast.error('Wypełnij wszystkie wymagane pola');
+      return;
+    }
+
+    try {
+      const eventRef = doc(db, 'events', selectedEvent.id);
+      const eventData = {
+        ...newEvent,
+        userId: currentUser.uid,
+        createdAt: selectedEvent.createdAt
+      };
+
+      await updateDoc(eventRef, eventData);
+      setEvents(prev => prev.map(event => 
+        event.id === selectedEvent.id ? { ...event, ...eventData } : event
+      ));
+      setIsEditingEvent(false);
+      setSelectedEvent(null);
+      setNewEvent({
+        name: '',
+        date: '',
+        location: '',
+        coordinates: undefined,
+        description: '',
+        maxGuests: 0,
+        theme: 'other'
+      });
+      toast.success('Wydarzenie zostało zaktualizowane');
+    } catch (error) {
+      console.error('Error updating event:', error);
+      toast.error('Nie udało się zaktualizować wydarzenia');
+    }
+  };
+
+  const handleEditEventClick = (event: Event) => {
+    setSelectedEvent(event);
+    setNewEvent({
+      name: event.name,
+      date: event.date,
+      location: event.location,
+      coordinates: event.coordinates,
+      description: event.description,
+      maxGuests: event.maxGuests,
+      theme: event.theme
+    });
+    setIsEditingEvent(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingEvent(false);
+    setSelectedEvent(null);
+    setNewEvent({
+      name: '',
+      date: '',
+      location: '',
+      coordinates: undefined,
+      description: '',
+      maxGuests: 0,
+      theme: 'other'
+    });
+  };
+
+  const handleLocationSelect = (lat: number, lng: number, address: string) => {
+    setNewEvent(prev => ({
+      ...prev,
+      location: address,
+      coordinates: { lat, lng }
+    }));
+  };
+
   const renderEventList = () => (
     <div className="dashboard__events">
-      <div className="dashboard__events-header">
+      <div className="dashboard__header">
         <h2>Twoje wydarzenia</h2>
         <button 
-          className="dashboard__add-button" 
+          className="dashboard__add-button"
           onClick={() => setIsAddingEvent(true)}
         >
           <FaPlus /> Dodaj wydarzenie
         </button>
       </div>
 
-      <div className="dashboard__events-grid">
+      {isAddingEvent && (
+        <div className="dashboard__form">
+          <h3>Dodaj nowe wydarzenie</h3>
+          <div className="form-group">
+            <label>Nazwa wydarzenia *</label>
+            <input
+              type="text"
+              value={newEvent.name}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Nazwa wydarzenia"
+            />
+          </div>
+          <div className="form-group">
+            <label>Motyw wydarzenia *</label>
+            <select
+              value={newEvent.theme}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, theme: e.target.value as EventTheme }))}
+            >
+              {EVENT_THEMES.map(theme => (
+                <option key={theme.id} value={theme.id}>
+                  {theme.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Data *</label>
+            <input
+              type="datetime-local"
+              value={newEvent.date}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
+            />
+          </div>
+          <div className="form-group">
+            <label>Lokalizacja *</label>
+            <div className="location-search">
+              <input
+                type="text"
+                value={newEvent.location}
+                onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Wyszukaj lokalizację..."
+              />
+              <Map
+                lat={newEvent.coordinates?.lat || 52.2297}
+                lng={newEvent.coordinates?.lng || 21.0122}
+                onLocationSelect={handleLocationSelect}
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Opis</label>
+            <textarea
+              value={newEvent.description}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Opis wydarzenia"
+            />
+          </div>
+          <div className="form-group">
+            <label>Maksymalna liczba gości</label>
+            <input
+              type="number"
+              value={newEvent.maxGuests}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, maxGuests: parseInt(e.target.value) || 0 }))}
+              min="0"
+            />
+          </div>
+          <div className="form-actions">
+            <button onClick={handleAddEvent}>Dodaj</button>
+            <button onClick={() => setIsAddingEvent(false)}>Anuluj</button>
+          </div>
+        </div>
+      )}
+
+      {isEditingEvent && selectedEvent && (
+        <div className="dashboard__form">
+          <h3>Edytuj wydarzenie</h3>
+          <div className="form-group">
+            <label>Nazwa wydarzenia *</label>
+            <input
+              type="text"
+              value={newEvent.name}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Nazwa wydarzenia"
+            />
+          </div>
+          <div className="form-group">
+            <label>Motyw wydarzenia *</label>
+            <select
+              value={newEvent.theme}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, theme: e.target.value as EventTheme }))}
+            >
+              {EVENT_THEMES.map(theme => (
+                <option key={theme.id} value={theme.id}>
+                  {theme.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Data *</label>
+            <input
+              type="datetime-local"
+              value={newEvent.date}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
+            />
+          </div>
+          <div className="form-group">
+            <label>Lokalizacja *</label>
+            <div className="location-search">
+              <input
+                type="text"
+                value={newEvent.location}
+                onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Wyszukaj lokalizację..."
+              />
+              <Map
+                lat={newEvent.coordinates?.lat || 52.2297}
+                lng={newEvent.coordinates?.lng || 21.0122}
+                onLocationSelect={handleLocationSelect}
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Opis</label>
+            <textarea
+              value={newEvent.description}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Opis wydarzenia"
+            />
+          </div>
+          <div className="form-group">
+            <label>Maksymalna liczba gości</label>
+            <input
+              type="number"
+              value={newEvent.maxGuests}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, maxGuests: parseInt(e.target.value) || 0 }))}
+              min="0"
+            />
+          </div>
+          <div className="form-actions">
+            <button onClick={handleEditEvent}>Zapisz zmiany</button>
+            <button onClick={handleCancelEdit}>Anuluj</button>
+          </div>
+        </div>
+      )}
+
+      <div className="dashboard__event-list">
         {events.map(event => (
-          <div 
-            key={event.id} 
-            className="dashboard__event-card"
-            onClick={() => handleEventClick(event)}
-          >
-            <h3>{event.name}</h3>
-            <p><FaCalendarAlt /> {new Date(event.date).toLocaleString()}</p>
-            <p><FaMapMarkerAlt /> {event.location}</p>
-            <p><FaUsers /> {event.maxGuests} gości</p>
-            <p className="dashboard__event-description">{event.description}</p>
-            <div className="dashboard__event-actions">
-              <button onClick={(e) => {
-                e.stopPropagation();
-                handleEventQR(event.id);
-              }} title="Generuj kod QR">
-                <FaQrcode />
+          <div key={event.id} className="dashboard__event-card">
+            <div className="dashboard__event-header">
+              <h3>{event.name}</h3>
+              <div className="dashboard__event-actions">
+                <button onClick={() => handleEditEventClick(event)}>
+                  <FaEdit /> Edytuj
+                </button>
+                <button onClick={() => handleDeleteEvent(event.id)}>
+                  <FaTrash /> Usuń
+                </button>
+              </div>
+            </div>
+            <div className="dashboard__event-details">
+              <p><FaCalendarAlt /> {new Date(event.date).toLocaleString()}</p>
+              <p><FaMapMarkerAlt /> {event.location}</p>
+              {event.maxGuests > 0 && (
+                <p><FaUsers /> Maksymalna liczba gości: {event.maxGuests}</p>
+              )}
+            </div>
+            {event.description && (
+              <p className="dashboard__event-description">{event.description}</p>
+            )}
+            <div className="dashboard__event-footer">
+              <button onClick={() => handleEventClick(event)}>
+                Zarządzaj gośćmi
               </button>
-              <button onClick={(e) => {
-                e.stopPropagation();
-                handleShareEvent(event.id);
-              }} title="Udostępnij">
-                <FaShare />
+              <button onClick={() => handleEventQR(event.id)}>
+                <FaQrcode /> Kod QR
               </button>
-              <button onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteEvent(event.id);
-              }} title="Usuń">
-                <FaTrash />
+              <button onClick={() => handleShareEvent(event.id)}>
+                <FaShare /> Udostępnij
               </button>
             </div>
           </div>
@@ -649,12 +898,14 @@ export const Dashboard = () => {
                   <p className="dashboard__qr-info">
                     {selectedGuestForQR.name} - {selectedEvent?.name}
                   </p>
-                  <button 
-                    className="dashboard__button dashboard__button--secondary"
-                    onClick={() => handleCopyLink(selectedGuestForQR)}
+                  <a 
+                    href={getGuestLink(selectedGuestForQR)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dashboard__qr-link"
                   >
-                    <FaCopy /> Kopiuj link do gościa
-                  </button>
+                    <FaExternalLinkAlt /> Przejdź do strony potwierdzającej
+                  </a>
                 </div>
               </div>
               <div className="dashboard__modal-footer">
@@ -774,84 +1025,6 @@ export const Dashboard = () => {
           </div>
         </div>
       </div>
-
-      {isAddingEvent && (
-        <div className="dashboard__modal">
-          <div className="dashboard__modal-content">
-            <button 
-              className="dashboard__modal-close"
-              onClick={() => setIsAddingEvent(false)}
-            >
-              <FaTimes />
-            </button>
-            <div className="dashboard__modal-header">
-              <h3>Nowe wydarzenie</h3>
-            </div>
-            <div className="dashboard__modal-body">
-              <div className="dashboard__form-group">
-                <label>Nazwa wydarzenia *</label>
-                <input
-                  type="text"
-                  value={newEvent.name}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Wprowadź nazwę wydarzenia"
-                  required
-                />
-              </div>
-              <div className="dashboard__form-group">
-                <label>Data *</label>
-                <input
-                  type="datetime-local"
-                  value={newEvent.date}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="dashboard__form-group">
-                <label>Lokalizacja *</label>
-                <input
-                  type="text"
-                  value={newEvent.location}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Wprowadź lokalizację"
-                  required
-                />
-              </div>
-              <div className="dashboard__form-group">
-                <label>Opis</label>
-                <textarea
-                  value={newEvent.description}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Wprowadź opis wydarzenia"
-                />
-              </div>
-              <div className="dashboard__form-group">
-                <label>Maksymalna liczba gości</label>
-                <input
-                  type="number"
-                  value={newEvent.maxGuests}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, maxGuests: parseInt(e.target.value) }))}
-                  min="0"
-                />
-              </div>
-            </div>
-            <div className="dashboard__modal-footer">
-              <button 
-                className="dashboard__button dashboard__button--secondary"
-                onClick={() => setIsAddingEvent(false)}
-              >
-                Anuluj
-              </button>
-              <button 
-                className="dashboard__button dashboard__button--primary"
-                onClick={handleAddEvent}
-              >
-                Dodaj wydarzenie
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }; 

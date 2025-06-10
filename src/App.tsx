@@ -93,6 +93,7 @@ const App: React.FC = () => {
                                 <Route path="/reset-password" element={<ResetPassword />} />
                                 <Route path="/registration-success" element={<RegistrationSuccess />} />
                                 <Route path="/confirm/:id/:email" element={<GuestConfirmation />} />
+                                <Route path="/guest/:id" element={<GuestConfirmation />} />
                                 <Route path="/purchase" element={<PurchaseRoute />} />
                                 <Route path="/payment/success" element={<PaymentSuccess />} />
                                 <Route

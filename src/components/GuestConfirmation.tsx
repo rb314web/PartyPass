@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import Navigation from './Navigation';
+import Map from './Map';
 import '../assets/style/GuestConfirmation.scss';
 
 interface Guest {
@@ -11,35 +13,47 @@ interface Guest {
     status: 'confirmed' | 'pending' | 'declined';
     notes?: string;
     userId: string;
+    eventId: string;
+}
+
+interface Event {
+    id: string;
+    name: string;
+    date: string;
+    location: string;
+    coordinates?: {
+        lat: number;
+        lng: number;
+    };
+    description: string;
+    theme: string;
 }
 
 const GuestConfirmation: React.FC = () => {
     const { id, email } = useParams<{ id: string; email: string }>();
     const navigate = useNavigate();
     const [guest, setGuest] = useState<Guest | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [event, setEvent] = useState<Event | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isSuccess, setIsSuccess] = useState(false);
     const [notes, setNotes] = useState('');
 
     useEffect(() => {
         const verifyAndFetchGuest = async () => {
-            if (!id || !email) {
+            if (!id) {
                 setError('Nieprawidłowy link potwierdzający');
                 setIsLoading(false);
                 return;
             }
 
             try {
-                console.log('Dane z URL:', { id, email });
-
-                // Pobieramy dane gościa bezpośrednio po ID dokumentu
-                const guestDoc = await getDoc(doc(db, 'guests', id));
-                console.log('Pobrany dokument:', guestDoc.exists() ? 'istnieje' : 'nie istnieje');
-
+                // Pobieramy dane gościa
+                const guestRef = doc(db, 'guests', id);
+                const guestDoc = await getDoc(guestRef);
+                
                 if (!guestDoc.exists()) {
-                    console.log('Nie znaleziono gościa o ID:', id);
-                    setError('Nie znaleziono gościa w bazie danych');
+                    setError('Nie znaleziono zaproszenia');
                     setIsLoading(false);
                     return;
                 }
@@ -49,28 +63,41 @@ const GuestConfirmation: React.FC = () => {
                     ...guestDoc.data()
                 } as Guest;
 
-                console.log('Znalezione dane gościa:', {
-                    id: guestData.id,
-                    email: guestData.email,
-                    status: guestData.status
-                });
-
-                // Sprawdzamy czy email się zgadza
-                if (guestData.email !== email) {
-                    console.log('Email się nie zgadza:', {
-                        oczekiwany: email,
-                        otrzymany: guestData.email
-                    });
+                // Sprawdzamy czy email się zgadza tylko jeśli został podany w URL
+                if (email && guestData.email !== email) {
                     setError('Nieprawidłowe dane gościa');
                     setIsLoading(false);
                     return;
                 }
                 
                 setGuest(guestData);
+
+                // Pobieramy dane wydarzenia
+                if (guestData.eventId) {
+                    const eventRef = doc(db, 'events', guestData.eventId);
+                    const eventDoc = await getDoc(eventRef);
+                    
+                    if (eventDoc.exists()) {
+                        const eventData = {
+                            id: eventDoc.id,
+                            ...eventDoc.data()
+                        } as Event;
+                        setEvent(eventData);
+                    }
+                }
+
                 setIsLoading(false);
             } catch (error) {
                 console.error('Błąd podczas weryfikacji:', error);
-                setError(error instanceof Error ? error.message : 'Nieprawidłowy link potwierdzający');
+                if (error instanceof Error) {
+                    if (error.message.includes('permission-denied')) {
+                        setError('Brak dostępu do danych. Link może być nieprawidłowy lub wygasły.');
+                    } else {
+                        setError('Wystąpił błąd podczas weryfikacji zaproszenia. Spróbuj ponownie później.');
+                    }
+                } else {
+                    setError('Nieprawidłowy link potwierdzający');
+                }
                 setIsLoading(false);
             }
         };
@@ -98,7 +125,15 @@ const GuestConfirmation: React.FC = () => {
             }, 3000);
         } catch (error) {
             console.error('Błąd podczas aktualizacji statusu:', error);
-            setError('Nie udało się zaktualizować statusu');
+            if (error instanceof Error) {
+                if (error.message.includes('permission-denied')) {
+                    setError('Nie masz uprawnień do aktualizacji statusu. Link może być nieprawidłowy lub wygasły.');
+                } else {
+                    setError('Wystąpił błąd podczas aktualizacji statusu. Spróbuj ponownie później.');
+                }
+            } else {
+                setError('Nie udało się zaktualizować statusu');
+            }
         }
     };
 
@@ -132,6 +167,12 @@ const GuestConfirmation: React.FC = () => {
                 <div className="guest-confirmation__error">
                     <h2>Ups! Coś poszło nie tak</h2>
                     <p>{error}</p>
+                    <button 
+                        className="guest-confirmation__button"
+                        onClick={() => window.location.reload()}
+                    >
+                        Odśwież stronę
+                    </button>
                 </div>
             </div>
         );
@@ -149,44 +190,94 @@ const GuestConfirmation: React.FC = () => {
     }
 
     return (
-        <div className="guest-confirmation">
-            <div className="guest-confirmation__content">
-                <h2>Potwierdzenie obecności</h2>
-                <p>Witaj {guest?.name}!</p>
-                <p>Prosimy o potwierdzenie Twojej obecności na wydarzeniu.</p>
-                
-                {guest?.status !== 'pending' && (
-                    <div className="guest-confirmation__current-status">
-                        <p>Twój aktualny status: <strong>{getStatusText(guest?.status || '')}</strong></p>
-                        <p>Możesz zmienić swoją decyzję poniżej.</p>
+        <>
+            <Navigation />
+            <div className="guest-confirmation" data-theme={event?.theme || 'other'}>
+                <div className="guest-confirmation__left-column">
+                    <div className="guest-confirmation__content">
+                        <h2>Potwierdzenie obecności</h2>
+                        <p>Dziękujemy za odpowiedź na zaproszenie. Prosimy o potwierdzenie swojej obecności.</p>
+                    </div>
+
+                    {event && (
+                        <>
+                            <div className="guest-confirmation__event-info">
+                                <h3>Szczegóły wydarzenia</h3>
+                                <p>
+                                    <strong>Nazwa:</strong>
+                                    {event.name}
+                                </p>
+                                <p>
+                                    <strong>Data:</strong>
+                                    {new Date(event.date).toLocaleDateString('pl-PL', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </p>
+                                <p>
+                                    <strong>Lokalizacja:</strong>
+                                    {event.location}
+                                </p>
+                                {event.description && (
+                                    <p>
+                                        <strong>Opis:</strong>
+                                        {event.description}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="guest-confirmation__current-status">
+                                <p>
+                                    Twój obecny status:
+                                    <strong>{getStatusText(guest?.status || '')}</strong>
+                                </p>
+                            </div>
+
+                            <div className="guest-confirmation__form">
+                                <textarea
+                                    className="guest-confirmation__notes"
+                                    placeholder="Dodaj notatkę (opcjonalnie)"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                />
+                                <div className="guest-confirmation__buttons">
+                                    <button
+                                        className="guest-confirmation__confirm-button"
+                                        onClick={() => handleStatusChange('confirmed')}
+                                        disabled={isLoading}
+                                    >
+                                        Potwierdzam obecność
+                                    </button>
+                                    <button
+                                        className="guest-confirmation__decline-button"
+                                        onClick={() => handleStatusChange('declined')}
+                                        disabled={isLoading}
+                                    >
+                                        Nie mogę przyjść
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {event?.coordinates && (
+                    <div className="guest-confirmation__right-column">
+                        <div className="guest-confirmation__map-container">
+                            <Map
+                                lat={event.coordinates.lat}
+                                lng={event.coordinates.lng}
+                                zoom={15}
+                            />
+                        </div>
                     </div>
                 )}
-                
-                <div className="guest-confirmation__form">
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Dodaj notatkę (opcjonalnie)"
-                        className="guest-confirmation__notes"
-                    />
-                    
-                    <div className="guest-confirmation__buttons">
-                        <button
-                            onClick={() => handleStatusChange('confirmed')}
-                            className="guest-confirmation__confirm-button"
-                        >
-                            Potwierdzam obecność
-                        </button>
-                        <button
-                            onClick={() => handleStatusChange('declined')}
-                            className="guest-confirmation__decline-button"
-                        >
-                            Nie mogę przyjść
-                        </button>
-                    </div>
-                </div>
             </div>
-        </div>
+        </>
     );
 };
 

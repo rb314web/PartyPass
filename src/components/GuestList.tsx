@@ -786,8 +786,17 @@ const GuestList: React.FC<GuestListProps> = ({ onStatsChange, maxGuests, current
                             />
                         </div>
                         <p className="guest-list__qr-info">
-                            Zeskanuj ten kod QR, aby potwierdzić swoją obecność.
+                            Zeskanuj ten kod QR lub kliknij przycisk poniżej, aby potwierdzić swoją obecność.
                         </p>
+                        <a 
+                            href={generateQRCode(selectedGuest)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="guest-list__qr-link"
+                        >
+                            <i className="fas fa-external-link-alt"></i>
+                            Przejdź do strony potwierdzającej
+                        </a>
                         <div className="guest-list__qr-actions">
                             <button
                                 onClick={downloadQRCode}
@@ -804,14 +813,6 @@ const GuestList: React.FC<GuestListProps> = ({ onStatsChange, maxGuests, current
                                 Wyślij kod QR mailem
                             </button>
                         </div>
-                        <a 
-                            href={generateQRCode(selectedGuest)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="guest-list__qr-link"
-                        >
-                            Otwórz link potwierdzający
-                        </a>
                         <button
                             className="guest-list__close-button"
                             onClick={() => setShowQRModal(false)}
