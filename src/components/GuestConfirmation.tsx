@@ -7,278 +7,221 @@ import Map from './Map';
 import '../assets/style/GuestConfirmation.scss';
 
 interface Guest {
-    id: string;
-    name: string;
-    email: string;
-    status: 'confirmed' | 'pending' | 'declined';
-    notes?: string;
-    userId: string;
-    eventId: string;
+  id: string;
+  name: string;
+  email: string;
+  status: 'confirmed' | 'pending' | 'declined';
+  notes?: string;
+  userId: string;
+  eventId: string;
 }
 
 interface Event {
-    id: string;
-    name: string;
-    date: string;
-    location: string;
-    coordinates?: {
-        lat: number;
-        lng: number;
-    };
-    description: string;
-    theme: string;
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  description: string;
+  theme: string;
 }
 
 const GuestConfirmation: React.FC = () => {
-    const { id, email } = useParams<{ id: string; email: string }>();
-    const navigate = useNavigate();
-    const [guest, setGuest] = useState<Guest | null>(null);
-    const [event, setEvent] = useState<Event | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [notes, setNotes] = useState('');
+  const { id, email } = useParams<{ id: string; email: string }>();
+  const navigate = useNavigate();
+  const [guest, setGuest] = useState<Guest | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [notes, setNotes] = useState('');
 
-    useEffect(() => {
-        const verifyAndFetchGuest = async () => {
-            if (!id) {
-                setError('Nieprawidłowy link potwierdzający');
-                setIsLoading(false);
-                return;
-            }
+  useEffect(() => {
+    const verifyAndFetchGuest = async () => {
+      if (!id) {
+        setError('Nieprawidłowy link potwierdzający');
+        setIsLoading(false);
+        return;
+      }
 
-            try {
-                // Pobieramy dane gościa
-                const guestRef = doc(db, 'guests', id);
-                const guestDoc = await getDoc(guestRef);
-                
-                if (!guestDoc.exists()) {
-                    setError('Nie znaleziono zaproszenia');
-                    setIsLoading(false);
-                    return;
-                }
+      try {
+        const guestRef = doc(db, 'guests', id);
+        const guestDoc = await getDoc(guestRef);
 
-                const guestData = {
-                    id: guestDoc.id,
-                    ...guestDoc.data()
-                } as Guest;
-
-                // Sprawdzamy czy email się zgadza tylko jeśli został podany w URL
-                if (email && guestData.email !== email) {
-                    setError('Nieprawidłowe dane gościa');
-                    setIsLoading(false);
-                    return;
-                }
-                
-                setGuest(guestData);
-
-                // Pobieramy dane wydarzenia
-                if (guestData.eventId) {
-                    const eventRef = doc(db, 'events', guestData.eventId);
-                    const eventDoc = await getDoc(eventRef);
-                    
-                    if (eventDoc.exists()) {
-                        const eventData = {
-                            id: eventDoc.id,
-                            ...eventDoc.data()
-                        } as Event;
-                        setEvent(eventData);
-                    }
-                }
-
-                setIsLoading(false);
-            } catch (error) {
-                console.error('Błąd podczas weryfikacji:', error);
-                if (error instanceof Error) {
-                    if (error.message.includes('permission-denied')) {
-                        setError('Brak dostępu do danych. Link może być nieprawidłowy lub wygasły.');
-                    } else {
-                        setError('Wystąpił błąd podczas weryfikacji zaproszenia. Spróbuj ponownie później.');
-                    }
-                } else {
-                    setError('Nieprawidłowy link potwierdzający');
-                }
-                setIsLoading(false);
-            }
-        };
-
-        verifyAndFetchGuest();
-    }, [id, email]);
-
-    const handleStatusChange = async (newStatus: 'confirmed' | 'declined') => {
-        if (!guest || !guest.id) {
-            setError('Brak danych gościa');
-            return;
+        if (!guestDoc.exists()) {
+          setError('Nie znaleziono zaproszenia');
+          setIsLoading(false);
+          return;
         }
 
-        try {
-            const guestRef = doc(db, 'guests', guest.id);
-            await updateDoc(guestRef, {
-                status: newStatus,
-                notes: notes.trim(),
-                updatedAt: Date.now()
-            });
-            
-            setIsSuccess(true);
-            setTimeout(() => {
-                navigate('/');
-            }, 3000);
-        } catch (error) {
-            console.error('Błąd podczas aktualizacji statusu:', error);
-            if (error instanceof Error) {
-                if (error.message.includes('permission-denied')) {
-                    setError('Nie masz uprawnień do aktualizacji statusu. Link może być nieprawidłowy lub wygasły.');
-                } else {
-                    setError('Wystąpił błąd podczas aktualizacji statusu. Spróbuj ponownie później.');
-                }
-            } else {
-                setError('Nie udało się zaktualizować statusu');
-            }
+        const guestData = {
+          id: guestDoc.id,
+          ...guestDoc.data(),
+        } as Guest;
+
+        if (email && guestData.email !== email) {
+          setError('Nieprawidłowe dane gościa');
+          setIsLoading(false);
+          return;
         }
+
+        setGuest(guestData);
+
+        if (guestData.eventId) {
+          const eventRef = doc(db, 'events', guestData.eventId);
+          const eventDoc = await getDoc(eventRef);
+
+          if (eventDoc.exists()) {
+            const eventData = {
+              id: eventDoc.id,
+              ...eventDoc.data(),
+            } as Event;
+            setEvent(eventData);
+          }
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Błąd podczas weryfikacji:', error);
+        setError('Wystąpił błąd. Spróbuj ponownie później.');
+        setIsLoading(false);
+      }
     };
 
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'confirmed':
-                return 'Potwierdzona';
-            case 'declined':
-                return 'Odrzucona';
-            case 'pending':
-                return 'Oczekująca';
-            default:
-                return status;
-        }
-    };
+    verifyAndFetchGuest();
+  }, [id, email]);
 
-    if (isLoading) {
-        return (
-            <div className="guest-confirmation">
-                <div className="guest-confirmation__loading">
-                    <div className="guest-confirmation__spinner"></div>
-                    <p>Sprawdzamy Twoje zaproszenie...</p>
-                </div>
-            </div>
-        );
+  const handleStatusChange = async (newStatus: 'confirmed' | 'declined') => {
+    if (!guest || !guest.id) {
+      setError('Brak danych gościa');
+      return;
     }
 
-    if (error) {
-        return (
-            <div className="guest-confirmation">
-                <div className="guest-confirmation__error">
-                    <h2>Ups! Coś poszło nie tak</h2>
-                    <p>{error}</p>
-                    <button 
-                        className="guest-confirmation__button"
-                        onClick={() => window.location.reload()}
-                    >
-                        Odśwież stronę
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    try {
+      const guestRef = doc(db, 'guests', guest.id);
+      await updateDoc(guestRef, {
+        status: newStatus,
+        notes: notes.trim(),
+        updatedAt: Date.now(),
+      });
 
-    if (isSuccess) {
-        return (
-            <div className="guest-confirmation">
-                <div className="guest-confirmation__success">
-                    <h2>Świetnie! Dziękujemy za odpowiedź!</h2>
-                    <p>Twoja decyzja została zapisana. Do zobaczenia na imprezie!</p>
-                </div>
-            </div>
-        );
+      setIsSuccess(true);
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji statusu:', error);
+      setError('Nie udało się zaktualizować statusu');
     }
+  };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'Obecność potwierdzona';
+      case 'declined':
+        return 'Obecność odrzucona';
+      case 'pending':
+        return 'Oczekuje na odpowiedź';
+      default:
+        return status;
+    }
+  };
+
+
+  if (isLoading) {
     return (
-        <>
-            <Navigation />
-            <div className="guest-confirmation" data-theme={event?.theme || 'other'}>
-                <div className="guest-confirmation__left-column">
-                    <div className="guest-confirmation__content">
-                        <h2>Potwierdzenie obecności</h2>
-                        <p>Dziękujemy za odpowiedź na zaproszenie. Prosimy o potwierdzenie swojej obecności.</p>
-                    </div>
-
-                    {event && (
-                        <>
-                            <div className="guest-confirmation__event-info">
-                                <h3>Szczegóły wydarzenia</h3>
-                                <p>
-                                    <strong>Nazwa:</strong>
-                                    {event.name}
-                                </p>
-                                <p>
-                                    <strong>Data:</strong>
-                                    {new Date(event.date).toLocaleDateString('pl-PL', {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
-                                </p>
-                                <p>
-                                    <strong>Lokalizacja:</strong>
-                                    {event.location}
-                                </p>
-                                {event.description && (
-                                    <p>
-                                        <strong>Opis:</strong>
-                                        {event.description}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="guest-confirmation__current-status">
-                                <p>
-                                    Twój obecny status:
-                                    <strong>{getStatusText(guest?.status || '')}</strong>
-                                </p>
-                            </div>
-
-                            <div className="guest-confirmation__form">
-                                <textarea
-                                    className="guest-confirmation__notes"
-                                    placeholder="Dodaj notatkę (opcjonalnie)"
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                />
-                                <div className="guest-confirmation__buttons">
-                                    <button
-                                        className="guest-confirmation__confirm-button"
-                                        onClick={() => handleStatusChange('confirmed')}
-                                        disabled={isLoading}
-                                    >
-                                        Potwierdzam obecność
-                                    </button>
-                                    <button
-                                        className="guest-confirmation__decline-button"
-                                        onClick={() => handleStatusChange('declined')}
-                                        disabled={isLoading}
-                                    >
-                                        Nie mogę przyjść
-                                    </button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                {event?.coordinates && (
-                    <div className="guest-confirmation__right-column">
-                        <div className="guest-confirmation__map-container">
-                            <Map
-                                lat={event.coordinates.lat}
-                                lng={event.coordinates.lng}
-                                zoom={15}
-                            />
-                        </div>
-                    </div>
-                )}
-            </div>
-        </>
+      <div className="guest-confirmation">
+        <div className="guest-confirmation__message-box">
+          <p>Sprawdzamy Twoje zaproszenie...</p>
+        </div>
+      </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="guest-confirmation">
+        <div className="guest-confirmation__message-box guest-confirmation__message-box--error">
+          <h2>Błąd</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="guest-confirmation">
+        <div className="guest-confirmation__message-box guest-confirmation__message-box--success">
+          <h2>Dziękujemy!</h2>
+          <p>Twoja odpowiedź została zapisana.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Navigation />
+      <div className="guest-confirmation">
+        <div className="guest-confirmation__container">
+          <div className="guest-confirmation__main-content">
+            <header className="guest-confirmation__header">
+              <h1 className="title">Potwierdź swoją obecność</h1>
+              <p className="subtitle">Cieszymy się, że tu jesteś. Daj nam znać, czy dołączysz.</p>
+            </header>
+
+            {event && (
+              <section className="guest-confirmation__details">
+                <h2 className="section-title">Szczegóły wydarzenia</h2>
+                <ul className="event-details">
+                  <li><strong>Wydarzenie:</strong> {event.name}</li>
+                  <li><strong>Data:</strong> {new Date(event.date).toLocaleString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</li>
+                  <li><strong>Miejsce:</strong> {event.location}</li>
+                  {event.description && <li><strong>Opis:</strong> {event.description}</li>}
+                </ul>
+              </section>
+            )}
+
+            <section className="guest-confirmation__status">
+              <h2 className="section-title">Twój status</h2>
+              <p className="status-badge">{getStatusText(guest?.status || '')}</p>
+            </section>
+
+            <section className="guest-confirmation__response">
+              <h2 className="section-title">Twoja odpowiedź</h2>
+              <textarea
+                className="textarea"
+                placeholder="Wiadomość (opcjonalnie)"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+              <div className="button-group">
+                <button className="button button--confirm" onClick={() => handleStatusChange('confirmed')}>
+                  Tak, będę
+                </button>
+                <button className="button button--decline" onClick={() => handleStatusChange('declined')}>
+                  Niestety, nie mogę
+                </button>
+              </div>
+            </section>
+          </div>
+          
+          {event?.coordinates && (
+            <aside className="guest-confirmation__map-area">
+              <div className="map-container">
+                <Map lat={event.coordinates.lat} lng={event.coordinates.lng} zoom={15} />
+              </div>
+            </aside>
+          )}
+        </div>
+      </div>
+    </>
+  );
 };
 
-export default GuestConfirmation; 
+export default GuestConfirmation;

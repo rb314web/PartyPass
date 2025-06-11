@@ -36,6 +36,7 @@ const Hero: React.FC = () => {
                         <button className="cta-button primary">Zacznij teraz</button>
                         <button className="cta-button secondary">Dowiedz się więcej</button>
                     </div>
+
                 </div>
                 <div className="hero-carousel">
                     <Slider {...sliderSettings}>
