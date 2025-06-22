@@ -15,6 +15,7 @@ const Navigation: React.FC = () => {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
@@ -135,24 +136,7 @@ const Navigation: React.FC = () => {
                         >
                             Kontakt
                         </a>
-                        {currentUser ? (
-                            <>
-                                <Link 
-                                    to="/dashboard" 
-                                    className={`navigation__link ${isActive('/dashboard') ? 'navigation__link--active' : ''}`}
-                                >
-                                    <FaUser />
-                                    Panel główny
-                                </Link>
-                                <button 
-                                    onClick={handleLogout} 
-                                    className="navigation__button navigation__button--login"
-                                >
-                                    <FaSignOutAlt />
-                                    Wyloguj
-                                </button>
-                            </>
-                        ) : (
+                        {!currentUser && (
                             <>
                                 <Link to="/demo" className="navigation__button navigation__button--demo">
                                     <FaPlay />
@@ -169,6 +153,31 @@ const Navigation: React.FC = () => {
                             </>
                         )}
                     </div>
+
+                    {currentUser && (
+                        <div 
+                            className="navigation__user-menu"
+                            onMouseEnter={() => setIsUserMenuOpen(true)}
+                            onMouseLeave={() => setIsUserMenuOpen(false)}
+                        >
+                            <div className="navigation__user-avatar">
+                                <FaUser />
+                            </div>
+                            {isUserMenuOpen && (
+                                <div className="navigation__user-dropdown">
+                                    <Link to="/dashboard" className="navigation__user-dropdown-item">
+                                        Panel główny
+                                    </Link>
+                                    <Link to="/settings" className="navigation__user-dropdown-item">
+                                        Ustawienia
+                                    </Link>
+                                    <button onClick={handleLogout} className="navigation__user-dropdown-item">
+                                        Wyloguj
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </nav>

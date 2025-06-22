@@ -23,6 +23,7 @@ import Purchase from './components/Purchase';
 import PaymentSuccess from './components/PaymentSuccess';
 import PrivateRoute from './components/PrivateRoute';
 import Demo from './components/Demo';
+import UserSettings from './components/UserSettings';
 import './assets/style/App.scss';
 
 const ScrollHandler: React.FC = () => {
@@ -105,6 +106,14 @@ const App: React.FC = () => {
                                     }
                                 />
                                 <Route path="/demo" element={<Demo />} />
+                                <Route
+                                    path="/settings"
+                                    element={
+                                        <PrivateRoute>
+                                            <UserSettings />
+                                        </PrivateRoute>
+                                    }
+                                />
                             </Routes>
                         </ToastProvider>
                     </SubscriptionProvider>

@@ -14,7 +14,7 @@
     grid-template-columns: 1fr 350px;
     gap: 2rem;
     max-width: 1440px;
-    margin: 0 auto;
+    margin: 50px auto 0;
   }
 
   &__main {
@@ -87,7 +87,7 @@
 
   &__stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 1rem;
   }
 
@@ -803,7 +803,7 @@
 
   &__stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1rem;
   }
 
