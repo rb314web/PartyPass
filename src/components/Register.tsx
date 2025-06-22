@@ -4,6 +4,7 @@ import '../assets/style/Register.scss';
 import { auth } from '../firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification, getAuth, updateProfile } from 'firebase/auth';
 import Navigation from './Navigation';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PasswordRequirement {
     id: string;
@@ -62,6 +63,7 @@ const Register: React.FC = () => {
     const navigate = useNavigate();
     const auth = getAuth();
     const [isErrorVisible, setIsErrorVisible] = useState<Record<string, boolean>>({});
+    const { currentUser } = useAuth();
 
     useEffect(() => {
         const newStatus: Record<string, boolean> = {};
@@ -186,6 +188,12 @@ const Register: React.FC = () => {
             setIsSubmitting(false);
         }
     };
+
+    useEffect(() => {
+        if (currentUser) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [currentUser, navigate]);
 
     return (
         <>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import '../assets/style/UserProfile.scss';
 
 interface UserProfileProps {
@@ -8,6 +9,7 @@ interface UserProfileProps {
 
 const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
     const { currentUser } = useAuth();
+    const { subscription } = useSubscription();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         displayName: currentUser?.displayName || '',
@@ -47,6 +49,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                             )}
                             {currentUser?.phoneNumber && (
                                 <p className="user-profile__phone">{currentUser.phoneNumber}</p>
+                            )}
+                            {subscription && (
+                                <>
+                                    <p className="user-profile__plan"><b>Plan:</b> {subscription.plan || 'Brak'}</p>
+                                    <p className="user-profile__valid-until"><b>Ważny do:</b> {subscription.validUntil ? subscription.validUntil.toLocaleDateString() : 'Brak'}</p>
+                                </>
                             )}
                         </div>
                         <button 

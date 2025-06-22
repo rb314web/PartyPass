@@ -12,6 +12,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import 'react-toastify/dist/ReactToastify.css';
 import '../assets/style/Dashboard.scss';
 import Map from '../components/Map';
+import Navigation from './Navigation';
+import UserProfile from './UserProfile';
 
 const EVENT_THEMES = [
   { id: 'wedding', label: 'Wesele' },
@@ -93,6 +95,7 @@ export const Dashboard = () => {
     email: '',
     status: 'pending'
   });
+  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -950,6 +953,7 @@ export const Dashboard = () => {
 
   return (
     <div className="dashboard">
+      <Navigation />
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -969,7 +973,7 @@ export const Dashboard = () => {
         <div className="dashboard__sidebar">
           <div className="dashboard__card">
             <h3>Profil użytkownika</h3>
-            <div className="dashboard__profile">
+            <div className="dashboard__profile" style={{cursor: 'pointer'}} onClick={() => setShowUserProfileModal(true)}>
               <div className="dashboard__profile-avatar">
                 {currentUser?.email?.[0].toUpperCase()}
               </div>
@@ -1025,6 +1029,13 @@ export const Dashboard = () => {
           </div>
         </div>
       </div>
+      {showUserProfileModal && (
+        <div className="dashboard__modal" style={{zIndex: 2000}}>
+          <div className="dashboard__modal-content" style={{padding: 0, background: 'none', boxShadow: 'none'}}>
+            <UserProfile onClose={() => setShowUserProfileModal(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }; 

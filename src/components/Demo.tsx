@@ -1,196 +1,223 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaUsers, FaChartBar, FaPlus, FaEdit, FaQrcode, FaShare } from 'react-icons/fa';
-import '../assets/style/Demo.scss';
+import React, { useState } from 'react';
+import { FaCalendarAlt, FaUsers, FaQrcode, FaShare, FaEdit, FaPlus, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
+import Navigation from './Navigation';
+import '../assets/style/Dashboard.scss';
 
-interface Event {
-    id: string;
-    name: string;
-    date: string;
-    location: string;
-    guests: number;
-}
+const demoEvents = [
+  {
+    id: '1',
+    name: 'Urodziny Ani',
+    date: '2024-04-15',
+    location: 'Warszawa',
+    description: 'Przyjęcie urodzinowe Ani',
+    maxGuests: 30,
+    theme: 'birthday',
+    createdAt: '2024-03-01T12:00:00Z',
+    userId: 'demo'
+  },
+  {
+    id: '2',
+    name: 'Impreza firmowa',
+    date: '2024-05-10',
+    location: 'Kraków',
+    description: 'Integracja firmowa',
+    maxGuests: 100,
+    theme: 'other',
+    createdAt: '2024-03-10T12:00:00Z',
+    userId: 'demo'
+  }
+];
+
+const demoGuests = [
+  {
+    id: 'g1',
+    name: 'Jan Kowalski',
+    email: 'jan.kowalski@example.com',
+    status: 'confirmed',
+    userId: 'demo',
+    eventId: '1'
+  },
+  {
+    id: 'g2',
+    name: 'Anna Nowak',
+    email: 'anna.nowak@example.com',
+    status: 'pending',
+    userId: 'demo',
+    eventId: '1'
+  },
+  {
+    id: 'g3',
+    name: 'Piotr Zieliński',
+    email: 'piotr.zielinski@example.com',
+    status: 'declined',
+    userId: 'demo',
+    eventId: '2'
+  }
+];
+
+const statusLabels: Record<string, string> = {
+  confirmed: 'Potwierdzony',
+  pending: 'Oczekujący',
+  declined: 'Odrzucony'
+};
 
 const Demo: React.FC = () => {
-    const navigate = useNavigate();
-    const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes in seconds
-    const [isDemoActive, setIsDemoActive] = useState(true);
-    const [activeTab, setActiveTab] = useState('events');
-    const [events, setEvents] = useState<Event[]>(() => {
-        const savedEvents = localStorage.getItem('demoEvents');
-        return savedEvents ? JSON.parse(savedEvents) : [
-            {
-                id: '1',
-                name: 'Urodziny Ani',
-                date: '2024-04-15',
-                location: 'Warszawa',
-                guests: 25
-            },
-            {
-                id: '2',
-                name: 'Firma Party',
-                date: '2024-05-01',
-                location: 'Kraków',
-                guests: 50
-            }
-        ];
-    });
+  const [activeTab, setActiveTab] = useState<'events' | 'guests'>('events');
+  const [events] = useState(demoEvents);
+  const [guests] = useState(demoGuests);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMsg, setModalMsg] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<typeof demoEvents[0] | null>(null);
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft((prevTime) => {
-                if (prevTime <= 1) {
-                    clearInterval(timer);
-                    setIsDemoActive(false);
-                    return 0;
-                }
-                return prevTime - 1;
-            });
-        }, 1000);
+  const guestStats = {
+    total: guests.length,
+    confirmed: guests.filter(g => g.status === 'confirmed').length,
+    pending: guests.filter(g => g.status === 'pending').length,
+    declined: guests.filter(g => g.status === 'declined').length
+  };
 
-        return () => clearInterval(timer);
-    }, []);
+  const handleAction = (msg: string) => {
+    setModalMsg(msg);
+    setShowModal(true);
+  };
 
-    useEffect(() => {
-        localStorage.setItem('demoEvents', JSON.stringify(events));
-    }, [events]);
-
-    const formatTime = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
-
-    const handleRegister = () => {
-        navigate('/register');
-    };
-
-    const handleAddEvent = () => {
-        const newEvent: Event = {
-            id: Date.now().toString(),
-            name: 'Nowe wydarzenie',
-            date: new Date().toISOString().split('T')[0],
-            location: 'Lokalizacja',
-            guests: 0
-        };
-        setEvents([...events, newEvent]);
-    };
-
-    const handleEditEvent = (id: string) => {
-        // Symulacja edycji
-        alert('W wersji demo edycja jest wyłączona. Zarejestruj się, aby uzyskać pełny dostęp.');
-    };
-
-    const handleGenerateQR = (id: string) => {
-        // Symulacja generowania QR
-        alert('W wersji demo generowanie QR jest wyłączone. Zarejestruj się, aby uzyskać pełny dostęp.');
-    };
-
-    const handleShareEvent = (id: string) => {
-        // Symulacja udostępniania
-        alert('W wersji demo udostępnianie jest wyłączone. Zarejestruj się, aby uzyskać pełny dostęp.');
-    };
-
-    if (!isDemoActive) {
-        return (
-            <div className="demo-expired">
-                <div className="demo-expired__content">
-                    <h2>Czas demo wygasł</h2>
-                    <p>Zarejestruj się, aby uzyskać pełny dostęp do wszystkich funkcji PartyPass.</p>
-                    <button className="demo-expired__button" onClick={handleRegister}>
-                        <i className="fas fa-user-plus"></i>
-                        Zarejestruj się
-                    </button>
-                </div>
+  const renderEventList = () => (
+    <div className="dashboard__events-list">
+      <div className="dashboard__events-header">
+        <h2>Wydarzenia</h2>
+        <button className="dashboard__button dashboard__button--primary" onClick={() => handleAction('Dodawanie wydarzeń dostępne po rejestracji!')}>
+          <FaPlus /> Dodaj wydarzenie
+        </button>
+      </div>
+      <div className="dashboard__events-grid">
+        {events.map(event => (
+          <div key={event.id} className="dashboard__event-card">
+            <h3>{event.name}</h3>
+            <p><FaCalendarAlt /> {event.date}</p>
+            <p><i className="fas fa-map-marker-alt"></i> {event.location}</p>
+            <p>{event.description}</p>
+            <div className="dashboard__event-actions">
+              <button onClick={() => handleAction('Edycja wydarzeń dostępna po rejestracji!')}><FaEdit /></button>
+              <button onClick={() => handleAction('Generowanie QR dostępne po rejestracji!')}><FaQrcode /></button>
+              <button onClick={() => handleAction('Udostępnianie wydarzeń dostępne po rejestracji!')}><FaShare /></button>
             </div>
-        );
-    }
+            <button className="dashboard__button dashboard__button--secondary" style={{marginTop: 8}} onClick={() => setSelectedEvent(event)}>
+              Zobacz gości
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
-    return (
-        <div className="demo">
-            <header className="demo__header">
-                <div className="demo__timer">
-                    <i className="fas fa-clock"></i>
-                    <span>Pozostały czas: {formatTime(timeLeft)}</span>
-                </div>
-                <button className="demo__register" onClick={handleRegister}>
-                    <i className="fas fa-user-plus"></i>
-                    Zarejestruj się
-                </button>
-            </header>
-            <div className="demo__content">
-                <div className="demo__sidebar">
-                    <button 
-                        className={`demo__tab ${activeTab === 'events' ? 'demo__tab--active' : ''}`}
-                        onClick={() => setActiveTab('events')}
-                    >
-                        <FaCalendarAlt />
-                        Wydarzenia
-                    </button>
-                    <button 
-                        className={`demo__tab ${activeTab === 'guests' ? 'demo__tab--active' : ''}`}
-                        onClick={() => setActiveTab('guests')}
-                    >
-                        <FaUsers />
-                        Goście
-                    </button>
-                    <button 
-                        className={`demo__tab ${activeTab === 'stats' ? 'demo__tab--active' : ''}`}
-                        onClick={() => setActiveTab('stats')}
-                    >
-                        <FaChartBar />
-                        Statystyki
-                    </button>
-                </div>
-                <div className="demo__main">
-                    {activeTab === 'events' && (
-                        <div className="demo__events">
-                            <div className="demo__events-header">
-                                <h2>Wydarzenia</h2>
-                                <button className="demo__add-button" onClick={handleAddEvent}>
-                                    <FaPlus />
-                                    Dodaj wydarzenie
-                                </button>
-                            </div>
-                            <div className="demo__events-grid">
-                                {events.map(event => (
-                                    <div key={event.id} className="demo__event-card">
-                                        <h3>{event.name}</h3>
-                                        <p><i className="fas fa-calendar"></i> {event.date}</p>
-                                        <p><i className="fas fa-map-marker-alt"></i> {event.location}</p>
-                                        <p><i className="fas fa-users"></i> {event.guests} gości</p>
-                                        <div className="demo__event-actions">
-                                            <button onClick={() => handleEditEvent(event.id)}>
-                                                <FaEdit />
-                                            </button>
-                                            <button onClick={() => handleGenerateQR(event.id)}>
-                                                <FaQrcode />
-                                            </button>
-                                            <button onClick={() => handleShareEvent(event.id)}>
-                                                <FaShare />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    {activeTab === 'guests' && (
-                        <div className="demo__guests">
-                            <h2>Lista gości</h2>
-                            <p>Zarejestruj się, aby uzyskać dostęp do zarządzania gośćmi.</p>
-                        </div>
-                    )}
-                    {activeTab === 'stats' && (
-                        <div className="demo__stats">
-                            <h2>Statystyki</h2>
-                            <p>Zarejestruj się, aby uzyskać dostęp do szczegółowych statystyk.</p>
-                        </div>
-                    )}
-                </div>
+  const renderGuestList = () => (
+    <div className="dashboard__guests-list-full">
+      <button className="dashboard__button dashboard__button--secondary" style={{marginBottom: 16}} onClick={() => setSelectedEvent(null)}>
+        <FaExternalLinkAlt /> Powrót do wydarzeń
+      </button>
+      <h2>Goście wydarzenia: {selectedEvent?.name}</h2>
+      <div className="dashboard__guests-list">
+        {guests.filter(g => g.eventId === selectedEvent?.id).map(guest => (
+          <div key={guest.id} className="dashboard__guest-item">
+            <div className="dashboard__guest-item-info">
+              <h4>{guest.name}</h4>
+              <p>{guest.email}</p>
             </div>
+            <span className={`dashboard__guest-status dashboard__guest-status--${guest.status}`}>
+              {statusLabels[guest.status]}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="dashboard">
+      <Navigation />
+      <div className="dashboard__content">
+        <div className="dashboard__main">
+          {selectedEvent ? renderGuestList() : renderEventList()}
         </div>
-    );
+        <div className="dashboard__sidebar">
+          <div className="dashboard__card">
+            <h3>Profil demo</h3>
+            <div className="dashboard__profile">
+              <div className="dashboard__profile-avatar">D</div>
+              <div className="dashboard__profile-info">
+                <h4>demo@partypass.pl</h4>
+                <p><FaCalendarAlt /> Plan: Demo</p>
+                <p><FaUsers /> Wydarzenia: {events.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="dashboard__card">
+            <h3>Statystyki gości</h3>
+            <div className="dashboard__stats-grid">
+              <div className="dashboard__stat-item">
+                <span className="dashboard__stat-item-value">{guestStats.total}</span>
+                <span className="dashboard__stat-item-label">Wszyscy</span>
+              </div>
+              <div className="dashboard__stat-item">
+                <span className="dashboard__stat-item-value">{guestStats.confirmed}</span>
+                <span className="dashboard__stat-item-label">{statusLabels['confirmed']}</span>
+              </div>
+              <div className="dashboard__stat-item">
+                <span className="dashboard__stat-item-value">{guestStats.pending}</span>
+                <span className="dashboard__stat-item-label">{statusLabels['pending']}</span>
+              </div>
+              <div className="dashboard__stat-item">
+                <span className="dashboard__stat-item-value">{guestStats.declined}</span>
+                <span className="dashboard__stat-item-label">{statusLabels['declined']}</span>
+              </div>
+            </div>
+          </div>
+          <div className="dashboard__card">
+            <h3>Ostatni goście</h3>
+            <div className="dashboard__guests-list">
+              {guests.slice(0, 5).map(guest => {
+                const event = events.find(e => e.id === guest.eventId);
+                return (
+                  <div key={guest.id} className="dashboard__guest-item">
+                    <div className="dashboard__guest-item-info">
+                      <h4>{guest.name}</h4>
+                      <p>{guest.email}</p>
+                      <p className="dashboard__guest-event">
+                        <FaCalendarAlt /> {event?.name || 'Nieznane wydarzenie'}
+                      </p>
+                    </div>
+                    <span className={`dashboard__guest-status dashboard__guest-status--${guest.status}`}>
+                      {statusLabels[guest.status]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+      {showModal && (
+        <div className="dashboard__modal">
+          <div className="dashboard__modal-content">
+            <button className="dashboard__modal-close" onClick={() => setShowModal(false)}>
+              <FaTimes />
+            </button>
+            <div className="dashboard__modal-header">
+              <h3>Demo</h3>
+            </div>
+            <div className="dashboard__modal-body">
+              <p>{modalMsg}</p>
+            </div>
+            <div className="dashboard__modal-footer">
+              <button className="dashboard__button dashboard__button--secondary" onClick={() => setShowModal(false)}>
+                Zamknij
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Demo; 

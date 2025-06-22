@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../assets/style/Login.scss';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from 'firebase/auth';
 import { getAuth } from 'firebase/auth';
 import Navigation from './Navigation';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ const Login: React.FC = () => {
     const [touched, setTouched] = useState<{ email: boolean; password: boolean }>({ email: false, password: false });
     const navigate = useNavigate();
     const auth = getAuth();
+    const { currentUser } = useAuth();
 
     const googleProvider = new GoogleAuthProvider();
 
@@ -114,6 +116,12 @@ const Login: React.FC = () => {
             setIsSubmitting(false);
         }
     };
+
+    useEffect(() => {
+        if (currentUser) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [currentUser, navigate]);
 
     return (
         <>
