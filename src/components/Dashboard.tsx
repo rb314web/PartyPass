@@ -14,6 +14,7 @@ import Map from '../components/Map';
 import Navigation from './Navigation';
 import UserProfile from './UserProfile';
 import Spinner from '../components/Spinner';
+import LocationWithMap from './LocationWithMap';
 
 const EVENT_THEMES = [
   { id: 'wedding', label: 'Wesele' },
@@ -548,15 +549,19 @@ export const Dashboard = () => {
           <div className="form-group">
             <label>Lokalizacja *</label>
             <div className="location-search">
-              <Map
-                lat={newEvent.coordinates?.lat || 52.2297}
-                lng={newEvent.coordinates?.lng || 21.0122}
-                value={newEvent.location || ''}
-                onChange={(address, lat, lng) => setNewEvent(prev => ({
-                  ...prev,
-                  location: address,
-                  coordinates: { lat, lng }
-                }))}
+              <LocationWithMap
+                key={selectedEvent?.id}
+                initialAddress={newEvent.location || ''}
+                initialLat={newEvent.coordinates?.lat || 52.2297}
+                initialLng={newEvent.coordinates?.lng || 21.0122}
+                onChange={(address: string, lat: number, lng: number) => {
+                  setNewEvent(prev => ({
+                    ...prev,
+                    location: address,
+                    coordinates: { lat, lng }
+                  }));
+                  console.log('Dashboard: newEvent updated from LocationWithMap', { address, lat, lng });
+                }}
               />
             </div>
           </div>
@@ -623,15 +628,19 @@ export const Dashboard = () => {
               <div className="form-group">
                 <label>Lokalizacja *</label>
                 <div className="location-search">
-                  <Map
-                    lat={newEvent.coordinates?.lat || 52.2297}
-                    lng={newEvent.coordinates?.lng || 21.0122}
-                    value={newEvent.location || ''}
-                    onChange={(address, lat, lng) => setNewEvent(prev => ({
-                      ...prev,
-                      location: address,
-                      coordinates: { lat, lng }
-                    }))}
+                  <LocationWithMap
+                    key={selectedEvent.id}
+                    initialAddress={newEvent.location || ''}
+                    initialLat={newEvent.coordinates?.lat || 52.2297}
+                    initialLng={newEvent.coordinates?.lng || 21.0122}
+                    onChange={(address: string, lat: number, lng: number) => {
+                      setNewEvent(prev => ({
+                        ...prev,
+                        location: address,
+                        coordinates: { lat, lng }
+                      }));
+                      console.log('Dashboard: newEvent updated from LocationWithMap', { address, lat, lng });
+                    }}
                   />
                 </div>
               </div>
