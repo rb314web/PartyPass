@@ -1,12 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Timestamp } from 'firebase/firestore';
 
 interface Subscription {
-    plan: 'Start' | 'Pro' | 'Premium' | null;
+    plan: 'Start' | 'Pro' | 'Premium' | 'Free' | null;
     status: 'active' | 'inactive' | 'expired';
     validUntil: Date | null;
+    expiryDate?: Timestamp;
+    planType?: string;
+    maxEvents?: number;
+    maxGuests?: number;
 }
 
 interface SubscriptionContextType {
@@ -30,39 +35,55 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchSubscription = async () => {
+        let unsubscribe: () => void;
+
+        const setupSubscriptionListener = () => {
             if (!currentUser) {
                 setSubscription(null);
                 setLoading(false);
                 return;
             }
 
-            try {
-                const subscriptionDoc = await getDoc(doc(db, 'subscriptions', currentUser.uid));
+            const subscriptionRef = doc(db, 'subscriptions', currentUser.uid);
                 
-                if (subscriptionDoc.exists()) {
-                    const data = subscriptionDoc.data();
+            unsubscribe = onSnapshot(subscriptionRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
                     setSubscription({
-                        plan: data.plan,
-                        status: data.status,
-                        validUntil: data.validUntil ? new Date(data.validUntil.toDate()) : null
+                        plan: data.plan as 'Start' | 'Pro' | 'Premium' | 'Free',
+                        status: data.status as 'active' | 'inactive' | 'expired',
+                        validUntil: data.validUntil ? new Date(data.validUntil.toDate()) : null,
+                        expiryDate: data.expiryDate as Timestamp || undefined,
+                        planType: data.planType as string || 'Free',
+                        maxEvents: data.maxEvents as number || 0,
+                        maxGuests: data.plan === 'Pro' ? 200 : (data.maxGuests as number || 0),
                     });
                 } else {
                     setSubscription({
-                        plan: null,
+                        plan: 'Free',
                         status: 'inactive',
-                        validUntil: null
+                        validUntil: null,
+                        expiryDate: undefined,
+                        planType: 'Free',
+                        maxEvents: 0,
+                        maxGuests: 0,
                     });
                 }
-            } catch (err) {
-                console.error('Błąd podczas pobierania subskrypcji:', err);
-                setError('Nie udało się pobrać informacji o subskrypcji');
-            } finally {
                 setLoading(false);
-            }
+            }, (err) => {
+                console.error('Błąd podczas nasłuchiwania subskrypcji:', err);
+                setError('Nie udało się pobrać informacji o subskrypcji w czasie rzeczywistym');
+                setLoading(false);
+            });
         };
 
-        fetchSubscription();
+        setupSubscriptionListener();
+
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
     }, [currentUser]);
 
     return (

@@ -128,7 +128,7 @@
 
         &:focus {
           outline: none;
-          border-color: var(--primary-color);
+          border-color: #ff5722;
           box-shadow: 0 0 0 3px var(--primary-shadow);
         }
       }
@@ -137,7 +137,7 @@
     .submit-button {
       width: 100%;
       padding: 0.75rem;
-      background: var(--primary-color);
+      background: #ff5722;
       color: white;
       border: none;
       border-radius: 8px;
@@ -209,7 +209,7 @@
 
     &:focus {
       outline: none;
-      border-color: var(--primary-color);
+      border-color: #ff5722;
       box-shadow: 0 0 0 3px var(--primary-shadow);
     }
 
@@ -219,7 +219,7 @@
       box-shadow: none;
       
       &:focus {
-        border-color: var(--primary-color);
+        border-color: #ff5722;
         box-shadow: 0 0 0 3px var(--primary-shadow);
       }
     }
@@ -248,11 +248,11 @@
     &:focus {
       outline: none;
       box-shadow: none;
-      color: var(--primary-color);
+      color: #ff5722;
     }
 
     &:hover {
-      color: var(--primary-color);
+      color: #ff5722;
     }
 
     i {
@@ -291,7 +291,7 @@
   &__button {
     width: 100%;
     padding: 0.875rem;
-    background: var(--primary-color);
+    background: #ff5722;
     color: white;
     border: none;
     border-radius: 8px;
@@ -325,7 +325,7 @@
     font-size: 0.9375rem;
 
     a {
-      color: var(--primary-color);
+      color: #ff5722;
       text-decoration: none;
       font-weight: 500;
 
@@ -414,8 +414,8 @@
       margin: 0;
 
       &:checked {
-        background: var(--primary-color);
-        border-color: var(--primary-color);
+        background: #ff5722;
+        border-color: #ff5722;
 
         &::after {
           content: '';
@@ -431,7 +431,7 @@
       }
 
       &:hover:not(:checked) {
-        border-color: var(--primary-color);
+        border-color: #ff5722;
       }
 
       &:focus {
@@ -456,7 +456,7 @@
       line-height: 1.4;
 
       a {
-        color: var(--primary-color);
+        color: #ff5722;
         text-decoration: none;
         font-weight: 500;
 

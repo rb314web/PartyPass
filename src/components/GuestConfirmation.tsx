@@ -5,6 +5,8 @@ import { db } from '../firebase';
 import Navigation from './Navigation';
 import Map from './Map';
 import '../assets/style/GuestConfirmation.scss';
+import { FaCheckCircle, FaTimesCircle, FaArrowLeft } from 'react-icons/fa';
+import Spinner from './Spinner';
 
 interface Guest {
   id: string;
@@ -37,6 +39,8 @@ const GuestConfirmation: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [lastAction, setLastAction] = useState<'confirmed' | 'declined' | null>(null);
+  const [loadingAction, setLoadingAction] = useState<'confirmed' | 'declined' | null>(null);
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -95,8 +99,10 @@ const GuestConfirmation: React.FC = () => {
   }, [id, email]);
 
   const handleStatusChange = async (newStatus: 'confirmed' | 'declined') => {
+    setLoadingAction(newStatus);
     if (!guest || !guest.id) {
       setError('Brak danych gościa');
+      setLoadingAction(null);
       return;
     }
 
@@ -109,34 +115,47 @@ const GuestConfirmation: React.FC = () => {
       });
 
       setIsSuccess(true);
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+      setLastAction(newStatus);
+      setLoadingAction(null);
     } catch (error) {
       console.error('Błąd podczas aktualizacji statusu:', error);
       setError('Nie udało się zaktualizować statusu');
+      setLoadingAction(null);
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return 'Obecność potwierdzona';
+        return 'Potwierdzono udział';
       case 'declined':
-        return 'Obecność odrzucona';
+        return 'Nie bierzesz udziału';
       case 'pending':
-        return 'Oczekuje na odpowiedź';
+        return 'Jeszcze nie odpowiedziano';
       default:
         return status;
     }
   };
 
+  const refreshGuest = async () => {
+    if (!guest?.id) return;
+    try {
+      const guestRef = doc(db, 'guests', guest.id);
+      const guestDoc = await getDoc(guestRef);
+      if (guestDoc.exists()) {
+        setGuest({ id: guestDoc.id, ...guestDoc.data() } as Guest);
+      }
+    } catch (e) {
+      // opcjonalnie: showToast('Nie udało się odświeżyć statusu', 'error');
+    }
+  };
 
   if (isLoading) {
     return (
       <div className="guest-confirmation">
-        <div className="guest-confirmation__message-box">
-          <p>Sprawdzamy Twoje zaproszenie...</p>
+        <div className="guest-confirmation__loading">
+          <Spinner />
+          <p>Ładujemy Twoje zaproszenie...</p>
         </div>
       </div>
     );
@@ -146,7 +165,7 @@ const GuestConfirmation: React.FC = () => {
     return (
       <div className="guest-confirmation">
         <div className="guest-confirmation__message-box guest-confirmation__message-box--error">
-          <h2>Błąd</h2>
+          <h2>Coś poszło nie tak</h2>
           <p>{error}</p>
         </div>
       </div>
@@ -154,13 +173,37 @@ const GuestConfirmation: React.FC = () => {
   }
 
   if (isSuccess) {
+    const wasConfirmed = lastAction === 'confirmed';
     return (
+      <>
+        <Navigation />
       <div className="guest-confirmation">
-        <div className="guest-confirmation__message-box guest-confirmation__message-box--success">
-          <h2>Dziękujemy!</h2>
-          <p>Twoja odpowiedź została zapisana.</p>
+          <div className={`guest-confirmation__message-box guest-confirmation__message-box--success`} style={{padding: '3.5rem 1.5rem'}}>
+            <div style={{fontSize: '3.5rem', marginBottom: '1.2rem', color: wasConfirmed ? '#56c596' : '#f67280'}}>
+              {wasConfirmed ? <FaCheckCircle /> : <FaTimesCircle />}
+            </div>
+            <h2 style={{fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem'}}>
+              {wasConfirmed ? 'Super, dziękujemy!' : 'Dziękujemy za informację!'}
+            </h2>
+            <p style={{fontSize: '1.15rem', color: '#6c757d', marginBottom: '2.5rem'}}>
+              {wasConfirmed
+                ? 'Cieszymy się, że będziesz z nami! W razie pytań napisz do organizatora.'
+                : 'Szkoda, że nie możesz być z nami. Jeśli coś się zmieni, daj znać organizatorowi.'}
+            </p>
+            <button
+              className="button button--secondary"
+              style={{marginTop: '1.5rem', fontSize: '1.05rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.5rem'}}
+              onClick={async () => {
+                setIsSuccess(false);
+                setLastAction(null);
+                await refreshGuest();
+              }}
+            >
+              <FaArrowLeft /> Zmień odpowiedź
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -171,10 +214,42 @@ const GuestConfirmation: React.FC = () => {
         <div className="guest-confirmation__container">
           <div className="guest-confirmation__main-content">
             <header className="guest-confirmation__header">
-              <h1 className="title">Potwierdź swoją obecność</h1>
-              <p className="subtitle">Cieszymy się, że tu jesteś. Daj nam znać, czy dołączysz.</p>
+              <h1 className="title">Daj znać, czy będziesz!</h1>
+              <p className="subtitle">To dla nas ważne – potwierdź lub odmów udział jednym kliknięciem.</p>
             </header>
 
+            <section className="guest-confirmation__status">
+              <h2 className="section-title">Twoja odpowiedź</h2>
+              <p className="status-badge">{getStatusText(guest?.status || '')}</p>
+            </section>
+
+            <section className="guest-confirmation__response">
+              <h2 className="section-title">Chcesz przekazać coś organizatorowi?</h2>
+              <textarea
+                className="textarea"
+                placeholder="Napisz wiadomość do organizatora (opcjonalnie)"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+              <div className="button-group">
+                <button
+                  className="button button--confirm"
+                  onClick={() => handleStatusChange('confirmed')}
+                  disabled={!!loadingAction}
+                >
+                  {loadingAction === 'confirmed' ? <span className="button-spinner" /> : 'Potwierdzam obecność'}
+                </button>
+                <button
+                  className="button button--decline"
+                  onClick={() => handleStatusChange('declined')}
+                  disabled={!!loadingAction}
+                >
+                  {loadingAction === 'declined' ? <span className="button-spinner" /> : 'Nie mogę być obecny/a'}
+                </button>
+              </div>
+            </section>
+          </div>
+          <div className="guest-confirmation__side-section">
             {event && (
               <section className="guest-confirmation__details">
                 <h2 className="section-title">Szczegóły wydarzenia</h2>
@@ -182,35 +257,17 @@ const GuestConfirmation: React.FC = () => {
                   <li><strong>Wydarzenie:</strong> {event.name}</li>
                   <li><strong>Data:</strong> {new Date(event.date).toLocaleString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</li>
                   <li><strong>Miejsce:</strong> {event.location}</li>
+                  <li><strong>Czas na potwierdzenie:</strong> {(() => {
+                    const eventDate = new Date(event.date);
+                    const deadline = new Date(eventDate);
+                    deadline.setDate(eventDate.getDate() - 1);
+                    deadline.setHours(23, 59, 0, 0);
+                    return deadline.toLocaleString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  })()}</li>
                   {event.description && <li><strong>Opis:</strong> {event.description}</li>}
                 </ul>
               </section>
             )}
-
-            <section className="guest-confirmation__status">
-              <h2 className="section-title">Twój status</h2>
-              <p className="status-badge">{getStatusText(guest?.status || '')}</p>
-            </section>
-
-            <section className="guest-confirmation__response">
-              <h2 className="section-title">Twoja odpowiedź</h2>
-              <textarea
-                className="textarea"
-                placeholder="Wiadomość (opcjonalnie)"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-              <div className="button-group">
-                <button className="button button--confirm" onClick={() => handleStatusChange('confirmed')}>
-                  Tak, będę
-                </button>
-                <button className="button button--decline" onClick={() => handleStatusChange('declined')}>
-                  Niestety, nie mogę
-                </button>
-              </div>
-            </section>
-          </div>
-          
           {event?.coordinates && (
             <aside className="guest-confirmation__map-area">
               <div className="map-container">
@@ -218,6 +275,7 @@ const GuestConfirmation: React.FC = () => {
               </div>
             </aside>
           )}
+          </div>
         </div>
       </div>
     </>

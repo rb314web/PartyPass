@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { FaSearch } from 'react-icons/fa';
+import Spinner from './Spinner';
 import 'leaflet/dist/leaflet.css';
 import '../assets/style/Map.scss';
 
@@ -154,7 +155,7 @@ const Map: React.FC<MapProps> = ({ lat, lng, zoom = 13, onLocationSelect, showSe
               <FaSearch />
             </button>
           </div>
-          {isLoading && <div className="search-loading">Wyszukiwanie...</div>}
+          {isLoading && <div className="search-loading"><Spinner /></div>}
           {searchResults.length > 0 && (
             <div className="search-results">
               {searchResults.map((result, index) => (

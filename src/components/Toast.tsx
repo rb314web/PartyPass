@@ -23,6 +23,7 @@ const Toast: React.FC<ToastProps> = ({
     const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
+        console.log("Toast component rendered/updated. Message:", message, "Type:", type, "IsVisible:", isVisible);
         timeoutRef.current = setTimeout(() => {
             setIsVisible(false);
             closeTimeoutRef.current = setTimeout(onClose, 300);

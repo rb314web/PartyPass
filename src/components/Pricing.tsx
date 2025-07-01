@@ -6,6 +6,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { AutoPayService } from '../services/autopayService';
 import { AUTOPAY_CONFIG } from '../config/autopay';
+import { Timestamp } from 'firebase/firestore';
 import '../assets/style/Pricing.scss';
 
 interface PricingPlan {
@@ -112,58 +113,58 @@ const Pricing: React.FC = () => {
 
     const activateSubscription = async (plan: PricingPlan) => {
         try {
-            const validUntil = new Date();
-            validUntil.setMonth(validUntil.getMonth() + 1);
+            console.log('Attempting to activate plan:', plan.name);
+            const now = new Date();
+            const expiryDate = new Date();
+            // Set expiry date based on plan - 1 month from now for simplicity
+            expiryDate.setMonth(expiryDate.getMonth() + 1);
 
-            // Zapisz w kolekcji subscriptions
-            await setDoc(doc(db, 'subscriptions', currentUser!.uid), {
-                plan: plan.name,
-                status: 'active',
-                validUntil: validUntil,
-                createdAt: new Date(),
-                price: plan.price
-            });
+            let maxEvents = 0;
+            let maxGuests = 0;
 
-            // Zapisz w dokumencie użytkownika
-            const userEventRef = doc(db, 'events', currentUser!.uid);
-            const userEventDoc = await getDoc(userEventRef);
-
-            const maxGuests = plan.name === 'Start' ? 50 : 
-                            plan.name === 'Pro' ? 200 : 
-                            'Bez limitu'; // Tekst zamiast Infinity dla Premium
-
-            if (userEventDoc.exists()) {
-                await setDoc(userEventRef, {
-                    ...userEventDoc.data(),
-                    subscription: {
-                        plan: plan.name,
-                        status: 'active',
-                        validUntil: validUntil,
-                        createdAt: new Date(),
-                        price: plan.price
-                    },
-                    maxGuests
-                }, { merge: true });
-            } else {
-                await setDoc(userEventRef, {
-                    subscription: {
-                        plan: plan.name,
-                        status: 'active',
-                        validUntil: validUntil,
-                        createdAt: new Date(),
-                        price: plan.price
-                    },
-                    maxGuests,
-                    guests: [],
-                    createdAt: new Date()
-                });
+            switch (plan.name) {
+                case 'Start':
+                    maxEvents = 1; // Example: 1 event for Start plan
+                    maxGuests = 50;
+                    break;
+                case 'Pro':
+                    maxEvents = 5; // Example: 5 events for Pro plan
+                    maxGuests = 200;
+                    break;
+                case 'Premium':
+                    maxEvents = 9999; // Essentially unlimited for Premium
+                    maxGuests = 9999; // Essentially unlimited for Premium
+                    break;
+                case 'Free':
+                default:
+                    maxEvents = 0; // No events for Free plan (or 1 if you want to allow a demo event)
+                    maxGuests = 0;
+                    break;
             }
 
+            const subscriptionData = {
+                plan: plan.name, // The current plan name (e.g., 'Start', 'Pro', 'Premium')
+                planType: plan.name, // Store planType explicitly for clarity
+                status: 'active',
+                expiryDate: Timestamp.fromDate(expiryDate), // Store as Firebase Timestamp
+                createdAt: Timestamp.fromDate(now),
+                price: plan.price,
+                maxEvents: maxEvents,
+                maxGuests: maxGuests,
+                userId: currentUser!.uid,
+            };
+
+            console.log('Saving subscription data to Firestore:', subscriptionData);
+
+            // Zapisz w kolekcji subscriptions
+            await setDoc(doc(db, 'subscriptions', currentUser!.uid), subscriptionData, { merge: true });
+
+            console.log(`Plan ${plan.name} aktywowany pomyślnie w Firebase.`);
             toast.success(`Plan ${plan.name} został aktywowany!`);
             navigate('/dashboard', { replace: true });
 
         } catch (error) {
-            console.error('Błąd podczas aktywacji planu:', error);
+            console.error('Błąd podczas aktywacji planu w Pricing.tsx:', error);
             toast.error('Wystąpił błąd podczas aktywacji planu. Spróbuj ponownie później.');
             setProcessingPlan(null);
         }

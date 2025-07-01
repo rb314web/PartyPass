@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import Toast, { ToastType } from '../components/Toast';
 
 interface ToastContextType {
@@ -26,8 +26,13 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     } | null>(null);
 
     const showToast = useCallback((message: string, type: ToastType) => {
+        console.log("showToast called with:", { message, type });
         setToast({ message, type });
     }, []);
+
+    useEffect(() => {
+        console.log("Toast state updated to:", toast);
+    }, [toast]);
 
     return (
         <ToastContext.Provider value={{ showToast }}>

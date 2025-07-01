@@ -7,13 +7,13 @@ import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaQrcode, FaShare, FaEdit, FaTr
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, query, where, updateDoc } from 'firebase/firestore';
-import { toast, ToastContainer } from 'react-toastify';
+import { useToast } from '../contexts/ToastContext';
 import { QRCodeSVG } from 'qrcode.react';
-import 'react-toastify/dist/ReactToastify.css';
 import '../assets/style/Dashboard.scss';
 import Map from '../components/Map';
 import Navigation from './Navigation';
 import UserProfile from './UserProfile';
+import Spinner from '../components/Spinner';
 
 const EVENT_THEMES = [
   { id: 'wedding', label: 'Wesele' },
@@ -50,6 +50,7 @@ interface Guest {
   status: 'confirmed' | 'pending' | 'declined';
   userId: string;
   eventId: string;
+  phoneNumber?: string;
 }
 
 interface GuestStats {
@@ -64,6 +65,7 @@ export const Dashboard = () => {
   const { theme } = useTheme();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('events');
   const [events, setEvents] = useState<Event[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -93,9 +95,18 @@ export const Dashboard = () => {
   const [newGuest, setNewGuest] = useState<Partial<Guest>>({
     name: '',
     email: '',
-    status: 'pending'
+    status: 'pending',
+    phoneNumber: '',
   });
-  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
+
+  // Calculate used events and guests
+  const usedEventsCount = events.length;
+  const usedGuestsCount = guests.length;
+
+  // Format expiry date
+  const formattedExpiryDate = subscription?.expiryDate
+    ? new Date(subscription.expiryDate.seconds * 1000).toLocaleDateString('pl-PL')
+    : 'N/A';
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -112,7 +123,7 @@ export const Dashboard = () => {
         setEvents(eventsList);
       } catch (error) {
         console.error('Error fetching events:', error);
-        toast.error('Nie udało się załadować wydarzeń');
+        showToast('Nie udało się załadować wydarzeń', 'error');
       }
     };
 
@@ -139,7 +150,7 @@ export const Dashboard = () => {
         setGuestStats(stats);
       } catch (error) {
         console.error('Error fetching guests:', error);
-        toast.error('Nie udało się załadować gości');
+        showToast('Nie udało się załadować gości', 'error');
       }
     };
 
@@ -149,12 +160,18 @@ export const Dashboard = () => {
 
   const handleAddEvent = async () => {
     if (!currentUser) {
-      toast.error('Musisz być zalogowany, aby dodać wydarzenie');
+      showToast('Musisz być zalogowany, aby dodać wydarzenie', 'error');
+      return;
+    }
+
+    // Walidacja limitu wydarzeń na podstawie subskrypcji
+    if (subscription && subscription.maxEvents !== undefined && subscription.maxEvents !== 9999 && events.length >= subscription.maxEvents) {
+      showToast(`Osiągnięto limit wydarzeń dla Twojego planu (${subscription.maxEvents}). Uaktualnij plan, aby dodać więcej.`, 'error');
       return;
     }
 
     if (!newEvent.name || !newEvent.date || !newEvent.location) {
-      toast.error('Wypełnij wszystkie wymagane pola');
+      showToast('Wypełnij wszystkie wymagane pola', 'error');
       return;
     }
 
@@ -164,6 +181,11 @@ export const Dashboard = () => {
         userId: currentUser.uid,
         createdAt: new Date().toISOString()
       };
+
+      // Remove coordinates if undefined to avoid Firebase error
+      if (eventData.coordinates === undefined) {
+        delete eventData.coordinates;
+      }
 
       const docRef = await addDoc(collection(db, 'events'), eventData);
       const addedEvent = { id: docRef.id, ...eventData } as Event;
@@ -178,10 +200,10 @@ export const Dashboard = () => {
         maxGuests: 0,
         theme: 'other'
       });
-      toast.success('Wydarzenie zostało dodane');
+      showToast('Wydarzenie zostało dodane', 'success');
     } catch (error) {
       console.error('Error adding event:', error);
-      toast.error('Nie udało się dodać wydarzenia');
+      showToast('Nie udało się dodać wydarzenia', 'error');
     }
   };
 
@@ -193,16 +215,16 @@ export const Dashboard = () => {
       const eventDoc = await getDocs(query(collection(db, 'events'), where('id', '==', eventId), where('userId', '==', currentUser.uid)));
       
       if (eventDoc.empty) {
-        toast.error('Nie masz uprawnień do usunięcia tego wydarzenia');
+        showToast('Nie masz uprawnień do usunięcia tego wydarzenia', 'error');
         return;
       }
 
       await deleteDoc(eventRef);
       setEvents(prev => prev.filter(event => event.id !== eventId));
-      toast.success('Wydarzenie zostało usunięte');
+      showToast('Wydarzenie zostało usunięte', 'success');
     } catch (error) {
       console.error('Error deleting event:', error);
-      toast.error('Nie udało się usunąć wydarzenia');
+      showToast('Nie udało się usunąć wydarzenia', 'error');
     }
   };
 
@@ -212,7 +234,7 @@ export const Dashboard = () => {
   };
 
   const handleEventQR = (eventId: string) => {
-    toast.info('Funkcja generowania kodów QR dla wydarzeń będzie dostępna wkrótce');
+    showToast('Funkcja generowania kodów QR dla wydarzeń będzie dostępna wkrótce', 'info');
   };
 
   const getQRCodeValue = (guest: Guest) => {
@@ -240,15 +262,15 @@ export const Dashboard = () => {
     const link = getGuestLink(guest);
     navigator.clipboard.writeText(link)
       .then(() => {
-        toast.success('Link skopiowany do schowka');
+        showToast('Link skopiowany do schowka', 'success');
       })
       .catch(() => {
-        toast.error('Nie udało się skopiować linku');
+        showToast('Nie udało się skopiować linku', 'error');
       });
   };
 
   const handleShareEvent = (eventId: string) => {
-    toast.info('Funkcja udostępniania wydarzeń będzie dostępna wkrótce');
+    showToast('Funkcja udostępniania wydarzeń będzie dostępna wkrótce', 'info');
   };
 
   const handleLogout = async () => {
@@ -257,7 +279,7 @@ export const Dashboard = () => {
       navigate('/login');
     } catch (error) {
       console.error('Error signing out:', error);
-      toast.error('Nie udało się wylogować');
+      showToast('Nie udało się wylogować', 'error');
     }
   };
 
@@ -272,68 +294,75 @@ export const Dashboard = () => {
   };
 
   const handleAddGuest = async () => {
-    if (!currentUser || !selectedEvent) return;
+    if (!currentUser) {
+      showToast('Musisz być zalogowany, aby dodać gościa', 'error');
+      return;
+    }
+
+    if (!selectedEvent) {
+      showToast('Wybierz wydarzenie, do którego chcesz dodać gościa.', 'error');
+      return;
+    }
+
+    // Walidacja limitu gości na podstawie subskrypcji
+    if (subscription && subscription.maxGuests !== undefined && subscription.maxGuests !== 9999) {
+      // Check against maxGuests of the specific event if applicable, or total guests
+      // For now, let's assume it's a global limit for all guests across all events for the user's plan
+      if (guests.length >= subscription.maxGuests) {
+        showToast(`Osiągnięto limit gości dla Twojego planu (${subscription.maxGuests}). Uaktualnij plan, aby dodać więcej.`, 'error');
+        return;
+      }
+    }
 
     if (!newGuest.name || !newGuest.email) {
-      toast.error('Wypełnij wszystkie wymagane pola');
+      showToast('Wypełnij wszystkie wymagane pola dla gościa', 'error');
       return;
     }
 
     try {
       const guestData = {
-        ...newGuest,
+        name: newGuest.name,
+        email: newGuest.email,
+        status: newGuest.status || 'pending',
         userId: currentUser.uid,
-        eventId: selectedEvent.id
+        eventId: selectedEvent.id,
+        phoneNumber: newGuest.phoneNumber || '',
       };
-
       const docRef = await addDoc(collection(db, 'guests'), guestData);
       const addedGuest = { id: docRef.id, ...guestData } as Guest;
       setGuests(prev => [...prev, addedGuest]);
       setIsAddingGuest(false);
-      setNewGuest({
-        name: '',
-        email: '',
-        status: 'pending'
-      });
-      toast.success('Gość został dodany');
+      setNewGuest({ name: '', email: '', status: 'pending', phoneNumber: '' });
+      showToast('Gość został dodany', 'success');
     } catch (error) {
       console.error('Error adding guest:', error);
-      toast.error('Nie udało się dodać gościa');
+      showToast('Nie udało się dodać gościa', 'error');
     }
   };
 
   const handleEditGuest = async () => {
-    if (!currentUser || !selectedGuest) return;
-
+    if (!currentUser || !selectedEvent || !selectedGuest) return;
     if (!newGuest.name || !newGuest.email) {
-      toast.error('Wypełnij wszystkie wymagane pola');
+      showToast('Wypełnij wszystkie wymagane pola', 'error');
       return;
     }
-
     try {
       const guestRef = doc(db, 'guests', selectedGuest.id);
-      await updateDoc(guestRef, {
+      const updatedData = {
         name: newGuest.name,
         email: newGuest.email,
-        status: newGuest.status
-      });
-
-      setGuests(prev => prev.map(guest => 
-        guest.id === selectedGuest.id 
-          ? { ...guest, ...newGuest }
-          : guest
-      ));
+        status: newGuest.status || 'pending',
+        phoneNumber: newGuest.phoneNumber || '',
+      };
+      await updateDoc(guestRef, updatedData);
+      setGuests(prev => prev.map(g => g.id === selectedGuest.id ? { ...g, ...updatedData } : g));
       setIsEditingGuest(false);
       setSelectedGuest(null);
-      setNewGuest({
-        name: '',
-        email: '',
-        status: 'pending'
-      });
-      toast.success('Dane gościa zostały zaktualizowane');
+      setNewGuest({ name: '', email: '', status: 'pending', phoneNumber: '' });
+      showToast('Dane gościa zostały zaktualizowane', 'success');
     } catch (error) {
-      console.error('Error updating guest:', error);
-      toast.error('Nie udało się zaktualizować danych gościa');
+      console.error('Error editing guest:', error);
+      showToast('Nie udało się zaktualizować gościa', 'error');
     }
   };
 
@@ -343,10 +372,10 @@ export const Dashboard = () => {
     try {
       await deleteDoc(doc(db, 'guests', guestId));
       setGuests(prev => prev.filter(guest => guest.id !== guestId));
-      toast.success('Gość został usunięty');
+      showToast('Gość został usunięty', 'success');
     } catch (error) {
       console.error('Error deleting guest:', error);
-      toast.error('Nie udało się usunąć gościa');
+      showToast('Nie udało się usunąć gościa', 'error');
     }
   };
 
@@ -355,7 +384,8 @@ export const Dashboard = () => {
     setNewGuest({
       name: guest.name,
       email: guest.email,
-      status: guest.status
+      status: guest.status,
+      phoneNumber: guest.phoneNumber || '',
     });
     setIsEditingGuest(true);
   };
@@ -372,21 +402,21 @@ export const Dashboard = () => {
           ? { ...guest, status: newStatus }
           : guest
       ));
-      toast.success('Status gościa został zaktualizowany');
+      showToast('Status gościa został zaktualizowany', 'success');
     } catch (error) {
       console.error('Error updating guest status:', error);
-      toast.error('Nie udało się zaktualizować statusu gościa');
+      showToast('Nie udało się zaktualizować statusu gościa', 'error');
     }
   };
 
   const handleEditEvent = async () => {
     if (!currentUser || !selectedEvent) {
-      toast.error('Musisz być zalogowany, aby edytować wydarzenie');
+      showToast('Musisz być zalogowany, aby edytować wydarzenie', 'error');
       return;
     }
 
     if (!newEvent.name || !newEvent.date || !newEvent.location) {
-      toast.error('Wypełnij wszystkie wymagane pola');
+      showToast('Wypełnij wszystkie wymagane pola', 'error');
       return;
     }
 
@@ -413,10 +443,10 @@ export const Dashboard = () => {
         maxGuests: 0,
         theme: 'other'
       });
-      toast.success('Wydarzenie zostało zaktualizowane');
+      showToast('Wydarzenie zostało zaktualizowane', 'success');
     } catch (error) {
       console.error('Error updating event:', error);
-      toast.error('Nie udało się zaktualizować wydarzenia');
+      showToast('Nie udało się zaktualizować wydarzenia', 'error');
     }
   };
 
@@ -459,10 +489,24 @@ export const Dashboard = () => {
   const renderEventList = () => (
     <div className="dashboard__events">
       <div className="dashboard__header">
-        <h2>Twoje wydarzenia</h2>
+        <div className="dashboard__header-title" style={{display: 'flex', flexDirection: 'column', flex: 1}}>
+          <h2>Twoje wydarzenia</h2>
+          <div className="dashboard__header-underline" style={{width: '100%', height: '2px', background: 'var(--border-color)', margin: '8px 0 0 0'}} />
+        </div>
         <button 
           className="dashboard__add-button"
-          onClick={() => setIsAddingEvent(true)}
+          onClick={() => {
+            console.log("Add Event button clicked.");
+            console.log("Subscription:", subscription);
+            console.log("Max Events:", subscription?.maxEvents);
+            console.log("Current Events length:", events.length);
+            if (subscription && subscription.maxEvents !== undefined && subscription.maxEvents !== 9999 && events.length >= subscription.maxEvents) {
+              showToast(`Osiągnięto limit wydarzeń dla Twojego planu (${subscription.maxEvents}). Uaktualnij plan, aby dodać więcej.`, 'error');
+              return;
+            }
+            setIsAddingEvent(true);
+          }}
+          title={subscription && subscription.maxEvents !== undefined && subscription.maxEvents !== 9999 && events.length >= subscription.maxEvents ? `Osiągnięto limit wydarzeń dla Twojego planu (${subscription.maxEvents}). Uaktualnij plan, aby dodać więcej.` : ''}
         >
           <FaPlus /> Dodaj wydarzenie
         </button>
@@ -614,39 +658,36 @@ export const Dashboard = () => {
         </div>
       )}
 
-      <div className="dashboard__event-list">
+      <div className="dashboard__events-grid">
         {events.map(event => (
-          <div key={event.id} className="dashboard__event-card">
-            <div className="dashboard__event-header">
+          <div key={event.id} className="dashboard__events-card">
               <h3>{event.name}</h3>
-              <div className="dashboard__event-actions">
-                <button onClick={() => handleEditEventClick(event)}>
-                  <FaEdit /> Edytuj
-                </button>
-                <button onClick={() => handleDeleteEvent(event.id)}>
-                  <FaTrash /> Usuń
-                </button>
-              </div>
-            </div>
-            <div className="dashboard__event-details">
-              <p><FaCalendarAlt /> {new Date(event.date).toLocaleString()}</p>
+            <p><FaCalendarAlt /> {new Date(event.date).toLocaleDateString()}</p>
               <p><FaMapMarkerAlt /> {event.location}</p>
-              {event.maxGuests > 0 && (
-                <p><FaUsers /> Maksymalna liczba gości: {event.maxGuests}</p>
-              )}
-            </div>
-            {event.description && (
-              <p className="dashboard__event-description">{event.description}</p>
-            )}
-            <div className="dashboard__event-footer">
-              <button onClick={() => handleEventClick(event)}>
-                Zarządzaj gośćmi
+            <p><FaUsers /> {event.maxGuests} gości</p>
+            {event.description && <p className="dashboard__events-card__description">{event.description}</p>}
+            
+            <div className="dashboard__events-card__event-actions">
+              <button 
+                onClick={() => handleEventClick(event)}
+                className="primary-action-button"
+              >
+                <FaExternalLinkAlt />
+                Szczegóły
               </button>
-              <button onClick={() => handleEventQR(event.id)}>
-                <FaQrcode /> Kod QR
+              <button 
+                onClick={() => handleEditEventClick(event)}
+                className="ghost-button"
+              >
+                <FaEdit />
+                Edytuj
               </button>
-              <button onClick={() => handleShareEvent(event.id)}>
-                <FaShare /> Udostępnij
+              <button 
+                onClick={() => handleDeleteEvent(event.id)}
+                className="ghost-button"
+              >
+                <FaTrash />
+                Usuń
               </button>
             </div>
           </div>
@@ -676,45 +717,17 @@ export const Dashboard = () => {
           <h2>Lista gości - {selectedEvent?.name}</h2>
           <button 
             className="dashboard__add-button"
-            onClick={() => setIsAddingGuest(true)}
+            onClick={() => {
+              if (subscription && subscription.maxGuests !== undefined && subscription.maxGuests !== 9999 && guests.length >= subscription.maxGuests) {
+                showToast(`Osiągnięto limit gości dla Twojego planu (${subscription.maxGuests}). Uaktualnij plan, aby dodać więcej.`, 'error');
+                return;
+              }
+              setIsAddingGuest(true);
+            }}
+            title={subscription && subscription.maxGuests !== undefined && subscription.maxGuests !== 9999 && guests.length >= subscription.maxGuests ? `Osiągnięto limit gości dla Twojego planu (${subscription.maxGuests}). Uaktualnij plan, aby dodać więcej.` : ''}
           >
             <FaPlus /> Dodaj gościa
           </button>
-        </div>
-
-        <div className="dashboard__event-stats">
-          <div className="dashboard__event-info">
-            <div className="dashboard__event-info-item">
-              <FaCalendarAlt />
-              <span>{new Date(selectedEvent?.date || '').toLocaleString()}</span>
-            </div>
-            <div className="dashboard__event-info-item">
-              <FaMapMarkerAlt />
-              <span>{selectedEvent?.location}</span>
-            </div>
-            <div className="dashboard__event-info-item">
-              <FaUsers />
-              <span>Maksymalnie {selectedEvent?.maxGuests} gości</span>
-            </div>
-          </div>
-          <div className="dashboard__stats-grid">
-            <div className="dashboard__stat-item">
-              <span className="dashboard__stat-item-value">{eventStats.total}</span>
-              <span className="dashboard__stat-item-label">Wszyscy goście</span>
-            </div>
-            <div className="dashboard__stat-item">
-              <span className="dashboard__stat-item-value">{eventStats.confirmed}</span>
-              <span className="dashboard__stat-item-label">Potwierdzeni</span>
-            </div>
-            <div className="dashboard__stat-item">
-              <span className="dashboard__stat-item-value">{eventStats.pending}</span>
-              <span className="dashboard__stat-item-label">Oczekujący</span>
-            </div>
-            <div className="dashboard__stat-item">
-              <span className="dashboard__stat-item-value">{eventStats.declined}</span>
-              <span className="dashboard__stat-item-label">Odrzuceni</span>
-            </div>
-          </div>
         </div>
 
         <div className="dashboard__guests-content">
@@ -786,7 +799,14 @@ export const Dashboard = () => {
               <p>Nie masz jeszcze żadnych gości na tym wydarzeniu. Dodaj pierwszego gościa, aby rozpocząć zarządzanie listą.</p>
               <button 
                 className="dashboard__button dashboard__button--primary"
-                onClick={() => setIsAddingGuest(true)}
+                onClick={() => {
+                  if (subscription && subscription.maxGuests !== undefined && subscription.maxGuests !== 9999 && guests.length >= subscription.maxGuests) {
+                    showToast(`Osiągnięto limit gości dla Twojego planu (${subscription.maxGuests}). Uaktualnij plan, aby dodać więcej.`, 'error');
+                    return;
+                  }
+                  setIsAddingGuest(true);
+                }}
+                title={subscription && subscription.maxGuests !== undefined && subscription.maxGuests !== 9999 && guests.length >= subscription.maxGuests ? `Osiągnięto limit gości dla Twojego planu (${subscription.maxGuests}). Uaktualnij plan, aby dodać więcej.` : ''}
               >
                 <FaPlus /> Dodaj pierwszego gościa
               </button>
@@ -806,7 +826,8 @@ export const Dashboard = () => {
                   setNewGuest({
                     name: '',
                     email: '',
-                    status: 'pending'
+                    status: 'pending',
+                    phoneNumber: '',
                   });
                 }}
               >
@@ -837,6 +858,15 @@ export const Dashboard = () => {
                   />
                 </div>
                 <div className="dashboard__form-group">
+                  <label>Numer telefonu</label>
+                  <input
+                    type="tel"
+                    value={newGuest.phoneNumber}
+                    onChange={(e) => setNewGuest(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                    placeholder="Wprowadź numer telefonu"
+                  />
+                </div>
+                <div className="dashboard__form-group">
                   <label>Status</label>
                   <select
                     value={newGuest.status}
@@ -858,7 +888,8 @@ export const Dashboard = () => {
                     setNewGuest({
                       name: '',
                       email: '',
-                      status: 'pending'
+                      status: 'pending',
+                      phoneNumber: '',
                     });
                   }}
                 >
@@ -929,6 +960,12 @@ export const Dashboard = () => {
     );
   };
 
+  // Statystyki wydarzeń
+  const now = new Date();
+  const upcomingEvents = events.filter(e => new Date(e.date) > now);
+  const pastEvents = events.filter(e => new Date(e.date) < now);
+  const nextEvent = upcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
   if (subscriptionLoading) {
     return (
       <div className="dashboard">
@@ -952,90 +989,43 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${theme}`}>
       <Navigation />
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme={theme}
-      />
       <div className="dashboard__content">
-        <div className="dashboard__main">
+        <aside className="dashboard__sidebar">
+          <div className="dashboard__card dashboard__subscription-info">
+            <h3>Moja Subskrypcja</h3>
+            {subscriptionLoading ? (
+              <Spinner />
+            ) : (
+              <div className="dashboard__subscription-content">
+                <div className="dashboard__subscription-details">
+                  <p>Plan: <span>{subscription?.planType || 'Brak'}</span></p>
+                  <p>Wygasa: <span>{formattedExpiryDate}</span></p>
+                  <p>Wykorzystane wydarzenia: <span>{usedEventsCount}/{subscription?.maxEvents === 9999 ? 'Bez limitu' : subscription?.maxEvents}</span></p>
+                  <p>Wykorzystani goście: <span>{usedGuestsCount}/{subscription?.maxGuests === 9999 ? 'Bez limitu' : subscription?.maxGuests}</span></p>
+        </div>
+                <div className="dashboard__subscription-graphic">
+                  {/* User Info instead of graphic */}
+                  {currentUser ? (
+                    <div className="user-info-display">
+                      <p>Zalogowany jako:</p>
+                      <p><strong>{currentUser.email}</strong></p>
+                      {currentUser.displayName && <p>{currentUser.displayName}</p>}
+              </div>
+                  ) : (
+                    <p>Brak danych użytkownika</p>
+                  )}
+              </div>
+            </div>
+            )}
+          </div>
+        </aside>
+
+        <main className="dashboard__main">
           {activeTab === 'events' ? renderEventList() : renderGuestList()}
-        </div>
-        <div className="dashboard__sidebar">
-          <div className="dashboard__card">
-            <h3>Profil użytkownika</h3>
-            <div className="dashboard__profile" style={{cursor: 'pointer'}} onClick={() => setShowUserProfileModal(true)}>
-              <div className="dashboard__profile-avatar">
-                {currentUser?.email?.[0].toUpperCase()}
+        </main>
               </div>
-              <div className="dashboard__profile-info">
-                <h4>{currentUser?.email}</h4>
-                <p><FaCalendarAlt /> Plan: {subscription.plan}</p>
-                <p><FaUsers /> Wydarzenia: {events.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="dashboard__card">
-            <h3>Statystyki gości</h3>
-            <div className="dashboard__stats-grid">
-              <div className="dashboard__stat-item">
-                <span className="dashboard__stat-item-value">{guestStats.total}</span>
-                <span className="dashboard__stat-item-label">Wszyscy</span>
-              </div>
-              <div className="dashboard__stat-item">
-                <span className="dashboard__stat-item-value">{guestStats.confirmed}</span>
-                <span className="dashboard__stat-item-label">Potwierdzeni</span>
-              </div>
-              <div className="dashboard__stat-item">
-                <span className="dashboard__stat-item-value">{guestStats.pending}</span>
-                <span className="dashboard__stat-item-label">Oczekujący</span>
-              </div>
-              <div className="dashboard__stat-item">
-                <span className="dashboard__stat-item-value">{guestStats.declined}</span>
-                <span className="dashboard__stat-item-label">Odrzuceni</span>
-              </div>
-            </div>
-          </div>
-          <div className="dashboard__card">
-            <h3>Ostatni goście</h3>
-            <div className="dashboard__guests-list">
-              {guests.slice(0, 5).map(guest => {
-                const event = events.find(e => e.id === guest.eventId);
-                return (
-                  <div key={guest.id} className="dashboard__guest-item">
-                    <div className="dashboard__guest-item-info">
-                      <h4>{guest.name}</h4>
-                      <p>{guest.email}</p>
-                      <p className="dashboard__guest-event">
-                        <FaCalendarAlt /> {event?.name || 'Nieznane wydarzenie'}
-                      </p>
-                    </div>
-                    <span className={`dashboard__guest-status dashboard__guest-status--${guest.status}`}>
-                      {guest.status}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-      {showUserProfileModal && (
-        <div className="dashboard__modal" style={{zIndex: 2000}}>
-          <div className="dashboard__modal-content" style={{padding: 0, background: 'none', boxShadow: 'none'}}>
-            <UserProfile onClose={() => setShowUserProfileModal(false)} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }; 

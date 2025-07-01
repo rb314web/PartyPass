@@ -123,15 +123,15 @@ const UserSettings: React.FC = () => {
     return (
         <>
             <Navigation />
-            <div className="user-settings">
+        <div className="user-settings">
                 <div className="user-settings__container">
-                    <div className="user-settings__header">
+            <div className="user-settings__header">
                         <h1 className="user-settings__title">Ustawienia</h1>
                         <button onClick={() => navigate(-1)} className="user-settings__back-button">
                             <FaArrowLeft />
                             <span>Powrót</span>
-                        </button>
-                    </div>
+                </button>
+            </div>
 
                     <div className="user-settings__card">
                         <h2 className="user-settings__card-title">Informacje o profilu</h2>
@@ -159,7 +159,7 @@ const UserSettings: React.FC = () => {
                             </div>
                             <button type="submit" className="user-settings__button">Zapisz zmiany</button>
                         </form>
-                    </div>
+                        </div>
 
                     <div className="user-settings__card">
                         <h2 className="user-settings__card-title">Zmień hasło</h2>
@@ -173,7 +173,7 @@ const UserSettings: React.FC = () => {
                                     onChange={(e) => setCurrentPassword(e.target.value)}
                                     placeholder="Wprowadź obecne hasło"
                                 />
-                            </div>
+                        </div>
                             <div className="form-group">
                                 <label htmlFor="newPassword">Nowe hasło</label>
                                 <input
@@ -184,7 +184,7 @@ const UserSettings: React.FC = () => {
                                     placeholder="Wprowadź nowe hasło"
                                 />
                                 {newPasswordError && <p className="form-error">{newPasswordError}</p>}
-                            </div>
+                        </div>
                             <button type="submit" className="user-settings__button">Zmień hasło</button>
                         </form>
                     </div>
@@ -194,8 +194,8 @@ const UserSettings: React.FC = () => {
                         <p>Usunięcie konta jest operacją nieodwracalną.</p>
                         <button onClick={openDeleteModal} className="user-settings__button user-settings__button--danger">Usuń konto</button>
                     </div>
-                </div>
-            </div>
+                        </div>
+                    </div>
 
             {isDeleteModalOpen && (
                 <div className="user-settings__modal">
@@ -229,7 +229,7 @@ const UserSettings: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                    </div>
             )}
 
             <Footer />
@@ -237,4 +237,4 @@ const UserSettings: React.FC = () => {
     );
 };
 
-export default UserSettings;
+export default UserSettings; 

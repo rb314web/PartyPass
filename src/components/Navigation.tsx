@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User } from 'firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +17,7 @@ const Navigation: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const location = useLocation();
+    const userMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -31,6 +32,17 @@ const Navigation: React.FC = () => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
+
+    useEffect(() => {
+        if (!isUserMenuOpen) return;
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isUserMenuOpen]);
 
     const isActive = (path: string) => {
         return location.pathname === path;
@@ -157,10 +169,9 @@ const Navigation: React.FC = () => {
                     {currentUser && (
                         <div 
                             className="navigation__user-menu"
-                            onMouseEnter={() => setIsUserMenuOpen(true)}
-                            onMouseLeave={() => setIsUserMenuOpen(false)}
+                            ref={userMenuRef}
                         >
-                            <div className="navigation__user-avatar">
+                            <div className="navigation__user-avatar" onClick={() => setIsUserMenuOpen(v => !v)}>
                                 <FaUser />
                             </div>
                             {isUserMenuOpen && (

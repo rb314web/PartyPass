@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './firebase';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
@@ -24,6 +24,7 @@ import PaymentSuccess from './components/PaymentSuccess';
 import PrivateRoute from './components/PrivateRoute';
 import Demo from './components/Demo';
 import UserSettings from './components/UserSettings';
+import Spinner from './components/Spinner';
 import './assets/style/App.scss';
 
 const ScrollHandler: React.FC = () => {
@@ -53,30 +54,28 @@ const PurchaseRoute: React.FC = () => {
     );
 };
 
-const App: React.FC = () => {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+const AppContent = () => {
+    const { loading } = useAuth();
+    const location = useLocation();
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
-            setLoading(false);
-        });
+    // Check if current location is a route that might not need the full-screen spinner
+    const isSpecialRoute = location.pathname.startsWith('/guest/') ||
+                           location.pathname.startsWith('/event/') ||
+                           location.pathname === '/login' ||
+                           location.pathname === '/register' ||
+                           location.pathname === '/reset-password' ||
+                           location.pathname === '/registration-success' ||
+                           location.pathname === '/payment-success' ||
+                           location.pathname === '/pricing' ||
+                           location.pathname === '/purchase' ||
+                           location.pathname === '/service-description' ||
+                           location.pathname === '/demo';
 
-        return () => unsubscribe();
-    }, []);
-
-    if (loading) {
-        return <div>Loading...</div>;
+    if (loading && !isSpecialRoute) {
+        return <Spinner />;
     }
 
     return (
-        <Router>
-            <AuthProvider>
-                <ThemeProvider>
-                    <SubscriptionProvider>
-                        <ToastProvider>
-                            <ScrollHandler />
                             <Routes>
                                 <Route path="/" element={
                                     <>
@@ -106,15 +105,27 @@ const App: React.FC = () => {
                                     }
                                 />
                                 <Route path="/demo" element={<Demo />} />
-                                <Route
-                                    path="/settings"
-                                    element={
-                                        <PrivateRoute>
-                                            <UserSettings />
-                                        </PrivateRoute>
-                                    }
-                                />
+            <Route
+                path="/settings"
+                element={
+                    <PrivateRoute>
+                        <UserSettings />
+                    </PrivateRoute>
+                }
+            />
                             </Routes>
+    );
+};
+
+const App: React.FC = () => {
+    return (
+        <Router>
+            <AuthProvider>
+                <ThemeProvider>
+                    <SubscriptionProvider>
+                        <ToastProvider>
+                            <ScrollHandler />
+                            <AppContent />
                         </ToastProvider>
                     </SubscriptionProvider>
                 </ThemeProvider>

@@ -5,11 +5,13 @@ import { auth } from '../firebase';
 interface AuthContextType {
     currentUser: User | null;
     signOut: () => Promise<void>;
+    loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
     currentUser: null,
-    signOut: async () => {}
+    signOut: async () => {},
+    loading: true
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -38,7 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const value = {
         currentUser,
-        signOut
+        signOut,
+        loading
     };
 
     return (
