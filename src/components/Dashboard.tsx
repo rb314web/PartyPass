@@ -548,16 +548,15 @@ export const Dashboard = () => {
           <div className="form-group">
             <label>Lokalizacja *</label>
             <div className="location-search">
-              <input
-                type="text"
-                value={newEvent.location}
-                onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Wyszukaj lokalizację..."
-              />
               <Map
                 lat={newEvent.coordinates?.lat || 52.2297}
                 lng={newEvent.coordinates?.lng || 21.0122}
-                onLocationSelect={handleLocationSelect}
+                value={newEvent.location || ''}
+                onChange={(address, lat, lng) => setNewEvent(prev => ({
+                  ...prev,
+                  location: address,
+                  coordinates: { lat, lng }
+                }))}
               />
             </div>
           </div>
@@ -586,74 +585,78 @@ export const Dashboard = () => {
       )}
 
       {isEditingEvent && selectedEvent && (
-        <div className="dashboard__form">
-          <h3>Edytuj wydarzenie</h3>
-          <div className="form-group">
-            <label>Nazwa wydarzenia *</label>
-            <input
-              type="text"
-              value={newEvent.name}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Nazwa wydarzenia"
-            />
-          </div>
-          <div className="form-group">
-            <label>Motyw wydarzenia *</label>
-            <select
-              value={newEvent.theme}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, theme: e.target.value as EventTheme }))}
-            >
-              {EVENT_THEMES.map(theme => (
-                <option key={theme.id} value={theme.id}>
-                  {theme.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Data *</label>
-            <input
-              type="datetime-local"
-              value={newEvent.date}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
-            />
-          </div>
-          <div className="form-group">
-            <label>Lokalizacja *</label>
-            <div className="location-search">
-              <input
-                type="text"
-                value={newEvent.location}
-                onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Wyszukaj lokalizację..."
-              />
-              <Map
-                lat={newEvent.coordinates?.lat || 52.2297}
-                lng={newEvent.coordinates?.lng || 21.0122}
-                onLocationSelect={handleLocationSelect}
-              />
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="modal-content__close" onClick={handleCancelEdit}>&times;</button>
+            <div className="modal-scroll">
+              <h3>Edytuj wydarzenie</h3>
+              <div className="form-group">
+                <label>Nazwa wydarzenia *</label>
+                <input
+                  type="text"
+                  value={newEvent.name}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Nazwa wydarzenia"
+                />
+              </div>
+              <div className="form-group">
+                <label>Motyw wydarzenia *</label>
+                <select
+                  value={newEvent.theme}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, theme: e.target.value as EventTheme }))}
+                >
+                  {EVENT_THEMES.map(theme => (
+                    <option key={theme.id} value={theme.id}>
+                      {theme.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Data *</label>
+                <input
+                  type="datetime-local"
+                  value={newEvent.date}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>Lokalizacja *</label>
+                <div className="location-search">
+                  <Map
+                    lat={newEvent.coordinates?.lat || 52.2297}
+                    lng={newEvent.coordinates?.lng || 21.0122}
+                    value={newEvent.location || ''}
+                    onChange={(address, lat, lng) => setNewEvent(prev => ({
+                      ...prev,
+                      location: address,
+                      coordinates: { lat, lng }
+                    }))}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Opis</label>
+                <textarea
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Opis wydarzenia"
+                />
+              </div>
+              <div className="form-group">
+                <label>Maksymalna liczba gości</label>
+                <input
+                  type="number"
+                  value={newEvent.maxGuests}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, maxGuests: parseInt(e.target.value) || 0 }))}
+                  min="0"
+                />
+              </div>
+              <div className="form-actions">
+                <button onClick={handleEditEvent}>Zapisz zmiany</button>
+                <button onClick={handleCancelEdit}>Anuluj</button>
+              </div>
             </div>
-          </div>
-          <div className="form-group">
-            <label>Opis</label>
-            <textarea
-              value={newEvent.description}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Opis wydarzenia"
-            />
-          </div>
-          <div className="form-group">
-            <label>Maksymalna liczba gości</label>
-            <input
-              type="number"
-              value={newEvent.maxGuests}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, maxGuests: parseInt(e.target.value) || 0 }))}
-              min="0"
-            />
-          </div>
-          <div className="form-actions">
-            <button onClick={handleEditEvent}>Zapisz zmiany</button>
-            <button onClick={handleCancelEdit}>Anuluj</button>
           </div>
         </div>
       )}
