@@ -31,6 +31,16 @@ interface Event {
   theme: string;
 }
 
+const themeBackgrounds: Record<string, string> = {
+  wedding: require('../assets/images/themes/ai-generated-9616740_1280.jpg'),
+  birthday: require('../assets/images/themes/flower-4985011_1280.png'),
+  anniversary: require('../assets/images/themes/template-1567539_1280.jpg'),
+  graduation: require('../assets/images/themes/ai-generated-9616740_1280.jpg'),
+  christening: require('../assets/images/themes/flower-4985011_1280.png'),
+  engagement: require('../assets/images/themes/template-1567539_1280.jpg'),
+  other: require('../assets/images/themes/ai-generated-9616740_1280.jpg'),
+};
+
 const GuestConfirmation: React.FC = () => {
   const { id, email } = useParams<{ id: string; email: string }>();
   const navigate = useNavigate();
@@ -211,6 +221,12 @@ const GuestConfirmation: React.FC = () => {
     <>
       <Navigation />
       <div className="guest-confirmation">
+        <div
+          className="guest-confirmation__theme-bg"
+          style={{
+            backgroundImage: `url(${themeBackgrounds[event?.theme] || themeBackgrounds.other})`
+          }}
+        />
         <div className="guest-confirmation__container">
           <div className="guest-confirmation__main-content">
             <header className="guest-confirmation__header">

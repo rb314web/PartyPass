@@ -52,6 +52,8 @@ interface Guest {
   userId: string;
   eventId: string;
   phoneNumber?: string;
+  plusOneType?: 'none' | 'plusOne' | 'named';
+  plusOneName?: string;
 }
 
 interface GuestStats {
@@ -98,6 +100,8 @@ export const Dashboard = () => {
     email: '',
     status: 'pending',
     phoneNumber: '',
+    plusOneType: 'none',
+    plusOneName: '',
   });
 
   // Calculate used events and guests
@@ -328,12 +332,14 @@ export const Dashboard = () => {
         userId: currentUser.uid,
         eventId: selectedEvent.id,
         phoneNumber: newGuest.phoneNumber || '',
+        plusOneType: newGuest.plusOneType,
+        plusOneName: newGuest.plusOneName,
       };
       const docRef = await addDoc(collection(db, 'guests'), guestData);
       const addedGuest = { id: docRef.id, ...guestData } as Guest;
       setGuests(prev => [...prev, addedGuest]);
       setIsAddingGuest(false);
-      setNewGuest({ name: '', email: '', status: 'pending', phoneNumber: '' });
+      setNewGuest({ name: '', email: '', status: 'pending', phoneNumber: '', plusOneType: 'none', plusOneName: '' });
       showToast('Gość został dodany', 'success');
     } catch (error) {
       console.error('Error adding guest:', error);
@@ -354,12 +360,14 @@ export const Dashboard = () => {
         email: newGuest.email,
         status: newGuest.status || 'pending',
         phoneNumber: newGuest.phoneNumber || '',
+        plusOneType: newGuest.plusOneType,
+        plusOneName: newGuest.plusOneName,
       };
       await updateDoc(guestRef, updatedData);
       setGuests(prev => prev.map(g => g.id === selectedGuest.id ? { ...g, ...updatedData } : g));
       setIsEditingGuest(false);
       setSelectedGuest(null);
-      setNewGuest({ name: '', email: '', status: 'pending', phoneNumber: '' });
+      setNewGuest({ name: '', email: '', status: 'pending', phoneNumber: '', plusOneType: 'none', plusOneName: '' });
       showToast('Dane gościa zostały zaktualizowane', 'success');
     } catch (error) {
       console.error('Error editing guest:', error);
@@ -387,6 +395,8 @@ export const Dashboard = () => {
       email: guest.email,
       status: guest.status,
       phoneNumber: guest.phoneNumber || '',
+      plusOneType: guest.plusOneType,
+      plusOneName: guest.plusOneName,
     });
     setIsEditingGuest(true);
   };
@@ -854,6 +864,8 @@ export const Dashboard = () => {
                     email: '',
                     status: 'pending',
                     phoneNumber: '',
+                    plusOneType: 'none',
+                    plusOneName: '',
                   });
                 }}
               >
@@ -903,6 +915,50 @@ export const Dashboard = () => {
                     <option value="declined">Odrzucony</option>
                   </select>
                 </div>
+                <div className="form-group">
+                  <label>Obecność:</label>
+                  <div>
+                    <label>
+                      <input
+                        type="radio"
+                        name="plusOneType"
+                        value="none"
+                        checked={newGuest.plusOneType === 'none' || !newGuest.plusOneType}
+                        onChange={() => setNewGuest(prev => ({ ...prev, plusOneType: 'none', plusOneName: '' }))}
+                      />
+                      Tylko ja
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="plusOneType"
+                        value="plusOne"
+                        checked={newGuest.plusOneType === 'plusOne'}
+                        onChange={() => setNewGuest(prev => ({ ...prev, plusOneType: 'plusOne', plusOneName: '' }))}
+                      />
+                      Z osobą towarzyszącą
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="plusOneType"
+                        value="named"
+                        checked={newGuest.plusOneType === 'named'}
+                        onChange={() => setNewGuest(prev => ({ ...prev, plusOneType: 'named' }))}
+                      />
+                      Z drugą osobą (wpisz imię i nazwisko)
+                    </label>
+                    {newGuest.plusOneType === 'named' && (
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Imię i nazwisko drugiej osoby"
+                        value={newGuest.plusOneName || ''}
+                        onChange={e => setNewGuest(prev => ({ ...prev, plusOneName: e.target.value }))}
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="dashboard__modal-footer">
                 <button 
@@ -916,6 +972,8 @@ export const Dashboard = () => {
                       email: '',
                       status: 'pending',
                       phoneNumber: '',
+                      plusOneType: 'none',
+                      plusOneName: '',
                     });
                   }}
                 >

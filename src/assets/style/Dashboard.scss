@@ -1206,8 +1206,8 @@
 }
 
 [data-theme='dark'] .dashboard__modal-content {
-  background: var(--card-bg);
-  color: var(--text-color);
+  background: #232b3a;
+  color: #f3f6f9;
   box-shadow: 0 8px 32px rgba(0,0,0,0.32);
   border: 1.5px solid var(--border-color);
 }
@@ -1745,4 +1745,33 @@
     align-items: flex-start; // Wyrównanie do góry
     padding-top: 2rem; // Odstęp od góry ekranu
   }
+}
+
+[data-theme='dark'] .modal-content {
+  background: #232b3a;
+  color: #f3f6f9;
+}
+[data-theme='dark'] .modal-content .form-group label {
+  color: #90a4b8;
+}
+[data-theme='dark'] .modal-content .form-group input,
+[data-theme='dark'] .modal-content .form-group select,
+[data-theme='dark'] .modal-content .form-group textarea {
+  background: #181c23;
+  color: #f3f6f9;
+  border: 1px solid #334155;
+}
+[data-theme='dark'] .modal-content .form-group input:focus,
+[data-theme='dark'] .modal-content .form-group select:focus,
+[data-theme='dark'] .modal-content .form-group textarea:focus {
+  border-color: #7c3aed;
+  background: #232b3a;
+}
+[data-theme='dark'] .modal-content .form-actions button {
+  background: #7c3aed;
+  color: #fff;
+}
+[data-theme='dark'] .modal-content .form-actions button:last-child {
+  background: #334155;
+  color: #f3f6f9;
 } 
