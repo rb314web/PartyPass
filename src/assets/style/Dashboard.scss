@@ -488,6 +488,10 @@
 
     .form-group {
       margin-bottom: 1.5rem;
+
+      @media (max-width: 480px) {
+        margin-bottom: 1.8rem;
+      }
     }
     .form-group label {
       display: block;
@@ -495,6 +499,11 @@
       color: #666;
       font-size: 0.95rem;
       font-weight: 500;
+
+      @media (max-width: 480px) {
+        margin-bottom: 0.8rem;
+        font-size: 0.9rem;
+      }
     }
     .form-group input,
     .form-group textarea,
@@ -508,6 +517,11 @@
       font-size: 1rem;
       transition: all 0.3s;
       margin-bottom: 0;
+
+      @media (max-width: 600px) {
+        padding: 0.9rem 0.8rem;
+        font-size: 0.95rem;
+      }
     }
     .form-group input:focus,
     .form-group textarea:focus,
@@ -526,16 +540,27 @@
       gap: 1.2rem;
     }
     .form-group .map-container {
-      height: 350px;
+      height: 450px;
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid #e0e3e7;
+
+      @media (max-width: 480px) {
+        height: 300px;
+        margin-bottom: 1.5rem;
+      }
     }
 
     .form-actions {
       display: flex;
       gap: 1rem;
       margin-top: 2rem;
+
+      @media (max-width: 480px) {
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
     }
     .form-actions button {
       padding: 0.8rem 1.6rem;
@@ -546,6 +571,11 @@
       transition: all 0.2s;
       background: #7c3aed;
       color: #fff;
+
+      @media (max-width: 480px) {
+        width: 100%;
+        padding: 0.8rem 1.2rem;
+      }
     }
     .form-actions button:last-child {
       background: #e0e3e7;
@@ -1183,9 +1213,28 @@
 }
 
 @media (max-width: 600px) {
+  .modal-content,
   .dashboard__modal-content {
-    padding: 1.2rem 0.5rem;
-    max-width: 98vw;
+    padding: 2rem 1.1rem !important;
+    gap: 1.2rem !important;
+    border-radius: 16px;
+  }
+
+  .modal-content label,
+  .dashboard__modal-content label {
+    margin-bottom: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .modal-content input,
+  .modal-content select,
+  .modal-content textarea,
+  .dashboard__modal-content input,
+  .dashboard__modal-content select,
+  .dashboard__modal-content textarea {
+    padding: 0.9rem 0.8rem;
+    margin-bottom: 1.2rem;
+    font-size: 1rem;
   }
 }
 
@@ -1477,14 +1526,50 @@
 .modal-content {
   background: #fff;
   border-radius: 18px;
-  padding: 2.5rem 2rem 2rem 2rem;
   box-shadow: 0 8px 32px rgba(31,38,135,0.18);
-  max-width: 650px;
-  width: 98vw;
   position: relative;
   animation: slideIn 0.3s cubic-bezier(.4,2,.6,1);
-  max-height: 92vh;
   overflow-y: auto;
+
+  // Default styles for large screens (desktop-first)
+  width: 80vw; // Take up 80% of viewport width by default
+  max-width: 1600px; // Cap at a very generous max width for ultra-wide displays
+  padding: 2.5rem 2rem; // Spacious padding
+  max-height: 92vh; // Keep within viewport height
+
+  // Styles for very large desktops / widescreen monitors
+  @media (max-width: 1200px) {
+    width: 85vw;
+    max-width: 1400px;
+    padding: 2.5rem 2rem;
+  }
+
+  // Styles for medium screens (e.g., smaller desktops/laptops)
+  @media (max-width: 1024px) {
+    width: 90vw; 
+    max-width: 1000px; 
+    padding: 2rem 1.5rem; 
+    border-radius: 16px;
+    max-height: 95vh;
+  }
+
+  // Styles for tablets
+  @media (max-width: 768px) {
+    width: 95vw; 
+    max-width: 700px; 
+    padding: 1.5rem 1rem; 
+    border-radius: 14px;
+    max-height: 95vh;
+  }
+
+  // Styles for small screens (mobile phones)
+  @media (max-width: 480px) {
+    width: 98vw; 
+    max-width: none; 
+    padding: 2.5rem 1.8rem;
+    border-radius: 12px; 
+    max-height: 98vh; 
+  }
 }
 
 .modal-content__close {
@@ -1610,7 +1695,7 @@
     padding-bottom: 4vh;
   }
   .modal-content {
-    max-width: 98vw;
+    max-width: 90vw;
     padding: 1.2rem 0.5rem;
     max-height: 98vh;
   }
@@ -1651,5 +1736,13 @@
   .modal-scroll .form-group select,
   .modal-scroll .form-group textarea {
     max-width: 100%;
+  }
+}
+
+// Styl dla modal-overlay na urządzeniach mobilnych
+@media (max-width: 600px) {
+  .modal-overlay {
+    align-items: flex-start; // Wyrównanie do góry
+    padding-top: 2rem; // Odstęp od góry ekranu
   }
 } 

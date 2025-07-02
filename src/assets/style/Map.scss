@@ -153,9 +153,11 @@
       background-color: var(--card-bg);
       color: var(--text-color);
       border: 1px solid var(--border-color);
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
       
       &:hover {
-        background-color: var(--hover-bg);
+        background-color: var(--purple-color);
+        color: #fff;
       }
     }
   }
@@ -181,10 +183,11 @@ body[data-theme='dark'] {
         border: 1px solid #334155;
         opacity: 1;
         border-radius: 4px;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 
         &:hover {
-          background-color: #2d3650;
-          color: #fff;
+          background-color: var(--purple-color) !important;
+          color: #fff !important;
           opacity: 1;
         }
       }

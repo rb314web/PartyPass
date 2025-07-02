@@ -594,7 +594,21 @@ export const Dashboard = () => {
           <div className="modal-content">
             <button className="modal-content__close" onClick={handleCancelEdit}>&times;</button>
             <div className="modal-scroll">
-              <h3>Edytuj wydarzenie</h3>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(124, 58, 237, 0.08)',
+                color: '#5b21b6',
+                borderRadius: '10px',
+                padding: '0.7rem 1rem',
+                marginBottom: '1.2rem',
+                fontWeight: 500,
+                fontSize: '1.05rem',
+                gap: '0.7rem'
+              }}>
+                <FaCalendarAlt style={{marginRight: 4, fontSize: '1.1em'}} />
+                Edycja wydarzenia: <span style={{fontWeight: 700, color: '#7c3aed'}}>{selectedEvent.name}</span>
+              </div>
               <div className="form-group">
                 <label>Nazwa wydarzenia *</label>
                 <input
