@@ -2,30 +2,56 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  overflow: hidden;
   position: relative;
+  min-height: 700px;
   padding: 3rem 2rem;
+  overflow: hidden;
+  background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 60%, #e0e7ef 100%);
 
-  &__container {
+  // Overlay dla lepszej czytelności tekstu - usunięty, bo teraz jest w React
+
+  // Subtelny efekt światła w tle
+  &::after {
+    content: '';
+    position: absolute;
+    left: 5%;
+    top: 5%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle at 30% 30%, #a5b4fc40 0%, #f0f4ff00 70%);
+    filter: blur(80px);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  // NOWOCZESNY HERO CONTAINER
+  .hero__container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    padding: 3.5rem 2.5rem;
+    border-radius: 2rem;
+    animation: fadeIn 1.2s cubic-bezier(.4,2,.6,1);
     max-width: 1440px;
     width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
     min-height: 600px;
-    padding: 3rem 2rem;
-
-    @media (max-width: 1024px) {
-      grid-template-columns: 1fr;
+    position: relative;
+    z-index: 2;
+    @media (max-width: 900px) {
+      flex-direction: column;
       gap: 2rem;
+      padding: 2rem 1rem;
+      min-height: 400px;
     }
   }
 
   .hero-content {
     max-width: 650px;
     padding: 0 2rem;
-    z-index: 1;
+    z-index: 3;
+    text-align: center;
+    position: relative;
 
     .hero-title {
       font-size: clamp(2rem, 5vw, 3rem);
@@ -69,86 +95,7 @@
           }
         }
 
-        &.secondary {.hero {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 4rem 2rem;
-          background-color: #f4f4f4;
-
-          &__content {
-            flex: 1;
-            max-width: 600px;
-
-            h1 {
-              font-size: 2.5rem;
-              color: #333;
-              margin-bottom: 1rem;
-            }
-
-            p {
-              font-size: 1.1rem;
-              color: #666;
-              margin-bottom: 2rem;
-            }
-          }
-
-          .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            width: 100%;
-            max-width: 400px;
-
-            .cta-button {
-              width: 100%;
-              padding: 1rem;
-              font-size: 1rem;
-              border-radius: 8px;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              transition: all 0.3s ease;
-              border: none;
-              cursor: pointer;
-
-              &.primary {
-                background: linear-gradient(45deg, #3b82f6, #60a5fa);
-                color: #fff;
-                box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
-
-                &:active {
-                  transform: scale(0.95);
-                  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
-                }
-              }
-
-              &.secondary {
-                background: transparent;
-                border: 2px solid #3b82f6;
-                color: #3b82f6;
-
-                &:active {
-                  background: rgba(59, 130, 246, 0.1);
-                  transform: scale(0.95);
-                }
-              }
-            }
-          }
-
-          @media (max-width: 768px) {
-            flex-direction: column;
-            text-align: center;
-
-            &__content {
-              max-width: 100%;
-              text-align: center;
-            }
-
-            .hero-buttons {
-              flex-direction: column;
-              max-width: 100%;
-            }
-          }
-        }
+        &.secondary {
           background: transparent;
           border: 2px solid #3b82f6;
           color: #3b82f6;
@@ -163,39 +110,74 @@
 
   }
 
-  .hero-carousel {
-    max-width: 100%; // Nie pozwala na przekroczenie szerokości rodzica
-    margin: 0 auto; // Centrowanie karuzeli
-    overflow: hidden;
+  .hero-ai-illustration {
+    display: none; // Ukrywamy obraz, bo teraz jest tłem całej sekcji
+  }
 
-    .hero-slide {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+  .gradient-text {
+    background: linear-gradient(90deg, #3b82f6 0%, #9333ea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+  }
 
-      .hero-img {
-        width: 100%; // Obraz zajmuje pełną szerokość kontenera
-        max-width: 800px; // Maksymalna szerokość obrazka (np. 800px)
-        height: auto; // Zachowanie proporcji obrazu
-        max-height: 400px; // Jeśli konieczne, ogranicz maksymalną wysokość obrazu
-        object-fit: cover; // Obrysa proporcjonalnie, zasłaniając kontener
-        border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        transition: transform 0.3s ease;
+  .glassmorph {
+    // Usunięte wszystkie style tła
+  }
 
+  .animate-fadein {
+    animation: fadeIn 1.2s cubic-bezier(.4,2,.6,1);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(40px);}
+    to { opacity: 1; transform: translateY(0);}
+  }
+
+  // Dark mode styles
+  [data-theme='dark'] & {
+    background: linear-gradient(120deg, #0f172a 0%, #1e293b 60%, #334155 100%);
+
+    .hero-title {
+      color: #f1f5f9;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-subtitle {
+      color: #cbd5e1;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cta-button {
+      &.primary {
+        background: linear-gradient(45deg, #60a5fa, #93c5fd);
+        color: #0f172a;
+        box-shadow: 0 4px 10px rgba(96, 165, 250, 0.4);
+
+        &:active {
+          box-shadow: 0 2px 6px rgba(96, 165, 250, 0.3);
+        }
+      }
+
+      &.secondary {
+        background: transparent;
+        border: 2px solid #60a5fa;
+        color: #60a5fa;
+
+        &:active {
+          background: rgba(96, 165, 250, 0.1);
+        }
       }
     }
 
-    .slick-dots {
-      bottom: -30px;
-
-      li button:before {
-        color: #111827;
-      }
-
-      li.slick-active button:before {
-        color: #3b82f6;
-      }
+    // Subtelny efekt światła w tle - ciemniejszy
+    &::after {
+      background: radial-gradient(circle at 30% 30%, #1e40af40 0%, #1e293b00 70%);
     }
   }
 
