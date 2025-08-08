@@ -1,0 +1,139 @@
+@import '../../../styles/globals/mixins';
+
+.settings {
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  &__header {
+    margin-bottom: var(--space-2xl);
+  }
+  
+  &__title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 var(--space-sm) 0;
+  }
+  
+  &__subtitle {
+    color: var(--gray-600);
+    margin: 0;
+    font-size: 1.125rem;
+  }
+  
+  &__layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--space-2xl);
+    
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+    }
+  }
+  
+  &__nav {
+    @media (max-width: 1024px) {
+      margin-bottom: var(--space-lg);
+    }
+  }
+  
+  &__nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    
+    @media (max-width: 1024px) {
+      flex-direction: row;
+      overflow-x: auto;
+      padding-bottom: var(--space-sm);
+      
+      &::-webkit-scrollbar {
+        height: 4px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 2px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--gray-400);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  &__nav-item {
+    @include button-base;
+    width: 100%;
+    padding: var(--space-lg);
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    text-align: left;
+    display: flex;
+    gap: var(--space-md);
+    transition: all 0.3s ease;
+    
+    @media (max-width: 1024px) {
+      min-width: 200px;
+    }
+    
+    &:hover {
+      border-color: var(--gray-300);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    &--active {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+      
+      .settings__nav-icon {
+        background: var(--primary);
+        color: white;
+      }
+      
+      .settings__nav-label {
+        color: var(--primary);
+      }
+    }
+  }
+  
+  &__nav-icon {
+    width: 40px;
+    height: 40px;
+    @include flex-center;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+  }
+  
+  &__nav-content {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  &__nav-label {
+    font-weight: 500;
+    color: var(--gray-900);
+    margin-bottom: var(--space-xs);
+  }
+  
+  &__nav-description {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    line-height: 1.4;
+  }
+  
+  &__content {
+    background: white;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    min-height: 600px;
+  }
+}

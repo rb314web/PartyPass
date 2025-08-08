@@ -1,0 +1,235 @@
+@import '../../../styles/globals/mixins';
+
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background: white;
+  border-right: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  transition: all 0.3s ease;
+  
+  @media (max-width: 768px) {
+    transform: translateX(-100%);
+    
+    &--mobile-open {
+      transform: translateX(0);
+    }
+  }
+  
+  &--collapsed {
+    width: 80px;
+    
+    .sidebar__logo-text,
+    .sidebar__nav span,
+    .sidebar__user-info,
+    .sidebar__logout span {
+      display: none;
+    }
+  }
+  
+  &__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    
+    @media (min-width: 769px) {
+      display: none;
+    }
+  }
+  
+  &__mobile-toggle {
+    display: none;
+    position: fixed;
+    top: var(--space-lg);
+    left: var(--space-lg);
+    z-index: 101;
+    @include button-base;
+    background: white;
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-md);
+    width: 48px;
+    height: 48px;
+    
+    @media (max-width: 768px) {
+      display: flex;
+    }
+  }
+  
+  &__header {
+    padding: var(--space-xl) var(--space-lg);
+    border-bottom: 1px solid var(--gray-100);
+    @include flex-between;
+  }
+  
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    
+    &-icon {
+      font-size: 1.5rem;
+    }
+    
+    &-text {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+  }
+  
+  &__collapse-btn {
+    @include button-base;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    width: 32px;
+    height: 32px;
+    
+    &:hover {
+      background: var(--gray-200);
+    }
+    
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+  
+  &__nav {
+    flex: 1;
+    padding: var(--space-lg) 0;
+  }
+  
+  &__menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    
+    &:hover {
+      background: var(--gray-50);
+      color: var(--gray-900);
+    }
+    
+    &--active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--primary);
+      }
+    }
+  }
+  
+  &__footer {
+    padding: var(--space-lg);
+    border-top: 1px solid var(--gray-100);
+  }
+  
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    
+    &-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      
+      &-placeholder {
+        width: 100%;
+        height: 100%;
+        background: var(--primary);
+        color: white;
+        @include flex-center;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+    }
+    
+    &-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    &-name {
+      font-weight: 500;
+      color: var(--gray-900);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    &-plan {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      
+      &--gray {
+        background: var(--gray-100);
+        color: var(--gray-600);
+      }
+      
+      &--primary {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+      }
+      
+      &--gold {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--secondary);
+      }
+    }
+  }
+  
+  &__logout {
+    @include button-base;
+    width: 100%;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    padding: var(--space-md);
+    gap: var(--space-md);
+    justify-content: flex-start;
+    
+    &:hover {
+      background: var(--error);
+      color: white;
+    }
+  }
+}

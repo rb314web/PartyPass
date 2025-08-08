@@ -1,0 +1,301 @@
+@import '../../../../styles/globals/mixins';
+
+.security-settings {
+  padding: var(--space-2xl);
+  
+  &__header {
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--gray-200);
+    
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin: 0 0 var(--space-sm) 0;
+    }
+    
+    p {
+      color: var(--gray-600);
+      margin: 0;
+    }
+  }
+  
+  &__section {
+    margin-bottom: var(--space-2xl);
+    padding: var(--space-xl);
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  &__section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+  
+  &__section-icon {
+    width: 40px;
+    height: 40px;
+    @include flex-center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+  }
+  
+  &__section-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0 0 var(--space-xs) 0;
+  }
+  
+  &__section-header p {
+    color: var(--gray-600);
+    margin: 0;
+    font-size: 0.875rem;
+  }
+  
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    max-width: 400px;
+  }
+  
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    
+    label {
+      font-weight: 500;
+      color: var(--gray-700);
+      font-size: 0.875rem;
+    }
+  }
+  
+  &__input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    
+    input {
+      width: 100%;
+      padding: var(--space-md);
+      padding-right: 3rem;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+    }
+  }
+  
+  &__password-toggle {
+    @include button-base;
+    position: absolute;
+    right: var(--space-md);
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    
+    &:hover {
+      color: var(--gray-600);
+    }
+  }
+  
+  &__strength {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  
+  &__strength-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  
+  &__strength-fill {
+    height: 100%;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+  }
+  
+  &__strength-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    min-width: 80px;
+  }
+  
+  &__error {
+    color: var(--error);
+    font-size: 0.875rem;
+    margin-top: var(--space-xs);
+  }
+  
+  &__save-btn {
+    @include button-base;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: var(--space-md) var(--space-xl);
+    gap: var(--space-sm);
+    font-weight: 500;
+    align-self: flex-start;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+  
+  &__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  // 2FA Section
+  &__2fa {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+  
+  &__2fa-status {
+    @include flex-between;
+    padding: var(--space-lg);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200);
+    gap: var(--space-lg);
+    
+    @media (max-width: 640px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  
+  &__2fa-info {
+    flex: 1;
+  }
+  
+  &__status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+    
+    &--enabled {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+    
+    &--disabled {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--secondary);
+    }
+  }
+  
+  &__2fa-btn {
+    @include button-base;
+    padding: var(--space-sm) var(--space-lg);
+    font-weight: 500;
+    
+    &--primary {
+      background: var(--primary);
+      color: white;
+      
+      &:hover {
+        background: var(--primary-dark);
+      }
+    }
+    
+    &--danger {
+      background: var(--error);
+      color: white;
+      
+      &:hover {
+        background: #dc2626;
+      }
+    }
+  }
+  
+  &__2fa-details {
+    padding: var(--space-lg);
+    background: rgba(16, 185, 129, 0.05);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin: 0 0 var(--space-sm) 0;
+    }
+    
+    p {
+      color: var(--gray-600);
+      margin: 0 0 var(--space-lg) 0;
+      font-size: 0.875rem;
+    }
+  }
+  
+  &__backup-codes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    
+    code {
+      background: var(--gray-100);
+      padding: var(--space-sm);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid var(--gray-200);
+    }
+  }
+  
+  &__generate-codes {
+    @include button-base;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    padding: var(--space-sm) var(--space-lg);
+    font-size: 0.875rem;
+    
+    &:hover {
+      background: var(--error);
+      color: white;
+    }
+  }
+}

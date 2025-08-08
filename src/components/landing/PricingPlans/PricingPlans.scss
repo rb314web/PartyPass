@@ -1,0 +1,253 @@
+@import '../../../styles/globals/mixins';
+
+.pricing-plans {
+  padding: var(--space-2xl) 0;
+  background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
+  
+  &__container {
+    @include container;
+  }
+  
+  &__header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+  }
+  
+  &__title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: var(--space-md);
+  }
+  
+  &__subtitle {
+    font-size: 1.25rem;
+    color: var(--gray-600);
+    margin-bottom: var(--space-2xl);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  &__billing-toggle {
+    display: inline-flex;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xs);
+    position: relative;
+  }
+  
+  &__toggle-btn {
+    @include button-base;
+    background: transparent;
+    color: var(--gray-600);
+    padding: var(--space-sm) var(--space-lg);
+    font-size: 0.875rem;
+    position: relative;
+    transition: all 0.3s ease;
+    
+    &.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    &:not(.active):hover {
+      color: var(--gray-800);
+    }
+  }
+  
+  &__discount-badge {
+    background: var(--secondary);
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: var(--space-xs);
+    font-weight: 600;
+  }
+  
+  &__grid {
+    @include responsive-grid(320px);
+    margin-bottom: var(--space-2xl);
+  }
+  
+  &__card {
+    @include card;
+    position: relative;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    
+    &:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    &--popular {
+      border-color: var(--primary);
+      transform: scale(1.05);
+      
+      &:hover {
+        transform: scale(1.05) translateY(-8px);
+      }
+    }
+  }
+  
+  &__popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-xl);
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    box-shadow: var(--shadow-md);
+  }
+  
+  &__card-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+  }
+  
+  &__plan-icon {
+    width: 60px;
+    height: 60px;
+    @include flex-center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border-radius: var(--radius-xl);
+    margin: 0 auto var(--space-lg);
+  }
+  
+  &__plan-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: var(--space-md);
+  }
+  
+  &__plan-price {
+    margin-bottom: var(--space-md);
+  }
+  
+  &__price {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--gray-900);
+  }
+  
+  &__price-interval {
+    font-size: 1rem;
+    color: var(--gray-600);
+    font-weight: 500;
+  }
+  
+  &__monthly-equivalent {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-top: var(--space-xs);
+  }
+  
+  &__card-body {
+    flex: 1;
+    margin-bottom: var(--space-xl);
+  }
+  
+  &__features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  &__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  &__feature-icon {
+    color: var(--success);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  &__card-footer {
+    margin-top: auto;
+  }
+  
+  &__cta {
+    @include button-base;
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 1.125rem;
+    font-weight: 600;
+    
+    &--primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+    }
+    
+    &--secondary {
+      background: var(--gray-100);
+      color: var(--gray-800);
+      border: 2px solid var(--gray-200);
+      
+      &:hover {
+        background: var(--gray-200);
+        border-color: var(--gray-300);
+      }
+    }
+  }
+  
+  &__guarantee {
+    @include flex-center;
+    gap: var(--space-lg);
+    background: var(--gray-50);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    
+    @media (max-width: 640px) {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+  
+  &__guarantee-icon {
+    width: 60px;
+    height: 60px;
+    @include flex-center;
+    background: var(--success);
+    color: white;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  
+  h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0 0 var(--space-xs) 0;
+  }
+  
+  p {
+    color: var(--gray-600);
+    margin: 0;
+  }
+}

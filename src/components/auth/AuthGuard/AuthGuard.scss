@@ -1,0 +1,17 @@
+// components/auth/AuthGuard/AuthGuard.scss
+.auth-guard-loading {
+  min-height: 100vh;
+  @include flex-center;
+  flex-direction: column;
+  gap: var(--space-lg);
+  background: var(--gray-50);
+}
+
+.auth-guard-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--gray-200);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
