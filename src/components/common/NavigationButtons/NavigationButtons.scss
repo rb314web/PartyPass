@@ -1,0 +1,75 @@
+// components/common/NavigationButtons/NavigationButtons.scss
+@import '../../../styles/globals/index.scss';
+
+.navigation-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+
+    &:hover:not(:disabled) {
+      background: var(--primary-50);
+      color: var(--primary-600);
+      border-color: var(--primary-200);
+      transform: translateY(-1px);
+    }
+
+    &:focus {
+      outline: 2px solid var(--primary-500);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    &--back {
+      &:hover:not(:disabled) {
+        background: var(--info-50);
+        color: var(--info-600);
+        border-color: var(--info-200);
+      }
+    }
+
+    &--forward {
+      &:hover:not(:disabled) {
+        background: var(--success-50);
+        color: var(--success-600);
+        border-color: var(--success-200);
+      }
+    }
+
+    &--refresh {
+      &:hover:not(:disabled) {
+        background: var(--warning-50);
+        color: var(--warning-600);
+        border-color: var(--warning-200);
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 0.25rem;
+
+    &__btn {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+}

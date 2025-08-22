@@ -1,0 +1,115 @@
+// components/common/BottomNavigation/BottomNavigation.scss
+@import '../../../styles/globals/index.scss';
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  z-index: 1000;
+  padding: 0.5rem 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+
+  &__container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    min-width: 4rem;
+    position: relative;
+
+    &:hover {
+      color: var(--primary-600);
+      background: var(--primary-50);
+    }
+
+    &:focus {
+      outline: 2px solid var(--primary-500);
+      outline-offset: 2px;
+    }
+
+    &--active {
+      color: var(--primary-600);
+      background: var(--primary-50);
+
+      .bottom-nav__icon {
+        background: var(--primary-100);
+        color: var(--primary-600);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: -0.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0.25rem;
+        height: 0.25rem;
+        background: var(--primary-500);
+        border-radius: 50%;
+      }
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1;
+  }
+}
+
+// Ukryj na większych ekranach
+@media (min-width: 769px) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
+// Dostosowanie dla bardzo małych ekranów
+@media (max-width: 360px) {
+  .bottom-nav {
+    &__container {
+      padding: 0 0.5rem;
+    }
+
+    &__item {
+      min-width: 3rem;
+      padding: 0.25rem;
+    }
+
+    &__icon {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    &__label {
+      font-size: 0.625rem;
+    }
+  }
+}

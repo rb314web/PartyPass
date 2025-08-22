@@ -1,5 +1,5 @@
 // components/dashboard/Sidebar/Sidebar.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -25,7 +25,7 @@ const Sidebar: React.FC = () => {
     { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },
     { icon: Calendar, label: 'Wydarzenia', path: '/dashboard/events' },
     { icon: Users, label: 'Goście', path: '/dashboard/guests' },
-    { icon: BarChart3, label: 'Analityki', path: '/dashboard/analytics' },
+    { icon: BarChart3, label: 'Analityka', path: '/dashboard/analytics' },
     { icon: Settings, label: 'Ustawienia', path: '/dashboard/settings' }
   ];
 
@@ -45,6 +45,28 @@ const Sidebar: React.FC = () => {
     return badges[user?.planType || 'starter'];
   };
 
+  // Handle escape key to close mobile menu
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && isMobileOpen) {
+      setIsMobileOpen(false);
+    }
+  }, [isMobileOpen]);
+
+  // Handle body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileOpen, handleKeyDown]);
+
   return (
     <>
       {/* Mobile overlay */}
@@ -52,6 +74,14 @@ const Sidebar: React.FC = () => {
         <div 
           className="sidebar__overlay"
           onClick={() => setIsMobileOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setIsMobileOpen(false);
+            }
+          }}
+          role="button"
+          tabIndex={-1}
+          aria-label="Zamknij menu"
         />
       )}
 
@@ -59,11 +89,19 @@ const Sidebar: React.FC = () => {
       <button 
         className="sidebar__mobile-toggle"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
+        aria-label={isMobileOpen ? "Zamknij menu nawigacyjne" : "Otwórz menu nawigacyjne"}
+        aria-expanded={isMobileOpen}
+        aria-controls="sidebar"
       >
         {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      <aside className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''} ${isMobileOpen ? 'sidebar--mobile-open' : ''}`}>
+      <aside 
+        id="sidebar"
+        className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''} ${isMobileOpen ? 'sidebar--mobile-open' : ''}`}
+        role="navigation"
+        aria-label="Menu nawigacyjne"
+      >
         <div className="sidebar__header">
           <div className="sidebar__logo">
             <div className="sidebar__logo-icon">🎉</div>
@@ -85,7 +123,16 @@ const Sidebar: React.FC = () => {
                 <Link
                   to={item.path}
                   className={`sidebar__link ${isActive(item.path, item.exact) ? 'sidebar__link--active' : ''}`}
-                  onClick={() => setIsMobileOpen(false)}
+                  onClick={() => {
+                    setIsMobileOpen(false);
+                    // Focus management - focus on main content after navigation
+                    setTimeout(() => {
+                      const mainContent = document.querySelector('.dashboard__content');
+                      if (mainContent) {
+                        (mainContent as HTMLElement).focus();
+                      }
+                    }, 100);
+                  }}
                 >
                   <item.icon size={20} />
                   {!isCollapsed && <span>{item.label}</span>}

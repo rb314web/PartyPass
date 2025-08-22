@@ -198,6 +198,21 @@ export interface NavItem {
   icon?: React.ComponentType;
   badge?: number;
   children?: NavItem[];
+  exact?: boolean;
+  shortcut?: string;
+  color?: string;
+}
+
+export interface NavigationHistoryItem {
+  path: string;
+  title: string;
+  timestamp: number;
+}
+
+export interface BreadcrumbItem {
+  label: string;
+  path: string;
+  icon?: React.ReactNode;
 }
 
 // Notification types

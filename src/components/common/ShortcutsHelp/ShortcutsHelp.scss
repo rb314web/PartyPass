@@ -1,0 +1,212 @@
+// components/common/ShortcutsHelp/ShortcutsHelp.scss
+@import '../../../styles/globals/index.scss';
+
+.shortcuts-help {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  &__modal {
+    position: relative;
+    background: var(--bg-primary);
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow: hidden;
+    animation: shortcutsHelpSlideIn 0.3s ease-out;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-primary);
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+  }
+
+  &__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    background: var(--gray-100);
+    color: var(--text-secondary);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--gray-200);
+      color: var(--text-primary);
+    }
+  }
+
+  &__content {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  &__category {
+    margin-bottom: 2rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__category-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  &__shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__shortcut {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--gray-100);
+    }
+  }
+
+  &__key {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  &__key-part {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.5rem;
+    background: var(--gray-200);
+    color: var(--text-primary);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    border: 1px solid var(--gray-300);
+  }
+
+  &__description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  &__footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--gray-50);
+    text-align: center;
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.25rem;
+      height: 1.25rem;
+      padding: 0 0.375rem;
+      background: var(--gray-200);
+      color: var(--text-primary);
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      border: 1px solid var(--gray-300);
+    }
+  }
+}
+
+@keyframes shortcutsHelpSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .shortcuts-help {
+    padding: 0.5rem;
+
+    &__modal {
+      max-height: 90vh;
+    }
+
+    &__content {
+      max-height: 70vh;
+    }
+
+    &__shortcut {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    &__key {
+      align-self: flex-end;
+    }
+  }
+}

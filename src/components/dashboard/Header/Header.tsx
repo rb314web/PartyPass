@@ -2,6 +2,7 @@
 import React from 'react';
 import { Bell, Search, Plus } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import NavigationButtons from '../../common/NavigationButtons/NavigationButtons';
 import './Header.scss';
 
 const Header: React.FC = () => {
@@ -26,6 +27,8 @@ const Header: React.FC = () => {
       </div>
 
       <div className="header__right">
+        <NavigationButtons className="header__nav-buttons" />
+        
         <div className="header__search">
           <Search size={20} className="header__search-icon" />
           <input 

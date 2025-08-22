@@ -152,6 +152,7 @@
   --border-focus: var(--primary);
   --border-error: var(--error);
   --border-success: var(--success);
+  --border-color: var(--gray-200);
   
   // ==========================================================================
   // Typography System
@@ -343,29 +344,27 @@
 }
 
 // ==========================================================================
-// Dark Mode Theme
+// Dark Mode Theme (disabled for now - can be enabled manually with class)
 // ==========================================================================
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    // Background Colors
-    --bg-primary: var(--gray-900);
-    --bg-secondary: var(--gray-800);
-    --bg-tertiary: var(--gray-700);
-    --bg-overlay: rgba(0, 0, 0, 0.8);
-    --bg-glass: rgba(0, 0, 0, 0.8);
-    
-    // Text Colors
-    --text-primary: var(--gray-100);
-    --text-secondary: var(--gray-300);
-    --text-tertiary: var(--gray-400);
-    --text-inverse: var(--gray-900);
-    --text-muted: var(--gray-500);
-    
-    // Border Colors
-    --border-primary: var(--gray-700);
-    --border-secondary: var(--gray-600);
-  }
+.dark-theme {
+  // Background Colors
+  --bg-primary: var(--gray-900);
+  --bg-secondary: var(--gray-800);
+  --bg-tertiary: var(--gray-700);
+  --bg-overlay: rgba(0, 0, 0, 0.8);
+  --bg-glass: rgba(0, 0, 0, 0.8);
+  
+  // Text Colors
+  --text-primary: var(--gray-100);
+  --text-secondary: var(--gray-300);
+  --text-tertiary: var(--gray-400);
+  --text-inverse: var(--gray-900);
+  --text-muted: var(--gray-500);
+  
+  // Border Colors
+  --border-primary: var(--gray-700);
+  --border-secondary: var(--gray-600);
 }
 
 // ==========================================================================

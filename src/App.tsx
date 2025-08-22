@@ -7,6 +7,9 @@ import Landing from './pages/Landing/Landing';
 import Login from './components/auth/Login/Login';
 import Register from './components/auth/Register/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
+import FloatingActionButton from './components/common/FloatingActionButton/FloatingActionButton';
+import BottomNavigation from './components/common/BottomNavigation/BottomNavigation';
+import ShortcutsHelp from './components/common/ShortcutsHelp/ShortcutsHelp';
 import './styles/globals/index.scss';
 
 function App() {
@@ -40,6 +43,11 @@ function App() {
             {/* Przekierowania */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          
+          {/* Globalne komponenty nawigacji */}
+          <FloatingActionButton />
+          <BottomNavigation />
+          <ShortcutsHelp />
         </div>
       </Router>
     </AuthProvider>

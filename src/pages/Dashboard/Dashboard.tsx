@@ -3,8 +3,11 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar/Sidebar';
 import Header from '../../components/dashboard/Header/Header';
+import Breadcrumbs from '../../components/common/Breadcrumbs/Breadcrumbs';
 import DashboardHome from '../../components/dashboard/DashboardHome/DashboardHome';
 import Events from '../../components/dashboard/Events/Events';
+import Guests from '../../components/dashboard/Guests/Guests';
+import Analytics from '../../components/dashboard/Analytics/Analytics';
 import Settings from '../../components/dashboard/Settings/Settings';
 import './Dashboard.scss';
 
@@ -14,10 +17,13 @@ const Dashboard: React.FC = () => {
       <Sidebar />
       <div className="dashboard__main">
         <Header />
-        <div className="dashboard__content">
+        <Breadcrumbs />
+        <div className="dashboard__content" tabIndex={-1}>
           <Routes>
             <Route index element={<DashboardHome />} />
             <Route path="events/*" element={<Events />} />
+            <Route path="guests/*" element={<Guests />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<Settings />} />
           </Routes>
         </div>
