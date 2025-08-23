@@ -10,16 +10,25 @@ import {
   LogOut,
   Menu,
   X,
-  Crown
+  Crown,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import './Sidebar.scss';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onMobileToggle?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen: externalMobileOpen = false, onMobileToggle }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+  
+  // Use external state if provided, otherwise use internal state
+  const isMobileOpen = externalMobileOpen !== false ? externalMobileOpen : internalMobileOpen;
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },
@@ -48,9 +57,13 @@ const Sidebar: React.FC = () => {
   // Handle escape key to close mobile menu
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && isMobileOpen) {
-      setIsMobileOpen(false);
+      if (onMobileToggle) {
+        onMobileToggle();
+      } else {
+        setInternalMobileOpen(false);
+      }
     }
-  }, [isMobileOpen]);
+  }, [isMobileOpen, onMobileToggle]);
 
   // Handle body scroll when mobile menu is open
   useEffect(() => {
@@ -67,16 +80,24 @@ const Sidebar: React.FC = () => {
     };
   }, [isMobileOpen, handleKeyDown]);
 
+  const handleMobileClose = () => {
+    if (onMobileToggle) {
+      onMobileToggle();
+    } else {
+      setInternalMobileOpen(false);
+    }
+  };
+
   return (
     <>
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div 
           className="sidebar__overlay"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={handleMobileClose}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
-              setIsMobileOpen(false);
+              handleMobileClose();
             }
           }}
           role="button"
@@ -85,16 +106,7 @@ const Sidebar: React.FC = () => {
         />
       )}
 
-      {/* Mobile toggle */}
-      <button 
-        className="sidebar__mobile-toggle"
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        aria-label={isMobileOpen ? "Zamknij menu nawigacyjne" : "Otwórz menu nawigacyjne"}
-        aria-expanded={isMobileOpen}
-        aria-controls="sidebar"
-      >
-        {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+      {/* Mobile toggle moved to Header */}
 
       <aside 
         id="sidebar"
@@ -111,8 +123,10 @@ const Sidebar: React.FC = () => {
           <button 
             className="sidebar__collapse-btn"
             onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
+            title={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
           >
-            <Menu size={20} />
+            {isCollapsed ? <ChevronRight size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
@@ -124,7 +138,7 @@ const Sidebar: React.FC = () => {
                   to={item.path}
                   className={`sidebar__link ${isActive(item.path, item.exact) ? 'sidebar__link--active' : ''}`}
                   onClick={() => {
-                    setIsMobileOpen(false);
+                    handleMobileClose();
                     // Focus management - focus on main content after navigation
                     setTimeout(() => {
                       const mainContent = document.querySelector('.dashboard__content');

@@ -318,51 +318,93 @@
   }
 }
 
-// Dark mode support
-@media (prefers-color-scheme: dark) {
+// Dark mode styles
+.dark {
   .event-card {
     background: var(--gray-800);
     border-color: var(--gray-700);
-    
+    color: var(--gray-100);
+
     &:hover {
       border-color: var(--gray-600);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
     }
-    
+
     &--selected {
-      background: rgba(99, 102, 241, 0.1);
-      border-color: var(--primary);
-    }
-    
-    &__menu-trigger {
-      background: var(--gray-700);
-      color: var(--gray-400);
-      
+      border-color: var(--blue-400);
+      background: rgba(59, 130, 246, 0.1);
+
       &:hover {
-        background: var(--gray-600);
+        border-color: var(--blue-300);
+      }
+    }
+
+    &__title {
+      color: var(--gray-100);
+    }
+
+    &__description {
+      color: var(--gray-300);
+    }
+
+    &__meta {
+      color: var(--gray-400);
+    }
+
+    &__checkbox-custom {
+      border-color: var(--gray-600);
+      background: var(--gray-700);
+
+      &::after {
+        color: var(--white);
+      }
+    }
+
+    &__menu-trigger {
+      color: var(--gray-400);
+
+      &:hover {
+        background: var(--gray-700);
         color: var(--gray-200);
       }
     }
-    
+
     &__menu-dropdown {
       background: var(--gray-800);
       border-color: var(--gray-600);
-      
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+
       button {
-        color: var(--gray-300);
-        
+        color: var(--gray-200);
+
         &:hover {
           background: var(--gray-700);
-          color: var(--gray-100);
+        }
+
+        &[data-action="delete"] {
+          color: var(--red-400);
+
+          &:hover {
+            background: var(--red-900);
+          }
         }
       }
     }
-    
-    &__progress-bar {
+
+    &__progress {
       background: var(--gray-700);
+
+      &-fill {
+        background: var(--blue-500);
+      }
     }
-    
-    &__footer {
-      border-color: var(--gray-700);
+
+    &__countdown {
+      color: var(--gray-300);
+    }
+
+    &__guests {
+      color: var(--gray-300);
     }
   }
 }

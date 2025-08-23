@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
+import { ThemeProvider } from './components/common/ThemeProvider/ThemeProvider';
 import AuthGuard from './components/auth/AuthGuard/AuthGuard';
 import Landing from './pages/Landing/Landing';
 import Login from './components/auth/Login/Login';
@@ -10,13 +11,13 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import FloatingActionButton from './components/common/FloatingActionButton/FloatingActionButton';
 import BottomNavigation from './components/common/BottomNavigation/BottomNavigation';
 import ShortcutsHelp from './components/common/ShortcutsHelp/ShortcutsHelp';
-import './styles/globals/index.scss';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="App">
           <Routes>
             {/* Publiczne strony */}
             <Route path="/" element={<Landing />} />
@@ -51,6 +52,7 @@ function App() {
         </div>
       </Router>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 

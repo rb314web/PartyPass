@@ -1,12 +1,34 @@
 // components/dashboard/Header/Header.tsx
-import React from 'react';
-import { Bell, Search, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, Search, Plus, Menu } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import NavigationButtons from '../../common/NavigationButtons/NavigationButtons';
+import { ThemeToggle } from '../../common/ThemeToggle/ThemeToggle';
 import './Header.scss';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onMobileToggle?: () => void;
+  isMobileOpen?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false }) => {
   const { user } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    // Check on mount
+    checkMobile();
+
+    // Add event listener
+    window.addEventListener('resize', checkMobile);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -17,6 +39,18 @@ const Header: React.FC = () => {
 
   return (
     <header className="header">
+      {isMobile && (
+        <button 
+          className="header__mobile-toggle"
+          onClick={onMobileToggle}
+          aria-label={isMobileOpen ? "Zamknij menu nawigacyjne" : "Otwórz menu nawigacyjne"}
+          aria-expanded={isMobileOpen}
+          aria-controls="sidebar"
+        >
+          <Menu size={24} />
+        </button>
+      )}
+      
       <div className="header__left">
         <h1 className="header__greeting">
           {getGreeting()}, {user?.firstName}! 👋
@@ -37,6 +71,8 @@ const Header: React.FC = () => {
             className="header__search-input"
           />
         </div>
+
+        <ThemeToggle />
 
         <button className="header__notifications">
           <Bell size={20} />

@@ -1,5 +1,5 @@
 // pages/Dashboard/Dashboard.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar/Sidebar';
 import Header from '../../components/dashboard/Header/Header';
@@ -12,11 +12,17 @@ import Settings from '../../components/dashboard/Settings/Settings';
 import './Dashboard.scss';
 
 const Dashboard: React.FC = () => {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const handleMobileToggle = () => {
+    setIsMobileOpen(!isMobileOpen);
+  };
+
   return (
     <div className="dashboard">
-      <Sidebar />
+      <Sidebar isMobileOpen={isMobileOpen} onMobileToggle={handleMobileToggle} />
       <div className="dashboard__main">
-        <Header />
+        <Header onMobileToggle={handleMobileToggle} isMobileOpen={isMobileOpen} />
         <Breadcrumbs />
         <div className="dashboard__content" tabIndex={-1}>
           <Routes>
