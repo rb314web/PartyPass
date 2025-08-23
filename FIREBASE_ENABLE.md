@@ -1,7 +1,8 @@
 # 🔥 Jak włączyć Firebase w PartyPass
 
-## Aktualny status
-Firebase jest obecnie **wyłączone** i aplikacja używa mock danych. Aby włączyć Firebase, wykonaj poniższe kroki:
+## ✅ Status: Firebase jest już włączone w kodzie!
+
+Firebase zostało pomyślnie włączone w kodzie aplikacji. Teraz musisz tylko skonfigurować projekt Firebase i dodać zmienne środowiskowe.
 
 ## 📋 Kroki do włączenia Firebase
 
@@ -51,41 +52,7 @@ REACT_APP_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 2. Kliknij **Get started**
 3. Wybierz **Start in test mode**
 
-### 7. Włącz Firebase w kodzie
-
-#### Krok 7a: Włącz konfigurację Firebase
-W pliku `src/config/firebase.ts` odkomentuj wszystkie linie:
-
-```typescript
-// Usuń komentarze z początku pliku
-import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
-import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
-import { getAnalytics, isSupported } from 'firebase/analytics';
-
-// Usuń komentarze z inicjalizacji
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const functions = getFunctions(app);
-export const analytics = isSupported().then((yes: boolean) => yes ? getAnalytics(app) : null);
-
-// Usuń mock exports na końcu pliku
-```
-
-#### Krok 7b: Włącz Firebase Auth Service
-W pliku `src/services/firebase/authService.ts` odkomentuj cały kod Firebase i usuń mock exports.
-
-#### Krok 7c: Włącz Firebase w useAuth
-W pliku `src/hooks/useAuth.tsx`:
-1. Odkomentuj import: `import { AuthService, AuthError } from '../services/firebase/authService';`
-2. Usuń mock users
-3. Zastąp mock logikę Firebase logiką
-
-### 8. Uruchom aplikację
+### 7. Uruchom aplikację
 ```bash
 npm start
 ```
@@ -158,8 +125,16 @@ Po włączeniu Firebase:
 - Sprawdź połączenie internetowe
 - Sprawdź czy Firebase project jest aktywny
 
+### "Firebase not configured"
+- Sprawdź czy plik `.env.local` istnieje i ma poprawne wartości
+- Upewnij się, że zmienne środowiskowe zaczynają się od `REACT_APP_`
+
 ## 📚 Przydatne linki
 
 - [Firebase Setup Guide](./FIREBASE_SETUP.md) - Pełny przewodnik konfiguracji
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Firebase Console](https://console.firebase.google.com/)
+
+## 🎉 Gotowe!
+
+Po wykonaniu powyższych kroków, Firebase będzie w pełni funkcjonalne w Twojej aplikacji PartyPass!

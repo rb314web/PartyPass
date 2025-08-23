@@ -1,6 +1,4 @@
 // services/firebase/authService.ts
-// TEMPORARILY DISABLED - Firebase services will be enabled after proper setup
-/*
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -308,66 +306,5 @@ export class AuthService {
       code: error.code || 'unknown',
       message
     };
-  }
-}
-*/
-
-// Temporary mock exports
-export interface AuthError {
-  code: string;
-  message: string;
-}
-
-export interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  planType: 'starter' | 'pro' | 'enterprise';
-}
-
-export interface UpdateProfileData {
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  avatar?: File;
-}
-
-export class AuthService {
-  // Mock methods - will be replaced with Firebase implementation
-  static async register(userData: RegisterData): Promise<any> {
-    throw new Error('Firebase not configured');
-  }
-
-  static async login(email: string, password: string): Promise<any> {
-    throw new Error('Firebase not configured');
-  }
-
-  static async logout(): Promise<void> {
-    throw new Error('Firebase not configured');
-  }
-
-  static async getCurrentUser(): Promise<any> {
-    return null;
-  }
-
-  static async updateProfile(userId: string, data: UpdateProfileData): Promise<any> {
-    throw new Error('Firebase not configured');
-  }
-
-  static async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    throw new Error('Firebase not configured');
-  }
-
-  static async resetPassword(email: string): Promise<void> {
-    throw new Error('Firebase not configured');
-  }
-
-  static async deleteAccount(password: string): Promise<void> {
-    throw new Error('Firebase not configured');
-  }
-
-  static onAuthStateChanged(callback: (user: any) => void): () => void {
-    return () => {};
   }
 }
