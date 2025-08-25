@@ -1,31 +1,27 @@
 // components/dashboard/Events/Events.tsx
-import React, { useState, useMemo } from 'react';
-import { Routes, Route, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { 
-  Calendar, 
   Plus, 
   Filter, 
   Search, 
   Grid3X3, 
   List, 
-  MoreVertical,
   Edit,
   Copy,
   Trash2,
-  Users,
-  MapPin,
-  Clock,
-  Eye,
   CheckCircle,
   AlertCircle,
   Pause
 } from 'lucide-react';
+import { EventService } from '../../../services/firebase/eventService';
+import { useAuth } from '../../../hooks/useAuth';
 import { Event } from '../../../types';
-import { mockEvents } from '../../../services/mockData';
+// import { mockEvents } from '../../../services/mockData';
 import EventCard from './EventCard/EventCard';
 import EventsList from './EventsList/EventsList';
-import CreateEvent from './CreateEvent/CreateEvent';
-import EventDetails from '../Events/EventDetails/EventDetailt';
+import AddEvent from './AddEvent/AddEvent';
+import EventDetails from './EventDetails/EventDetails';
 import './Events.scss';
 
 type ViewMode = 'grid' | 'list';
@@ -34,13 +30,31 @@ type SortBy = 'date' | 'name' | 'guests' | 'created';
 
 const Events: React.FC = () => {
   const navigate = useNavigate();
-  const [events, setEvents] = useState<Event[]>(mockEvents);
+  const { user } = useAuth();
+  const [events, setEvents] = useState<Event[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Pobieranie wydarzeń przy inicjalizacji
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const unsubscribe = EventService.subscribeToUserEvents(
+      user.id,
+      (updatedEvents) => {
+        setEvents(updatedEvents);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.id]);
 
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
@@ -62,7 +76,7 @@ const Events: React.FC = () => {
         case 'name':
           return a.title.localeCompare(b.title);
         case 'guests':
-          return b.guests.length - a.guests.length;
+          return b.guestCount - a.guestCount;
         case 'created':
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         default:
@@ -74,7 +88,12 @@ const Events: React.FC = () => {
   }, [events, searchQuery, filterStatus, sortBy]);
 
   const handleCreateEvent = () => {
-    navigate('/dashboard/events/create');
+    setIsAddEventOpen(true);
+  };
+
+  const handleEventAdded = async () => {
+    // Nie potrzebujemy nic robić, ponieważ mamy już subskrypcję na zmiany
+    // EventService.subscribeToUserEvents automatycznie zaktualizuje stan
   };
 
   const handleEventAction = (eventId: string, action: 'edit' | 'duplicate' | 'delete' | 'view') => {
@@ -109,21 +128,31 @@ const Events: React.FC = () => {
     }
   };
 
-  const handleDeleteEvent = (eventId: string) => {
-    if (window.confirm('Czy na pewno chcesz usunąć to wydarzenie?')) {
-      setEvents(prev => prev.filter(e => e.id !== eventId));
-      setSelectedEvents(prev => prev.filter(id => id !== eventId));
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      if (window.confirm('Czy na pewno chcesz usunąć to wydarzenie? Ta operacja jest nieodwracalna.')) {
+        await EventService.deleteEvent(eventId);
+        // Nie musimy ręcznie aktualizować state'u - subscribeToUserEvents zrobi to za nas
+        setSelectedEvents(prev => prev.filter(id => id !== eventId));
+      }
+    } catch (error: any) {
+      alert(`Nie udało się usunąć wydarzenia: ${error.message}`);
     }
   };
 
-  const handleBulkAction = (action: 'delete' | 'duplicate' | 'archive') => {
+  const handleBulkAction = async (action: 'delete' | 'duplicate' | 'archive') => {
     if (selectedEvents.length === 0) return;
 
     switch (action) {
       case 'delete':
-        if (window.confirm(`Czy na pewno chcesz usunąć ${selectedEvents.length} wydarzeń?`)) {
-          setEvents(prev => prev.filter(e => !selectedEvents.includes(e.id)));
-          setSelectedEvents([]);
+        if (window.confirm(`Czy na pewno chcesz usunąć ${selectedEvents.length} wydarzeń? Ta operacja jest nieodwracalna.`)) {
+          try {
+            await Promise.all(selectedEvents.map(eventId => EventService.deleteEvent(eventId)));
+            // Nie musimy ręcznie aktualizować state'u - subscribeToUserEvents zrobi to za nas
+            setSelectedEvents([]);
+          } catch (error: any) {
+            alert(`Wystąpił błąd podczas usuwania wydarzeń: ${error.message}`);
+          }
         }
         break;
       case 'duplicate':
@@ -213,7 +242,7 @@ const Events: React.FC = () => {
         </div>
         <div className="events__stat">
           <div className="events__stat-value">
-            {events.reduce((acc, e) => acc + e.guests.length, 0)}
+            {events.reduce((acc, e) => acc + e.guestCount, 0)}
           </div>
           <div className="events__stat-label">Goście</div>
         </div>
@@ -221,8 +250,8 @@ const Events: React.FC = () => {
           <div className="events__stat-value">
             {Math.round(
               events.reduce((acc, e) => {
-                const responded = e.guests.filter(g => g.status !== 'pending').length;
-                return acc + (e.guests.length > 0 ? responded / e.guests.length : 0);
+                const responded = e.acceptedCount + e.declinedCount;
+                return acc + (e.guestCount > 0 ? responded / e.guestCount : 0);
               }, 0) / events.length * 100
             ) || 0}%
           </div>
@@ -342,17 +371,17 @@ const Events: React.FC = () => {
       <div className="events__content">
         {filteredAndSortedEvents.length === 0 ? (
           <div className="events__empty">
-            <Calendar size={64} />
+            <img src="/logo192.png" alt="PartyPass logo" style={{ width: 80, marginBottom: 16 }} />
             <h3>
               {searchQuery || filterStatus !== 'all' 
-                ? 'Nie znaleziono wydarzeń' 
-                : 'Brak wydarzeń'
+                ? 'Nie znaleźliśmy żadnych wydarzeń pasujących do Twoich kryteriów.' 
+                : 'Nie masz jeszcze żadnych wydarzeń.'
               }
             </h3>
             <p>
               {searchQuery || filterStatus !== 'all'
-                ? 'Spróbuj zmienić filtry lub wyszukiwanie'
-                : 'Stwórz swoje pierwsze wydarzenie aby rozpocząć'
+                ? 'Spróbuj zmienić filtry lub wyszukiwanie, aby znaleźć swoje wydarzenia.'
+                : 'Zacznij od utworzenia swojego pierwszego wydarzenia i zaproś znajomych!'
               }
             </p>
             {!searchQuery && filterStatus === 'all' && (
@@ -361,7 +390,7 @@ const Events: React.FC = () => {
                 onClick={handleCreateEvent}
               >
                 <Plus size={20} />
-                Stwórz wydarzenie
+                Utwórz pierwsze wydarzenie
               </button>
             )}
           </div>
@@ -385,7 +414,16 @@ const Events: React.FC = () => {
                     getStatusColor={getStatusColor}
                     getStatusLabel={getStatusLabel}
                   />
-                ))}
+                  ))}
+                  {/* Informacja o braku gości w aktywnych wydarzeniach */}
+                  {filteredAndSortedEvents.some(ev => ev.status === 'active') && 
+                   filteredAndSortedEvents.filter(ev => ev.status === 'active').every(ev => ev.guestCount === 0) && (
+                    <div className="events__no-guests">
+                      <img src="/logo192.png" alt="Brak gości" style={{ width: 48, marginBottom: 8 }} />
+                      <h4>Twoje aktywne wydarzenia czekają na gości!</h4>
+                      <p>Dodaj uczestników do aktywnych wydarzeń, aby rozpocząć planowanie i zarządzanie listą gości.</p>
+                    </div>
+                  )}
               </div>
             ) : (
               <EventsList
@@ -404,12 +442,21 @@ const Events: React.FC = () => {
   );
 
   return (
-    <Routes>
-      <Route index element={<EventsListPage />} />
-      <Route path="create" element={<CreateEvent />} />
-      <Route path="edit/:id" element={<CreateEvent />} />
-      <Route path=":id" element={<EventDetails />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route index element={<EventsListPage />} />
+        <Route path=":id" element={
+          <EventDetails />
+        } />
+      </Routes>
+
+      <AddEvent
+        open={isAddEventOpen}
+        onClose={() => setIsAddEventOpen(false)}
+        userId={user?.id || ''}
+        onEventAdded={handleEventAdded}
+      />
+    </>
   );
 };
 

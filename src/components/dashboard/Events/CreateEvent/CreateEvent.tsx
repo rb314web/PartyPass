@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { Event } from '../../../../types';
-import { mockEvents } from '../../../../services/mockData';
+// import { mockEvents } from '../../../../services/mockData';
 import './CreateEvent.scss';
 
 interface EventFormData {
@@ -67,25 +67,7 @@ const CreateEvent: React.FC = () => {
 
   // Load event data if editing
   useEffect(() => {
-    if (isEditing && id) {
-      const event = mockEvents.find(e => e.id === id);
-      if (event) {
-        const eventDate = new Date(event.date);
-        setFormData({
-          title: event.title,
-          description: event.description,
-          date: eventDate.toISOString().split('T')[0],
-          time: eventDate.toTimeString().slice(0, 5),
-          location: event.location,
-          maxGuests: event.maxGuests,
-          tags: [],
-          isPrivate: false,
-          requireRSVP: true,
-          allowPlusOne: false,
-          sendReminders: true
-        });
-      }
-    }
+  // Usunięto mockowe ładowanie eventu. Jeśli będzie integracja z backendem, tutaj należy pobrać dane wydarzenia po id.
   }, [isEditing, id]);
 
   const validateStep = (step: number): boolean => {
@@ -110,7 +92,7 @@ const CreateEvent: React.FC = () => {
         }
         break;
       case 3:
-        if (formData.maxGuests < 1) newErrors.maxGuests = 'Musi być co najmniej 1 gość';
+  if (Number(formData.maxGuests) < 1) newErrors.maxGuests = 'Musi być co najmniej 1 gość';
         
         // Check plan limits
         const planLimits = {
@@ -122,7 +104,7 @@ const CreateEvent: React.FC = () => {
         const userPlan = user?.planType || 'starter';
         const maxAllowed = planLimits[userPlan].maxGuests;
         
-        if (formData.maxGuests > maxAllowed) {
+        if (Number(formData.maxGuests) > maxAllowed) {
           newErrors.maxGuests = `Twój plan pozwala na maksymalnie ${maxAllowed} gości`;
         }
         break;
@@ -209,8 +191,8 @@ const eventData: Event = {
   location: formData.location,
   maxGuests: Number(formData.maxGuests), 
   status: 'draft',
-  createdAt: isEditing ? mockEvents.find(e => e.id === id)?.createdAt || new Date() : new Date(),
-  guests: isEditing ? mockEvents.find(e => e.id === id)?.guests || [] : []
+  createdAt: isEditing ? new Date() : new Date(),
+  guests: isEditing ? [] : []
 };
 
       console.log('Event saved:', eventData);

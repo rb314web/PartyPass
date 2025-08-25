@@ -17,13 +17,20 @@ export interface Event {
   date: Date;
   location: string;
   maxGuests: number;
-  guests: Guest[];
+  guests?: Guest[];
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   createdAt: Date;
+  guestCount: number;
+  acceptedCount: number;
+  pendingCount: number;
+  declinedCount: number;
+  dresscode?: string;
+  additionalInfo?: string;
 }
 
 export interface Guest {
   id: string;
+  userId: string;
   eventId: string;
   email: string;
   firstName: string;
@@ -31,6 +38,15 @@ export interface Guest {
   status: 'pending' | 'accepted' | 'declined' | 'maybe';
   invitedAt: Date;
   respondedAt?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
+  phone?: string;
+  dietaryRestrictions?: string;
+  plusOne?: boolean;
+  notes?: string;
+  eventName: string;
+  eventDate: Date;
+  rsvpToken?: string;
 }
 
 export interface Plan {

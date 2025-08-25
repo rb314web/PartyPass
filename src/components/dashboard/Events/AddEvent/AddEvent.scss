@@ -1,0 +1,23 @@
+.add-event-dialog {
+  .MuiDialog-paper {
+    min-width: 600px;
+    
+    @media (max-width: 600px) {
+      min-width: 100%;
+      margin: 16px;
+    }
+  }
+
+  .dialog-content {
+    padding: 24px;
+  }
+
+  .form-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .date-picker {
+    width: 100%;
+  }
+}

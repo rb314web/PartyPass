@@ -20,16 +20,16 @@ const Footer: React.FC = () => {
               Zarządzaj gośćmi, wysyłaj zaproszenia i śledź odpowiedzi w jednym miejscu.
             </p>
             <div className="footer__social">
-              <a href="#" className="footer__social-link" aria-label="Twitter">
+              <a href="https://twitter.com/partypass" className="footer__social-link" aria-label="Twitter">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="footer__social-link" aria-label="Facebook">
+              <a href="https://facebook.com/partypass" className="footer__social-link" aria-label="Facebook">
                 <Facebook size={20} />
               </a>
-              <a href="#" className="footer__social-link" aria-label="Instagram">
+              <a href="https://instagram.com/partypass" className="footer__social-link" aria-label="Instagram">
                 <Instagram size={20} />
               </a>
-              <a href="#" className="footer__social-link" aria-label="LinkedIn">
+              <a href="https://linkedin.com/company/partypass" className="footer__social-link" aria-label="LinkedIn">
                 <Linkedin size={20} />
               </a>
             </div>

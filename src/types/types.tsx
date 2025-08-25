@@ -12,18 +12,48 @@ export interface User {
 }
 
 // Guest related types
+export type GuestStatus = 'pending' | 'accepted' | 'declined' | 'maybe';
+
 export interface Guest {
   id: string;
+  userId: string;
   eventId: string;
   email: string;
   firstName: string;
   lastName: string;
-  status: 'pending' | 'accepted' | 'declined' | 'maybe';
+  status: GuestStatus;
   invitedAt: Date;
   respondedAt?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
+  phone?: string;
+  dietaryRestrictions?: string;
   plusOne?: boolean;
+  notes?: string;
+  eventName: string;
+  eventDate: Date;
+  rsvpToken?: string;
+}
+
+export interface GuestFilters {
+  eventId?: string;
+  status?: GuestStatus;
+  search?: string;
+  userId?: string;
+}
+
+export interface CreateGuestData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
   dietaryRestrictions?: string;
   notes?: string;
+  plusOne?: boolean;
+}
+
+export interface UpdateGuestData extends Partial<CreateGuestData> {
+  status?: GuestStatus;
 }
 
 // Event related types
@@ -170,7 +200,6 @@ export interface Plan {
 
 // Filter and sorting types
 export type EventStatus = Event['status'];
-export type GuestStatus = Guest['status'];
 export type SortDirection = 'asc' | 'desc';
 
 export interface EventFilters {
@@ -181,8 +210,10 @@ export interface EventFilters {
 }
 
 export interface GuestFilters {
-  status?: GuestStatus[];
+  eventId?: string;
+  status?: GuestStatus;
   search?: string;
+  userId?: string;
 }
 
 export interface SortConfig {

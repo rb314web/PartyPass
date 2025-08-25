@@ -58,11 +58,38 @@ export interface FirebaseEvent {
   acceptedCount: number;
   declinedCount: number;
   pendingCount: number;
+  dresscode?: string;
+  additionalInfo?: string;
+}
+
+export interface CreateEventData {
+  title: string;
+  description: string;
+  date: Date;
+  location: string;
+  maxGuests: number;
+  guestCount: number;
+  acceptedCount: number;
+  declinedCount: number;
+  pendingCount: number;
+  dresscode?: string;
+  additionalInfo?: string;
+  category?: string;
+  tags?: string[];
+  isPublic?: boolean;
+  settings?: {
+    allowGuestInvites: boolean;
+    requireApproval: boolean;
+    sendReminders: boolean;
+    reminderDays: number[];
+  };
+  image?: File;
 }
 
 // Firebase Guest type
 export interface FirebaseGuest {
   id: string;
+  userId: string;
   eventId: string;
   email: string;
   firstName: string;
@@ -70,16 +97,16 @@ export interface FirebaseGuest {
   status: 'pending' | 'accepted' | 'declined' | 'maybe';
   invitedAt: Timestamp;
   respondedAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
   phoneNumber?: string;
   dietaryRestrictions?: string;
-  plusOne?: {
-    firstName: string;
-    lastName: string;
-    dietaryRestrictions?: string;
-  };
+  plusOne?: boolean;
   notes?: string;
   rsvpToken: string; // For secure RSVP links
 }
+
+export interface FirebaseGuestData extends Omit<FirebaseGuest, 'id'> {}
 
 // Firebase Activity type
 export interface FirebaseActivity {

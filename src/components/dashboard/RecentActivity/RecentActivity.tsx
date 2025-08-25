@@ -5,13 +5,9 @@ import { pl } from 'date-fns/locale';
 import { CheckCircle, Calendar, UserX, UserCheck } from 'lucide-react';
 import './RecentActivity.scss';
 
-interface Activity {
-  id: string;
-  type: 'guest_response' | 'event_created' | 'guest_declined' | 'guest_accepted' | 'event_updated' | 'event_deleted';
-  message: string;
-  timestamp: Date;
-  eventId: string;
-}
+import { Activity as GlobalActivity } from '../../../types';
+
+type Activity = GlobalActivity;
 
 interface RecentActivityProps {
   activities: Activity[];

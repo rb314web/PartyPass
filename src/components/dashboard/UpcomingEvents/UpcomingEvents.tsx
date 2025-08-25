@@ -12,9 +12,9 @@ interface UpcomingEventsProps {
 
 const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
   const getResponseStats = (event: Event) => {
-    const total = event.guests.length;
-    const accepted = event.guests.filter(g => g.status === 'accepted').length;
-    const pending = event.guests.filter(g => g.status === 'pending').length;
+    const total = event.guestCount;
+    const accepted = event.acceptedCount;
+    const pending = event.pendingCount;
     
     return { total, accepted, pending };
   };

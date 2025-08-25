@@ -1,0 +1,29 @@
+.add-guest-dialog {
+  .MuiDialog-paper {
+    min-width: 500px;
+    
+    @media (max-width: 600px) {
+      min-width: 100%;
+      margin: 16px;
+    }
+  }
+
+  .form-grid {
+    margin-top: 16px;
+  }
+
+  .form-field {
+    margin-bottom: 16px;
+  }
+
+  .plus-one-checkbox {
+    margin-top: 8px;
+  }
+}
+
+.dialog-actions {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

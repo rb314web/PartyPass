@@ -51,10 +51,10 @@ const EventsList: React.FC<EventsListProps> = ({
   };
 
   const getGuestStats = (event: Event) => {
-    const total = event.guests.length;
-    const accepted = event.guests.filter(g => g.status === 'accepted').length;
-    const pending = event.guests.filter(g => g.status === 'pending').length;
-    const declined = event.guests.filter(g => g.status === 'declined').length;
+    const total = event.guestCount;
+    const accepted = event.acceptedCount;
+    const pending = event.pendingCount;
+    const declined = event.declinedCount;
     
     return { total, accepted, pending, declined };
   };

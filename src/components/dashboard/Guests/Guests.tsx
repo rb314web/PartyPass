@@ -1,5 +1,4 @@
-// components/dashboard/Guests/Guests.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -10,27 +9,17 @@ import {
   Mail,
   Phone,
   Calendar,
-  MapPin,
   UserCheck,
   UserX,
-  Clock
+  Clock,
+  AlertCircle
 } from 'lucide-react';
+import { useAuth } from '../../../hooks/useAuth';
+import type { Guest } from '../../../types';
+import { GuestService, GuestFilters } from '../../../services/firebase/guestService';
+import { EventService } from '../../../services/firebase/eventService';
+import { AddGuest } from './AddGuest/AddGuest';
 import './Guests.scss';
-
-interface Guest {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  status: 'confirmed' | 'pending' | 'declined' | 'maybe';
-  eventId: string;
-  eventName: string;
-  eventDate: Date;
-  rsvpDate?: Date;
-  dietaryRestrictions?: string;
-  notes?: string;
-}
 
 const Guests: React.FC = () => {
   const navigate = useNavigate();
@@ -39,45 +28,49 @@ const Guests: React.FC = () => {
   const [sortBy, setSortBy] = useState<'name' | 'event' | 'status' | 'date'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Mock data - w przyszłości będzie z API
-  const guests: Guest[] = useMemo(() => [
-    {
-      id: '1',
-      firstName: 'Jan',
-      lastName: 'Kowalski',
-      email: 'jan.kowalski@email.com',
-      phone: '+48 123 456 789',
-      status: 'confirmed',
-      eventId: '1',
-      eventName: 'Urodziny Ani',
-      eventDate: new Date('2024-02-15'),
-      rsvpDate: new Date('2024-02-10'),
-      dietaryRestrictions: 'Bezglutenowe',
-      notes: 'Przyjdzie z partnerem'
-    },
-    {
-      id: '2',
-      firstName: 'Anna',
-      lastName: 'Nowak',
-      email: 'anna.nowak@email.com',
-      status: 'pending',
-      eventId: '1',
-      eventName: 'Urodziny Ani',
-      eventDate: new Date('2024-02-15')
-    },
-    {
-      id: '3',
-      firstName: 'Piotr',
-      lastName: 'Wiśniewski',
-      email: 'piotr.wisniewski@email.com',
-      phone: '+48 987 654 321',
-      status: 'declined',
-      eventId: '2',
-      eventName: 'Spotkanie firmowe',
-      eventDate: new Date('2024-02-20'),
-      rsvpDate: new Date('2024-02-12')
+  const { user } = useAuth();
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+
+  const loadGuests = useCallback(async (isLoadingMore = false) => {
+    try {
+      if (!isLoadingMore) {
+        setIsLoading(true);
+      }
+      const filters: GuestFilters = {};
+      if (filterStatus !== 'all') {
+        filters.status = filterStatus;
+      }
+      if (searchQuery) {
+        filters.search = searchQuery;
+      }
+
+      const result = await GuestService.getUserGuests(
+        user!.id,
+        filters,
+        10,
+        isLoadingMore ? lastDoc : undefined
+      );
+
+      setGuests(prev => isLoadingMore ? [...prev, ...result.guests] : result.guests);
+      setLastDoc(result.lastDoc);
+      setHasMore(result.hasMore);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-  ], []);
+  }, [user, searchQuery, filterStatus, lastDoc]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadGuests();
+    }
+  }, [user, searchQuery, filterStatus]);
 
   const filteredAndSortedGuests = useMemo(() => {
     let filtered = guests.filter(guest => {
@@ -123,7 +116,7 @@ const Guests: React.FC = () => {
 
   const getStatusColor = (status: Guest['status']) => {
     const colors = {
-      confirmed: 'success',
+      accepted: 'success',
       pending: 'warning',
       declined: 'error',
       maybe: 'info'
@@ -133,7 +126,7 @@ const Guests: React.FC = () => {
 
   const getStatusLabel = (status: Guest['status']) => {
     const labels = {
-      confirmed: 'Potwierdzone',
+      accepted: 'Potwierdzone',
       pending: 'Oczekujące',
       declined: 'Odrzucone',
       maybe: 'Może'
@@ -143,35 +136,74 @@ const Guests: React.FC = () => {
 
   const getStatusIcon = (status: Guest['status']) => {
     switch (status) {
-      case 'confirmed': return <UserCheck size={16} />;
+      case 'accepted': return <UserCheck size={16} />;
       case 'pending': return <Clock size={16} />;
       case 'declined': return <UserX size={16} />;
       case 'maybe': return <Clock size={16} />;
     }
   };
 
+  const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
+  const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (user?.id) {
+        try {
+          const result = await EventService.getUserEvents(user.id);
+          const mappedEvents = result.events.map(event => ({
+            id: event.id,
+            title: event.title
+          }));
+          setEvents(mappedEvents);
+          if (mappedEvents.length > 0) {
+            setSelectedEventId(mappedEvents[0].id);
+          }
+        } catch (error) {
+          console.error('Błąd podczas ładowania wydarzeń:', error);
+        }
+      }
+    };
+    loadEvents();
+  }, [user]);
+
   const handleCreateGuest = () => {
-    navigate('/dashboard/guests/create');
+    if (events.length === 0) {
+      alert('Najpierw musisz utworzyć wydarzenie');
+      return;
+    }
+    setIsAddGuestOpen(true);
   };
 
-  const handleGuestAction = (action: string, guestId: string) => {
-    switch (action) {
-      case 'edit':
-        navigate(`/dashboard/guests/edit/${guestId}`);
-        break;
-      case 'delete':
-        // Implementacja usuwania
-        console.log('Delete guest:', guestId);
-        break;
-      case 'email':
-        window.open(`mailto:${guests.find(g => g.id === guestId)?.email}`);
-        break;
-      case 'phone':
-        const guest = guests.find(g => g.id === guestId);
-        if (guest?.phone) {
-          window.open(`tel:${guest.phone}`);
-        }
-        break;
+  const handleGuestAdded = () => {
+    loadGuests();
+  };
+
+  const handleGuestAction = async (action: string, guestId: string) => {
+    try {
+      switch (action) {
+        case 'edit':
+          navigate(`/dashboard/guests/edit/${guestId}`);
+          break;
+        case 'delete':
+          if (window.confirm('Czy na pewno chcesz usunąć tego gościa?')) {
+            await GuestService.deleteGuest(guestId);
+            setGuests(prev => prev.filter(g => g.id !== guestId));
+          }
+          break;
+        case 'email':
+          window.open(`mailto:${guests.find(g => g.id === guestId)?.email}`);
+          break;
+        case 'phone':
+          const guest = guests.find(g => g.id === guestId);
+          if (guest?.phone) {
+            window.open(`tel:${guest.phone}`);
+          }
+          break;
+      }
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -222,7 +254,7 @@ const Guests: React.FC = () => {
             className="guests__filter-select"
           >
             <option value="all">Wszystkie statusy</option>
-            <option value="confirmed">Potwierdzone</option>
+            <option value="accepted">Potwierdzone</option>
             <option value="pending">Oczekujące</option>
             <option value="declined">Odrzucone</option>
             <option value="maybe">Może</option>
@@ -250,7 +282,21 @@ const Guests: React.FC = () => {
       </div>
 
       <div className="guests__content">
-        {filteredAndSortedGuests.length === 0 ? (
+        {isLoading ? (
+          <div className="guests__loading">
+            <div className="guests__spinner"></div>
+            <p>Ładowanie gości...</p>
+          </div>
+        ) : error ? (
+          <div className="guests__error">
+            <AlertCircle size={48} />
+            <h3>Wystąpił błąd</h3>
+            <p>{error}</p>
+            <button onClick={() => loadGuests()} className="guests__retry-btn">
+              Spróbuj ponownie
+            </button>
+          </div>
+        ) : filteredAndSortedGuests.length === 0 ? (
           <div className="guests__empty">
             <Users size={64} />
             <h3>
@@ -378,12 +424,23 @@ const Guests: React.FC = () => {
   );
 
   return (
-    <Routes>
-      <Route index element={<GuestsListPage />} />
-      <Route path="create" element={<div>Formularz dodawania gościa</div>} />
-      <Route path="edit/:id" element={<div>Formularz edycji gościa</div>} />
-      <Route path="import" element={<div>Import gości</div>} />
-    </Routes>
+    <>
+      <Routes>
+        <Route index element={<GuestsListPage />} />
+        <Route path="edit/:id" element={<div>Formularz edycji gościa</div>} />
+        <Route path="import" element={<div>Import gości</div>} />
+      </Routes>
+
+      <AddGuest
+        open={isAddGuestOpen}
+        onClose={() => setIsAddGuestOpen(false)}
+        userId={user?.id || ''}
+        eventId={selectedEventId}
+        events={events}
+        onEventChange={setSelectedEventId}
+        onGuestAdded={handleGuestAdded}
+      />
+    </>
   );
 };
 

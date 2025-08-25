@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo",
+    "skipLibCheck": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true
+  }
+}
+}

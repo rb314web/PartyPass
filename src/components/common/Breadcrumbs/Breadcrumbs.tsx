@@ -1,7 +1,9 @@
 // components/common/Breadcrumbs/Breadcrumbs.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
+import { EventService } from '../../../services/firebase/eventService';
+import { useAuth } from '../../../hooks/useAuth';
 import './Breadcrumbs.scss';
 
 interface BreadcrumbItem {
@@ -12,9 +14,44 @@ interface BreadcrumbItem {
 
 const Breadcrumbs: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const [eventTitle, setEventTitle] = useState<string | null>(null);
+
+  // Get event ID from the last segment of the path if we're in events section
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const eventId = pathSegments.includes('events') ? 
+    pathSegments[pathSegments.indexOf('events') + 1] : null;
+
+  useEffect(() => {
+    const loadEventTitle = async () => {
+      // Debug
+      console.log('Loading title effect triggered');
+      console.log('Event ID:', eventId);
+      console.log('User:', user);
+      console.log('Current title:', eventTitle);
+
+      if (!eventId || !user) {
+        return;
+      }
+
+      try {
+        const event = await EventService.getEventById(eventId, user.id);
+        console.log('Loaded event:', event);
+        if (event) {
+          setEventTitle(event.title);
+        }
+      } catch (error) {
+        console.error('Błąd podczas ładowania tytułu wydarzenia:', error);
+        setEventTitle('Wydarzenie niedostępne');
+      }
+    };
+
+    loadEventTitle();
+  }, [eventId, user]);
 
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     const pathSegments = location.pathname.split('/').filter(Boolean);
+
     const breadcrumbs: BreadcrumbItem[] = [];
 
     // Dodaj stronę główną
@@ -28,9 +65,30 @@ const Breadcrumbs: React.FC = () => {
     let currentPath = '';
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
-      
-      // Mapuj segmenty na czytelne nazwy
-      const label = getSegmentLabel(segment, pathSegments, index);
+      let label: string;
+
+      // Sprawdź, czy to ID wydarzenia w sekcji events
+      if (eventId && segment === eventId && pathSegments.includes('events')) {
+        if (eventTitle) {
+          label = eventTitle;
+        } else {
+          label = 'Ładowanie...';
+          // Debug
+          console.log('Event ID:', eventId);
+          console.log('Current segment:', segment);
+          console.log('Event title:', eventTitle);
+          console.log('User:', user);
+        }
+      } 
+      // Obsługa edycji wydarzenia
+      else if (segment === 'edit' && index < pathSegments.length - 1 && pathSegments[index + 1] === eventId) {
+        label = 'Edycja';
+        currentPath = currentPath.replace('/edit', '');
+      }
+      // Standardowe etykiety
+      else {
+        label = labelMap[segment] || segment;
+      }
       
       breadcrumbs.push({
         label,
@@ -38,36 +96,25 @@ const Breadcrumbs: React.FC = () => {
       });
     });
 
-    return breadcrumbs;
+    // Usuń duplikaty ścieżek
+    return breadcrumbs.filter((item, index, self) => 
+      index === self.findIndex((t) => t.path === item.path)
+    );
   };
 
-  const getSegmentLabel = (segment: string, allSegments: string[], index: number): string => {
-    // Mapowanie segmentów na czytelne nazwy
-    const labelMap: Record<string, string> = {
-      'dashboard': 'Dashboard',
-      'events': 'Wydarzenia',
-      'guests': 'Goście',
-      'analytics': 'Analityka',
-      'settings': 'Ustawienia',
-      'create': 'Utwórz',
-      'edit': 'Edytuj',
-      'login': 'Logowanie',
-      'register': 'Rejestracja'
-    };
-
-    // Jeśli to ostatni segment i ma ID (np. edit/123), pokaż "Edytuj"
-    if (index === allSegments.length - 1 && /^\d+$/.test(segment)) {
-      const previousSegment = allSegments[index - 1];
-      if (previousSegment === 'edit') {
-        return 'Edytuj';
-      }
-      if (previousSegment === 'events' || previousSegment === 'guests') {
-        return 'Szczegóły';
-      }
-    }
-
-    return labelMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+  const labelMap: Record<string, string> = {
+    'dashboard': 'Dashboard',
+    'events': 'Wydarzenia',
+    'guests': 'Goście',
+    'analytics': 'Analityka',
+    'settings': 'Ustawienia',
+    'create': 'Utwórz',
+    'edit': 'Edycja',
+    'login': 'Logowanie',
+    'register': 'Rejestracja'
   };
+
+
 
   const breadcrumbs = generateBreadcrumbs();
 

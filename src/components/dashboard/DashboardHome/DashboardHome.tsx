@@ -17,9 +17,9 @@ import QuickActions from '../QuickActions/QuickActions';
 import RecentActivity from '../RecentActivity/RecentActivity';
 import UpcomingEvents from '../UpcomingEvents/UpcomingEvents';
 import EventsChart from '../EventsChart/EventsChart';
-import { mockStats, mockEvents, mockRecentActivity } from '../../../services/mockData';
+import { EventService, EventStats } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
-import { StatsCardProps, Activity } from '../../../types';
+import { Activity } from '../../../types';
 import './DashboardHome.scss';
 
 // Local interface that matches what StatsCard component actually expects
@@ -36,56 +36,80 @@ const DashboardHome: React.FC = () => {
   const { user } = useAuth();
 
   // Use the component's expected interface
+  const [stats, setStats] = React.useState<EventStats | null>(null);
+
+  React.useEffect(() => {
+    if (user?.id) {
+      EventService.getEventStats(user.id)
+        .then(setStats)
+        .catch(() => setStats(null));
+    }
+  }, [user]);
+
   const statsCards: StatsCardComponentProps[] = [
     {
       title: 'Wszystkie wydarzenia',
-      value: mockStats.totalEvents,
-      change: '+12%',
+      value: stats?.totalEvents ?? 0,
+      change: '+0%',
       trend: 'up',
       icon: Calendar,
       color: 'blue'
     },
     {
       title: 'Aktywne wydarzenia',
-      value: mockStats.activeEvents,
-      change: '+2',
+      value: stats?.activeEvents ?? 0,
+      change: '+0',
       trend: 'up',
       icon: CheckCircle,
       color: 'green'
     },
     {
       title: 'Łączni goście',
-      value: mockStats.totalGuests,
-      change: '+23%',
+      value: stats?.totalGuests ?? 0,
+      change: '+0%',
       trend: 'up',
       icon: Users,
       color: 'purple'
     },
     {
       title: 'Wskaźnik odpowiedzi',
-      value: `${mockStats.responseRate}%`,
-      change: '+5%',
+      value: `${stats?.responseRate ?? 0}%`,
+      change: '+0%',
       trend: 'up',
       icon: TrendingUp,
       color: 'orange'
     }
   ];
 
-  // Local type for RecentActivity component that matches its expected props
-  type RecentActivityType = Omit<Activity, 'type'> & {
-    type: 'guest_response' | 'event_created' | 'guest_declined' | 'guest_accepted' | 'event_updated' | 'event_deleted';
-  };
+  const [activities, setActivities] = React.useState<Activity[]>([]);
+  const upcomingEvents: any[] = [];
 
-  const upcomingEvents = mockEvents
-    .filter(event => event.status === 'active' && new Date(event.date) > new Date())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 3);
+  React.useEffect(() => {
+    if (user?.id) {
+      // Pobierz ostatnie aktywności
+      EventService.getRecentActivities(user.id, 10)
+        .then(setActivities)
+        .catch(error => {
+          console.error('Błąd podczas pobierania aktywności:', error);
+          setActivities([]);
+        });
+    }
+  }, [user]);
 
-  // Filter activities and properly type them for RecentActivity component
-  const filteredActivities: RecentActivityType[] = mockRecentActivity
-    .filter((activity): activity is RecentActivityType => 
-      ['guest_response', 'event_created', 'guest_declined', 'guest_accepted', 'event_updated', 'event_deleted'].includes(activity.type)
-    );
+  // Filtruj aktywności według dozwolonych typów
+  const allowedActivityTypes = [
+    'guest_response',
+    'event_created',
+    'guest_declined',
+    'guest_accepted',
+    'event_updated',
+    'event_deleted',
+    'guest_maybe',
+    'event_cancelled'
+  ] as const;
+  
+  const filteredActivities = activities.filter(activity => 
+    allowedActivityTypes.includes(activity.type));
 
   return (
     <div className="dashboard-home">

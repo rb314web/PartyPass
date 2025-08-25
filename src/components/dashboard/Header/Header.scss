@@ -2,12 +2,20 @@
 @import '../../../styles/globals/variables';
 
 .header {
-  @include flex-between;
-  padding: var(--space-xl) var(--space-2xl);
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
   background: var(--white);
-  border-bottom: 1px solid var(--gray-100);
   gap: var(--space-lg);
   position: relative;
+  align-items: center;
+  
+  @media (max-width: 1300px) {
+    padding: var(--space-sm) var(--space-md);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -48,28 +56,39 @@
   
   &__left {
     flex: 1;
+    min-width: 0;
+    margin-top: var(--space-lg);
   }
   
   &__greeting {
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 600;
     color: var(--gray-900);
-    margin: 0 0 var(--space-xs) 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
   }
   
   &__subtitle {
     color: var(--gray-600);
-    margin: 0;
+    margin: var(--space-2xs) 0 0 0;
+    font-size: 0.875rem;
+    font-weight: normal;
   }
   
   &__right {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
+    gap: var(--space-xs);
+    
+    @media (max-width: 1300px) {
+      justify-content: flex-start;
+    }
     
     @media (max-width: 768px) {
-      width: 100%;
-      justify-content: space-between;
+      flex: 1;
+      justify-content: flex-end;
     }
   }
 
@@ -81,26 +100,31 @@
   
   &__search {
     position: relative;
+    margin-right: var(--space-sm);
     
     @media (max-width: 640px) {
-      flex: 1;
+      display: none;
     }
     
     &-icon {
       position: absolute;
-      left: var(--space-md);
+      left: var(--space-sm);
       top: 50%;
       transform: translateY(-50%);
       color: var(--gray-400);
+      width: 16px;
+      height: 16px;
     }
     
     &-input {
-      padding: var(--space-sm) var(--space-md) var(--space-sm) 2.5rem;
+      padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-xl);
       border: 1px solid var(--gray-200);
-      border-radius: var(--radius-md);
-      background: var(--gray-50);
-      width: 300px;
-      transition: all 0.3s ease;
+      border-radius: var(--radius-full);
+      background: var(--white);
+      color: var(--gray-900);
+      width: 240px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
       
       @media (max-width: 640px) {
         width: 100%;
@@ -121,11 +145,19 @@
   
   &__notifications {
     @include button-base;
-    background: var(--gray-100);
-    color: var(--gray-600);
-    width: 44px;
-    height: 44px;
+    background: transparent;
+    color: var(--gray-700);
+    width: 32px;
+    height: 32px;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      background: var(--gray-100);
+      border-radius: var(--radius-full);
+    }
     
     &:hover {
       background: var(--gray-200);
@@ -148,11 +180,16 @@
   
   &__cta {
     @include button-base;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: var(--primary);
     color: white;
-    padding: var(--space-sm) var(--space-lg);
-    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    gap: var(--space-xs);
+    font-size: 0.875rem;
     font-weight: 500;
+    border-radius: var(--radius-full);
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
     
     &:hover {
       transform: translateY(-1px);

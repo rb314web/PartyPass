@@ -65,12 +65,12 @@ export const useTheme = (): UseThemeReturn => {
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, applyTheme]);
 
   // Apply theme on mount and theme change
   useEffect(() => {
     applyTheme(theme);
-  }, [theme]);
+  }, [theme, applyTheme]);
 
   return {
     theme,
