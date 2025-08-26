@@ -1,7 +1,7 @@
 @import '../../../../styles/globals/mixins';
 
 .profile-settings {
-  padding: var(--space-2xl);
+  padding: 0;
   
   &__header {
     margin-bottom: var(--space-2xl);
@@ -23,6 +23,14 @@
   
   &__section {
     margin-bottom: var(--space-2xl);
+    padding: var(--space-xl);
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
     
     h3 {
       font-size: 1.125rem;
@@ -30,6 +38,13 @@
       color: var(--gray-900);
       margin: 0 0 var(--space-lg) 0;
     }
+  }
+  
+  // Form layout
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
   }
   
   &__avatar-section {
@@ -79,6 +94,9 @@
     &:hover {
       background: var(--primary-dark);
     }
+    
+    input { display: none; }
+    font-size: 0.875rem;
   }
   
   &__avatar-remove {
@@ -91,6 +109,9 @@
       background: var(--error);
       color: white;
     }
+    
+    input { display: none; }
+    font-size: 0.875rem;
   }
   
   &__grid {
@@ -113,5 +134,123 @@
       color: var(--gray-700);
       font-size: 0.875rem;
     }
-}}
+    
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: var(--space-md);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      background: var(--gray-50);
+      transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 44px;
+      
+      &:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+      }
+      
+      &::placeholder {
+        color: var(--gray-400);
+      }
+      
+      &:disabled {
+        background: var(--gray-100);
+        cursor: not-allowed;
+        opacity: .7;
+      }
+    }
+    
+    textarea {
+      line-height: 1.5;
+    }
+  }
   
+  // Actions (save button container)
+  &__actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: var(--space-lg);
+  }
+  
+  &__save-btn {
+    @include button-base;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: var(--space-md) var(--space-xl);
+    font-weight: 500;
+    gap: var(--space-sm);
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    &:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+  
+  &__spinner {
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255,255,255,0.35);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  // Danger zone styling
+  &__danger-zone {
+    margin-top: var(--space-3xl);
+    padding: var(--space-xl);
+    border: 1px solid var(--red-200);
+    background: var(--red-50);
+    border-radius: var(--radius-lg);
+    
+    h3 {
+      margin: 0 0 var(--space-sm) 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--red-700);
+    }
+    
+    p {
+      margin: 0 0 var(--space-lg) 0;
+      color: var(--red-600);
+      font-size: 0.875rem;
+    }
+  }
+  
+  &__danger-btn {
+    @include button-base;
+    background: linear-gradient(135deg, var(--red-500), var(--red-600));
+    color: white;
+    padding: var(--space-md) var(--space-xl);
+    gap: var(--space-sm);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    
+    &:hover {
+      background: linear-gradient(135deg, var(--red-600), var(--red-700));
+    }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+}

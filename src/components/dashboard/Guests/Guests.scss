@@ -279,11 +279,17 @@
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.25rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
   }
 
   &__guest-email {
     font-size: 0.875rem;
     color: var(--text-secondary);
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
   }
 
   &__event-info {

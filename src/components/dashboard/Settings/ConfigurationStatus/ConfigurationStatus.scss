@@ -1,0 +1,191 @@
+// components/dashboard/Settings/ConfigurationStatus/ConfigurationStatus.scss
+.config-status {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+
+  &__title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__items {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+
+  &__label {
+    flex: 1;
+    font-weight: 500;
+    color: #495057;
+  }
+
+  &__value {
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+
+    &.success {
+      color: #198754;
+      background: #d1eddb;
+    }
+
+    &.error {
+      color: #dc3545;
+      background: #f8d7da;
+    }
+
+    &.warning {
+      color: #fd7e14;
+      background: #fff3cd;
+    }
+  }
+
+  &__icon {
+    &--success {
+      color: #198754;
+    }
+
+    &--error {
+      color: #dc3545;
+    }
+
+    &--warning {
+      color: #fd7e14;
+    }
+  }
+
+  &__missing {
+    margin-top: 20px;
+    padding: 16px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+
+    &-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #8a6d3b;
+      margin: 0 0 12px 0;
+    }
+
+    &-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 12px 0;
+    }
+
+    &-item {
+      margin-bottom: 8px;
+
+      code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.875rem;
+        color: #495057;
+      }
+    }
+
+    &-help {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #6c757d;
+
+      code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        color: #495057;
+      }
+    }
+  }
+
+  &__success {
+    margin-top: 20px;
+    padding: 16px;
+    background: #d1eddb;
+    border: 1px solid #badbcc;
+    border-radius: 8px;
+
+    &-message {
+      margin: 0;
+      color: #0f5132;
+      font-weight: 500;
+    }
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .config-status {
+    background: #2d3748;
+    border-color: #4a5568;
+
+    &__title {
+      color: #e2e8f0;
+    }
+
+    &__item {
+      background: #4a5568;
+      border-color: #718096;
+    }
+
+    &__label {
+      color: #cbd5e0;
+    }
+
+    &__missing {
+      background: #744d26;
+      border-color: #9c6b2c;
+
+      &-title {
+        color: #fbd38d;
+      }
+
+      &-help {
+        color: #e2e8f0;
+
+        code {
+          background: #4a5568;
+          color: #e2e8f0;
+        }
+      }
+
+      &-item code {
+        background: #4a5568;
+        color: #e2e8f0;
+      }
+    }
+
+    &__success {
+      background: #22543d;
+      border-color: #38a169;
+
+      &-message {
+        color: #9ae6b4;
+      }
+    }
+  }
+}

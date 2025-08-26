@@ -55,17 +55,20 @@
       color: var(--error);
     }
   }
-  
-  &__value {
+    &__value {
     font-size: 2rem;
     font-weight: 700;
     color: var(--gray-900);
     margin-bottom: var(--space-xs);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
   
   &__title {
     color: var(--gray-600);
     font-size: 0.875rem;
     font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 }

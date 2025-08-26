@@ -23,17 +23,19 @@ import { pl } from 'date-fns/locale';
 import { EventService } from '../../../../services/firebase/eventService';
 import { Event, Guest } from '../../../../types';
 import { useAuth } from '../../../../hooks/useAuth';
+import DuplicateEventModal, { DuplicateEventData } from '../DuplicateEventModal/DuplicateEventModal';
+import InvitationManager from '../InvitationManager/InvitationManager';
 import './EventDetails.scss';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [event, setEvent] = useState<Event | null>(null);
+  const { user } = useAuth();  const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showShareOptions, setShowShareOptions] = useState(false);
-  const [showGuestOptions, setShowGuestOptions] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);  const [showGuestOptions, setShowGuestOptions] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [showInvitationManager, setShowInvitationManager] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -78,24 +80,31 @@ const EventDetails: React.FC = () => {
       alert(`Błąd podczas usuwania wydarzenia: ${error.message}`);
     }
   };
-
   const handleDuplicate = () => {
     if (!event) return;
-    
-    const duplicatedEvent: Event = {
-      ...event,
-      id: Date.now().toString(),
-      title: `${event.title} (kopia)`,
-      status: 'draft',
-      createdAt: new Date(),
-      guestCount: 0,
-      acceptedCount: 0,
-      pendingCount: 0,
-      declinedCount: 0,
-      guests: []
-    };
+    setShowDuplicateModal(true);
+  };
 
-    navigate('/dashboard/events/new', { state: { eventData: duplicatedEvent } });
+  const handleDuplicateConfirm = async (duplicateData: DuplicateEventData) => {
+    if (!event || !user) return;
+
+    try {
+      await EventService.duplicateEvent(event.id, user.id, {
+        title: duplicateData.title,
+        date: duplicateData.date,
+        includeGuests: duplicateData.includeGuests,
+        guestAction: duplicateData.guestAction
+      });
+
+      // Show success message and optionally redirect
+      alert('Wydarzenie zostało pomyślnie zduplikowane!');
+      setShowDuplicateModal(false);
+      
+      // Optionally redirect to the events list to see the new event
+      navigate('/dashboard/events');
+    } catch (error: any) {
+      alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
+    }
   };
 
   const handleShare = () => {
@@ -309,12 +318,18 @@ const EventDetails: React.FC = () => {
 
       {/* Lista gości */}
       <div className="event-details__guests">
-        <div className="event-details__section-header">
-          <h2>Lista gości</h2>
+        <div className="event-details__section-header">          <h2>Lista gości</h2>
           <div className="event-details__guest-actions">
             <button onClick={downloadGuestList}>
               <Download size={20} />
               Pobierz listę
+            </button>
+            <button 
+              onClick={() => setShowInvitationManager(true)}
+              className="button--secondary"
+            >
+              <Mail size={20} />
+              Zarządzaj zaproszeniami
             </button>
             <button onClick={handleAddGuests} className="button--primary">
               <Plus size={20} />
@@ -424,9 +439,24 @@ const EventDetails: React.FC = () => {
                 </div>
               </form>
             </div>
-          </div>
-        )}
-      </div>
+          </div>        )}
+      </div>      {/* Modal duplikowania wydarzenia */}
+      {event && (
+        <DuplicateEventModal
+          isOpen={showDuplicateModal}
+          onClose={() => setShowDuplicateModal(false)}
+          event={event}
+          onDuplicate={handleDuplicateConfirm}
+        />
+      )}
+
+      {/* Manager zaproszeń */}
+      {event && showInvitationManager && (
+        <InvitationManager
+          event={event}
+          onClose={() => setShowInvitationManager(false)}
+        />
+      )}
     </div>
   );
 };

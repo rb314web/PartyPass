@@ -15,6 +15,7 @@ interface AuthContextType {
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -161,6 +162,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const user = await AuthService.loginWithGoogle();
+      setUser(user);
+    } catch (err) {
+      const authError = err as AuthError;
+      setError(authError.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearError = () => setError(null);
 
   return (
@@ -175,7 +192,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateProfile,
       changePassword,
       resetPassword,
-      deleteAccount
+      deleteAccount,
+      loginWithGoogle
     }}>
       {children}
     </AuthContext.Provider>

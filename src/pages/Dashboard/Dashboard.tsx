@@ -9,10 +9,14 @@ import Events from '../../components/dashboard/Events/Events';
 import Guests from '../../components/dashboard/Guests/Guests';
 import Analytics from '../../components/dashboard/Analytics/Analytics';
 import Settings from '../../components/dashboard/Settings/Settings';
+import usePageAnalytics from '../../hooks/usePageAnalytics';
 import './Dashboard.scss';
 
 const Dashboard: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Track page analytics
+  usePageAnalytics();
 
   const handleMobileToggle = () => {
     setIsMobileOpen(!isMobileOpen);

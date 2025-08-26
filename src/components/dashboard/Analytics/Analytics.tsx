@@ -1,87 +1,149 @@
 // components/dashboard/Analytics/Analytics.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
   Users, 
   Calendar,
   Download,
-  Filter,
   Eye,
-  Share2,
-  Mail,
-  Smartphone,
-  Monitor,
-  Square
+  Clock,
+  Target,
+  Zap,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
+import { AnalyticsService, AnalyticsReport } from '../../../services/firebase/analyticsService';
+import AnalyticsExportService from '../../../services/firebase/analyticsExportService';
+import { useAuth } from '../../../hooks/useAuth';
+import RealTimeWidget from './RealTimeWidget/RealTimeWidget';
+import NotificationsWidget from './NotificationsWidget/NotificationsWidget';
+import LineChart from './LineChart/LineChart';
+import AnalyticsFilters, { AnalyticsFiltersData } from './AnalyticsFilters/AnalyticsFilters';
 import './Analytics.scss';
 
-interface AnalyticsData {
-  totalEvents: number;
-  totalGuests: number;
-  averageGuestsPerEvent: number;
-  rsvpRate: number;
-  eventsThisMonth: number;
-  eventsLastMonth: number;
-  growthRate: number;
-  topEventTypes: Array<{
-    type: string;
-    count: number;
-    percentage: number;
-  }>;
-  monthlyStats: Array<{
-    month: string;
-    events: number;
-    guests: number;
-  }>;
-  guestEngagement: {
-    confirmed: number;
-    pending: number;
-    declined: number;
-    maybe: number;
-  };
-  deviceUsage: {
-    desktop: number;
-    mobile: number;
-    tablet: number;
-  };
+interface TimeRange {
+  label: string;
+  value: string;
+  days: number;
 }
 
-const Analytics: React.FC = () => {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
-  const [selectedMetric, setSelectedMetric] = useState<'events' | 'guests' | 'engagement'>('events');
+const TIME_RANGES: TimeRange[] = [
+  { label: 'Ostatnie 7 dni', value: '7d', days: 7 },
+  { label: 'Ostatnie 30 dni', value: '30d', days: 30 },
+  { label: 'Ostatnie 90 dni', value: '90d', days: 90 },
+  { label: 'Ostatni rok', value: '1y', days: 365 }
+];
 
-  // Mock data - w przyszłości będzie z API
-  const analyticsData: AnalyticsData = {
-    totalEvents: 24,
-    totalGuests: 342,
-    averageGuestsPerEvent: 14.25,
-    rsvpRate: 78.5,
-    eventsThisMonth: 8,
-    eventsLastMonth: 6,
-    growthRate: 33.3,
-    topEventTypes: [
-      { type: 'Urodziny', count: 12, percentage: 50 },
-      { type: 'Spotkania firmowe', count: 6, percentage: 25 },
-      { type: 'Wesele', count: 3, percentage: 12.5 },
-      { type: 'Inne', count: 3, percentage: 12.5 }
-    ],
-    monthlyStats: [
-      { month: 'Sty', events: 4, guests: 56 },
-      { month: 'Lut', events: 6, guests: 78 },
-      { month: 'Mar', events: 8, guests: 112 },
-      { month: 'Kwi', events: 6, guests: 96 }
-    ],
-    guestEngagement: {
-      confirmed: 268,
-      pending: 45,
-      declined: 18,
-      maybe: 11
-    },
-    deviceUsage: {
-      desktop: 65,
-      mobile: 30,
-      tablet: 5
+const Analytics: React.FC = () => {
+  const { user } = useAuth();
+  const [timeRange, setTimeRange] = useState<string>('30d');
+  const [selectedMetric, setSelectedMetric] = useState<'events' | 'guests' | 'engagement'>('events');
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  
+  // Filters state
+  const [filters, setFilters] = useState<AnalyticsFiltersData>({
+    dateRange: { start: null, end: null },
+    eventTypes: [],
+    locations: [],
+    guestCountRange: { min: 0, max: 1000 },
+    status: [],
+    searchQuery: ''
+  });
+
+  // Oblicz daty na podstawie wybranego zakresu
+  const dateRange = useMemo(() => {
+    const selectedRange = TIME_RANGES.find(r => r.value === timeRange);
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - (selectedRange?.days || 30));
+    
+    return { startDate, endDate };
+  }, [timeRange]);
+
+  // Pobierz dane analityczne
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const loadAnalytics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const report = await AnalyticsService.generateReport(user.id, {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate
+        });
+        
+        setAnalyticsData(report);
+      } catch (err: any) {
+        console.error('Błąd podczas ładowania analityki:', err);
+        setError('Nie udało się załadować danych analitycznych');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAnalytics();
+  }, [user?.id, dateRange]);  // Eksport danych
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Click outside handler for export dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.analytics__export-dropdown')) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showExportMenu]);
+
+  const handleExport = async (type: 'csv' | 'pdf' | 'html' = 'csv') => {
+    if (!analyticsData || !user?.id) return;
+    
+    try {
+      setIsExporting(true);
+      
+      switch (type) {
+        case 'csv':
+          await AnalyticsExportService.exportToCSV(analyticsData, filters);
+          break;
+          
+        case 'pdf':
+          await AnalyticsExportService.exportToPDF('analytics-dashboard', 
+            `analytics-report-${timeRange}-${new Date().toISOString().split('T')[0]}.pdf`);
+          break;
+          
+        case 'html':
+          await AnalyticsExportService.exportToHTML(analyticsData, 'analytics-dashboard');
+          break;
+          
+        default:
+          await AnalyticsExportService.exportToCSV(analyticsData, filters);
+      }
+      
+      setShowExportMenu(false);
+    } catch (err: any) {
+      console.error('Błąd podczas eksportu:', err);
+      alert(err.message || 'Nie udało się wyeksportować danych');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Odświeżenie danych
+  const handleRefresh = () => {
+    if (user?.id) {
+      const event = new CustomEvent('refreshAnalytics');
+      window.dispatchEvent(event);
     }
   };
 
@@ -214,9 +276,49 @@ const Analytics: React.FC = () => {
       </div>
     );
   };
+  if (loading) {
+    return (
+      <div className="analytics analytics--loading">
+        <div className="analytics__loader">
+          <RefreshCw className="analytics__spinner" size={32} />
+          <p>Ładowanie analityki...</p>
+        </div>
+      </div>
+    );
+  }
 
+  if (error) {
+    return (
+      <div className="analytics analytics--error">
+        <div className="analytics__error">
+          <AlertCircle size={32} />
+          <h3>Błąd podczas ładowania danych</h3>
+          <p>{error}</p>
+          <button 
+            onClick={handleRefresh}
+            className="analytics__retry-btn"
+          >
+            <RefreshCw size={20} />
+            Spróbuj ponownie
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analyticsData) {
+    return (
+      <div className="analytics analytics--empty">
+        <div className="analytics__empty">
+          <BarChart3 size={48} />
+          <h3>Brak danych analitycznych</h3>
+          <p>Rozpocznij organizowanie wydarzeń, aby zobaczyć statystyki</p>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="analytics">
+    <div className="analytics" id="analytics-dashboard">
       <div className="analytics__header">
         <div className="analytics__title">
           <BarChart3 size={32} />
@@ -230,22 +332,72 @@ const Analytics: React.FC = () => {
           <div className="analytics__time-range">
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as any)}
+              onChange={(e) => setTimeRange(e.target.value)}
               className="analytics__select"
             >
-              <option value="7d">Ostatnie 7 dni</option>
-              <option value="30d">Ostatnie 30 dni</option>
-              <option value="90d">Ostatnie 90 dni</option>
-              <option value="1y">Ostatni rok</option>
+              {TIME_RANGES.map(range => (
+                <option key={range.value} value={range.value}>
+                  {range.label}
+                </option>
+              ))}
             </select>
           </div>
-          
-          <button className="analytics__export-btn">
-            <Download size={20} />
-            Eksportuj
-          </button>
-        </div>
+            <div className="analytics__export-dropdown">
+            <button 
+              className="analytics__export-btn"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={isExporting}
+            >
+              {isExporting ? <RefreshCw className="analytics__spinner" size={20} /> : <Download size={20} />}
+              {isExporting ? 'Eksportowanie...' : 'Eksportuj'}
+              <svg width="12" height="12" viewBox="0 0 12 12" className="analytics__dropdown-arrow">
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              </svg>
+            </button>
+            
+            {showExportMenu && (
+              <div className="analytics__export-menu">
+                <button onClick={() => handleExport('csv')} className="analytics__export-option">
+                  <span>📊</span>
+                  <div>
+                    <strong>CSV</strong>
+                    <small>Dane tabelaryczne</small>
+                  </div>
+                </button>
+                <button onClick={() => handleExport('pdf')} className="analytics__export-option">
+                  <span>📄</span>
+                  <div>
+                    <strong>PDF</strong>
+                    <small>Pełny raport</small>
+                  </div>
+                </button>
+                <button onClick={() => handleExport('html')} className="analytics__export-option">
+                  <span>🌐</span>
+                  <div>
+                    <strong>HTML</strong>
+                    <small>Interaktywny raport</small>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button 
+            className="analytics__refresh-btn"
+            onClick={handleRefresh}
+            title="Odśwież dane"
+          >
+            <RefreshCw size={20} />
+          </button>        </div>
       </div>
+
+      {/* Analytics Filters */}
+      <AnalyticsFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        availableEventTypes={analyticsData.popularEventTypes.map((type: any) => type.type)}
+        availableLocations={analyticsData.topLocations.map((location: any) => location.location)}
+      />
 
       {/* Statystyki główne */}
       <div className="analytics__stats-grid">
@@ -276,6 +428,11 @@ const Analytics: React.FC = () => {
         />
       </div>
 
+      {/* Real-time Analytics */}
+      <div className="analytics__realtime-section">
+        <RealTimeWidget />
+      </div>
+
       {/* Wzrost */}
       <div className="analytics__growth-card">
         <div className="analytics__growth-header">
@@ -300,11 +457,11 @@ const Analytics: React.FC = () => {
       {/* Wykresy */}
       <div className="analytics__charts-grid">
         <ChartCard 
-          title="Typy wydarzeń"
+          title="Popularne typy wydarzeń"
           actions={
             <select
               value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value as any)}
+              onChange={(e) => setSelectedMetric(e.target.value as 'events' | 'guests' | 'engagement')}
               className="analytics__metric-select"
             >
               <option value="events">Wydarzenia</option>
@@ -314,7 +471,7 @@ const Analytics: React.FC = () => {
           }
         >
           <SimpleBarChart
-            data={analyticsData.topEventTypes.map(type => ({
+            data={analyticsData.popularEventTypes.map((type: any) => ({
               label: type.type,
               value: type.count,
               color: 'var(--primary-500)'
@@ -350,43 +507,115 @@ const Analytics: React.FC = () => {
               ))}
             </div>
           </div>
-        </ChartCard>
-
-        <ChartCard title="Użycie urządzeń">
-          <div className="analytics__device-chart">
-            <DonutChart
-              data={[
-                { label: 'Desktop', value: analyticsData.deviceUsage.desktop, color: 'var(--primary-500)' },
-                { label: 'Mobile', value: analyticsData.deviceUsage.mobile, color: 'var(--success-500)' },
-                { label: 'Tablet', value: analyticsData.deviceUsage.tablet, color: 'var(--warning-500)' }
-              ]}
-            />
-            <div className="analytics__device-legend">
-              <div className="analytics__device-item">
-                <Monitor size={16} />
-                <span>Desktop: {analyticsData.deviceUsage.desktop}%</span>
-              </div>
-              <div className="analytics__device-item">
-                <Smartphone size={16} />
-                <span>Mobile: {analyticsData.deviceUsage.mobile}%</span>
-              </div>
-              <div className="analytics__device-item">
-                <Square size={16} />
-                <span>Tablet: {analyticsData.deviceUsage.tablet}%</span>
-              </div>
-            </div>
-          </div>
-        </ChartCard>
-
-        <ChartCard title="Statystyki miesięczne">
+        </ChartCard>        <ChartCard title="Trendy miesięczne">
           <SimpleBarChart
-            data={analyticsData.monthlyStats.map(stat => ({
+            data={analyticsData.monthlyTrends.map((stat: any) => ({
               label: stat.month,
               value: stat.events,
               color: 'var(--primary-500)'
             }))}
           />
         </ChartCard>
+
+        <ChartCard title="Wzrost liczby wydarzeń w czasie">
+          <LineChart
+            data={analyticsData.monthlyTrends.map((stat: any, index: number) => ({
+              date: stat.month,
+              value: stat.events,
+              label: `${stat.events} wydarzeń`
+            }))}
+            title="Wydarzenia"
+            color="var(--primary-500)"
+            height={220}
+          />
+        </ChartCard>
+
+        <ChartCard title="Popularność gości w czasie">
+          <LineChart
+            data={analyticsData.monthlyTrends.map((stat: any, index: number) => ({
+              date: stat.month,
+              value: stat.guests || Math.floor(stat.events * 8.5), // Estimate guests if not available
+              label: `${stat.guests || Math.floor(stat.events * 8.5)} gości`
+            }))}
+            title="Goście"
+            color="var(--success-500)"
+            height={220}
+          />
+        </ChartCard>
+
+        <ChartCard title="Popularne lokalizacje">
+          <SimpleBarChart
+            data={analyticsData.topLocations.slice(0, 5).map((location: any) => ({
+              label: location.location,
+              value: location.count,
+              color: 'var(--success-500)'
+            }))}
+          />
+        </ChartCard>
+      </div>      {/* Szczegółowe analizy */}
+      <div className="analytics__detailed-section">
+        <h2>Szczegółowe analizy</h2>
+        
+        <div className="analytics__detailed-grid">
+          <ChartCard title="Rozkład dni tygodnia">
+            <SimpleBarChart
+              data={analyticsData.weekdayDistribution.map((day: any) => ({
+                label: day.day,
+                value: day.count,
+                color: 'var(--warning-500)'
+              }))}
+            />
+          </ChartCard>
+
+          <ChartCard title="Rozkład godzin wydarzeń">
+            <SimpleBarChart
+              data={analyticsData.timeDistribution.slice(8, 24).map((hour: any) => ({
+                label: `${hour.hour}:00`,
+                value: hour.count,
+                color: 'var(--info-500)'
+              }))}
+              height={150}
+            />
+          </ChartCard>
+
+          <div className="analytics__response-time-card">
+            <h3>Analiza czasu odpowiedzi</h3>
+            <div className="analytics__response-stats">
+              <div className="analytics__response-stat">
+                <Zap size={20} />
+                <div>
+                  <span className="analytics__response-label">Szybkie odpowiedzi</span>
+                  <span className="analytics__response-value">{analyticsData.responseTimeAnalysis.fastResponders}</span>
+                  <span className="analytics__response-subtitle">{'< 24h'}</span>
+                </div>
+              </div>
+              <div className="analytics__response-stat">
+                <Clock size={20} />
+                <div>
+                  <span className="analytics__response-label">Średnie odpowiedzi</span>
+                  <span className="analytics__response-value">{analyticsData.responseTimeAnalysis.mediumResponders}</span>
+                  <span className="analytics__response-subtitle">24h - 7 dni</span>
+                </div>
+              </div>
+              <div className="analytics__response-stat">
+                <Target size={20} />
+                <div>
+                  <span className="analytics__response-label">Powolne odpowiedzi</span>
+                  <span className="analytics__response-value">{analyticsData.responseTimeAnalysis.slowResponders}</span>
+                  <span className="analytics__response-subtitle">{'> 7 dni'}</span>
+                </div>
+              </div>
+            </div>
+            <div className="analytics__avg-response">
+              <strong>Średni czas odpowiedzi: {analyticsData.responseTimeAnalysis.averageResponseTime.toFixed(1)} godzin</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Notifications */}
+      <div className="analytics__notifications-section">
+        <NotificationsWidget />
       </div>
     </div>
   );

@@ -12,7 +12,9 @@ import {
   User as FirebaseAuthUser,
   sendEmailVerification,
   reauthenticateWithCredential,
-  EmailAuthProvider
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import {
   doc,
@@ -114,6 +116,48 @@ export class AuthService {
         lastLoginAt: Timestamp.now()
       });
 
+      return this.convertFirebaseUserToUser(firebaseUser.uid, userData);
+    } catch (error: any) {
+      throw this.handleAuthError(error);
+    }
+  }
+
+  // Login with Google
+  static async loginWithGoogle(): Promise<User> {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+
+      // Get or create user profile in Firestore
+      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid));
+      let userData: Omit<FirebaseUser, 'uid'>;
+      if (!userDoc.exists()) {
+        // Create new profile
+        userData = {
+          email: firebaseUser.email || '',
+          firstName: firebaseUser.displayName?.split(' ')[0] || '',
+          lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+          planType: 'starter',
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          isEmailVerified: firebaseUser.emailVerified,
+          lastLoginAt: Timestamp.now(),
+          preferences: {
+            notifications: { email: true, push: true, sms: false },
+            theme: 'light',
+            language: 'pl'
+          },
+          avatar: firebaseUser.photoURL || ''
+        };
+        await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), userData);
+      } else {
+        userData = userDoc.data() as Omit<FirebaseUser, 'uid'>;
+        await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
+          lastLoginAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        });
+      }
       return this.convertFirebaseUserToUser(firebaseUser.uid, userData);
     } catch (error: any) {
       throw this.handleAuthError(error);

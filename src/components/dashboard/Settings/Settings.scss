@@ -1,8 +1,16 @@
 @import '../../../styles/globals/mixins';
 
 .settings {
-  max-width: 1200px;
+  max-width: 1800px;
   margin: 0 auto;
+  padding: 0 var(--space-lg);
+  box-sizing: border-box;
+  width: 100%;
+  
+  @media (min-width: 1920px) {
+    max-width: 1850px;
+    padding: 0 var(--space-2xl);
+  }
   
   &__header {
     margin-bottom: var(--space-2xl);
@@ -20,11 +28,16 @@
     margin: 0;
     font-size: 1.125rem;
   }
-  
-  &__layout {
+    &__layout {
     display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: var(--space-2xl);
+    grid-template-columns: 280px 1fr;
+    gap: var(--space-xl);
+    max-width: 100%;
+    
+    @media (min-width: 1400px) {
+      grid-template-columns: 320px 1fr;
+      gap: var(--space-2xl);
+    }
     
     @media (max-width: 1024px) {
       grid-template-columns: 1fr;
@@ -112,28 +125,101 @@
     border-radius: var(--radius-md);
     flex-shrink: 0;
   }
-  
-  &__nav-content {
+    &__nav-content {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
   }
   
   &__nav-label {
     font-weight: 500;
     color: var(--gray-900);
     margin-bottom: var(--space-xs);
-  }
-  
-  &__nav-description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }  &__nav-description {
     font-size: 0.875rem;
     color: var(--gray-600);
     line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    
+    // Enhanced wrapping for very long words
+    word-break: break-word;
+    
+    // Ensure proper spacing and readability
+    letter-spacing: 0.01em;
+    
+    // Better handling of different content types
+    &:has(a) {
+      a {
+        word-break: break-all;
+        overflow-wrap: anywhere;
+      }
+    }
+    
+    // Only limit lines on very small screens
+    @media (max-width: 640px) {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      text-overflow: ellipsis;
+    }
   }
-  
-  &__content {
+    &__content {
     background: white;
     border-radius: var(--radius-xl);
     border: 1px solid var(--gray-200);
     min-height: 600px;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    padding: var(--space-xl);
+    
+    // Responsive padding
+    @media (max-width: 768px) {
+      padding: var(--space-lg);
+      border-radius: var(--radius-lg);
+    }
+    
+    @media (max-width: 480px) {
+      padding: var(--space-md);
+      margin: 0 calc(-1 * var(--space-md));
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+  }
+}
+
+// Additional responsive improvements for mobile
+@media (max-width: 640px) {
+  .settings {
+    &__nav-item {
+      padding: var(--space-md);
+      min-width: 180px;
+    }
+    
+    &__nav-label {
+      font-size: 0.875rem;
+    }
+    
+    &__nav-description {
+      font-size: 0.8125rem;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
+      -webkit-box-orient: vertical;
+      text-overflow: ellipsis;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
   }
 }

@@ -56,6 +56,48 @@ export interface UpdateGuestData extends Partial<CreateGuestData> {
   status?: GuestStatus;
 }
 
+// RSVP System types
+export interface RSVPToken {
+  id: string;
+  guestId: string;
+  eventId: string;
+  token: string;
+  isUsed: boolean;
+  createdAt: Date;
+  expiresAt?: Date;
+  usedAt?: Date;
+}
+
+export interface RSVPResponse {
+  status: GuestStatus;
+  dietaryRestrictions?: string;
+  notes?: string;
+  plusOne?: boolean;
+  plusOneDetails?: {
+    firstName?: string;
+    lastName?: string;
+    dietaryRestrictions?: string;
+  };
+}
+
+export interface GuestInvitation {
+  guestId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  rsvpToken: string;
+  rsvpUrl: string;
+  qrCode?: string;
+}
+
+export interface InvitationDelivery {
+  method: 'email' | 'sms' | 'print';
+  recipients: string[];
+  subject?: string;
+  message?: string;
+  includeQR?: boolean;
+}
+
 // Event related types
 export interface Event {
   id: string;
@@ -75,6 +117,12 @@ export interface Event {
   allowPlusOne?: boolean;
   sendReminders?: boolean;
   imageUrl?: string;
+  dresscode?: string;
+  additionalInfo?: string;
+  guestCount: number;
+  acceptedCount: number;
+  pendingCount: number;
+  declinedCount: number;
 }
 
 // Activity/Notification types

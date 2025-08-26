@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import Header from '../../common/Header/Header';
+import GoogleIcon from './GoogleIcon';
 import './Login.scss';
 
 const Login: React.FC = () => {
@@ -14,7 +15,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   
-  const { login, loading, error, clearError } = useAuth();
+  const { login, loginWithGoogle, loading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +23,15 @@ const Login: React.FC = () => {
     
     try {
       await login(formData.email, formData.password);
+    } catch (err) {
+      // Error jest już ustawiony w kontekście
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    clearError();
+    try {
+      await loginWithGoogle();
     } catch (err) {
       // Error jest już ustawiony w kontekście
     }
@@ -123,6 +133,18 @@ const Login: React.FC = () => {
                 )}
               </button>
             </form>
+
+            <div className="login__google">
+              <button
+                type="button"
+                className="login__google-btn"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+              >
+                <GoogleIcon size={20} />
+                Zaloguj się przez Google
+              </button>
+            </div>
 
             <div className="login__footer">
               <p>

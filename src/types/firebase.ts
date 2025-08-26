@@ -101,9 +101,8 @@ export interface FirebaseGuest {
   updatedAt?: Timestamp;
   phoneNumber?: string;
   dietaryRestrictions?: string;
-  plusOne?: boolean;
-  notes?: string;
-  rsvpToken: string; // For secure RSVP links
+  plusOne?: boolean;  notes?: string;
+  rsvpToken?: string; // For secure RSVP links
 }
 
 export interface FirebaseGuestData extends Omit<FirebaseGuest, 'id'> {}

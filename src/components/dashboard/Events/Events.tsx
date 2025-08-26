@@ -22,6 +22,7 @@ import EventCard from './EventCard/EventCard';
 import EventsList from './EventsList/EventsList';
 import AddEvent from './AddEvent/AddEvent';
 import EventDetails from './EventDetails/EventDetails';
+import EditEvent from './EditEvent/EditEvent';
 import './Events.scss';
 
 type ViewMode = 'grid' | 'list';
@@ -112,19 +113,25 @@ const Events: React.FC = () => {
         break;
     }
   };
-
-  const handleDuplicateEvent = (eventId: string) => {
+  const handleDuplicateEvent = async (eventId: string) => {
+    if (!user) return;
+    
     const eventToDuplicate = events.find(e => e.id === eventId);
     if (eventToDuplicate) {
-      const duplicatedEvent: Event = {
-        ...eventToDuplicate,
-        id: Date.now().toString(),
-        title: `${eventToDuplicate.title} (kopia)`,
-        status: 'draft',
-        createdAt: new Date(),
-        guests: []
-      };
-      setEvents(prev => [duplicatedEvent, ...prev]);
+      try {
+        // Use the new duplicate service with default settings
+        await EventService.duplicateEvent(eventId, user.id, {
+          title: `${eventToDuplicate.title} (kopia)`,
+          date: new Date(eventToDuplicate.date.getTime() + 7 * 24 * 60 * 60 * 1000), // Add 7 days
+          includeGuests: false,
+          guestAction: 'none'
+        });
+        
+        // Success message - the subscription will automatically update the events list
+        alert('Wydarzenie zostało pomyślnie zduplikowane!');
+      } catch (error: any) {
+        alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
+      }
     }
   };
 
@@ -442,11 +449,13 @@ const Events: React.FC = () => {
   );
 
   return (
-    <>
-      <Routes>
+    <>      <Routes>
         <Route index element={<EventsListPage />} />
         <Route path=":id" element={
           <EventDetails />
+        } />
+        <Route path="edit/:id" element={
+          <EditEvent />
         } />
       </Routes>
 

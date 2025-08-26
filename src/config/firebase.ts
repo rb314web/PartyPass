@@ -8,13 +8,13 @@ import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || 'demo-key',
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || 'demo.firebaseapp.com',
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || 'demo-project',
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || 'demo.appspot.com',
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || '1:123456789:web:demo',
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || 'G-DEMO'
+  apiKey: "AIzaSyA-8qwvOfQab02YrftdgqLNI9rPdo95Nk4",
+  authDomain: "partypass-app-9539e.firebaseapp.com",
+  projectId: "partypass-app-9539e",
+  storageBucket: "partypass-app-9539e.appspot.com",
+  messagingSenderId: "583171646923",
+  appId: "1:583171646923:web:b2d26b6966af7933b1c24e",
+  measurementId: "G-G28WF7GJ2W"
 };
 
 // Initialize Firebase

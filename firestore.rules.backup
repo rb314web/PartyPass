@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Sprawdzenie czy użytkownik jest zalogowany
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Sprawdzenie czy użytkownik jest właścicielem dokumentu
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Sprawdzenie czy dokument jest tworzony z poprawnymi danymi
+    function hasValidEventData() {
+      let data = request.resource.data;
+      return data.userId == request.auth.uid
+        && data.title is string && data.title.size() > 0
+        && data.description is string
+        && data.date is timestamp
+        && data.location is string && data.location.size() > 0
+        && data.maxGuests is number && data.maxGuests > 0
+        && data.status in ['draft', 'active', 'completed', 'cancelled']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && data.guestCount is number
+        && data.acceptedCount is number
+        && data.pendingCount is number
+        && data.declinedCount is number;
+    }
+    
+    // Sprawdzenie czy aktualizacja dokumentu jest poprawna
+    function hasValidEventUpdate() {
+      let data = request.resource.data;
+      return data.userId == resource.data.userId
+        && (data.title is string && data.title.size() > 0)
+        && (data.description is string)
+        && (data.date is timestamp)
+        && (data.location is string && data.location.size() > 0)
+        && (data.maxGuests is number && data.maxGuests > 0)
+        && (data.status in ['draft', 'active', 'completed', 'cancelled'])
+        && data.updatedAt is timestamp;
+    }
+    
+    // Wydarzenia
+    match /events/{eventId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) || 
+        exists(/databases/$(database)/documents/guests/$(request.auth.uid))
+      );
+      allow create: if isAuthenticated() && hasValidEventData();
+      allow update: if isAuthenticated() && isOwner(resource.data.userId) && hasValidEventUpdate();
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Goście
+    match /guests/{guestId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) || 
+        resource.data.email == request.auth.token.email
+      );
+      allow create: if isAuthenticated() && (
+        isOwner(request.resource.data.userId) ||
+        exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
+      );
+      allow update: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        resource.data.email == request.auth.token.email
+      );
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Aktywności
+    match /activities/{activityId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Użytkownicy
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Notyfikacje
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+  }
+}

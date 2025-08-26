@@ -17,9 +17,16 @@ export interface Event {
   date: Date;
   location: string;
   maxGuests: number;
-  guests?: Guest[];
+  guests: Guest[];
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   createdAt: Date;
+  updatedAt?: Date;
+  tags?: string[];
+  isPrivate?: boolean;
+  requireRSVP?: boolean;
+  allowPlusOne?: boolean;
+  sendReminders?: boolean;
+  imageUrl?: string;
   guestCount: number;
   acceptedCount: number;
   pendingCount: number;
@@ -35,7 +42,7 @@ export interface Guest {
   email: string;
   firstName: string;
   lastName: string;
-  status: 'pending' | 'accepted' | 'declined' | 'maybe';
+  status: GuestStatus;
   invitedAt: Date;
   respondedAt?: Date;
   createdAt: Date;
@@ -85,4 +92,62 @@ export interface StatsCardProps {
   trend: 'up' | 'down' | 'neutral';
   icon: React.ComponentType;
   color: 'blue' | 'green' | 'purple' | 'orange';
+}
+
+// RSVP System types
+export type GuestStatus = 'pending' | 'accepted' | 'declined' | 'maybe';
+
+export interface CreateGuestData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  dietaryRestrictions?: string;
+  notes?: string;
+  plusOne?: boolean;
+}
+
+export interface UpdateGuestData extends Partial<CreateGuestData> {
+  status?: GuestStatus;
+}
+
+export interface RSVPToken {
+  id: string;
+  guestId: string;
+  eventId: string;
+  token: string;
+  isUsed: boolean;
+  createdAt: Date;
+  expiresAt?: Date;
+  usedAt?: Date;
+}
+
+export interface RSVPResponse {
+  status: GuestStatus;
+  dietaryRestrictions?: string;
+  notes?: string;
+  plusOne?: boolean;
+  plusOneDetails?: {
+    firstName?: string;
+    lastName?: string;
+    dietaryRestrictions?: string;
+  };
+}
+
+export interface GuestInvitation {
+  guestId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  rsvpToken: string;
+  rsvpUrl: string;
+  qrCode?: string;
+}
+
+export interface InvitationDelivery {
+  method: 'email' | 'sms' | 'print';
+  recipients: string[];
+  subject?: string;
+  message?: string;
+  includeQR?: boolean;
 }

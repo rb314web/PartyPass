@@ -19,6 +19,7 @@ import {
 import { db } from '../../config/firebase';
 import { Guest } from '../../types';
 import { FirebaseGuest, FirebaseEvent, COLLECTIONS } from '../../types/firebase';
+import { AnalyticsService } from './analyticsService';
 
 export interface GuestFilters {
   eventId?: string;
@@ -138,7 +139,6 @@ export class GuestService {
       throw new Error(`Błąd podczas pobierania gości: ${error.message}`);
     }
   }
-
   // Create guest
   static async createGuest(userId: string, eventId: string, guestData: CreateGuestData): Promise<Guest> {
     try {
@@ -154,11 +154,46 @@ export class GuestService {
         createdAt: Timestamp.now(),
         dietaryRestrictions: guestData.dietaryRestrictions,
         notes: guestData.notes,
-        plusOne: guestData.plusOne || false,
-        rsvpToken: Math.random().toString(36).substring(2)
+        plusOne: guestData.plusOne || false
       };
 
       const docRef = await addDoc(collection(db, COLLECTIONS.GUESTS), newGuest);
+        // Generate RSVP token after creating the guest
+      try {
+        const { RSVPService } = await import('./rsvpService');
+        const rsvpToken = await RSVPService.generateRSVPToken(docRef.id, eventId);
+        
+        // Update guest with the RSVP token
+        await updateDoc(docRef, {
+          rsvpToken: rsvpToken.token
+        });
+        
+        newGuest.rsvpToken = rsvpToken.token;
+      } catch (rsvpError) {
+        console.warn('Failed to generate RSVP token for guest:', rsvpError);
+        // Guest is still created, just without RSVP token
+        newGuest.rsvpToken = undefined;
+      }
+      
+      // Track analytics for guest invitation
+      try {
+        await AnalyticsService.trackMetric(
+          userId,
+          'guest_invited',
+          1,
+          {
+            eventId,
+            guestEmail: guestData.email,
+            hasPlusOne: guestData.plusOne || false,
+            hasDietaryRestrictions: !!guestData.dietaryRestrictions,
+            hasPhone: !!guestData.phone
+          },
+          eventId,
+          docRef.id
+        );
+      } catch (analyticsError) {
+        console.warn('Failed to track guest invitation analytics:', analyticsError);
+      }
       
       // Update event guest counts
       const eventRef = firebaseDoc(db, COLLECTIONS.EVENTS, eventId);
@@ -234,10 +269,28 @@ export class GuestService {
           }
 
           await updateDoc(eventRef, updates);
-        }
-
-        updateFields.status = updateData.status;
+        }        updateFields.status = updateData.status;
         updateFields.respondedAt = Timestamp.now();
+
+        // Track analytics for guest response
+        try {
+          await AnalyticsService.trackMetric(
+            oldData.userId,
+            'guest_responded',
+            1,
+            {
+              eventId: oldData.eventId,
+              oldStatus: oldData.status,
+              newStatus: updateData.status,
+              guestEmail: oldData.email,
+              responseTime: Date.now() - oldData.invitedAt.toMillis()
+            },
+            oldData.eventId,
+            guestId
+          );
+        } catch (analyticsError) {
+          console.warn('Failed to track guest response analytics:', analyticsError);
+        }
       }
 
       await updateDoc(guestRef, updateFields);

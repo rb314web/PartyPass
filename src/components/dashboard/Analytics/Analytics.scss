@@ -6,6 +6,18 @@
   background: var(--bg-secondary);
   min-height: 100vh;
 
+  // Animation keyframes
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   &__header {
     display: flex;
     justify-content: space-between;
@@ -70,6 +82,10 @@
     }
   }
 
+  &__export-dropdown {
+    position: relative;
+    display: inline-block;
+  }
   &__export-btn {
     display: flex;
     align-items: center;
@@ -84,7 +100,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: var(--primary-600);
       transform: translateY(-1px);
     }
@@ -92,6 +108,75 @@
     @media (max-width: 768px) {
       width: 100%;
       justify-content: center;
+    }
+
+    &:disabled {
+      background: var(--gray-400);
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+
+  &__dropdown-arrow {
+    transition: transform 0.2s ease;
+    margin-left: 0.25rem;
+  }
+
+  &__export-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 200px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    animation: slideDown 0.2s ease-out;
+  }
+
+  &__export-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 0.9rem;
+
+    &:hover {
+      background: var(--background-secondary);
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    span {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+
+      strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      small {
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+      }
     }
   }
 
@@ -461,5 +546,347 @@
     gap: 0.5rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
+  }
+
+  // Loading and Error States
+  &--loading,
+  &--error,
+  &--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+  }
+
+  &__loader,
+  &__error,
+  &__empty {
+    text-align: center;
+    padding: 2rem;
+
+    h3 {
+      margin: 1rem 0 0.5rem 0;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+    color: var(--primary-500);
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  &__retry-btn {
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-500);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: var(--primary-600);
+    }
+
+    &:disabled {
+      background: var(--gray-400);
+      cursor: not-allowed;
+    }
+  }
+
+  // Enhanced Controls
+  &__refresh-btn {
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--gray-50);
+      border-color: var(--primary-500);
+      color: var(--primary-500);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  // Detailed Analytics Section
+  &__detailed-section {
+    margin-top: 3rem;
+
+    h2 {
+      margin: 0 0 2rem 0;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+  }
+
+  &__detailed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Response Time Analysis
+  &__response-time-card {
+    background: var(--bg-primary);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    h3 {
+      margin: 0 0 1.5rem 0;
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+  }
+
+  &__response-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__response-stat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 0.75rem;
+    border-left: 4px solid var(--primary-500);
+
+    &:nth-child(1) {
+      border-left-color: var(--success-500);
+      
+      svg {
+        color: var(--success-500);
+      }
+    }
+
+    &:nth-child(2) {
+      border-left-color: var(--warning-500);
+      
+      svg {
+        color: var(--warning-500);
+      }
+    }
+
+    &:nth-child(3) {
+      border-left-color: var(--error-500);
+      
+      svg {
+        color: var(--error-500);
+      }
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+  }
+
+  &__response-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  &__response-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__response-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  &__avg-response {
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    border-radius: 0.75rem;
+    text-align: center;
+
+    strong {
+      color: white;
+      font-size: 1rem;
+    }
+  }
+
+  // Real-time Analytics Section
+  &__realtime-section {
+    margin-bottom: 2rem;
+  }
+
+  // Enhanced Chart Responsiveness
+  @media (max-width: 1200px) {
+    &__charts-grid {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    &__header {
+      margin-bottom: 1.5rem;
+    }
+
+    &__title {
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    &__controls {
+      gap: 0.75rem;
+    }
+
+    &__stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    &__growth-card {
+      padding: 1rem;
+    }
+
+    &__chart-card {
+      padding: 1rem;
+    }
+
+    &__bar-label {
+      width: 60px;
+      font-size: 0.75rem;
+    }
+
+    &__bar-value {
+      width: 30px;
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+
+    &__stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__engagement-chart,
+    &__device-chart {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    &__response-stat {
+      padding: 0.75rem;
+      
+      div {
+        gap: 0.125rem;
+      }
+    }
+
+    &__response-value {
+      font-size: 1.25rem;
+    }
+  }
+
+  // Dark Mode Enhancements
+  [data-theme="dark"] & {
+    &__spinner {
+      color: var(--primary-400);
+    }
+
+    &__bar-container {
+      background: var(--gray-700);
+    }
+
+    &__response-stat {
+      background: var(--gray-800);
+    }
+
+    &__avg-response {
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+    }
+  }
+
+  // Animation Enhancements
+  &__stat-card,
+  &__chart-card,
+  &__growth-card,
+  &__response-time-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  &__bar {
+    animation: growBar 0.8s ease-out;
+  }
+
+  @keyframes growBar {
+    from {
+      width: 0;
+    }
+    to {
+      width: var(--final-width, 100%);
+    }
+  }
+
+  // Accessibility Improvements
+  &__select,
+  &__metric-select {
+    &:focus-visible {
+      outline: 2px solid var(--primary-500);
+      outline-offset: 2px;
+    }
+  }
+
+  &__export-btn,
+  &__refresh-btn,
+  &__retry-btn {
+    &:focus-visible {
+      outline: 2px solid var(--primary-500);
+      outline-offset: 2px;
+    }
   }
 }

@@ -17,6 +17,7 @@ import QuickActions from '../QuickActions/QuickActions';
 import RecentActivity from '../RecentActivity/RecentActivity';
 import UpcomingEvents from '../UpcomingEvents/UpcomingEvents';
 import EventsChart from '../EventsChart/EventsChart';
+import AnalyticsWidget from '../AnalyticsWidget/AnalyticsWidget';
 import { EventService, EventStats } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
 import { Activity } from '../../../types';
@@ -155,9 +156,7 @@ const DashboardHome: React.FC = () => {
             </Link>
           </div>
           <RecentActivity activities={filteredActivities} />
-        </div>
-
-        {/* Upcoming Events */}
+        </div>        {/* Upcoming Events */}
         <div className="dashboard-home__events-section">
           <div className="dashboard-home__section-header">
             <h2>Nadchodzące wydarzenia</h2>
@@ -167,6 +166,11 @@ const DashboardHome: React.FC = () => {
             </Link>
           </div>
           <UpcomingEvents events={upcomingEvents} />
+        </div>
+
+        {/* Analytics Widget */}
+        <div className="dashboard-home__analytics-section">
+          <AnalyticsWidget />
         </div>
 
         {/* Quick Insights */}
