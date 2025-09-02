@@ -2,11 +2,14 @@
 .landing {
   // Ensure smooth scrolling and full height
   scroll-behavior: smooth;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   
-  // Landing page specific overrides
-  .hero {
-    // Hero section is already styled in its own component
-    // This is just a container
+  // Account for sticky navigation
+  main {
+    padding-top: 0; // Navigation is sticky, no extra padding needed
   }
   
   // Section spacing
@@ -33,5 +36,10 @@
   // Ensure consistent spacing
   .hero + section {
     margin-top: 0;
+  }
+  
+  // Contact section spacing
+  #contact {
+    padding: 0; // Footer handles its own padding
   }
 }

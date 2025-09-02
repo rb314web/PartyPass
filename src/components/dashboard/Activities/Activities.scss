@@ -1,0 +1,336 @@
+// components/dashboard/Activities/Activities.scss
+@use '../../../styles/globals/variables' as *;
+@use '../../../styles/globals/mixins' as *;
+
+.activities {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  // Color aliases for activity icons
+  --success-color: var(--green-500);
+  --error-color: var(--red-500);
+  --warning-color: var(--amber-500);
+  --info-color: var(--blue-500);
+  --primary-color: var(--primary);
+  --surface-color: var(--bg-surface);
+  --surface-hover: var(--card-background-hover);
+  --border-color: var(--border-primary);
+
+  @include mobile {
+    padding: 1rem;
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1rem;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  &__title-section {
+    flex: 1;
+  }
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+
+    @include mobile {
+      font-size: 1.5rem;
+    }
+  }
+
+  &__subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  &__refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--surface-hover);
+      border-color: var(--primary-color);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    @include mobile {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  &__refresh-icon--spinning {
+    animation: spin 1s linear infinite;
+  }
+
+  &__controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+
+    @include mobile {
+      flex-direction: column;
+    }
+  }
+
+  &__search {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+
+    svg {
+      position: absolute;
+      left: 0.75rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+
+  &__search-input {
+    width: 100%;
+    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    &::placeholder {
+      color: var(--text-secondary);
+    }
+  }
+
+  &__filter {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 200px;
+
+    @include mobile {
+      min-width: unset;
+    }
+
+    svg {
+      position: absolute;
+      left: 0.75rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+
+  &__filter-select {
+    width: 100%;
+    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+  }
+
+  &__content {
+    min-height: 400px;
+  }
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+
+    p {
+      margin: 1rem 0 0 0;
+      font-size: 0.875rem;
+    }
+  }
+
+  &__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-secondary);
+
+    svg {
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    h3 {
+      margin: 0 0 0.5rem 0;
+      color: var(--text-primary);
+      font-size: 1.25rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      max-width: 400px;
+      line-height: 1.5;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--surface-hover);
+      border-color: var(--primary-color);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    @include mobile {
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-hover);
+
+    @include mobile {
+      width: 32px;
+      height: 32px;
+    }
+
+    &--success svg {
+      color: var(--success-color);
+    }
+
+    &--error svg {
+      color: var(--error-color);
+    }
+
+    &--warning svg {
+      color: var(--warning-color);
+    }
+
+    &--info svg {
+      color: var(--info-color);
+    }
+
+    &--default svg {
+      color: var(--text-secondary);
+    }
+  }
+
+  &__content-item {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__message {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+
+    @include mobile {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+  }
+
+  &__time {
+    font-weight: 500;
+  }
+
+  &__date {
+    opacity: 0.8;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

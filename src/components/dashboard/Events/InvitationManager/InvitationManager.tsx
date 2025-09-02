@@ -1,9 +1,7 @@
 // components/dashboard/Events/InvitationManager/InvitationManager.tsx
 import React, { useState, useEffect } from 'react';
 import { 
-  QrCode, 
   Mail, 
-  MessageSquare, 
   Printer, 
   Download,
   Send,
@@ -11,16 +9,16 @@ import {
   CheckCircle,
   AlertCircle,
   Users,
-  Link,
   Eye,
   X,
   Smartphone
 } from 'lucide-react';
 import RSVPService from '../../../../services/firebase/rsvpService';
+import { NewRSVPService } from '../../../../services/firebase/newRSVPService';
 import { 
   Event, 
-  GuestInvitation, 
-  InvitationDelivery 
+  GuestInvitation,
+  InvitationDelivery
 } from '../../../../types';
 import './InvitationManager.scss';
 
@@ -47,9 +45,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
   const generateInvitations = async () => {
     try {
       setLoading(true);
-      const generatedInvitations = await RSVPService.generateInvitationsForEvent(event.id);
+      const generatedInvitations = await NewRSVPService.generateInvitationsForEvent(event.id);
       setInvitations(generatedInvitations);
-      setSelectedGuests(generatedInvitations.map(inv => inv.guestId));
+      setSelectedGuests(generatedInvitations.map(inv => inv.eventGuestId));
     } catch (error) {
       console.error('Błąd podczas generowania zaproszeń:', error);
     } finally {
@@ -61,15 +59,15 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     if (selectedGuests.length === invitations.length) {
       setSelectedGuests([]);
     } else {
-      setSelectedGuests(invitations.map(inv => inv.guestId));
+      setSelectedGuests(invitations.map(inv => inv.eventGuestId));
     }
   };
 
-  const handleGuestSelect = (guestId: string) => {
-    if (selectedGuests.includes(guestId)) {
-      setSelectedGuests(prev => prev.filter(id => id !== guestId));
+  const handleGuestSelect = (eventGuestId: string) => {
+    if (selectedGuests.includes(eventGuestId)) {
+      setSelectedGuests(prev => prev.filter(id => id !== eventGuestId));
     } else {
-      setSelectedGuests(prev => [...prev, guestId]);
+      setSelectedGuests(prev => [...prev, eventGuestId]);
     }
   };
 
@@ -77,11 +75,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     try {
       setSendingStatus('sending');
       
-      const selectedInvitations = invitations.filter(inv => 
-        selectedGuests.includes(inv.guestId)
-      );
-
-      const delivery: InvitationDelivery = {
+    const selectedInvitations = invitations.filter(inv => 
+      selectedGuests.includes(inv.eventGuestId)
+    );      const delivery: InvitationDelivery = {
         method: deliveryMethod,
         recipients: selectedInvitations.map(inv => inv.email),
         subject: emailSubject,
@@ -203,10 +199,6 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     link.click();
   };
 
-  const getSelectedInvitations = () => {
-    return invitations.filter(inv => selectedGuests.includes(inv.guestId));
-  };
-
   if (loading) {
     return (
       <div className="invitation-manager">
@@ -252,16 +244,16 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
           <div className="invitation-manager__guests-list">
             {invitations.map(invitation => (
               <div 
-                key={invitation.guestId} 
+                key={invitation.eventGuestId} 
                 className={`invitation-manager__guest ${
-                  selectedGuests.includes(invitation.guestId) ? 'selected' : ''
+                  selectedGuests.includes(invitation.eventGuestId) ? 'selected' : ''
                 }`}
               >
                 <label className="invitation-manager__guest-checkbox">
                   <input
                     type="checkbox"
-                    checked={selectedGuests.includes(invitation.guestId)}
-                    onChange={() => handleGuestSelect(invitation.guestId)}
+                    checked={selectedGuests.includes(invitation.eventGuestId)}
+                    onChange={() => handleGuestSelect(invitation.eventGuestId)}
                   />
                   <span className="invitation-manager__guest-name">
                     {invitation.firstName} {invitation.lastName}

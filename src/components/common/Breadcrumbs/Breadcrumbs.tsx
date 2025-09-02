@@ -106,6 +106,7 @@ const Breadcrumbs: React.FC = () => {
     'dashboard': 'Dashboard',
     'events': 'Wydarzenia',
     'guests': 'Goście',
+    'contacts': 'Kontakty',
     'analytics': 'Analityka',
     'settings': 'Ustawienia',
     'create': 'Utwórz',

@@ -9,23 +9,23 @@ import {
   Mail,
   Phone,
   Calendar,
-  UserCheck,
-  UserX,
-  Clock,
-  AlertCircle
+  AlertCircle,
+  Edit3
 } from 'lucide-react';
+import { Box, Typography, Skeleton } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import type { Guest } from '../../../types';
 import { GuestService, GuestFilters } from '../../../services/firebase/guestService';
 import { EventService } from '../../../services/firebase/eventService';
 import { AddGuest } from './AddGuest/AddGuest';
+import { EditGuestModal } from './EditGuestModal/EditGuestModal';
 import './Guests.scss';
 
 const Guests: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | Guest['status']>('all');
-  const [sortBy, setSortBy] = useState<'name' | 'event' | 'status' | 'date'>('name');
+  const [filterStatus, setFilterStatus] = useState<'all'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'event' | 'date'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const { user } = useAuth();
@@ -41,9 +41,6 @@ const Guests: React.FC = () => {
         setIsLoading(true);
       }
       const filters: GuestFilters = {};
-      if (filterStatus !== 'all') {
-        filters.status = filterStatus;
-      }
       if (searchQuery) {
         filters.search = searchQuery;
       }
@@ -64,21 +61,20 @@ const Guests: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, searchQuery, filterStatus, lastDoc]);
+  }, [user, searchQuery, lastDoc]);
 
   useEffect(() => {
     if (user?.id) {
       loadGuests();
     }
-  }, [user, searchQuery, filterStatus]);
+  }, [user, searchQuery]);
 
   const filteredAndSortedGuests = useMemo(() => {
     let filtered = guests.filter(guest => {
       const matchesSearch = guest.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            guest.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            guest.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = filterStatus === 'all' || guest.status === filterStatus;
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
 
     filtered.sort((a, b) => {
@@ -94,10 +90,6 @@ const Guests: React.FC = () => {
           aValue = a.eventName;
           bValue = b.eventName;
           break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
         case 'date':
           aValue = a.eventDate;
           bValue = b.eventDate;
@@ -112,38 +104,11 @@ const Guests: React.FC = () => {
     });
 
     return filtered;
-  }, [guests, searchQuery, filterStatus, sortBy, sortDirection]);
-
-  const getStatusColor = (status: Guest['status']) => {
-    const colors = {
-      accepted: 'success',
-      pending: 'warning',
-      declined: 'error',
-      maybe: 'info'
-    };
-    return colors[status];
-  };
-
-  const getStatusLabel = (status: Guest['status']) => {
-    const labels = {
-      accepted: 'Potwierdzone',
-      pending: 'Oczekujące',
-      declined: 'Odrzucone',
-      maybe: 'Może'
-    };
-    return labels[status];
-  };
-
-  const getStatusIcon = (status: Guest['status']) => {
-    switch (status) {
-      case 'accepted': return <UserCheck size={16} />;
-      case 'pending': return <Clock size={16} />;
-      case 'declined': return <UserX size={16} />;
-      case 'maybe': return <Clock size={16} />;
-    }
-  };
+  }, [guests, searchQuery, sortBy, sortDirection]);
 
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
+  const [isEditGuestModalOpen, setIsEditGuestModalOpen] = useState(false);
+  const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
   const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
 
@@ -184,7 +149,11 @@ const Guests: React.FC = () => {
     try {
       switch (action) {
         case 'edit':
-          navigate(`/dashboard/guests/edit/${guestId}`);
+          const guestToEdit = guests.find(g => g.id === guestId);
+          if (guestToEdit) {
+            setEditingGuest(guestToEdit);
+            setIsEditGuestModalOpen(true);
+          }
           break;
         case 'delete':
           if (window.confirm('Czy na pewno chcesz usunąć tego gościa?')) {
@@ -252,12 +221,9 @@ const Guests: React.FC = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
             className="guests__filter-select"
+            style={{ display: 'none' }}
           >
             <option value="all">Wszystkie statusy</option>
-            <option value="accepted">Potwierdzone</option>
-            <option value="pending">Oczekujące</option>
-            <option value="declined">Odrzucone</option>
-            <option value="maybe">Może</option>
           </select>
 
           <select
@@ -273,8 +239,6 @@ const Guests: React.FC = () => {
             <option value="name-desc">Imię Z-A</option>
             <option value="event-asc">Wydarzenie A-Z</option>
             <option value="event-desc">Wydarzenie Z-A</option>
-            <option value="status-asc">Status A-Z</option>
-            <option value="status-desc">Status Z-A</option>
             <option value="date-asc">Data rosnąco</option>
             <option value="date-desc">Data malejąco</option>
           </select>
@@ -283,44 +247,219 @@ const Guests: React.FC = () => {
 
       <div className="guests__content">
         {isLoading ? (
-          <div className="guests__loading">
-            <div className="guests__spinner"></div>
-            <p>Ładowanie gości...</p>
+          <div className="guests__table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Gość</th>
+                  <th>Wydarzenie</th>
+                  <th>Data wydarzenia</th>
+                  <th>Kontakt</th>
+                  <th>Akcje</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index}>
+                    <td>
+                      <div className="guests__guest-info">
+                        <Skeleton 
+                          variant="circular" 
+                          width={40} 
+                          height={40}
+                          animation="wave"
+                          sx={{ 
+                            backgroundColor: '#f0f0f0'
+                          }}
+                        />
+                        <div>
+                          <Skeleton 
+                            variant="text" 
+                            width={120} 
+                            height={20}
+                            animation="wave"
+                            sx={{ marginBottom: '4px', backgroundColor: '#f0f0f0' }}
+                          />
+                          <Skeleton 
+                            variant="text" 
+                            width={160} 
+                            height={16}
+                            animation="wave"
+                            sx={{ backgroundColor: '#f0f0f0' }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="guests__event-info">
+                        <Skeleton 
+                          variant="text" 
+                          width={140} 
+                          height={18}
+                          animation="wave"
+                          sx={{ marginBottom: '4px', backgroundColor: '#f0f0f0' }}
+                        />
+                        <Skeleton 
+                          variant="text" 
+                          width={100} 
+                          height={14}
+                          animation="wave"
+                          sx={{ backgroundColor: '#f0f0f0' }}
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <Skeleton 
+                        variant="text" 
+                        width={100} 
+                        height={16}
+                        animation="wave"
+                        sx={{ backgroundColor: '#f0f0f0' }}
+                      />
+                    </td>
+                    <td>
+                      <div className="guests__contact">
+                        <Skeleton 
+                          variant="rectangular" 
+                          width={32} 
+                          height={32}
+                          animation="wave"
+                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                        />
+                        <Skeleton 
+                          variant="rectangular" 
+                          width={32} 
+                          height={32}
+                          animation="wave"
+                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div className="guests__actions-cell">
+                        <Skeleton 
+                          variant="rectangular" 
+                          width={60} 
+                          height={32}
+                          animation="wave"
+                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                        />
+                        <Skeleton 
+                          variant="rectangular" 
+                          width={50} 
+                          height={32}
+                          animation="wave"
+                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : error ? (
-          <div className="guests__error">
-            <AlertCircle size={48} />
-            <h3>Wystąpił błąd</h3>
-            <p>{error}</p>
-            <button onClick={() => loadGuests()} className="guests__retry-btn">
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              padding: '4rem 2rem',
+              backgroundColor: '#ffffff'
+            }}
+          >
+            <Box 
+              sx={{ 
+                color: '#ef4444', 
+                marginBottom: 2 
+              }}
+            >
+              <AlertCircle size={48} />
+            </Box>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#333333',
+                fontWeight: 600,
+                marginBottom: 1
+              }}
+            >
+              Wystąpił błąd
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: '#666666',
+                textAlign: 'center',
+                marginBottom: 3
+              }}
+            >
+              {error}
+            </Typography>
+            <button 
+              onClick={() => loadGuests()} 
+              className="guests__action-btn guests__action-btn--primary"
+            >
               Spróbuj ponownie
             </button>
-          </div>
+          </Box>
         ) : filteredAndSortedGuests.length === 0 ? (
-          <div className="guests__empty">
-            <Users size={64} />
-            <h3>
-              {searchQuery || filterStatus !== 'all' 
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              padding: '4rem 2rem',
+              backgroundColor: '#ffffff'
+            }}
+          >
+            <Box 
+              sx={{ 
+                color: '#94a3b8', 
+                marginBottom: 2 
+              }}
+            >
+              <Users size={64} />
+            </Box>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#333333',
+                fontWeight: 600,
+                marginBottom: 1
+              }}
+            >
+              {searchQuery 
                 ? 'Nie znaleziono gości' 
                 : 'Brak gości'
               }
-            </h3>
-            <p>
-              {searchQuery || filterStatus !== 'all'
-                ? 'Spróbuj zmienić filtry lub wyszukiwanie'
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: '#666666',
+                textAlign: 'center',
+                marginBottom: 3,
+                maxWidth: '400px'
+              }}
+            >
+              {searchQuery
+                ? 'Spróbuj zmienić wyszukiwanie'
                 : 'Dodaj pierwszego gościa do swoich wydarzeń'
               }
-            </p>
-            {!searchQuery && filterStatus === 'all' && (
+            </Typography>
+            {!searchQuery && (
               <button 
-                className="guests__empty-btn"
+                className="guests__action-btn guests__action-btn--primary"
                 onClick={handleCreateGuest}
               >
                 <Plus size={20} />
                 Dodaj gościa
               </button>
             )}
-          </div>
+          </Box>
         ) : (
           <div className="guests__table">
             <table>
@@ -328,8 +467,8 @@ const Guests: React.FC = () => {
                 <tr>
                   <th>Gość</th>
                   <th>Wydarzenie</th>
-                  <th>Status</th>
                   <th>Data wydarzenia</th>
+                  <th>Osoba towarzysząca</th>
                   <th>Kontakt</th>
                   <th>Akcje</th>
                 </tr>
@@ -362,15 +501,28 @@ const Guests: React.FC = () => {
                       </div>
                     </td>
                     <td>
-                      <span className={`guests__status guests__status--${getStatusColor(guest.status)}`}>
-                        {getStatusIcon(guest.status)}
-                        {getStatusLabel(guest.status)}
-                      </span>
-                    </td>
-                    <td>
                       <div className="guests__date">
                         <Calendar size={14} />
                         {guest.eventDate.toLocaleDateString('pl-PL')}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="guests__plus-one">
+                        {guest.plusOne ? (
+                          <div className="guests__plus-one-info">
+                            <div className="guests__plus-one-indicator">
+                              <Users size={14} />
+                              +1
+                            </div>
+                            {guest.plusOneDetails && (guest.plusOneDetails.firstName || guest.plusOneDetails.lastName) && (
+                              <div className="guests__plus-one-name">
+                                {guest.plusOneDetails.firstName} {guest.plusOneDetails.lastName}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="guests__no-plus-one">-</span>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -400,14 +552,15 @@ const Guests: React.FC = () => {
                         <button
                           onClick={() => handleGuestAction('edit', guest.id)}
                           className="guests__action-btn guests__action-btn--small"
-                          title="Edytuj"
+                          title="Edytuj gościa"
                         >
+                          <Edit3 size={14} />
                           Edytuj
                         </button>
                         <button
                           onClick={() => handleGuestAction('delete', guest.id)}
                           className="guests__action-btn guests__action-btn--small guests__action-btn--danger"
-                          title="Usuń"
+                          title="Usuń gościa"
                         >
                           Usuń
                         </button>
@@ -427,7 +580,6 @@ const Guests: React.FC = () => {
     <>
       <Routes>
         <Route index element={<GuestsListPage />} />
-        <Route path="edit/:id" element={<div>Formularz edycji gościa</div>} />
         <Route path="import" element={<div>Import gości</div>} />
       </Routes>
 
@@ -439,6 +591,16 @@ const Guests: React.FC = () => {
         events={events}
         onEventChange={setSelectedEventId}
         onGuestAdded={handleGuestAdded}
+      />
+
+      <EditGuestModal
+        open={isEditGuestModalOpen}
+        onClose={() => {
+          setIsEditGuestModalOpen(false);
+          setEditingGuest(null);
+        }}
+        guest={editingGuest}
+        onGuestUpdated={handleGuestAdded}
       />
     </>
   );

@@ -1,0 +1,166 @@
+// components/dashboard/Events/EventDetails/EventLocationMap/EventLocationMap.scss
+@use '../../../../../styles/globals/variables' as *;
+@use '../../../../../styles/globals/mixins' as *;
+
+.event-location-map {
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--bg-accent);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+
+    svg {
+      color: var(--primary);
+    }
+  }
+
+  &__external-btn {
+    padding: 0.5rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: var(--surface-hover);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+  }
+
+  &__container {
+    position: relative;
+    background: var(--bg-surface);
+
+    .leaflet-container {
+      background: var(--bg-surface);
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(255, 255, 255, 0.8);
+      font-size: 0.7rem;
+    }
+  }
+
+  &__address {
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    background: var(--bg-accent);
+    border-top: 1px solid var(--border-light);
+    line-height: 1.4;
+  }
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    gap: 1rem;
+    
+    span {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+  }
+
+  &__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-primary);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  &__error {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+
+    svg {
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    p {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+  }
+
+  &__external-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--surface-hover);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+  }
+
+  @include mobile {
+    border-radius: 8px;
+
+    &__header {
+      padding: 0.75rem;
+    }
+
+    &__address {
+      padding: 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    &__container {
+      .leaflet-container {
+        height: 200px !important;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

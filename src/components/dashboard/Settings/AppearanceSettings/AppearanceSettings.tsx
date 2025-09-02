@@ -1,11 +1,11 @@
 // components/dashboard/Settings/AppearanceSettings/AppearanceSettings.tsx
 import React, { useState } from 'react';
-import { Palette, Monitor, Sun, Moon, Globe, Type } from 'lucide-react';
+import { Palette, Sun, Globe, Type } from 'lucide-react';
 import './AppearanceSettings.scss';
 
 const AppearanceSettings: React.FC = () => {
   const [settings, setSettings] = useState({
-    theme: 'light' as 'light' | 'dark' | 'system',
+    theme: 'light' as 'light',
     accentColor: 'blue' as 'blue' | 'purple' | 'green' | 'orange' | 'red',
     language: 'pl' as 'pl' | 'en' | 'de' | 'fr',
     dateFormat: 'DD/MM/YYYY' as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD',
@@ -37,8 +37,6 @@ const AppearanceSettings: React.FC = () => {
 
   const themes = [
     { id: 'light', name: 'Jasny', icon: Sun, description: 'Klasyczny jasny motyw' },
-    { id: 'dark', name: 'Ciemny', icon: Moon, description: 'Oszczędza baterię i oczy' },
-    { id: 'system', name: 'Systemowy', icon: Monitor, description: 'Dopasuj do systemu' }
   ];
 
   const accentColors = [
@@ -270,7 +268,7 @@ const AppearanceSettings: React.FC = () => {
       <div className="appearance-settings__section">
         <div className="appearance-settings__section-header">
           <div className="appearance-settings__section-icon">
-            <Monitor size={20} />
+            <Palette size={20} />
           </div>
           <div>
             <h3>Podgląd</h3>

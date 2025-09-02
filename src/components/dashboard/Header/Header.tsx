@@ -1,9 +1,29 @@
 // components/dashboard/Header/Header.tsx
-import React, { useState, useEffect } from 'react';
-import { Bell, Search, Plus, Menu } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Bell, 
+  Search, 
+  Plus, 
+  Menu, 
+  Sparkles,
+  Calendar,
+  Users,
+  Settings,
+  TrendingUp,
+  ArrowRight,
+  X,
+  Check,
+  Clock,
+  AlertCircle,
+  Star,
+  Wifi,
+  WifiOff
+} from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import { EventService } from '../../../services/firebase/eventService';
 import NavigationButtons from '../../common/NavigationButtons/NavigationButtons';
-import { ThemeToggle } from '../../common/ThemeToggle/ThemeToggle';
 import './Header.scss';
 
 interface HeaderProps {
@@ -11,37 +31,303 @@ interface HeaderProps {
   isMobileOpen?: boolean;
 }
 
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  timestamp: Date;
+  actionUrl?: string;
+}
+
+interface QuickAction {
+  id: string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  href: string;
+  shortcut?: string;
+  category: 'create' | 'manage' | 'analyze';
+}
+
 const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [isMobile, setIsMobile] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  
+  // Connection status for global offline indicator
+  const [isConnected, setIsConnected] = useState(true);
+  const [showConnectivityStatus, setShowConnectivityStatus] = useState(false);
+  
+  // Mock notifications data
+  const [notifications] = useState<Notification[]>([
+    {
+      id: 1,
+      title: 'Nowe RSVP',
+      message: 'Jan Kowalski potwierdził uczestnictwo w "Impreza urodzinowa"',
+      type: 'success',
+      read: false,
+      timestamp: new Date(Date.now() - 5 * 60 * 1000),
+      actionUrl: '/dashboard/events/123'
+    },
+    {
+      id: 2,
+      title: 'Przypomnienie',
+      message: 'Sprawdź listę gości dla wydarzenia jutro',
+      type: 'warning',
+      read: false,
+      timestamp: new Date(Date.now() - 30 * 60 * 1000),
+      actionUrl: '/dashboard/events/124'
+    },
+    {
+      id: 3,
+      title: 'Analityka gotowa',
+      message: 'Raport miesięczny został wygenerowany',
+      type: 'info',
+      read: true,
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      actionUrl: '/dashboard/analytics'
+    }
+  ]);
 
+  // Enhanced quick actions
+  const quickActions: QuickAction[] = [
+    {
+      id: 'new-event',
+      label: 'Nowe wydarzenie',
+      description: 'Utwórz nową imprezę lub spotkanie',
+      icon: <Calendar size={20} />,
+      href: '/dashboard/events/create',
+      shortcut: 'Ctrl+N',
+      category: 'create'
+    },
+    {
+      id: 'add-contact',
+      label: 'Dodaj kontakt',
+      description: 'Dodaj nową osobę do bazy kontaktów',
+      icon: <Users size={20} />,
+      href: '/dashboard/contacts/add',
+      shortcut: 'Ctrl+Shift+C',
+      category: 'create'
+    },
+    {
+      id: 'view-analytics',
+      label: 'Analityka',
+      description: 'Zobacz statystyki i raporty',
+      icon: <TrendingUp size={20} />,
+      href: '/dashboard/analytics',
+      shortcut: 'Ctrl+A',
+      category: 'analyze'
+    },
+    {
+      id: 'settings',
+      label: 'Ustawienia',
+      description: 'Zarządzaj kontem i preferencjami',
+      icon: <Settings size={20} />,
+      href: '/dashboard/settings',
+      shortcut: 'Ctrl+,',
+      category: 'manage'
+    }
+  ];
+
+  // Responsive check
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
 
-    // Check on mount
     checkMobile();
-
-    // Add event listener
     window.addEventListener('resize', checkMobile);
-
-    // Cleanup
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const getGreeting = () => {
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Command palette (Ctrl/Cmd + K)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      
+      // Quick actions (Ctrl/Cmd + Shift + K)
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'K') {
+        e.preventDefault();
+        setIsQuickActionsOpen(true);
+      }
+      
+      // Escape to close all overlays
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+        setIsNotificationsOpen(false);
+        setIsQuickActionsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Prevent body scroll when search modal is open
+  useEffect(() => {
+    if (isSearchOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isSearchOpen]);
+
+  // Close overlays when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
+      // For search modal (now rendered via portal)
+      if (isSearchOpen && 
+          !target.closest('.dashboard-header__search-container') && 
+          !target.closest('.dashboard-header__search-expanded')) {
+        setIsSearchOpen(false);
+      }
+      
+      if (!target.closest('.dashboard-header__notifications')) {
+        setIsNotificationsOpen(false);
+      }
+      if (!target.closest('.dashboard-header__quick-actions')) {
+        setIsQuickActionsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSearchOpen]);
+
+  // Monitor connection status globally
+  useEffect(() => {
+    const handleConnectionChange = (connected: boolean) => {
+      const wasConnected = isConnected;
+      setIsConnected(connected);
+      
+      // Show notification only for actual connection changes
+      if (wasConnected !== connected) {
+        setShowConnectivityStatus(true);
+        
+        setTimeout(() => {
+          setShowConnectivityStatus(false);
+        }, 3000);
+      }
+    };
+
+    const unsubscribe = EventService.subscribeToConnectionStatus(handleConnectionChange);
+    
+    return () => unsubscribe();
+  }, [isConnected]);
+
+  // Enhanced greeting with time awareness
+  const getGreeting = useCallback(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Dzień dobry';
-    if (hour < 18) return 'Dzień dobry';
-    return 'Dobry wieczór';
-  };
+    const name = user?.firstName || 'Użytkowniku';
+    
+    if (hour < 6) return `Dobranoc, ${name}`;
+    if (hour < 12) return `Dzień dobry, ${name}`;
+    if (hour < 17) return `Dzień dobry, ${name}`;
+    if (hour < 22) return `Dobry wieczór, ${name}`;
+    return `Dobranoc, ${name}`;
+  }, [user?.firstName]);
+
+  // Enhanced subtitle with context awareness
+  const getSubtitle = useCallback(() => {
+    const path = location.pathname;
+    
+    if (path.includes('/events')) return 'Zarządzaj swoimi wydarzeniami i gośćmi';
+    if (path.includes('/contacts')) return 'Organizuj swoją bazę kontaktów';
+    if (path.includes('/analytics')) return 'Analizuj statystyki i trendy';
+    if (path.includes('/settings')) return 'Dostosuj aplikację do swoich potrzeb';
+    
+    return 'Sprawdź swoje nadchodzące wydarzenia i zaplanuj kolejne';
+  }, [location.pathname]);
+
+  // Mock search functionality
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Simulate API call
+    const mockResults = [
+      { type: 'event', title: 'Impreza urodzinowa', url: '/dashboard/events/123' },
+      { type: 'contact', title: 'Jan Kowalski', url: '/dashboard/contacts/456' },
+      { type: 'setting', title: 'Ustawienia powiadomień', url: '/dashboard/settings#notifications' }
+    ].filter(item => 
+      item.title.toLowerCase().includes(query.toLowerCase())
+    );
+
+    setSearchResults(mockResults);
+  }, []);
+
+  // Handle search input
+  const handleSearchInput = useCallback((value: string) => {
+    setSearchQuery(value);
+    handleSearch(value);
+  }, [handleSearch]);
+
+  // Execute search
+  const executeSearch = useCallback((result?: any) => {
+    if (result) {
+      navigate(result.url);
+    } else if (searchQuery.trim()) {
+      navigate(`/dashboard/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+    
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [navigate, searchQuery]);
+
+  // Handle notification click
+  const handleNotificationClick = useCallback((notification: Notification) => {
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    }
+    setIsNotificationsOpen(false);
+  }, [navigate]);
+
+  // Get unread notifications count
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Format notification timestamp
+  const formatTimestamp = useCallback((timestamp: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - timestamp.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Teraz';
+    if (minutes < 60) return `${minutes}m temu`;
+    if (hours < 24) return `${hours}h temu`;
+    return `${days}d temu`;
+  }, []);
 
   return (
-    <header className="header">
+    <>
+      {/* Mobile Toggle - Outside grid */}
       {isMobile && (
         <button 
-          className="header__mobile-toggle"
+          className="dashboard-header__mobile-toggle"
           onClick={onMobileToggle}
           aria-label={isMobileOpen ? "Zamknij menu nawigacyjne" : "Otwórz menu nawigacyjne"}
           aria-expanded={isMobileOpen}
@@ -51,40 +337,323 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
         </button>
       )}
       
-      <div className="header__left">
-        <h1 className="header__greeting">
-          {getGreeting()}, {user?.firstName}! 👋
-        </h1>
-        <p className="header__subtitle">
-          Sprawdź swoje nadchodzące wydarzenia i zaplanuj kolejne
-        </p>
+      <header className="dashboard-header">
+      {/* Left Section - Greeting */}
+      <div className="dashboard-header__left">
+        <div className="dashboard-header__greeting-container">
+          <h1 className="dashboard-header__greeting">
+            {getGreeting()}
+            <span className="dashboard-header__greeting-emoji">👋</span>
+          </h1>
+          <p className="dashboard-header__subtitle">
+            {getSubtitle()}
+          </p>
+        </div>
+        
+        {/* Breadcrumb-style path indicator */}
+        <div className="dashboard-header__path">
+          <span className="dashboard-header__path-item">Dashboard</span>
+          {location.pathname !== '/dashboard' && (
+            <>
+              <span className="dashboard-header__path-separator">/</span>
+              <span className="dashboard-header__path-item dashboard-header__path-item--current">
+                {location.pathname.split('/').pop()?.replace('-', ' ') || 'Page'}
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="header__right">
-        <NavigationButtons className="header__nav-buttons" />
+      {/* Logo Section - Centered */}
+      <div className="dashboard-header__logo">
+        <span className="dashboard-header__logo-icon">🎉</span>
+        <span className="dashboard-header__logo-text">PartyPass</span>
+      </div>
+
+      {/* Right Section - Actions */}
+      <div className="dashboard-header__right">
+        {/* Global connection status - show only when offline */}
+        {!isConnected && (
+          <div className="dashboard-header__connection-status">
+            <WifiOff size={16} />
+            <span>Offline</span>
+          </div>
+        )}
         
-        <div className="header__search">
-          <Search size={20} className="header__search-icon" />
-          <input 
-            type="text" 
-            placeholder="Szukaj wydarzeń..."
-            className="header__search-input"
-          />
+        {/* Navigation Buttons */}
+        <NavigationButtons className="dashboard-header__nav-buttons" />
+        
+        {/* Enhanced Search */}
+        <div className="dashboard-header__search-container">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="dashboard-header__search-trigger"
+            aria-label="Otwórz wyszukiwanie (Ctrl+K)"
+            title="Wyszukaj (Ctrl+K)"
+          >
+            <Search size={18} />
+            {!isMobile && (
+              <>
+                <span className="dashboard-header__search-hint">Szukaj...</span>
+                <kbd className="dashboard-header__search-kbd">⌘K</kbd>
+              </>
+            )}
+          </button>
         </div>
 
-        <ThemeToggle />
+        {/* Enhanced Notifications */}
+        <div className="dashboard-header__notifications">
+          <button
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className="dashboard-header__notifications-trigger"
+            aria-label={`Powiadomienia (${unreadCount} nieprzeczytanych)`}
+            title="Powiadomienia"
+          >
+            <Bell size={16} />
+            {unreadCount > 0 && (
+              <span className="dashboard-header__notifications-badge">{unreadCount}</span>
+            )}
+          </button>
+          
+          {/* Notifications Dropdown */}
+          {isNotificationsOpen && (
+            <div className="dashboard-header__notifications-dropdown">
+              <div className="dashboard-header__notifications-header">
+                <h3>Powiadomienia</h3>
+                <button
+                  onClick={() => setIsNotificationsOpen(false)}
+                  className="dashboard-header__notifications-close"
+                  aria-label="Zamknij powiadomienia"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <div className="dashboard-header__notifications-list">
+                {notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`dashboard-header__notification ${!notification.read ? 'dashboard-header__notification--unread' : ''}`}
+                    >
+                      <div className={`dashboard-header__notification-icon dashboard-header__notification-icon--${notification.type}`}>
+                        {notification.type === 'success' && <Check size={16} />}
+                        {notification.type === 'warning' && <AlertCircle size={16} />}
+                        {notification.type === 'error' && <X size={16} />}
+                        {notification.type === 'info' && <Bell size={16} />}
+                      </div>
+                      
+                      <div className="dashboard-header__notification-content">
+                        <div className="dashboard-header__notification-title">{notification.title}</div>
+                        <div className="dashboard-header__notification-message">{notification.message}</div>
+                        <div className="dashboard-header__notification-time">
+                          <Clock size={12} />
+                          {formatTimestamp(notification.timestamp)}
+                        </div>
+                      </div>
+                      
+                      {!notification.read && (
+                        <div className="dashboard-header__notification-dot"></div>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="dashboard-header__notifications-empty">
+                    <Bell size={48} />
+                    <p>Brak nowych powiadomień</p>
+                  </div>
+                )}
+              </div>
+              
+              {notifications.length > 0 && (
+                <div className="dashboard-header__notifications-footer">
+                  <button className="dashboard-header__notifications-view-all">
+                    Zobacz wszystkie
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-        <button className="header__notifications">
-          <Bell size={20} />
-          <span className="header__notifications-badge">3</span>
-        </button>
-
-        <button className="header__cta">
-          <Plus size={20} />
-          <span>Nowe wydarzenie</span>
-        </button>
+        {/* Enhanced Quick Actions - Hide on mobile */}
+        {!isMobile && (
+          <div className="dashboard-header__quick-actions">
+            <button
+              onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
+              className="dashboard-header__quick-actions-trigger"
+              aria-label="Szybkie akcje"
+              title="Szybkie akcje (Ctrl+Shift+K)"
+            >
+              <Plus size={18} />
+              <span>Akcje</span>
+              <Sparkles size={16} className="dashboard-header__quick-actions-sparkle" />
+            </button>
+          
+          {/* Quick Actions Dropdown */}
+          {isQuickActionsOpen && (
+            <div className="dashboard-header__quick-actions-dropdown">
+              <div className="dashboard-header__quick-actions-header">
+                <h3>Szybkie akcje</h3>
+                <button
+                  onClick={() => setIsQuickActionsOpen(false)}
+                  className="dashboard-header__quick-actions-close"
+                  aria-label="Zamknij szybkie akcje"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <div className="dashboard-header__quick-actions-grid">
+                {quickActions.map((action) => (
+                  <button
+                    key={action.id}
+                    onClick={() => {
+                      navigate(action.href);
+                      setIsQuickActionsOpen(false);
+                    }}
+                    className="dashboard-header__quick-action"
+                  >
+                    <div className="dashboard-header__quick-action-icon">{action.icon}</div>
+                    <div className="dashboard-header__quick-action-content">
+                      <div className="dashboard-header__quick-action-label">{action.label}</div>
+                      <div className="dashboard-header__quick-action-desc">{action.description}</div>
+                    </div>
+                    {action.shortcut && (
+                      <kbd className="dashboard-header__quick-action-kbd">{action.shortcut}</kbd>
+                    )}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="dashboard-header__quick-actions-footer">
+                <div className="dashboard-header__quick-actions-tip">
+                  <Star size={14} />
+                  Użyj <kbd>Ctrl+Shift+K</kbd> aby szybko otworzyć akcje
+                </div>
+              </div>
+            </div>
+          )}
+          </div>
+        )}
       </div>
+      
+      {/* Search Modal rendered outside DOM hierarchy to prevent layout issues */}
+      {isSearchOpen && createPortal(
+        <>
+          <div className="dashboard-header__search-overlay" onClick={() => setIsSearchOpen(false)} />
+          <div 
+            className="dashboard-header__search-expanded"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 9999
+            }}
+          >
+            <div className="dashboard-header__search-header">
+              <h3>Przeszukaj PartyPass</h3>
+              <button
+                onClick={() => setIsSearchOpen(false)}
+                className="dashboard-header__search-close"
+                aria-label="Zamknij wyszukiwanie"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="dashboard-header__search-box">
+              <Search size={20} className="dashboard-header__search-icon" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    executeSearch();
+                  }
+                }}
+                placeholder="Szukaj wydarzeń, kontaktów, ustawień..."
+                className="dashboard-header__search-input"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => executeSearch()}
+                  className="dashboard-header__search-submit"
+                  aria-label="Wyszukaj"
+                >
+                  <ArrowRight size={16} />
+                </button>
+              )}
+            </div>
+            
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="dashboard-header__search-results">
+                <div className="dashboard-header__search-results-label">Wyniki</div>
+                {searchResults.map((result, index) => (
+                  <button
+                    key={index}
+                    onClick={() => executeSearch(result)}
+                    className="dashboard-header__search-result"
+                  >
+                    <div className="dashboard-header__search-result-type">{result.type}</div>
+                    <div className="dashboard-header__search-result-title">{result.title}</div>
+                    <ArrowRight size={14} />
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {/* Quick Actions in Search */}
+            <div className="dashboard-header__search-actions">
+              <div className="dashboard-header__search-actions-label">Szybkie akcje</div>
+              {quickActions.slice(0, 3).map((action) => (
+                <button
+                  key={action.id}
+                  onClick={() => {
+                    navigate(action.href);
+                    setIsSearchOpen(false);
+                  }}
+                  className="dashboard-header__search-action"
+                >
+                  <div className="dashboard-header__search-action-icon">{action.icon}</div>
+                  <div className="dashboard-header__search-action-content">
+                    <div className="dashboard-header__search-action-label">{action.label}</div>
+                    <div className="dashboard-header__search-action-desc">{action.description}</div>
+                  </div>
+                  {action.shortcut && (
+                    <kbd className="dashboard-header__search-action-kbd">{action.shortcut}</kbd>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>,
+        document.getElementById('root') || document.body
+      )}
+      
+      {/* Global connectivity status toast */}
+      {showConnectivityStatus && (
+        <div className={`dashboard-header__connectivity-toast ${isConnected ? 'dashboard-header__connectivity-toast--online' : 'dashboard-header__connectivity-toast--offline'}`}>
+          {isConnected ? (
+            <>
+              <Wifi size={16} />
+              <span>Połączenie przywrócone</span>
+            </>
+          ) : (
+            <>
+              <WifiOff size={16} />
+              <span>Brak połączenia - zmiany zostaną zsynchronizowane</span>
+            </>
+          )}
+        </div>
+      )}
     </header>
+    </>
   );
 };
 

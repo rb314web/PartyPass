@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import Header from '../../common/Header/Header';
+import Navigation from '../../common/Navigation/Navigation';
 import './Register.scss';
 
 const Register: React.FC = () => {
@@ -75,7 +75,7 @@ const Register: React.FC = () => {
 
   return (
     <>
-      <Header />
+      <Navigation variant="auth" />
       <div className="register">
         <div className="register__container">
           <div className="register__card">

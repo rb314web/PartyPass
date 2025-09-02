@@ -17,7 +17,7 @@ import {
   QueryConstraint
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { Guest } from '../../types';
+import { Guest, CreateGuestData, UpdateGuestData } from '../../types';
 import { FirebaseGuest, FirebaseEvent, COLLECTIONS } from '../../types/firebase';
 import { AnalyticsService } from './analyticsService';
 
@@ -26,20 +26,6 @@ export interface GuestFilters {
   status?: Guest['status'];
   search?: string;
   userId?: string;
-}
-
-export interface CreateGuestData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  dietaryRestrictions?: string;
-  notes?: string;
-  plusOne?: boolean;
-}
-
-export interface UpdateGuestData extends Partial<CreateGuestData> {
-  status?: Guest['status'];
 }
 
 const convertFirebaseGuestToGuest = (guestDoc: FirebaseGuest & { id: string }, eventData?: FirebaseEvent): Guest => {
@@ -139,6 +125,7 @@ export class GuestService {
       throw new Error(`Błąd podczas pobierania gości: ${error.message}`);
     }
   }
+
   // Create guest
   static async createGuest(userId: string, eventId: string, guestData: CreateGuestData): Promise<Guest> {
     try {
@@ -148,12 +135,12 @@ export class GuestService {
         firstName: guestData.firstName,
         lastName: guestData.lastName,
         email: guestData.email,
-        phoneNumber: guestData.phone,
+        phoneNumber: guestData.phone || '',
         status: 'pending',
         invitedAt: Timestamp.now(),
         createdAt: Timestamp.now(),
-        dietaryRestrictions: guestData.dietaryRestrictions,
-        notes: guestData.notes,
+        dietaryRestrictions: guestData.dietaryRestrictions || '',
+        notes: guestData.notes || '',
         plusOne: guestData.plusOne || false
       };
 
@@ -236,10 +223,11 @@ export class GuestService {
       if (updateData.firstName) updateFields.firstName = updateData.firstName;
       if (updateData.lastName) updateFields.lastName = updateData.lastName;
       if (updateData.email) updateFields.email = updateData.email;
-      if (updateData.phone) updateFields.phoneNumber = updateData.phone;
-      if (updateData.dietaryRestrictions) updateFields.dietaryRestrictions = updateData.dietaryRestrictions;
-      if (updateData.notes) updateFields.notes = updateData.notes;
+      if (updateData.phone !== undefined) updateFields.phoneNumber = updateData.phone;
+      if (updateData.dietaryRestrictions !== undefined) updateFields.dietaryRestrictions = updateData.dietaryRestrictions;
+      if (updateData.notes !== undefined) updateFields.notes = updateData.notes;
       if (typeof updateData.plusOne === 'boolean') updateFields.plusOne = updateData.plusOne;
+      if (updateData.plusOneDetails !== undefined) updateFields.plusOneDetails = updateData.plusOneDetails;
       
       // Jeśli zmienia się status, zaktualizuj liczniki wydarzenia
       if (updateData.status && updateData.status !== oldData.status) {

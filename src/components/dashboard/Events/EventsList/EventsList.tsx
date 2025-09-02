@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import {
-  Calendar,
   MapPin,
   Users,
   MoreVertical,

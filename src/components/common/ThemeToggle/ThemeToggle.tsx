@@ -1,10 +1,14 @@
 // components/common/ThemeToggle/ThemeToggle.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun } from 'lucide-react';
 import { useTheme, Theme } from '../../../hooks/useTheme';
 import './ThemeToggle.scss';
 
-export const ThemeToggle: React.FC = () => {
+interface ThemeToggleProps {
+  className?: string;
+}
+
+export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -39,33 +43,15 @@ export const ThemeToggle: React.FC = () => {
   };
 
   const getThemeIcon = () => {
-    switch (theme) {
-      case 'light':
-        return <Sun size={20} />;
-      case 'dark':
-        return <Moon size={20} />;
-      case 'auto':
-        return <Monitor size={20} />;
-      default:
-        return <Sun size={20} />;
-    }
+    return <Sun size={20} />;
   };
 
   const getThemeLabel = () => {
-    switch (theme) {
-      case 'light':
-        return 'Jasny';
-      case 'dark':
-        return 'Ciemny';
-      case 'auto':
-        return 'Auto';
-      default:
-        return 'Auto';
-    }
+    return 'Jasny';
   };
 
   return (
-    <div className="theme-toggle" ref={dropdownRef}>
+    <div className={`theme-toggle ${className || ''}`} ref={dropdownRef}>
       <button
         className="theme-toggle__button"
         onClick={() => setIsOpen(!isOpen)}
@@ -101,22 +87,6 @@ export const ThemeToggle: React.FC = () => {
           >
             <Sun size={16} />
             <span>Jasny</span>
-          </button>
-          
-          <button
-            className={`theme-toggle__option ${theme === 'dark' ? 'theme-toggle__option--active' : ''}`}
-            onClick={() => handleThemeSelect('dark')}
-          >
-            <Moon size={16} />
-            <span>Ciemny</span>
-          </button>
-          
-          <button
-            className={`theme-toggle__option ${theme === 'auto' ? 'theme-toggle__option--active' : ''}`}
-            onClick={() => handleThemeSelect('auto')}
-          >
-            <Monitor size={16} />
-            <span>Auto</span>
           </button>
         </div>
       )}

@@ -16,27 +16,38 @@ import {
   Settings,
   Mail,
   Download,
-  Plus
+  Plus,
+  HelpCircle,
+  ChevronDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { EventService } from '../../../../services/firebase/eventService';
-import { Event, Guest } from '../../../../types';
+import { EventGuestService } from '../../../../services/firebase/eventGuestService';
+import { Event, Contact, EventGuest, GuestStatus } from '../../../../types';
 import { useAuth } from '../../../../hooks/useAuth';
 import DuplicateEventModal, { DuplicateEventData } from '../DuplicateEventModal/DuplicateEventModal';
 import InvitationManager from '../InvitationManager/InvitationManager';
+import AddContact from '../../Contacts/AddContact/AddContact';
+import AddContactsToEvent from '../AddContactsToEvent/AddContactsToEvent';
+import EventLocationMap from './EventLocationMap/EventLocationMap';
 import './EventDetails.scss';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();  const [event, setEvent] = useState<Event | null>(null);
+  const [eventGuests, setEventGuests] = useState<Array<EventGuest & { contact: Contact }>>([]);
   const [loading, setLoading] = useState(true);
-  const [showShareOptions, setShowShareOptions] = useState(false);  const [showGuestOptions, setShowGuestOptions] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
+  const [showGuestOptions, setShowGuestOptions] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [showInvitationManager, setShowInvitationManager] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const [isAddContactsOpen, setIsAddContactsOpen] = useState(false);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -45,20 +56,48 @@ const EventDetails: React.FC = () => {
       try {
         if (!user) {
           setEvent(null);
+          setEventGuests([]);
           return;
         }
+        
         const eventData = await EventService.getEventById(id, user.id);
         setEvent(eventData);
+        
+        // Ładuj gości wydarzenia
+        if (eventData) {
+          const guests = await EventGuestService.getEventGuests(eventData.id);
+          console.log('Loaded guests:', guests.length, guests.map(g => `${g.contact.firstName} (${g.status})`));
+          setEventGuests(guests);
+        }
+        
         setLoading(false);
       } catch (error: any) {
         console.error('Błąd podczas ładowania wydarzenia:', error);
         setEvent(null);
+        setEventGuests([]);
         setLoading(false);
       }
     };
 
     loadEvent();
   }, [id, user]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showGuestOptions && !(event.target as Element).closest('.event-details__section-header')) {
+        setShowGuestOptions(false);
+      }
+      if (statusDropdownOpen && !(event.target as Element).closest('.event-details__guest-status-container')) {
+        setStatusDropdownOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showGuestOptions, statusDropdownOpen]);
 
   const handleBack = () => {
     navigate('/dashboard/events');
@@ -122,6 +161,99 @@ const EventDetails: React.FC = () => {
     setShowGuestOptions(!showGuestOptions);
   };
 
+  const handleAddNewGuest = () => {
+    setIsAddContactOpen(true);
+    setShowGuestOptions(false);
+  };
+
+  const handleAddContacts = () => {
+    setIsAddContactsOpen(true);
+    setShowGuestOptions(false);
+  };
+
+  const handleContactAdded = async (contact: Contact) => {
+    // Po dodaniu kontaktu, automatycznie dodaj go do wydarzenia
+    if (event && user) {
+      try {
+        await EventGuestService.addContactToEvent(event.id, contact.id, {
+          contactId: contact.id,
+          eventSpecificNotes: '',
+          plusOneType: 'none'
+        });
+        // Przeładuj listę gości
+        await handleGuestAdded();
+      } catch (error) {
+        console.error('Błąd podczas dodawania kontaktu do wydarzenia:', error);
+      }
+    }
+  };
+
+  const handleRemoveGuest = async (contactId: string) => {
+    if (!event || !window.confirm('Czy na pewno chcesz usunąć tego gościa z wydarzenia?')) {
+      return;
+    }
+
+    try {
+      await EventGuestService.removeContactFromEvent(event.id, contactId);
+      // Przeładuj listę gości
+      await handleGuestAdded();
+    } catch (error) {
+      console.error('Błąd podczas usuwania gościa:', error);
+      alert('Wystąpił błąd podczas usuwania gościa');
+    }
+  };
+
+  const handleUpdateGuestStatus = async (contactId: string, newStatus: GuestStatus) => {
+    if (!event) return;
+
+    try {
+      await EventGuestService.updateGuestStatus(event.id, contactId, newStatus);
+      // Przeładuj listę gości
+      await handleGuestAdded();
+      setStatusDropdownOpen(null);
+    } catch (error) {
+      console.error('Błąd podczas zmiany statusu gościa:', error);
+      alert('Wystąpił błąd podczas zmiany statusu gościa');
+    }
+  };
+
+  const getGuestStatusLabel = (status: GuestStatus) => {
+    switch (status) {
+      case 'accepted': return 'Potwierdził';
+      case 'declined': return 'Odrzucił';
+      case 'maybe': return 'Może';
+      case 'pending': return 'Oczekuje';
+      default: return 'Nieznany';
+    }
+  };
+
+  const getGuestStatusIcon = (status: GuestStatus) => {
+    switch (status) {
+      case 'accepted': return <CheckCircle size={16} color="var(--success)" />;
+      case 'declined': return <XCircle size={16} color="var(--error)" />;
+      case 'maybe': return <HelpCircle size={16} color="var(--warning)" />;
+      case 'pending': return <Clock size={16} color="var(--warning)" />;
+      default: return <Clock size={16} color="var(--text-secondary)" />;
+    }
+  };
+
+  const handleGuestAdded = async () => {
+    // Przeładuj wydarzenie i gości aby odświeżyć listę
+    if (id && user) {
+      try {
+        const eventData = await EventService.getEventById(id, user.id);
+        setEvent(eventData);
+        
+        if (eventData) {
+          const guests = await EventGuestService.getEventGuests(eventData.id);
+          setEventGuests(guests);
+        }
+      } catch (error) {
+        console.error('Błąd podczas przeładowywania wydarzenia:', error);
+      }
+    }
+  };
+
   const handleUpdateSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!event) return;
@@ -148,17 +280,17 @@ const EventDetails: React.FC = () => {
   };
 
   const downloadGuestList = () => {
-    if (!event) return;
+    if (!event || eventGuests.length === 0) return;
 
     // Przygotuj dane
     const csvData = [
-      ['Imię', 'Nazwisko', 'Email', 'Status', 'Data odpowiedzi'].join(','),
-      ...(event.guests || []).map(guest => [
-        guest.firstName,
-        guest.lastName,
-        guest.email,
-        guest.status,
-        guest.respondedAt ? format(guest.respondedAt, 'dd.MM.yyyy HH:mm') : ''
+      ['Imię', 'Nazwisko', 'Email', 'Status', 'Data zaproszenia'].join(','),
+      ...eventGuests.map(eventGuest => [
+        eventGuest.contact.firstName,
+        eventGuest.contact.lastName,
+        eventGuest.contact.email,
+        eventGuest.status,
+        format(eventGuest.invitedAt, 'dd.MM.yyyy HH:mm')
       ].join(','))
     ].join('\\n');
 
@@ -294,6 +426,11 @@ const EventDetails: React.FC = () => {
         <p>{event.description}</p>
       </div>
 
+      {/* Mapa lokalizacji */}
+      <div className="event-details__location-section">
+        <EventLocationMap location={event.location} />
+      </div>
+
       {/* Statystyki gości */}
       <div className="event-details__guests-stats">
         <div className="event-details__stat-grid">
@@ -335,23 +472,88 @@ const EventDetails: React.FC = () => {
               <Plus size={20} />
               Dodaj gości
             </button>
+            {showGuestOptions && (
+              <div className="event-details__guest-dropdown">
+                <button onClick={handleAddNewGuest} className="event-details__dropdown-item">
+                  <Plus size={16} />
+                  Dodaj nowy kontakt
+                </button>
+                <button onClick={handleAddContacts} className="event-details__dropdown-item">
+                  <Users size={16} />
+                  Dodaj z kontaktów
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {(event.guests || []).length > 0 ? (
+        {eventGuests.length > 0 ? (
           <div className="event-details__guests-list">
-            {(event.guests || []).map((guest) => (
-              <div key={guest.id} className="event-details__guest">
+            {eventGuests.map((eventGuest) => (
+              <div key={`${eventGuest.id}-${eventGuest.contact.id}`} className="event-details__guest">
                 <div className="event-details__guest-info">
                   <div className="event-details__guest-name">
-                    {guest.firstName} {guest.lastName}
+                    {eventGuest.contact.firstName} {eventGuest.contact.lastName}
                   </div>
-                  <div className="event-details__guest-email">{guest.email}</div>
+                  <div className="event-details__guest-email">{eventGuest.contact.email}</div>
                 </div>
-                <div className="event-details__guest-status">
-                  {guest.status === 'accepted' && <CheckCircle size={20} color="var(--success)" />}
-                  {guest.status === 'declined' && <XCircle size={20} color="var(--error)" />}
-                  {guest.status === 'pending' && <Clock size={20} color="var(--warning)" />}
+                <div className="event-details__guest-actions">
+                  <div className="event-details__guest-status-container">
+                    <button 
+                      onClick={() => setStatusDropdownOpen(
+                        statusDropdownOpen === eventGuest.contact.id ? null : eventGuest.contact.id
+                      )}
+                      className="event-details__guest-status-button"
+                      title="Zmień status"
+                    >
+                      {getGuestStatusIcon(eventGuest.status as GuestStatus)}
+                      <span className="event-details__guest-status-label">
+                        {getGuestStatusLabel(eventGuest.status as GuestStatus)}
+                      </span>
+                      <ChevronDown size={14} />
+                    </button>
+                    
+                    {statusDropdownOpen === eventGuest.contact.id && (
+                      <div className="event-details__status-dropdown">
+                        <button
+                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'pending')}
+                          className={`event-details__status-dropdown-item ${eventGuest.status === 'pending' ? 'event-details__status-dropdown-item--active' : ''}`}
+                        >
+                          <Clock size={16} />
+                          Oczekuje
+                        </button>
+                        <button
+                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'accepted')}
+                          className={`event-details__status-dropdown-item ${eventGuest.status === 'accepted' ? 'event-details__status-dropdown-item--active' : ''}`}
+                        >
+                          <CheckCircle size={16} />
+                          Potwierdził
+                        </button>
+                        <button
+                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'maybe')}
+                          className={`event-details__status-dropdown-item ${eventGuest.status === 'maybe' ? 'event-details__status-dropdown-item--active' : ''}`}
+                        >
+                          <HelpCircle size={16} />
+                          Może
+                        </button>
+                        <button
+                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'declined')}
+                          className={`event-details__status-dropdown-item ${eventGuest.status === 'declined' ? 'event-details__status-dropdown-item--active' : ''}`}
+                        >
+                          <XCircle size={16} />
+                          Odrzucił
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button 
+                    onClick={() => handleRemoveGuest(eventGuest.contact.id)}
+                    className="event-details__guest-remove"
+                    title="Usuń gościa"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -455,6 +657,24 @@ const EventDetails: React.FC = () => {
         <InvitationManager
           event={event}
           onClose={() => setShowInvitationManager(false)}
+        />
+      )}
+
+      {/* Modal dodawania kontaktu */}
+      <AddContact
+        open={isAddContactOpen}
+        onClose={() => setIsAddContactOpen(false)}
+        onContactAdded={handleContactAdded}
+      />
+
+      {/* Modal dodawania kontaktów */}
+      {event && (
+        <AddContactsToEvent
+          open={isAddContactsOpen}
+          onClose={() => setIsAddContactsOpen(false)}
+          eventId={event.id}
+          eventTitle={event.title}
+          onContactsAdded={handleGuestAdded}
         />
       )}
     </div>

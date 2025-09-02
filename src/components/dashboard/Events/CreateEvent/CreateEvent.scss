@@ -1,13 +1,25 @@
-@import '../../../../styles/globals//mixins';
+@use '../../../../styles/globals/mixins' as mixins;
 
 .create-event {
   min-height: 100vh;
   background: var(--bg-secondary);
   padding: var(--space-lg);
   
+  @media (max-width: 768px) {
+    padding: var(--space-md);
+  }
+  
+  @media (max-width: 480px) {
+    padding: var(--space-sm);
+  }
+  
   &__container {
     max-width: 800px;
     margin: 0 auto;
+    
+    @media (max-width: 768px) {
+      max-width: 100%;
+    }
   }
   
   &__header {
@@ -54,9 +66,20 @@
     border-radius: var(--radius-xl);
     border: 1px solid var(--border-primary);
     
+    @media (max-width: 768px) {
+      padding: var(--space-md);
+      margin-bottom: var(--space-xl);
+      border-radius: var(--radius-lg);
+    }
+    
     @media (max-width: 640px) {
       flex-direction: column;
       align-items: stretch;
+      padding: var(--space-sm);
+    }
+    
+    @media (max-width: 480px) {
+      margin-bottom: var(--space-lg);
     }
   }
   
@@ -160,8 +183,19 @@
     padding: var(--space-2xl);
     margin-bottom: var(--space-xl);
     
+    @media (max-width: 768px) {
+      padding: var(--space-xl);
+      border-radius: var(--radius-lg);
+    }
+    
     @media (max-width: 640px) {
       padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
+    
+    @media (max-width: 480px) {
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
     }
   }
   
@@ -634,51 +668,7 @@
   }
 }
 
-// Dark mode support
-@media (prefers-color-scheme: dark) {
-  .create-event {
-    background: var(--gray-900);
-    
-    &__progress,
-    &__content,
-    &__navigation {
-      background: var(--gray-800);
-      border-color: var(--gray-700);
-    }
-    
-    &__input,
-    &__textarea,
-    &__tags-input {
-      background: var(--gray-800);
-      border-color: var(--gray-600);
-      color: var(--gray-100);
-      
-      &::placeholder {
-        color: var(--gray-400);
-      }
-    }
-    
-    &__option {
-      background: var(--gray-800);
-      border-color: var(--gray-600);
-      
-      &:hover {
-        background: var(--gray-700);
-        border-color: var(--primary-500);
-      }
-    }
-    
-    &__preview {
-      background: var(--gray-700);
-      border-color: var(--gray-600);
-    }
-    
-    &__summary {
-      background: rgba(99, 102, 241, 0.1);
-      border-color: var(--primary-500);
-    }
-  }
-}
+
 
 // High contrast mode
 @media (prefers-contrast: high) {

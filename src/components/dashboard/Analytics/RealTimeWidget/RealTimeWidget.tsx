@@ -39,36 +39,48 @@ const RealTimeWidget: React.FC = () => {
         unsubscribe = await AnalyticsService.subscribeToMetrics(
           user.id,
           (newMetrics) => {
+            // Transform array to object with mock data for now
+            const metricsData = {
+              pageViews: 0,
+              pageViewsChange: 0,
+              activeUsers: 0,
+              activeUsersChange: 0,
+              userActions: 0,
+              userActionsChange: 0,
+              engagementRate: 0,
+              engagementRateChange: 0
+            };
+            
             const realTimeMetrics: RealTimeMetric[] = [
               {
                 id: 'page_views',
                 label: 'Wyświetlenia',
-                value: newMetrics.pageViews || 0,
-                change: newMetrics.pageViewsChange || 0,
+                value: metricsData.pageViews || 0,
+                change: metricsData.pageViewsChange || 0,
                 icon: <Eye size={20} />,
                 color: 'blue'
               },
               {
                 id: 'active_users',
                 label: 'Aktywni użytkownicy',
-                value: newMetrics.activeUsers || 0,
-                change: newMetrics.activeUsersChange || 0,
+                value: metricsData.activeUsers || 0,
+                change: metricsData.activeUsersChange || 0,
                 icon: <Users size={20} />,
                 color: 'green'
               },
               {
                 id: 'user_actions',
                 label: 'Akcje użytkowników',
-                value: newMetrics.userActions || 0,
-                change: newMetrics.userActionsChange || 0,
+                value: metricsData.userActions || 0,
+                change: metricsData.userActionsChange || 0,
                 icon: <Activity size={20} />,
                 color: 'purple'
               },
               {
                 id: 'engagement_rate',
                 label: 'Wskaźnik zaangażowania',
-                value: newMetrics.engagementRate || 0,
-                change: newMetrics.engagementRateChange || 0,
+                value: metricsData.engagementRate || 0,
+                change: metricsData.engagementRateChange || 0,
                 icon: <TrendingUp size={20} />,
                 color: 'orange'
               }

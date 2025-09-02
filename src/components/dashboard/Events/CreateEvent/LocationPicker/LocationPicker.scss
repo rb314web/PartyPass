@@ -1,0 +1,209 @@
+// components/dashboard/Events/CreateEvent/LocationPicker/LocationPicker.scss
+@use '../../../../../styles/globals/variables' as *;
+@use '../../../../../styles/globals/mixins' as *;
+
+.location-picker {
+  position: relative; // Establish stacking context
+  
+  &__input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    &::placeholder {
+      color: var(--text-secondary);
+    }
+
+    &--error {
+      border-color: var(--error);
+    }
+  }
+
+  &__error {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--error);
+  }
+
+  &__search {
+    margin-top: 1rem;
+    position: relative;
+    z-index: 20; // Ensure search results appear above map
+  }
+
+  &__search-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    svg {
+      position: absolute;
+      left: 0.75rem;
+      color: var(--text-secondary);
+      z-index: 1;
+    }
+  }
+
+  &__search-field {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    &::placeholder {
+      color: var(--text-secondary);
+    }
+
+    &--error {
+      border-color: var(--error);
+    }
+  }
+
+  &__search-spinner {
+    position: absolute;
+    right: 0.75rem;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-primary);
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  &__search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-primary);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 30; // Higher than map container
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &__search-result {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+
+    &:hover {
+      background: var(--surface-hover);
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    svg {
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    span {
+      flex: 1;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
+
+  &__map-container {
+    margin-top: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-surface);
+    position: relative;
+    z-index: 1; // Lower than search results
+  }
+
+  &__map {
+    width: 100%;
+    height: 300px;
+
+    .leaflet-container {
+      background: var(--bg-surface);
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(255, 255, 255, 0.8);
+      font-size: 0.7rem;
+    }
+  }
+
+  &__hints {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    position: relative;
+    z-index: 1; // Same as map, below search results
+  }
+
+  &__hint {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__hint-item {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0.25rem 0;
+    padding-left: 1rem;
+    line-height: 1.4;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

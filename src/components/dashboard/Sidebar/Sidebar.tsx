@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   Crown,
-  ChevronRight
+  ChevronRight,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import './Sidebar.scss';
@@ -19,21 +20,30 @@ import './Sidebar.scss';
 interface SidebarProps {
   isMobileOpen?: boolean;
   onMobileToggle?: () => void;
+  isCollapsed?: boolean;
+  onCollapsedToggle?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen: externalMobileOpen = false, onMobileToggle }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isMobileOpen: externalMobileOpen = false, 
+  onMobileToggle,
+  isCollapsed: externalCollapsed,
+  onCollapsedToggle 
+}) => {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
   
   // Use external state if provided, otherwise use internal state
   const isMobileOpen = externalMobileOpen !== false ? externalMobileOpen : internalMobileOpen;
+  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },
     { icon: Calendar, label: 'Wydarzenia', path: '/dashboard/events' },
-    { icon: Users, label: 'Goście', path: '/dashboard/guests' },
+    { icon: Users, label: 'Kontakty', path: '/dashboard/contacts' },
+    { icon: Activity, label: 'Aktywności', path: '/dashboard/activities' },
     { icon: BarChart3, label: 'Analityka', path: '/dashboard/analytics' },
     { icon: Settings, label: 'Ustawienia', path: '/dashboard/settings' }
   ];
@@ -120,9 +130,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen: externalMobileOpen = fa
             {!isCollapsed && <span className="sidebar__logo-text">PartyPass</span>}
           </div>
           
+          {/* Mobile close button - only visible on mobile when open */}
+          <button 
+            className="sidebar__mobile-close"
+            onClick={handleMobileClose}
+            aria-label="Zamknij menu"
+            title="Zamknij menu"
+          >
+            <X size={20} />
+          </button>
+          
+          {/* Desktop collapse button - hidden on mobile */}
           <button 
             className="sidebar__collapse-btn"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => {
+              if (onCollapsedToggle) {
+                onCollapsedToggle();
+              } else {
+                setInternalCollapsed(!internalCollapsed);
+              }
+            }}
             aria-label={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
             title={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
           >

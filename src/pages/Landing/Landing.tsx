@@ -1,6 +1,6 @@
 // pages/Landing/Landing.tsx
 import React from 'react';
-import Header from '../../components/common/Header/Header';
+import Navigation from '../../components/common/Navigation/Navigation';
 import Hero from '../../components/landing/Hero/Hero';
 import Features from '../../components/landing/Features/Features';
 import PricingPlans from '../../components/landing/PricingPlans/PricingPlans';
@@ -10,14 +10,19 @@ import './Landing.scss';
 const Landing: React.FC = () => {
   return (
     <div className="landing">
-      <Header />
+      <Navigation variant="landing" />
       <main>
-        <Hero />
+        <section id="hero">
+          <Hero />
+        </section>
         <section id="features">
           <Features />
         </section>
         <section id="pricing">
           <PricingPlans />
+        </section>
+        <section id="contact">
+          {/* Contact section will be handled by Footer */}
         </section>
       </main>
       <Footer />

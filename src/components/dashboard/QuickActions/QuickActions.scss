@@ -1,4 +1,4 @@
-@import '../../../styles/globals/mixins';
+@use '../../../styles/globals/mixins' as mixins;
 
 .quick-actions {
   display: flex;
@@ -9,7 +9,7 @@
   }
   
   &__btn {
-    @include button-base;
+    @include mixins.button-base;
     background: white;
     border: 1px solid var(--gray-200);
     color: var(--gray-600);
@@ -34,11 +34,13 @@
         box-shadow: var(--shadow-md);
       }
     }
+  }
+  
+  &__label {
+    font-weight: 500;
     
     @media (max-width: 640px) {
-      .quick-actions__label {
-        display: none;
-      }
+      display: none;
     }
   }
 }

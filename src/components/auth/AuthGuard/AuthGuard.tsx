@@ -2,6 +2,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
+import AppLoader from '../../common/AppLoader/AppLoader';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,12 +14,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAuth = true }) =
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="auth-guard-loading">
-        <div className="auth-guard-spinner"></div>
-        <p>Ładowanie...</p>
-      </div>
-    );
+    return <AppLoader message="Ładowanie aplikacji..." />;
   }
 
   if (requireAuth && !user) {

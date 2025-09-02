@@ -1,8 +1,8 @@
-@import '../../../styles/globals/mixins';
+@use '../../../styles/globals/mixins' as mixins;
 
 .dashboard-home {
   &__header {
-    @include flex-between;
+    @include mixins.flex-between;
     margin-bottom: var(--space-2xl);
     gap: var(--space-lg);
     
@@ -25,7 +25,7 @@
   }
   
   &__stats {
-    @include responsive-grid(250px);
+    @include mixins.responsive-grid(250px);
     margin-bottom: var(--space-2xl);
   }
   
@@ -43,7 +43,7 @@
   &__activity-section,
   &__events-section,
   &__insights-section {
-    @include card;
+    @include mixins.card;
     padding: var(--space-xl);
   }
   
@@ -65,7 +65,7 @@
   }
   
   &__section-header {
-    @include flex-between;
+    @include mixins.flex-between;
     margin-bottom: var(--space-xl);
     
     h2 {
@@ -152,7 +152,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    @include flex-center;
+    @include mixins.flex-center;
     flex-shrink: 0;
     
     &--success {

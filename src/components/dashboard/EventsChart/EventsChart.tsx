@@ -1,17 +1,55 @@
 // components/dashboard/EventsChart/EventsChart.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { EventService, EventChartData } from '../../../services/firebase/eventService';
+import { useAuth } from '../../../hooks/useAuth';
 import './EventsChart.scss';
 
-const EventsChart: React.FC = () => {
-  // Mock data dla wykresu
-  const chartData = [
-    { month: 'Lut', events: 4, guests: 45 },
-    { month: 'Mar', events: 6, guests: 78 },
-    { month: 'Kwi', events: 3, guests: 32 },
-    { month: 'Maj', events: 8, guests: 95 },
-    { month: 'Cze', events: 5, guests: 67 },
-    { month: 'Lip', events: 7, guests: 89 }
-  ];
+interface EventsChartProps {
+  timeFilter?: string;
+}
+
+const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => {
+  const { user } = useAuth();
+  const [chartData, setChartData] = useState<EventChartData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadChartData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const data = await EventService.getEventChartData(user.id);
+        setChartData(data);
+      } catch (error) {
+        console.error('Error loading chart data:', error);
+        // Fallback to mock data
+        setChartData([
+          { month: 'Lut', events: 4, guests: 45, date: new Date() },
+          { month: 'Mar', events: 6, guests: 78, date: new Date() },
+          { month: 'Kwi', events: 3, guests: 32, date: new Date() },
+          { month: 'Maj', events: 8, guests: 95, date: new Date() },
+          { month: 'Cze', events: 5, guests: 67, date: new Date() },
+          { month: 'Lip', events: 7, guests: 89, date: new Date() }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChartData();
+  }, [user, timeFilter]);
+
+  if (loading) {
+    return (
+      <div className="events-chart">
+        <div className="events-chart__loading">
+          <div className="events-chart__spinner"></div>
+          <p>Ładowanie danych wykresu...</p>
+        </div>
+      </div>
+    );
+  }
 
   const maxEvents = Math.max(...chartData.map(d => d.events));
   const maxGuests = Math.max(...chartData.map(d => d.guests));

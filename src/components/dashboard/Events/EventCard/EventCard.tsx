@@ -11,8 +11,7 @@ import {
   Copy,
   Trash2,
   Eye,
-  Clock,
-  CheckCircle2
+  Clock
 } from 'lucide-react';
 import { Event } from '../../../../types';
 import './EventCard.scss';

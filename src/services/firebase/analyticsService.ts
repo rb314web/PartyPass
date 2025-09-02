@@ -1,20 +1,17 @@
 // services/firebase/analyticsService.ts
 import {
   collection,
-  doc,
   addDoc,
   getDocs,
   query,
   where,
   orderBy,
   Timestamp,
-  writeBatch,
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { COLLECTIONS } from '../../types/firebase';
 import { EventService } from './eventService';
-import { GuestService } from './guestService';
 
 export interface AnalyticsMetric {
   id: string;
@@ -105,8 +102,8 @@ export class AnalyticsService {
         value,
         metadata,
         timestamp: Timestamp.now(),
-        eventId,
-        guestId
+        ...(eventId && { eventId }),
+        ...(guestId && { guestId })
       };
 
       await addDoc(collection(db, COLLECTIONS.ANALYTICS), metric);
@@ -169,7 +166,6 @@ export class AnalyticsService {
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
     // Filtruj wydarzenia według dat
     let filteredEvents = events;

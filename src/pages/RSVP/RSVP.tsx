@@ -11,12 +11,11 @@ import {
   HelpCircle,
   ArrowLeft,
   User,
-  Mail,
-  Phone,
   MessageSquare,
   AlertCircle,
   Loader
 } from 'lucide-react';
+import AppLoader from '../../components/common/AppLoader/AppLoader';
 import RSVPService from '../../services/firebase/rsvpService';
 import { RSVPResponse, Guest, Event, RSVPToken, GuestStatus } from '../../types';
 import './RSVP.scss';
@@ -158,15 +157,7 @@ const RSVP: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="rsvp-page rsvp-page--loading">
-        <div className="rsvp-loading">
-          <Loader className="rsvp-loading__spinner" size={40} />
-          <h2>Ładowanie zaproszenia...</h2>
-          <p>Proszę czekać</p>
-        </div>
-      </div>
-    );
+    return <AppLoader message="Ładowanie zaproszenia..." />;
   }
 
   if (error) {

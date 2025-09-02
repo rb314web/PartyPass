@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { EventService } from '../../../../services/firebase/eventService';
 import { Event } from '../../../../types';
 import { useAuth } from '../../../../hooks/useAuth';
+import LocationPicker from '../CreateEvent/LocationPicker/LocationPicker';
 import './EditEvent.scss';
 
 interface EventFormData {
@@ -286,16 +287,12 @@ const EditEvent: React.FC = () => {
                 <MapPin size={20} />
                 Lokalizacja *
               </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
+              <LocationPicker
                 value={formData.location}
-                onChange={handleInputChange}
+                onChange={(location: string) => setFormData(prev => ({ ...prev, location }))}
+                error={errors.location}
                 placeholder="Gdzie odbędzie się wydarzenie?"
-                className={errors.location ? 'error' : ''}
               />
-              {errors.location && <span className="edit-event__error">{errors.location}</span>}
             </div>
 
             <div className="edit-event__field">

@@ -8,8 +8,7 @@ import {
   Calendar,
   ArrowRight,
   Eye,
-  Activity,
-  Target
+  Activity
 } from 'lucide-react';
 import { AnalyticsService, AnalyticsReport } from '../../../services/firebase/analyticsService';
 import { useAuth } from '../../../hooks/useAuth';

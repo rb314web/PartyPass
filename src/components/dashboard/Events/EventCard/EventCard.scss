@@ -10,10 +10,24 @@
   position: relative;
   overflow: hidden;
   
+  @media (max-width: 768px) {
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+  }
+  
+  @media (max-width: 480px) {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+  }
+  
   &:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
     border-color: var(--gray-300);
+    
+    @media (max-width: 768px) {
+      transform: translateY(-2px);
+    }
   }
   
   &--selected {
@@ -31,6 +45,12 @@
     justify-content: space-between;
     margin-bottom: var(--space-md);
     position: relative;
+    
+    @media (max-width: 480px) {
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-sm);
+    }
   }
   
   &__checkbox {
@@ -324,96 +344,7 @@
   }
 }
 
-// Dark mode styles
-.dark {
-  .event-card {
-    background: var(--gray-800);
-    border-color: var(--gray-700);
-    color: var(--gray-100);
 
-    &:hover {
-      border-color: var(--gray-600);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-    }
-
-    &--selected {
-      border-color: var(--blue-400);
-      background: rgba(59, 130, 246, 0.1);
-
-      &:hover {
-        border-color: var(--blue-300);
-      }
-    }
-
-    &__title {
-      color: var(--gray-100);
-    }
-
-    &__description {
-      color: var(--gray-300);
-    }
-
-    &__meta {
-      color: var(--gray-400);
-    }
-
-    &__checkbox-custom {
-      border-color: var(--gray-600);
-      background: var(--gray-700);
-
-      &::after {
-        color: var(--white);
-      }
-    }
-
-    &__menu-trigger {
-      color: var(--gray-400);
-
-      &:hover {
-        background: var(--gray-700);
-        color: var(--gray-200);
-      }
-    }
-
-    &__menu-dropdown {
-      background: var(--gray-800);
-      border-color: var(--gray-600);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-
-      button {
-        color: var(--gray-200);
-
-        &:hover {
-          background: var(--gray-700);
-        }
-
-        &[data-action="delete"] {
-          color: var(--red-400);
-
-          &:hover {
-            background: var(--red-900);
-          }
-        }
-      }
-    }
-
-    &__progress {
-      background: var(--gray-700);
-
-      &-fill {
-        background: var(--blue-500);
-      }
-    }
-
-    &__countdown {
-      color: var(--gray-300);
-    }
-
-    &__guests {
-      color: var(--gray-300);
-    }
-  }
-}
 
 // High contrast mode
 @media (prefers-contrast: high) {

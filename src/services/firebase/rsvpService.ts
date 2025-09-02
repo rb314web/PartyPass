@@ -14,6 +14,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
 import { db } from '../../config/firebase';
+import { COLLECTIONS } from '../../types/firebase';
 import EmailService from '../emailService';
 import { 
   RSVPToken, 
@@ -39,7 +40,8 @@ export class RSVPService {
       expiresAt.setDate(expiresAt.getDate() + 30); // Token ważny przez 30 dni
 
       const rsvpTokenData: Omit<RSVPToken, 'id'> = {
-        guestId,
+        eventGuestId: guestId, // Use eventGuestId for new field
+        guestId, // Keep for backward compatibility
         eventId,
         token,
         isUsed: false,
@@ -82,7 +84,8 @@ export class RSVPService {
       
       return {
         id: doc.id,
-        guestId: data.guestId,
+        eventGuestId: data.eventGuestId || data.guestId, // Use new field or fallback to legacy
+        guestId: data.guestId, // Keep legacy field
         eventId: data.eventId,
         token: data.token,
         isUsed: data.isUsed,
@@ -141,7 +144,11 @@ export class RSVPService {
       const batch = writeBatch(db);
 
       // Aktualizuj gościa
-      const guestRef = doc(db, 'guests', rsvpToken.guestId);
+      const guestId = rsvpToken.guestId || rsvpToken.eventGuestId;
+      if (!guestId) {
+        throw new Error('Brak ID gościa w tokenie RSVP');
+      }
+      const guestRef = doc(db, 'guests', guestId);
       batch.update(guestRef, {
         status: response.status,
         dietaryRestrictions: response.dietaryRestrictions || '',
@@ -181,6 +188,49 @@ export class RSVPService {
       }
 
       await batch.commit();
+
+      // Get guest and event data for activity
+      try {
+        const guestDoc = await getDoc(doc(db, 'guests', guestId));
+        const eventDoc = await getDoc(doc(db, 'events', rsvpToken.eventId));
+        
+        if (guestDoc.exists() && eventDoc.exists()) {
+          const guestData = guestDoc.data();
+          const eventData = eventDoc.data();
+          
+          let activityType: string;
+          let message: string;
+          
+          switch (response.status) {
+            case 'accepted':
+              activityType = 'guest_accepted';
+              message = `${guestData.firstName || 'Gość'} ${guestData.lastName || ''} potwierdził udział w wydarzeniu "${eventData.title}"`;
+              break;
+            case 'declined':
+              activityType = 'guest_declined';
+              message = `${guestData.firstName || 'Gość'} ${guestData.lastName || ''} odrzucił zaproszenie na wydarzenie "${eventData.title}"`;
+              break;
+            case 'maybe':
+              activityType = 'guest_maybe';
+              message = `${guestData.firstName || 'Gość'} ${guestData.lastName || ''} jest niezdecydowany na wydarzenie "${eventData.title}"`;
+              break;
+            default:
+              activityType = 'guest_response';
+              message = `${guestData.firstName || 'Gość'} ${guestData.lastName || ''} odpowiedział na zaproszenie na wydarzenie "${eventData.title}"`;
+          }
+          
+          await addDoc(collection(db, COLLECTIONS.ACTIVITIES), {
+            type: activityType,
+            message: message,
+            timestamp: Timestamp.now(),
+            eventId: rsvpToken.eventId,
+            eventGuestId: guestId,
+            userId: eventData.userId
+          });
+        }
+      } catch (activityError) {
+        console.warn('Failed to create activity for RSVP response:', activityError);
+      }
 
       // Śledź analytykę
       await this.trackRSVPAnalytics(rsvpToken.eventId, response.status);
@@ -247,7 +297,9 @@ export class RSVPService {
         const qrCode = await this.generateQRCode(rsvpToken.token);
 
         invitations.push({
-          guestId: guestDoc.id,
+          eventGuestId: guestDoc.id,
+          contactId: guestData.contactId || guestDoc.id, // Use contactId if available, fallback to guestId
+          guestId: guestDoc.id, // Legacy field
           email: guestData.email,
           firstName: guestData.firstName,
           lastName: guestData.lastName,
@@ -286,7 +338,8 @@ export class RSVPService {
       
       return {
         id: doc.id,
-        guestId: data.guestId,
+        eventGuestId: data.eventGuestId || data.guestId, // Use new field or fallback to legacy
+        guestId: data.guestId, // Keep legacy field
         eventId: data.eventId,
         token: data.token,
         isUsed: data.isUsed,
@@ -424,7 +477,12 @@ PartyPass - Zarządzanie wydarzeniami
       }
 
       // Pobierz dane gościa
-      const guestDoc = await getDoc(doc(db, 'guests', rsvpToken.guestId));
+      const guestId = rsvpToken.guestId || rsvpToken.eventGuestId;
+      if (!guestId) {
+        throw new Error('Brak ID gościa w tokenie RSVP');
+      }
+      
+      const guestDoc = await getDoc(doc(db, 'guests', guestId));
       if (!guestDoc.exists()) {
         throw new Error('Gość nie istnieje');
       }

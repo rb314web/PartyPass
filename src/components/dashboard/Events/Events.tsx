@@ -1,5 +1,5 @@
 // components/dashboard/Events/Events.tsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
@@ -12,7 +12,8 @@ import {
   Trash2,
   CheckCircle,
   AlertCircle,
-  Pause
+  Pause,
+  Bell
 } from 'lucide-react';
 import { EventService } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
@@ -21,6 +22,7 @@ import { Event } from '../../../types';
 import EventCard from './EventCard/EventCard';
 import EventsList from './EventsList/EventsList';
 import AddEvent from './AddEvent/AddEvent';
+import CreateEvent from './CreateEvent/CreateEvent';
 import EventDetails from './EventDetails/EventDetails';
 import EditEvent from './EditEvent/EditEvent';
 import './Events.scss';
@@ -40,22 +42,86 @@ const Events: React.FC = () => {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  
+  // Real-time synchronization state  
+  const [recentChanges, setRecentChanges] = useState<{id: string, type: 'added' | 'modified' | 'removed', timestamp: Date}[]>([]);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
-  // Pobieranie wydarzeń przy inicjalizacji
+  // Enhanced real-time updates callback
+  const handleRealtimeUpdate = useCallback((updatedEvents: Event[], changeType?: 'added' | 'modified' | 'removed', changedEventId?: string) => {
+    setEvents(prevEvents => {
+      // Detect specific changes for notifications
+      if (changeType && changedEventId) {
+        const timestamp = new Date();
+        setRecentChanges(prev => [
+          { id: changedEventId, type: changeType, timestamp },
+          ...prev.slice(0, 4) // Keep only last 5 changes
+        ]);
+        
+        // Show notification for changes made by others (not current user actions)
+        if (changeType !== 'removed' && hasInitiallyLoaded) {
+          const changedEvent = updatedEvents.find(e => e.id === changedEventId);
+          if (changedEvent) {
+            showChangeNotification(changeType, changedEvent);
+          }
+        }
+      }
+      
+      // Mark as initially loaded after first successful update
+      if (!hasInitiallyLoaded) {
+        setHasInitiallyLoaded(true);
+      }
+      
+      return updatedEvents;
+    });
+  }, [hasInitiallyLoaded]);
+
+  // Show change notifications
+  const showChangeNotification = (type: 'added' | 'modified', event: Event) => {
+    // You can integrate with a toast library here
+    const message = type === 'added' 
+      ? `Nowe wydarzenie: ${event.title}` 
+      : `Zaktualizowano: ${event.title}`;
+    
+    console.log(`🔔 Real-time update: ${message}`);
+    
+    // Optional: Show browser notification if page is not focused
+    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('PartyPass', {
+        body: message,
+        icon: '/logo192.png'
+      });
+    }
+  };
+
+  // Request notification permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Enhanced Firebase subscription with error handling
   useEffect(() => {
     if (!user?.id) return;
     
-    const unsubscribe = EventService.subscribeToUserEvents(
-      user.id,
-      (updatedEvents) => {
-        setEvents(updatedEvents);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user?.id]);
+    try {
+      const unsubscribe = EventService.subscribeToUserEvents(
+        user.id,
+        (updatedEvents) => handleRealtimeUpdate(updatedEvents),
+        {
+          // Enable real-time filters if needed
+          ...(filterStatus !== 'all' && { status: filterStatus as any })
+        }
+      );
+      
+      return () => {
+        unsubscribe();
+      };
+    } catch (error) {
+      console.error('Error setting up real-time subscription:', error);
+    }
+  }, [user?.id, handleRealtimeUpdate, filterStatus]);
 
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
@@ -89,7 +155,7 @@ const Events: React.FC = () => {
   }, [events, searchQuery, filterStatus, sortBy]);
 
   const handleCreateEvent = () => {
-    setIsAddEventOpen(true);
+    navigate('create');
   };
 
   const handleEventAdded = async () => {
@@ -118,18 +184,42 @@ const Events: React.FC = () => {
     
     const eventToDuplicate = events.find(e => e.id === eventId);
     if (eventToDuplicate) {
+      // Optimistic update - add temporary event immediately
+      const tempId = `temp-${Date.now()}`;
+      
       try {
-        // Use the new duplicate service with default settings
+        const optimisticEvent: Event = {
+          ...eventToDuplicate,
+          id: tempId,
+          title: `${eventToDuplicate.title} (kopia)`,
+          date: new Date(eventToDuplicate.date.getTime() + 7 * 24 * 60 * 60 * 1000),
+          status: 'draft',
+          createdAt: new Date(),
+          guests: [],
+          guestCount: 0,
+          acceptedCount: 0,
+          declinedCount: 0,
+          pendingCount: 0
+        };
+        
+        setEvents(prev => [optimisticEvent, ...prev]);
+        
+        // Perform actual duplication
         await EventService.duplicateEvent(eventId, user.id, {
           title: `${eventToDuplicate.title} (kopia)`,
-          date: new Date(eventToDuplicate.date.getTime() + 7 * 24 * 60 * 60 * 1000), // Add 7 days
+          date: new Date(eventToDuplicate.date.getTime() + 7 * 24 * 60 * 60 * 1000),
           includeGuests: false,
           guestAction: 'none'
         });
         
-        // Success message - the subscription will automatically update the events list
-        alert('Wydarzenie zostało pomyślnie zduplikowane!');
+        // Remove optimistic event and let real-time update handle the rest
+        setEvents(prev => prev.filter(e => e.id !== tempId));
+        
+        console.log('📋 Event duplicated successfully');
       } catch (error: any) {
+        // Remove optimistic update on error
+        setEvents(prev => prev.filter(e => e.id !== tempId));
+        
         alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
       }
     }
@@ -138,11 +228,38 @@ const Events: React.FC = () => {
   const handleDeleteEvent = async (eventId: string) => {
     try {
       if (window.confirm('Czy na pewno chcesz usunąć to wydarzenie? Ta operacja jest nieodwracalna.')) {
+        // Optimistic update - remove immediately from UI
+        const eventToDelete = events.find(e => e.id === eventId);
+        if (eventToDelete) {
+          setEvents(prev => prev.filter(e => e.id !== eventId));
+          setSelectedEvents(prev => prev.filter(id => id !== eventId));
+          
+          // Add to recent changes for tracking
+          setRecentChanges(prev => [
+            { id: eventId, type: 'removed', timestamp: new Date() },
+            ...prev.slice(0, 4)
+          ]);
+        }
+        
+        // Perform actual deletion
         await EventService.deleteEvent(eventId);
-        // Nie musimy ręcznie aktualizować state'u - subscribeToUserEvents zrobi to za nas
-        setSelectedEvents(prev => prev.filter(id => id !== eventId));
+        
+        // Success feedback
+        console.log('🗑️ Event deleted successfully');
       }
     } catch (error: any) {
+      // Revert optimistic update on error
+      console.error('Error deleting event:', error);
+      
+      // Refresh data to restore the event
+      if (user?.id) {
+        const unsubscribe = EventService.subscribeToUserEvents(
+          user.id,
+          (updatedEvents) => handleRealtimeUpdate(updatedEvents)
+        );
+        setTimeout(() => unsubscribe(), 1000); // Quick refresh
+      }
+      
       alert(`Nie udało się usunąć wydarzenia: ${error.message}`);
     }
   };
@@ -223,6 +340,32 @@ const Events: React.FC = () => {
         </div>
         
         <div className="events__header-actions">
+          {/* Recent changes indicator */}
+          {recentChanges.length > 0 && (
+            <div 
+              className="events__recent-changes" 
+              title="Ostatnie zmiany"
+              onClick={() => {
+                const changesList = recentChanges.map(change => {
+                  const event = events.find(e => e.id === change.id);
+                  const eventTitle = event?.title || 'Nieznane wydarzenie';
+                  const typeLabel = change.type === 'added' ? 'Dodano' : 
+                                   change.type === 'modified' ? 'Zmieniono' : 'Usunięto';
+                  const timeAgo = Math.round((Date.now() - change.timestamp.getTime()) / 1000);
+                  const timeLabel = timeAgo < 60 ? 'przed chwilą' : 
+                                   timeAgo < 3600 ? `${Math.round(timeAgo/60)} min temu` :
+                                   `${Math.round(timeAgo/3600)} godz. temu`;
+                  return `${typeLabel}: ${eventTitle} (${timeLabel})`;
+                }).join('\n');
+                
+                alert(`Ostatnie zmiany:\n\n${changesList}`);
+              }}
+            >
+              <Bell size={16} />
+              <span className="events__changes-count">{recentChanges.length}</span>
+            </div>
+          )}
+          
           <button 
             className="events__create-btn"
             onClick={handleCreateEvent}
@@ -451,6 +594,7 @@ const Events: React.FC = () => {
   return (
     <>      <Routes>
         <Route index element={<EventsListPage />} />
+        <Route path="create" element={<CreateEvent />} />
         <Route path=":id" element={
           <EventDetails />
         } />

@@ -348,6 +348,35 @@
     color: var(--text-secondary);
   }
 
+  &__plus-one {
+    font-size: 0.875rem;
+
+    &-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    &-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--primary-600);
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    &-name {
+      color: var(--text-primary);
+      font-size: 0.75rem;
+    }
+  }
+
+  &__no-plus-one {
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
   &__contact {
     display: flex;
     gap: 0.5rem;

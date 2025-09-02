@@ -1,5 +1,28 @@
 // components/dashboard/EventsChart/EventsChart.scss
 .events-chart {
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--gray-500);
+    
+    p {
+      margin-top: var(--space-md);
+      font-size: 0.875rem;
+    }
+  }
+  
+  &__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--gray-200);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
   &__legend {
     display: flex;
     gap: var(--space-lg);
@@ -113,4 +136,9 @@
     color: var(--gray-600);
     font-weight: 500;
   }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

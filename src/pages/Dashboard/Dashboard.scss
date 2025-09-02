@@ -1,42 +1,74 @@
 // pages/Dashboard/Dashboard.scss
 .dashboard {
-  display: flex;
   min-height: 100vh;
   background: var(--gray-50);
+  
+  &__layout {
+    display: flex;
+    height: 100vh;
+  }
   
   &__main {
     flex: 1;
     margin-left: 280px;
+    display: flex;
+    flex-direction: column;
     transition: margin-left 0.3s ease;
+    overflow: hidden;
+    
+    &--collapsed {
+      margin-left: 80px;
+    }
     
     @media (max-width: 768px) {
       margin-left: 0;
-    }
-    
-    .sidebar--collapsed + & {
-      margin-left: 80px;
       
-      @media (max-width: 768px) {
+      &--collapsed {
         margin-left: 0;
       }
     }
   }
   
   &__content {
+    flex: 1;
     padding: var(--space-2xl);
-    min-height: calc(100vh - 120px);
+    padding-top: calc(80px + var(--space-2xl)); // Add space for fixed header
+    overflow-y: auto;
+    
+    @media (max-width: 1300px) {
+      padding-top: calc(70px + var(--space-xl));
+    }
+    
+    @media (max-width: 1200px) {
+      padding: var(--space-xl);
+      padding-top: calc(70px + var(--space-xl));
+    }
     
     @media (max-width: 768px) {
       padding: var(--space-lg);
-      margin-top: 60px; // Space for mobile toggle
-      padding-bottom: 80px; // Space for bottom navigation
+      padding-top: calc(60px + var(--space-lg));
+      padding-bottom: 100px; // Space for mobile navigation
+    }
+    
+    @media (max-width: 480px) {
+      padding: var(--space-md);
+      padding-bottom: 100px;
+    }
+  }
+  
+  // Mobile-first improvements
+  @media (max-width: 768px) {
+    &__layout {
+      flex-direction: column;
+      height: auto;
+      min-height: 100vh;
+    }
+    
+    &__main {
+      order: 2;
+      margin-left: 0;
+      min-height: calc(100vh - 70px); // Account for header height
     }
   }
 }
 
-// Dark mode styles
-.dark {
-  .dashboard {
-    background: var(--gray-900);
-  }
-}

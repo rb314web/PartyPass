@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import Header from '../../common/Header/Header';
+import Navigation from '../../common/Navigation/Navigation';
 import GoogleIcon from './GoogleIcon';
 import './Login.scss';
 
@@ -46,7 +46,7 @@ const Login: React.FC = () => {
 
   return (
     <>
-      <Header />
+      <Navigation variant="auth" />
       <div className="login">
         <div className="login__container">
           <div className="login__card">

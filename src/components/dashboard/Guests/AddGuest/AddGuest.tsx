@@ -7,6 +7,10 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
@@ -45,7 +49,13 @@ export const AddGuest: React.FC<AddGuestProps> = ({
     phone: '',
     dietaryRestrictions: '',
     notes: '',
-    plusOne: false
+    plusOne: false,
+    plusOneType: 'none', // 'none', 'simple', 'detailed'
+    plusOneDetails: {
+      firstName: '',
+      lastName: '',
+      dietaryRestrictions: ''
+    }
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,12 +66,53 @@ export const AddGuest: React.FC<AddGuestProps> = ({
     }));
   };
 
+  const handlePlusOneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      plusOneDetails: {
+        ...prev.plusOneDetails,
+        [name]: value
+      }
+    }));
+  };
+
+  const handlePlusOneTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      plusOneType: value,
+      plusOne: value !== 'none',
+      // Reset szczegółów gdy przełączamy na 'simple'
+      plusOneDetails: value === 'simple' ? {
+        firstName: '',
+        lastName: '',
+        dietaryRestrictions: ''
+      } : prev.plusOneDetails
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await GuestService.createGuest(userId, eventId, formData);
+      const guestData = {
+        ...formData,
+        // Ustaw plusOne na podstawie typu
+        plusOne: formData.plusOneType !== 'none',
+        // Tylko przekaż plusOneDetails jeśli typ to 'detailed' i pola są wypełnione
+        plusOneDetails: formData.plusOneType === 'detailed' && (
+          formData.plusOneDetails.firstName?.trim() || 
+          formData.plusOneDetails.lastName?.trim()
+        ) ? {
+          firstName: formData.plusOneDetails.firstName?.trim() || undefined,
+          lastName: formData.plusOneDetails.lastName?.trim() || undefined,
+          dietaryRestrictions: formData.plusOneDetails.dietaryRestrictions?.trim() || undefined
+        } : undefined
+      };
+      
+      await GuestService.createGuest(userId, eventId, guestData);
       enqueueSnackbar('Gość został dodany pomyślnie!', { variant: 'success' });
       onGuestAdded();
       onClose();
@@ -72,7 +123,13 @@ export const AddGuest: React.FC<AddGuestProps> = ({
         phone: '',
         dietaryRestrictions: '',
         notes: '',
-        plusOne: false
+        plusOne: false,
+        plusOneType: 'none',
+        plusOneDetails: {
+          firstName: '',
+          lastName: '',
+          dietaryRestrictions: ''
+        }
       });
     } catch (error: any) {
       enqueueSnackbar(error.message || 'Wystąpił błąd podczas dodawania gościa', { 
@@ -164,21 +221,77 @@ export const AddGuest: React.FC<AddGuestProps> = ({
               rows={3}
               disabled={loading}
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.plusOne}
-                  onChange={handleChange}
-                  name="plusOne"
-                  disabled={loading}
+            <FormControl component="fieldset" disabled={loading}>
+              <FormLabel component="legend" sx={{ mb: 1, fontWeight: 600 }}>
+                Osoba towarzysząca
+              </FormLabel>
+              <RadioGroup
+                value={formData.plusOneType}
+                onChange={handlePlusOneTypeChange}
+                name="plusOneType"
+              >
+                <FormControlLabel
+                  value="none"
+                  control={<Radio size="small" />}
+                  label="Brak osoby towarzyszącej"
                 />
-              }
-              label={
-                <Typography>
-                  Osoba towarzysząca (+1)
+                <FormControlLabel
+                  value="simple"
+                  control={<Radio size="small" />}
+                  label="Osoba towarzysząca (bez szczegółów)"
+                />
+                <FormControlLabel
+                  value="detailed"
+                  control={<Radio size="small" />}
+                  label="Osoba towarzysząca (ze szczegółami)"
+                />
+              </RadioGroup>
+            </FormControl>
+            
+            {formData.plusOneType === 'detailed' && (
+              <Box sx={{ 
+                mt: 2, 
+                p: 2, 
+                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                borderRadius: 1,
+                border: '1px solid rgba(25, 118, 210, 0.12)'
+              }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                  Dane osoby towarzyszącej
                 </Typography>
-              }
-            />
+                <Box sx={{ display: 'grid', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Imię osoby towarzyszącej"
+                    name="firstName"
+                    value={formData.plusOneDetails.firstName}
+                    onChange={handlePlusOneChange}
+                    disabled={loading}
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Nazwisko osoby towarzyszącej"
+                    name="lastName"
+                    value={formData.plusOneDetails.lastName}
+                    onChange={handlePlusOneChange}
+                    disabled={loading}
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Preferencje żywieniowe osoby towarzyszącej"
+                    name="dietaryRestrictions"
+                    value={formData.plusOneDetails.dietaryRestrictions}
+                    onChange={handlePlusOneChange}
+                    multiline
+                    rows={2}
+                    disabled={loading}
+                    size="small"
+                  />
+                </Box>
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

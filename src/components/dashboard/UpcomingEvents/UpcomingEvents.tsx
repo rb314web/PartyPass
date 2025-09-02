@@ -3,6 +3,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Event } from '../../../types';
 import './UpcomingEvents.scss';
 
@@ -11,6 +12,16 @@ interface UpcomingEventsProps {
 }
 
 const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
+  const navigate = useNavigate();
+  
+  const handleCreateEvent = () => {
+    navigate('/dashboard/events/create');
+  };
+
+  const handleEventClick = (eventId: string) => {
+    navigate(`/dashboard/events/${eventId}`);
+  };
+
   const getResponseStats = (event: Event) => {
     const total = event.guestCount;
     const accepted = event.acceptedCount;
@@ -36,7 +47,10 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
         <div className="upcoming-events__empty">
           <Calendar size={48} />
           <p>Brak nadchodzących wydarzeń</p>
-          <button className="upcoming-events__create-btn">
+          <button 
+            className="upcoming-events__create-btn"
+            onClick={handleCreateEvent}
+          >
             Stwórz pierwsze wydarzenie
           </button>
         </div>
@@ -45,7 +59,11 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events }) => {
           {events.map((event) => {
             const stats = getResponseStats(event);
             return (
-              <div key={event.id} className="upcoming-events__card">
+              <div 
+                key={event.id} 
+                className="upcoming-events__card"
+                onClick={() => handleEventClick(event.id)}
+              >
                 <div className="upcoming-events__header">
                   <h3 className="upcoming-events__title">{event.title}</h3>
                   <span className="upcoming-events__date-badge">

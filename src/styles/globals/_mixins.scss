@@ -1,6 +1,28 @@
 // styles/globals/_mixins.scss - PartyPass Mixins
 
 // ==========================================================================
+// Responsive Mixins
+// ==========================================================================
+
+@mixin mobile {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: 1025px) {
+    @content;
+  }
+}
+
+// ==========================================================================
 // Layout Mixins
 // ==========================================================================
 
@@ -105,6 +127,12 @@
   text-decoration: none;
   user-select: none;
   white-space: nowrap;
+  min-height: 44px; // Minimum touch target for mobile
+  
+  @media (max-width: 768px) {
+    min-height: 48px; // Larger touch targets on mobile
+    min-width: 48px;
+  }
   
   &:focus {
     outline: 2px solid var(--primary);
@@ -131,5 +159,25 @@
   
   &:active {
     transform: translateY(0);
+  }
+}
+
+// Touch-friendly interactive elements
+@mixin touch-target($size: 44px) {
+  min-height: $size;
+  min-width: $size;
+  
+  @media (max-width: 768px) {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+// Mobile-optimized input styles
+@mixin input-mobile {
+  @media (max-width: 768px) {
+    font-size: 16px; // Prevents zoom on iOS
+    padding: var(--space-4) var(--space-4);
+    border-radius: var(--radius-lg);
   }
 }

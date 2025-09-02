@@ -17,7 +17,6 @@ export interface Event {
   date: Date;
   location: string;
   maxGuests: number;
-  guests: Guest[];
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   createdAt: Date;
   updatedAt?: Date;
@@ -31,30 +30,68 @@ export interface Event {
   acceptedCount: number;
   pendingCount: number;
   declinedCount: number;
+  maybeCount: number;
   dresscode?: string;
   additionalInfo?: string;
+  
+  // Legacy field for backward compatibility
+  guests?: EventGuest[];
 }
 
-export interface Guest {
+export interface Contact {
   id: string;
   userId: string;
-  eventId: string;
   email: string;
   firstName: string;
   lastName: string;
+  phone?: string;
+  dietaryRestrictions?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  tags?: string[];
+}
+
+export interface EventGuest {
+  id: string;
+  eventId: string;
+  contactId: string;
   status: GuestStatus;
   invitedAt: Date;
   respondedAt?: Date;
+  plusOneType?: 'none' | 'withoutDetails' | 'withDetails';
+  plusOneDetails?: {
+    firstName?: string;
+    lastName?: string;
+    dietaryRestrictions?: string;
+  };
+  rsvpToken?: string;
+  eventSpecificNotes?: string;
   createdAt: Date;
   updatedAt?: Date;
+  
+  // Legacy fields for backward compatibility
+  userId?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   phone?: string;
   dietaryRestrictions?: string;
-  plusOne?: boolean;
   notes?: string;
+  plusOne?: boolean;
+  eventName?: string;
+  eventDate?: Date;
+}
+
+// Extended EventGuest with Contact data for display purposes
+export interface EventGuestWithContact extends EventGuest {
+  contact: Contact;
   eventName: string;
   eventDate: Date;
-  rsvpToken?: string;
 }
+
+// Legacy Guest alias for backward compatibility
+export type Guest = EventGuest;
 
 export interface Plan {
   id: string;
@@ -78,11 +115,14 @@ export interface Activity {
     | 'guest_accepted' 
     | 'event_deleted'
     | 'guest_maybe'
-    | 'event_cancelled';
+    | 'event_cancelled'
+    | 'contact_added'
+    | 'contact_updated';
   message: string;
   timestamp: Date;
-  eventId: string;
-  guestId?: string;
+  eventId?: string;
+  contactId?: string;
+  eventGuestId?: string;
 }
 
 export interface StatsCardProps {
@@ -97,24 +137,60 @@ export interface StatsCardProps {
 // RSVP System types
 export type GuestStatus = 'pending' | 'accepted' | 'declined' | 'maybe';
 
-export interface CreateGuestData {
+export interface CreateContactData {
   firstName: string;
   lastName: string;
   email: string;
   phone?: string;
   dietaryRestrictions?: string;
   notes?: string;
+  tags?: string[];
+}
+
+export interface UpdateContactData extends Partial<CreateContactData> {}
+
+export interface CreateEventGuestData {
+  contactId: string;
+  eventSpecificNotes?: string;
+  plusOneType?: 'none' | 'withoutDetails' | 'withDetails';
+  plusOneDetails?: {
+    firstName?: string;
+    lastName?: string;
+    dietaryRestrictions?: string;
+  };
+  
+  // Legacy fields for backward compatibility
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  dietaryRestrictions?: string;
+  notes?: string;
   plusOne?: boolean;
 }
 
-export interface UpdateGuestData extends Partial<CreateGuestData> {
+export interface UpdateEventGuestData extends Partial<CreateEventGuestData> {
   status?: GuestStatus;
+  
+  // Legacy fields for backward compatibility
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  dietaryRestrictions?: string;
+  notes?: string;
+  plusOne?: boolean;
 }
+
+// Legacy aliases for backward compatibility
+export type CreateGuestData = CreateEventGuestData;
+export type UpdateGuestData = UpdateEventGuestData;
 
 export interface RSVPToken {
   id: string;
-  guestId: string;
+  eventGuestId: string;
   eventId: string;
+  guestId?: string; // Legacy field for backward compatibility
   token: string;
   isUsed: boolean;
   createdAt: Date;
@@ -127,6 +203,7 @@ export interface RSVPResponse {
   dietaryRestrictions?: string;
   notes?: string;
   plusOne?: boolean;
+  plusOneType?: 'none' | 'withoutDetails' | 'withDetails';
   plusOneDetails?: {
     firstName?: string;
     lastName?: string;
@@ -135,7 +212,9 @@ export interface RSVPResponse {
 }
 
 export interface GuestInvitation {
-  guestId: string;
+  eventGuestId: string;
+  contactId: string;
+  guestId?: string; // Legacy field for backward compatibility
   email: string;
   firstName: string;
   lastName: string;

@@ -58,6 +58,7 @@ export interface FirebaseEvent {
   acceptedCount: number;
   declinedCount: number;
   pendingCount: number;
+  maybeCount: number;
   dresscode?: string;
   additionalInfo?: string;
 }
@@ -101,7 +102,13 @@ export interface FirebaseGuest {
   updatedAt?: Timestamp;
   phoneNumber?: string;
   dietaryRestrictions?: string;
-  plusOne?: boolean;  notes?: string;
+  plusOne?: boolean;
+  plusOneDetails?: {
+    firstName?: string;
+    lastName?: string;
+    dietaryRestrictions?: string;
+  };
+  notes?: string;
   rsvpToken?: string; // For secure RSVP links
 }
 

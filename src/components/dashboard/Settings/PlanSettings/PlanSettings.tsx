@@ -125,7 +125,7 @@ const PlanSettings: React.FC = () => {
       setUsageStats(stats);
     } catch (error) {
       console.error('❌ PlanSettings.loadUsageStats: Błąd podczas ładowania statystyk:', error);
-      console.error('📝 PlanSettings.loadUsageStats: Stack trace:', error.stack);
+      console.error('📝 PlanSettings.loadUsageStats: Stack trace:', (error as Error).stack);
     } finally {
       setLoadingStats(false);
       console.log('🏁 PlanSettings.loadUsageStats: Zakończono ładowanie statystyk');

@@ -6,7 +6,6 @@ import {
   getDoc,
   getDocs,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -65,6 +64,13 @@ export interface EventStats {
   eventsThisMonth: number;
   guestsThisMonth: number;
   upcomingEvents: number;
+}
+
+export interface EventChartData {
+  month: string;
+  events: number;
+  guests: number;
+  date: Date;
 }
 
 export class EventService {
@@ -148,6 +154,7 @@ export class EventService {
         acceptedCount: eventData.acceptedCount || 0,
         declinedCount: eventData.declinedCount || 0,
         pendingCount: eventData.pendingCount || 0,
+        maybeCount: 0,
         dresscode: eventData.dresscode,
         additionalInfo: eventData.additionalInfo
       };
@@ -174,6 +181,19 @@ export class EventService {
         );
       } catch (analyticsError) {
         console.warn('Failed to track event creation analytics:', analyticsError);
+      }
+
+      // Create activity for event creation
+      try {
+        await addDoc(collection(db, COLLECTIONS.ACTIVITIES), {
+          type: 'event_created',
+          message: `Utworzono wydarzenie "${eventData.title}"`,
+          timestamp: Timestamp.now(),
+          eventId: docRef.id,
+          userId: userId
+        });
+      } catch (activityError) {
+        console.warn('Failed to create activity for event creation:', activityError);
       }
       
       return this.convertFirebaseEventToEvent(docRef.id, { ...eventDoc, id: docRef.id });
@@ -224,6 +244,22 @@ export class EventService {
         );
       } catch (analyticsError) {
         console.warn('Failed to track event update analytics:', analyticsError);
+      }
+
+      // Create activity for event update
+      try {
+        const eventDoc = await getDoc(eventRef);
+        const eventData = eventDoc.data() as FirebaseEvent;
+        
+        await addDoc(collection(db, COLLECTIONS.ACTIVITIES), {
+          type: 'event_updated',
+          message: `Zaktualizowano wydarzenie "${eventData.title}"`,
+          timestamp: Timestamp.now(),
+          eventId: eventId,
+          userId: eventData.userId
+        });
+      } catch (activityError) {
+        console.warn('Failed to create activity for event update:', activityError);
       }
 
       // Get updated event
@@ -372,6 +408,7 @@ export class EventService {
         acceptedCount: 0,
         declinedCount: 0,
         pendingCount: 0,
+        maybeCount: 0,
         dresscode: originalEvent.dresscode || '',
         additionalInfo: originalEvent.additionalInfo || ''
       };
@@ -418,7 +455,6 @@ export class EventService {
         await batch.commit();
 
         // Create activity for duplication
-        const activityRef = doc(collection(db, COLLECTIONS.ACTIVITIES));
         await addDoc(collection(db, COLLECTIONS.ACTIVITIES), {
           type: 'event_duplicated',
           userId,
@@ -622,6 +658,83 @@ export class EventService {
     }
   }
 
+  // Get chart data for last 6 months
+  static async getEventChartData(userId: string): Promise<EventChartData[]> {
+    try {
+      const now = new Date();
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(now.getMonth() - 5); // Get last 6 months including current
+      sixMonthsAgo.setDate(1); // Start from first day of the month
+      sixMonthsAgo.setHours(0, 0, 0, 0);
+
+      // Get events from last 6 months
+      const eventsQuery = query(
+        collection(db, COLLECTIONS.EVENTS),
+        where('userId', '==', userId),
+        where('createdAt', '>=', Timestamp.fromDate(sixMonthsAgo)),
+        orderBy('createdAt', 'asc')
+      );
+
+      const eventsSnapshot = await getDocs(eventsQuery);
+      
+      // Initialize chart data for last 6 months
+      const chartData: EventChartData[] = [];
+      for (let i = 0; i < 6; i++) {
+        const date = new Date();
+        date.setMonth(now.getMonth() - (5 - i));
+        date.setDate(1);
+        date.setHours(0, 0, 0, 0);
+        
+        chartData.push({
+          month: date.toLocaleDateString('pl-PL', { month: 'short' }),
+          events: 0,
+          guests: 0,
+          date: new Date(date)
+        });
+      }
+
+      // Process events and aggregate by month
+      eventsSnapshot.forEach(doc => {
+        const event = doc.data() as FirebaseEvent;
+        const eventDate = event.createdAt.toDate();
+        const eventMonth = new Date(eventDate.getFullYear(), eventDate.getMonth(), 1);
+        
+        // Find matching month in chart data
+        const chartEntry = chartData.find(entry => 
+          entry.date.getTime() === eventMonth.getTime()
+        );
+        
+        if (chartEntry) {
+          chartEntry.events += 1;
+          chartEntry.guests += event.guestCount || 0;
+        }
+      });
+
+      return chartData;
+    } catch (error) {
+      console.error('Error getting chart data:', error);
+      
+      // Return mock data on error
+      const now = new Date();
+      const mockData: EventChartData[] = [];
+      
+      for (let i = 0; i < 6; i++) {
+        const date = new Date();
+        date.setMonth(now.getMonth() - (5 - i));
+        date.setDate(1);
+        
+        mockData.push({
+          month: date.toLocaleDateString('pl-PL', { month: 'short' }),
+          events: Math.floor(Math.random() * 8) + 1,
+          guests: Math.floor(Math.random() * 50) + 10,
+          date: new Date(date)
+        });
+      }
+      
+      return mockData;
+    }
+  }
+
   // Get recent activities
   static async getRecentActivities(userId: string, limitCount: number = 10): Promise<Activity[]> {
     try {
@@ -633,19 +746,23 @@ export class EventService {
       );
 
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
+      const activities = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate() || new Date()
       })) as Activity[];
+
+      return activities;
     } catch (error: any) {
-      throw new Error(`Błąd podczas pobierania aktywności: ${error.message}`);
+      console.error('Error fetching activities:', error);
+      return []; // Return empty array on error
     }
   }
 
   // Real-time events listener
   static subscribeToUserEvents(
     userId: string,
-    callback: (events: Event[]) => void,
+    callback: (events: Event[], changeType?: 'added' | 'modified' | 'removed', changedEventId?: string) => void,
     filters: EventFilters = {}
   ): () => void {
     // Tymczasowo używamy tylko where, bez orderBy, dopóki indeks się nie zbuduje
@@ -659,8 +776,28 @@ export class EventService {
       q = query(q, where('status', '==', filters.status));
     }
 
+    let previousEvents: Event[] = [];
+
     return onSnapshot(q, (querySnapshot) => {
       const events: Event[] = [];
+      let changeType: 'added' | 'modified' | 'removed' | undefined;
+      let changedEventId: string | undefined;
+
+      // Process document changes for real-time detection
+      querySnapshot.docChanges().forEach((change) => {
+        if (change.type === 'added' && !previousEvents.find(e => e.id === change.doc.id)) {
+          changeType = 'added';
+          changedEventId = change.doc.id;
+        } else if (change.type === 'modified') {
+          changeType = 'modified';
+          changedEventId = change.doc.id;
+        } else if (change.type === 'removed') {
+          changeType = 'removed';
+          changedEventId = change.doc.id;
+        }
+      });
+
+      // Convert all events
       querySnapshot.forEach((doc) => {
         const eventData = doc.data() as FirebaseEvent;
         events.push(this.convertFirebaseEventToEvent(doc.id, eventData));
@@ -681,7 +818,14 @@ export class EventService {
       // Sortujemy ręcznie po createdAt
       filteredEvents.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       
-      callback(filteredEvents);
+      // Update previous events for next comparison
+      previousEvents = [...filteredEvents];
+      
+      callback(filteredEvents, changeType, changedEventId);
+    }, (error) => {
+      console.error('Error in events subscription:', error);
+      // Fallback: call with empty array to indicate error
+      callback([], 'removed', undefined);
     });
   }
   // Convert Firebase event to app event
@@ -700,9 +844,43 @@ export class EventService {
       acceptedCount: firebaseEvent.acceptedCount,
       pendingCount: firebaseEvent.pendingCount,
       declinedCount: firebaseEvent.declinedCount,
+      maybeCount: firebaseEvent.maybeCount || 0,
       dresscode: firebaseEvent.dresscode,
       additionalInfo: firebaseEvent.additionalInfo,
       guests: [] // Używamy liczników zamiast tablicy gości
     };
+  }
+
+  // Monitor Firebase connection status
+  static subscribeToConnectionStatus(callback: (connected: boolean) => void): () => void {
+    // Simple connection monitoring using online/offline events
+    const handleOnline = () => callback(true);
+    const handleOffline = () => callback(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Initial state
+    callback(navigator.onLine);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }
+
+  // Batch operations for better performance
+  static async batchUpdateEvents(updates: { eventId: string; data: Partial<UpdateEventData> }[]): Promise<void> {
+    const batch = writeBatch(db);
+    
+    updates.forEach(({ eventId, data }) => {
+      const eventRef = doc(db, COLLECTIONS.EVENTS, eventId);
+      batch.update(eventRef, {
+        ...data,
+        updatedAt: Timestamp.now()
+      });
+    });
+    
+    await batch.commit();
   }
 }

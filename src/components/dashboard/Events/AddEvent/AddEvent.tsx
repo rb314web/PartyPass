@@ -11,7 +11,6 @@ import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { pl } from 'date-fns/locale';
 import { useSnackbar } from 'notistack';
 import { EventService } from '../../../../services/firebase/eventService';
-import { CreateEventData } from '../../../../types/firebase';
 import './AddEvent.scss';
 
 interface AddEventProps {

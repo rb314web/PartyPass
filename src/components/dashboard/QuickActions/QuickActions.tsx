@@ -1,7 +1,7 @@
 // components/dashboard/QuickActions/QuickActions.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, Users, BarChart3, Settings } from 'lucide-react';
+import { Plus, Users, BarChart3, Settings } from 'lucide-react';
 import useActionAnalytics from '../../../hooks/useActionAnalytics';
 import './QuickActions.scss';
 

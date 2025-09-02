@@ -8,7 +8,14 @@
     
     @media (max-width: 768px) {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+    
+    @media (max-width: 480px) {
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
     }
   }
   
@@ -33,6 +40,17 @@
     display: flex;
     gap: var(--space-md);
     align-items: center;
+    
+    @media (max-width: 768px) {
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      width: 100%;
+    }
+    
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
   
   &__create-btn {
@@ -46,6 +64,125 @@
     &:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-lg);
+    }
+    
+    @media (max-width: 768px) {
+      padding: var(--space-sm) var(--space-lg);
+      font-size: var(--text-sm);
+    }
+    
+    @media (max-width: 480px) {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Real-time status styles
+  &__realtime-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    
+    &--offline {
+      .events__connection-indicator {
+        color: var(--error);
+      }
+    }
+  }
+
+  &__connection-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--success);
+    transition: all 0.3s ease;
+
+    &--offline {
+      background: var(--error-50);
+      border-color: var(--error-200);
+      color: var(--error);
+    }
+  }
+
+  &__last-update {
+    font-size: 0.75rem;
+    opacity: 0.8;
+  }
+
+  &__pending-updates {
+    background: var(--error);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  &__recent-changes {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--primary-50);
+    border: 1px solid var(--primary-200);
+    border-radius: var(--radius-md);
+    color: var(--primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--primary-100);
+    }
+  }
+
+  &__changes-count {
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  &__connectivity-toast {
+    position: fixed;
+    top: 80px;
+    right: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    animation: slideInRight 0.3s ease;
+
+    &--online {
+      background: var(--success-50);
+      border: 1px solid var(--success-200);
+      color: var(--success-dark);
+    }
+
+    &--offline {
+      background: var(--error-50);
+      border: 1px solid var(--error-200);
+      color: var(--error-dark);
     }
   }
   
@@ -321,8 +458,23 @@
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: var(--space-lg);
     
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--space-md);
+    }
+    
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-sm);
+    }
+    
     @media (max-width: 640px) {
       grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+    
+    @media (max-width: 480px) {
+      gap: var(--space-sm);
     }
   }
   
@@ -419,6 +571,18 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+// Animation for connectivity toast
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 

@@ -151,9 +151,9 @@ export class AnalyticsExportService {
     }
 
     // Response time analysis
-    if (data.avgResponseTime < 24) {
+    if ((data as any).avgResponseTime && (data as any).avgResponseTime < 24) {
       insights.push('⚡ Goście szybko odpowiadają na zaproszenia!');
-    } else if (data.avgResponseTime > 72) {
+    } else if ((data as any).avgResponseTime && (data as any).avgResponseTime > 72) {
       insights.push('⏰ Goście potrzebują więcej czasu na odpowiedź. Rozważ wcześniejsze wysyłanie zaproszeń.');
     }
 
@@ -181,7 +181,7 @@ export class AnalyticsExportService {
     csvData.push({
       Category: 'Podsumowanie',
       Metric: 'Średnio gości na wydarzenie',
-      Value: data.avgGuestsPerEvent,
+      Value: data.averageGuestsPerEvent,
       Date: new Date().toLocaleDateString('pl-PL')
     });
 
@@ -327,7 +327,7 @@ export class AnalyticsExportService {
         </div>
         <div class="summary-card">
             <h3>Średnio gości/wydarzenie</h3>
-            <h2>${data.avgGuestsPerEvent}</h2>
+            <h2>${data.averageGuestsPerEvent}</h2>
         </div>
         <div class="summary-card">
             <h3>Wzrost</h3>

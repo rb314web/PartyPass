@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { Event } from '../../../../types';
-// import { mockEvents } from '../../../../services/mockData';
+import { EventService } from '../../../../services/firebase/eventService';
+import LocationPicker from './LocationPicker/LocationPicker';
 import './CreateEvent.scss';
 
 interface EventFormData {
@@ -32,6 +33,8 @@ interface EventFormData {
   requireRSVP: boolean;
   allowPlusOne: boolean;
   sendReminders: boolean;
+  dresscode: string;
+  additionalInfo: string;
 }
 
 const CreateEvent: React.FC = () => {
@@ -51,7 +54,9 @@ const CreateEvent: React.FC = () => {
     isPrivate: false,
     requireRSVP: true,
     allowPlusOne: false,
-    sendReminders: true
+    sendReminders: true,
+    dresscode: '',
+    additionalInfo: ''
   });
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -67,8 +72,45 @@ const CreateEvent: React.FC = () => {
 
   // Load event data if editing
   useEffect(() => {
-  // Usunięto mockowe ładowanie eventu. Jeśli będzie integracja z backendem, tutaj należy pobrać dane wydarzenia po id.
-  }, [isEditing, id]);
+    const loadEvent = async () => {
+      if (isEditing && id && user?.id) {
+        try {
+          setIsLoading(true);
+          const event = await EventService.getEventById(id, user.id);
+          
+          if (event) {
+            // Convert event data to form format
+            const eventDate = new Date(event.date);
+            const dateStr = eventDate.toISOString().split('T')[0];
+            const timeStr = eventDate.toTimeString().split(' ')[0].slice(0, 5);
+            
+            setFormData({
+              title: event.title,
+              description: event.description,
+              date: dateStr,
+              time: timeStr,
+              location: event.location,
+              maxGuests: event.maxGuests,
+              tags: event.tags || [],
+              isPrivate: event.isPrivate || false,
+              requireRSVP: event.requireRSVP || false,
+              allowPlusOne: event.allowPlusOne || false,
+              sendReminders: event.sendReminders || false,
+              dresscode: event.dresscode || '',
+              additionalInfo: event.additionalInfo || ''
+            });
+          }
+        } catch (error) {
+          console.error('Error loading event:', error);
+          // TODO: Show error message and redirect to events list
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadEvent();
+  }, [isEditing, id, user?.id]);
 
   const validateStep = (step: number): boolean => {
     const newErrors: Partial<EventFormData> = {};
@@ -83,11 +125,35 @@ const CreateEvent: React.FC = () => {
         if (!formData.time) newErrors.time = 'Godzina jest wymagana';
         if (!formData.location.trim()) newErrors.location = 'Lokalizacja jest wymagana';
         
-        // Check if date is not in the past
+        // Validate date format and value
         if (formData.date && formData.time) {
-          const eventDateTime = new Date(`${formData.date}T${formData.time}`);
-          if (eventDateTime < new Date()) {
-            newErrors.date = 'Data nie może być w przeszłości';
+          try {
+            // Check date format
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            const timeRegex = /^\d{2}:\d{2}$/;
+            
+            if (!dateRegex.test(formData.date)) {
+              newErrors.date = 'Nieprawidłowy format daty';
+            } else if (!timeRegex.test(formData.time)) {
+              newErrors.time = 'Nieprawidłowy format godziny';
+            } else {
+              // Check year is reasonable
+              const year = parseInt(formData.date.split('-')[0]);
+              const currentYear = new Date().getFullYear();
+              
+              if (year < currentYear || year > currentYear + 10) {
+                newErrors.date = `Rok musi być między ${currentYear} a ${currentYear + 10}`;
+              } else {
+                const eventDateTime = new Date(`${formData.date}T${formData.time}`);
+                if (isNaN(eventDateTime.getTime())) {
+                  newErrors.date = 'Nieprawidłowa data lub godzina';
+                } else if (eventDateTime < new Date()) {
+                  newErrors.date = 'Data nie może być w przeszłości';
+                }
+              }
+            }
+          } catch {
+            newErrors.date = 'Nieprawidłowa data lub godzina';
           }
         }
         break;
@@ -179,26 +245,104 @@ const CreateEvent: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (!user?.id) {
+        throw new Error('Użytkownik nie jest zalogowany');
+      }
 
-const eventData: Event = {
-  id: isEditing ? id! : Date.now().toString(),
-  userId: user?.id || '1',
-  title: formData.title,
-  description: formData.description,
-  date: new Date(`${formData.date}T${formData.time}`),
-  location: formData.location,
-  maxGuests: Number(formData.maxGuests), 
-  status: 'draft',
-  createdAt: isEditing ? new Date() : new Date(),
-  guests: isEditing ? [] : []
-};
+      // Validate all required fields before creating event
+      if (!formData.title.trim()) {
+        throw new Error('Tytuł wydarzenia jest wymagany');
+      }
+      if (!formData.description.trim()) {
+        throw new Error('Opis wydarzenia jest wymagany');
+      }
+      if (!formData.date) {
+        throw new Error('Data wydarzenia jest wymagana');
+      }
+      if (!formData.time) {
+        throw new Error('Godzina wydarzenia jest wymagana');
+      }
+      if (!formData.location.trim()) {
+        throw new Error('Lokalizacja wydarzenia jest wymagana');
+      }
 
-      console.log('Event saved:', eventData);
+      // Validate date format
+      let eventDate: Date;
+      try {
+        console.log('Date string:', formData.date, 'Time string:', formData.time);
+        
+        // Basic format validation
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        const timeRegex = /^\d{2}:\d{2}$/;
+        
+        if (!dateRegex.test(formData.date)) {
+          throw new Error('Nieprawidłowy format daty (wymagany: YYYY-MM-DD)');
+        }
+        
+        if (!timeRegex.test(formData.time)) {
+          throw new Error('Nieprawidłowy format godziny (wymagany: HH:MM)');
+        }
+        
+        // Check year is reasonable (between current year and 10 years from now)
+        const year = parseInt(formData.date.split('-')[0]);
+        const currentYear = new Date().getFullYear();
+        
+        if (year < currentYear || year > currentYear + 10) {
+          throw new Error(`Rok musi być między ${currentYear} a ${currentYear + 10}`);
+        }
+        
+        const dateTimeString = `${formData.date}T${formData.time}`;
+        console.log('Combined string:', dateTimeString);
+        eventDate = new Date(dateTimeString);
+        console.log('Parsed date:', eventDate);
+        
+        if (isNaN(eventDate.getTime())) {
+          throw new Error('Nieprawidłowa data lub godzina');
+        }
+        
+        // Check if date is not in the past
+        if (eventDate < new Date()) {
+          throw new Error('Data wydarzenia nie może być w przeszłości');
+        }
+        
+      } catch (error) {
+        console.error('Date parsing error:', error);
+        throw error instanceof Error ? error : new Error('Nieprawidłowy format daty lub godziny');
+      }
+
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        date: eventDate,
+        location: formData.location,
+        maxGuests: Number(formData.maxGuests),
+        tags: formData.tags,
+        isPrivate: formData.isPrivate,
+        requireRSVP: formData.requireRSVP,
+        allowPlusOne: formData.allowPlusOne,
+        sendReminders: formData.sendReminders,
+        dresscode: formData.dresscode || '',
+        additionalInfo: formData.additionalInfo || '',
+        guestCount: 0,
+        acceptedCount: 0,
+        declinedCount: 0,
+        pendingCount: 0
+      };
+
+      if (isEditing && id) {
+        // Update existing event
+        await EventService.updateEvent(id, eventData);
+        console.log('Event updated successfully');
+      } else {
+        // Create new event
+        const newEvent = await EventService.createEvent(user.id, eventData);
+        console.log('Event created successfully:', newEvent);
+      }
+
       navigate('/dashboard/events');
     } catch (error) {
       console.error('Error saving event:', error);
+      // TODO: Show error message to user
     } finally {
       setIsLoading(false);
     }
@@ -313,6 +457,7 @@ const eventData: Event = {
                   onChange={handleInputChange}
                   className={`create-event__input ${errors.date ? 'create-event__input--error' : ''}`}
                   min={new Date().toISOString().split('T')[0]}
+                  max={new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0]}
                 />
                 {errors.date && (
                   <span className="create-event__error">{errors.date}</span>
@@ -342,20 +487,14 @@ const eventData: Event = {
                 <MapPin size={16} />
                 Lokalizacja *
               </label>
-              <input
-                type="text"
-                name="location"
+              <LocationPicker
                 value={formData.location}
-                onChange={handleInputChange}
-                className={`create-event__input ${errors.location ? 'create-event__input--error' : ''}`}
+                onChange={(location: string) => setFormData(prev => ({ ...prev, location }))}
+                error={errors.location}
                 placeholder="np. Sala konferencyjna, Restauracja Roma, ul. Kwiatowa 15..."
-                maxLength={200}
               />
-              {errors.location && (
-                <span className="create-event__error">{errors.location}</span>
-              )}
               <div className="create-event__field-help">
-                Podaj dokładną lokalizację aby goście mogli łatwo dotrzeć
+                Podaj dokładną lokalizację lub wybierz na mapie
               </div>
             </div>
 
@@ -490,6 +629,40 @@ const eventData: Event = {
                     </span>
                   </div>
                 </label>
+              </div>
+            </div>
+
+            <div className="create-event__field">
+              <label className="create-event__label">
+                Dress code
+              </label>
+              <input
+                type="text"
+                name="dresscode"
+                value={formData.dresscode}
+                onChange={handleInputChange}
+                className="create-event__input"
+                placeholder="np. Elegancki, Casual, Kostiumy..."
+              />
+              <div className="create-event__field-help">
+                Opcjonalne informacje o wymaganym ubiorze
+              </div>
+            </div>
+
+            <div className="create-event__field">
+              <label className="create-event__label">
+                Dodatkowe informacje
+              </label>
+              <textarea
+                name="additionalInfo"
+                value={formData.additionalInfo}
+                onChange={handleInputChange}
+                className="create-event__textarea"
+                placeholder="Dodatkowe szczegóły, instrukcje, uwagi..."
+                rows={4}
+              />
+              <div className="create-event__field-help">
+                Wszelkie dodatkowe informacje dla gości
               </div>
             </div>
 
