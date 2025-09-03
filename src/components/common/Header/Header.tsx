@@ -8,7 +8,6 @@ import {
   LogOut, 
   Search,
   Bell,
-  Command,
   Sparkles,
   ArrowRight,
   Globe,
@@ -147,27 +146,6 @@ const Header: React.FC<HeaderProps> = ({ variant = 'landing' }) => {
     setIsSearchOpen(false);
     setIsUserMenuOpen(false);
   }, [location.pathname]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // CMD/CTRL + K for search
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsSearchOpen(true);
-      }
-      
-      // Escape to close all menus
-      if (e.key === 'Escape') {
-        setIsMenuOpen(false);
-        setIsSearchOpen(false);
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   // Secure anchor click handler with validation
   const handleAnchorClick = useCallback((href: string) => {
@@ -366,12 +344,11 @@ const Header: React.FC<HeaderProps> = ({ variant = 'landing' }) => {
             <button
               onClick={handleCommandPalette}
               className="header__search-trigger"
-              aria-label="Otwórz wyszukiwanie (Ctrl+K)"
-              title="Wyszukaj (Ctrl+K)"
+              aria-label="Otwórz wyszukiwanie"
+              title="Wyszukaj"
             >
-              <Command size={18} />
+              <Search size={18} />
               <span className="header__search-hint">Szukaj...</span>
-              <kbd className="header__search-kbd">⌘K</kbd>
             </button>
             
             {/* Expanded Search */}

@@ -31,7 +31,6 @@ const FloatingActionButton: React.FC = () => {
       label: 'Nowe wydarzenie',
       icon: <Calendar size={20} />,
       path: '/dashboard/events/create',
-      shortcut: 'Ctrl+N',
       color: 'primary'
     },
     {
@@ -39,7 +38,6 @@ const FloatingActionButton: React.FC = () => {
       label: 'Dodaj gościa',
       icon: <Users size={20} />,
       path: '/dashboard/guests/create',
-      shortcut: 'Ctrl+G',
       color: 'success'
     },
     {
@@ -47,7 +45,6 @@ const FloatingActionButton: React.FC = () => {
       label: 'Analityka',
       icon: <BarChart3 size={20} />,
       path: '/dashboard/analytics',
-      shortcut: 'Ctrl+A',
       color: 'info'
     }
   ];
@@ -56,30 +53,6 @@ const FloatingActionButton: React.FC = () => {
     navigate(action.path);
     setIsOpen(false);
   };
-
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      switch (e.key.toLowerCase()) {
-        case 'n':
-          e.preventDefault();
-          navigate('/dashboard/events/create');
-          break;
-        case 'g':
-          e.preventDefault();
-          navigate('/dashboard/guests/create');
-          break;
-        case 'a':
-          e.preventDefault();
-          navigate('/dashboard/analytics');
-          break;
-      }
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, handleKeyDown]);
 
   if (!isVisible) return null;
 
@@ -96,13 +69,12 @@ const FloatingActionButton: React.FC = () => {
               style={{
                 animationDelay: `${index * 0.1}s`
               }}
-              title={`${action.label} (${action.shortcut})`}
+              title={action.label}
             >
               <div className="fab__action-icon">
                 {action.icon}
               </div>
               <span className="fab__action-label">{action.label}</span>
-              <span className="fab__action-shortcut">{action.shortcut}</span>
             </button>
           ))}
         </div>

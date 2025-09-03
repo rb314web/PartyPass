@@ -47,7 +47,6 @@ interface QuickAction {
   description: string;
   icon: React.ReactNode;
   href: string;
-  shortcut?: string;
   category: 'create' | 'manage' | 'analyze';
 }
 
@@ -66,6 +65,22 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
   // Connection status for global offline indicator
   const [isConnected, setIsConnected] = useState(true);
   const [showConnectivityStatus, setShowConnectivityStatus] = useState(false);
+
+  // Get notifications dropdown position for desktop
+  const getNotificationsPosition = () => {
+    if (isMobile) {
+      return {}; // Use CSS positioning for mobile
+    }
+    
+    // For desktop, center the modal
+    return {
+      position: 'fixed' as const,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 9999
+    };
+  };
   
   // Mock notifications data
   const [notifications] = useState<Notification[]>([
@@ -106,7 +121,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
       description: 'Utwórz nową imprezę lub spotkanie',
       icon: <Calendar size={20} />,
       href: '/dashboard/events/create',
-      shortcut: 'Ctrl+N',
       category: 'create'
     },
     {
@@ -115,7 +129,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
       description: 'Dodaj nową osobę do bazy kontaktów',
       icon: <Users size={20} />,
       href: '/dashboard/contacts/add',
-      shortcut: 'Ctrl+Shift+C',
       category: 'create'
     },
     {
@@ -124,7 +137,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
       description: 'Zobacz statystyki i raporty',
       icon: <TrendingUp size={20} />,
       href: '/dashboard/analytics',
-      shortcut: 'Ctrl+A',
       category: 'analyze'
     },
     {
@@ -133,7 +145,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
       description: 'Zarządzaj kontem i preferencjami',
       icon: <Settings size={20} />,
       href: '/dashboard/settings',
-      shortcut: 'Ctrl+,',
       category: 'manage'
     }
   ];
@@ -149,36 +160,9 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Keyboard shortcuts
+  // Prevent body scroll when modals are open
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Command palette (Ctrl/Cmd + K)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsSearchOpen(true);
-      }
-      
-      // Quick actions (Ctrl/Cmd + Shift + K)
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'K') {
-        e.preventDefault();
-        setIsQuickActionsOpen(true);
-      }
-      
-      // Escape to close all overlays
-      if (e.key === 'Escape') {
-        setIsSearchOpen(false);
-        setIsNotificationsOpen(false);
-        setIsQuickActionsOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Prevent body scroll when search modal is open
-  useEffect(() => {
-    if (isSearchOpen) {
+    if (isSearchOpen || isNotificationsOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -188,7 +172,7 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isSearchOpen]);
+  }, [isSearchOpen, isNotificationsOpen]);
 
   // Close overlays when clicking outside
   useEffect(() => {
@@ -202,9 +186,8 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
         setIsSearchOpen(false);
       }
       
-      if (!target.closest('.dashboard-header__notifications')) {
-        setIsNotificationsOpen(false);
-      }
+      // Notifications now use overlay, so no need to handle here
+      
       if (!target.closest('.dashboard-header__quick-actions')) {
         setIsQuickActionsOpen(false);
       }
@@ -388,15 +371,12 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
           <button
             onClick={() => setIsSearchOpen(true)}
             className="dashboard-header__search-trigger"
-            aria-label="Otwórz wyszukiwanie (Ctrl+K)"
-            title="Wyszukaj (Ctrl+K)"
+            aria-label="Otwórz wyszukiwanie"
+            title="Wyszukaj"
           >
             <Search size={18} />
             {!isMobile && (
-              <>
-                <span className="dashboard-header__search-hint">Szukaj...</span>
-                <kbd className="dashboard-header__search-kbd">⌘K</kbd>
-              </>
+              <span className="dashboard-header__search-hint">Szukaj...</span>
             )}
           </button>
         </div>
@@ -404,7 +384,11 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
         {/* Enhanced Notifications */}
         <div className="dashboard-header__notifications">
           <button
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsNotificationsOpen(!isNotificationsOpen);
+            }}
             className="dashboard-header__notifications-trigger"
             aria-label={`Powiadomienia (${unreadCount} nieprzeczytanych)`}
             title="Powiadomienia"
@@ -414,10 +398,17 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
               <span className="dashboard-header__notifications-badge">{unreadCount}</span>
             )}
           </button>
-          
-          {/* Notifications Dropdown */}
-          {isNotificationsOpen && (
-            <div className="dashboard-header__notifications-dropdown">
+        </div>
+
+        {/* Notifications Modal rendered outside DOM hierarchy to prevent layout issues */}
+        {isNotificationsOpen && createPortal(
+          <>
+            <div className="dashboard-header__notifications-overlay" onClick={() => setIsNotificationsOpen(false)} />
+            <div 
+              className="dashboard-header__notifications-dropdown"
+              style={getNotificationsPosition()}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="dashboard-header__notifications-header">
                 <h3>Powiadomienia</h3>
                 <button
@@ -474,8 +465,9 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </>,
+          document.getElementById('root') || document.body
+        )}
 
         {/* Enhanced Quick Actions - Hide on mobile */}
         {!isMobile && (
@@ -484,7 +476,7 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
               onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
               className="dashboard-header__quick-actions-trigger"
               aria-label="Szybkie akcje"
-              title="Szybkie akcje (Ctrl+Shift+K)"
+              title="Szybkie akcje"
             >
               <Plus size={18} />
               <span>Akcje</span>
@@ -520,18 +512,8 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
                       <div className="dashboard-header__quick-action-label">{action.label}</div>
                       <div className="dashboard-header__quick-action-desc">{action.description}</div>
                     </div>
-                    {action.shortcut && (
-                      <kbd className="dashboard-header__quick-action-kbd">{action.shortcut}</kbd>
-                    )}
                   </button>
                 ))}
-              </div>
-              
-              <div className="dashboard-header__quick-actions-footer">
-                <div className="dashboard-header__quick-actions-tip">
-                  <Star size={14} />
-                  Użyj <kbd>Ctrl+Shift+K</kbd> aby szybko otworzyć akcje
-                </div>
               </div>
             </div>
           )}
@@ -545,13 +527,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
           <div className="dashboard-header__search-overlay" onClick={() => setIsSearchOpen(false)} />
           <div 
             className="dashboard-header__search-expanded"
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 9999
-            }}
           >
             <div className="dashboard-header__search-header">
               <h3>Przeszukaj PartyPass</h3>
@@ -625,9 +600,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
                     <div className="dashboard-header__search-action-label">{action.label}</div>
                     <div className="dashboard-header__search-action-desc">{action.description}</div>
                   </div>
-                  {action.shortcut && (
-                    <kbd className="dashboard-header__search-action-kbd">{action.shortcut}</kbd>
-                  )}
                 </button>
               ))}
             </div>

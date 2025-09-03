@@ -14,7 +14,6 @@ import PaymentReturn from './pages/PaymentReturn/PaymentReturn';
 import RSVP from './pages/RSVP/RSVP';
 import FloatingActionButton from './components/common/FloatingActionButton/FloatingActionButton';
 import BottomNavigation from './components/common/BottomNavigation/BottomNavigation';
-import ShortcutsHelp from './components/common/ShortcutsHelp/ShortcutsHelp';
 import EmailService from './services/emailService';
 
 function App() {
@@ -73,7 +72,6 @@ function App() {
               {/* Globalne komponenty nawigacji */}
               <FloatingActionButton />
               <BottomNavigation />
-              <ShortcutsHelp />
             </div>
           </Router>
         </AuthProvider>
