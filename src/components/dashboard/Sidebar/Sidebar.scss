@@ -35,6 +35,34 @@
     width: 260px;
   }
   
+  // Tablet/medium screens - tylko ikony
+  @media (min-width: 770px) and (max-width: 1200px) {
+    width: 80px;
+    
+    .sidebar__logo-text,
+    .sidebar__nav span,
+    .sidebar__user-info,
+    .sidebar__logout span {
+      display: none;
+    }
+    
+    // Wyśrodkuj ikony
+    .sidebar__link {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+    
+    .sidebar__logout {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+    
+    // Ukryj przycisk collapse na średnich ekranach
+    .sidebar__collapse-btn {
+      display: none;
+    }
+  }
+
   &--collapsed {
     width: 80px;
     

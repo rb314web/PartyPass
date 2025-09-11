@@ -333,25 +333,10 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
           </p>
         </div>
         
-        {/* Breadcrumb-style path indicator */}
-        <div className="dashboard-header__path">
-          <span className="dashboard-header__path-item">Dashboard</span>
-          {location.pathname !== '/dashboard' && (
-            <>
-              <span className="dashboard-header__path-separator">/</span>
-              <span className="dashboard-header__path-item dashboard-header__path-item--current">
-                {location.pathname.split('/').pop()?.replace('-', ' ') || 'Page'}
-              </span>
-            </>
-          )}
-        </div>
+        {/* Breadcrumb moved to page content - removed from header */}
       </div>
 
-      {/* Logo Section - Centered */}
-      <div className="dashboard-header__logo">
-        <span className="dashboard-header__logo-icon">🎉</span>
-        <span className="dashboard-header__logo-text">PartyPass</span>
-      </div>
+      {/* Logo Section moved to sidebar - remove from header */}
 
       {/* Right Section - Actions */}
       <div className="dashboard-header__right">

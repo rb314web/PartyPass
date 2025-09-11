@@ -18,7 +18,7 @@ import {
   DocumentData
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '../../config/firebase';
+import { db, storage, auth } from '../../config/firebase';
 import { FirebaseEvent, COLLECTIONS, CreateEventData as BaseCreateEventData } from '../../types/firebase';
 import { Event, Activity, Guest } from '../../types';
 import { AnalyticsService } from './analyticsService';
@@ -77,28 +77,36 @@ export class EventService {
   // Get event by ID
   static async getEventById(eventId: string, userId?: string): Promise<Event | null> {
     try {
+      console.log('Próba pobrania wydarzenia:', eventId, 'dla użytkownika:', userId);
+      console.log('Firebase Auth currentUser:', auth.currentUser?.uid);
       const eventDoc = await getDoc(doc(db, COLLECTIONS.EVENTS, eventId));
       
       if (!eventDoc.exists()) {
+        console.log('Wydarzenie nie istnieje:', eventId);
         return null;
       }
 
       const eventData = eventDoc.data() as FirebaseEvent;
+      console.log('Dane wydarzenia:', { eventId, userId: eventData.userId, requestUserId: userId });
       
       // Sprawdź uprawnienia użytkownika
       if (userId && eventData.userId !== userId) {
-        console.warn('Brak dostępu do wydarzenia:', eventId);
+        console.warn('Brak dostępu do wydarzenia:', eventId, 'właściciel:', eventData.userId, 'żądający:', userId);
         return null;
       }
 
       // Pobierz gości wydarzenia
+      console.log('Pobieranie gości dla wydarzenia:', eventId);
       const guestsQuery = query(
         collection(db, COLLECTIONS.GUESTS),
-        where('eventId', '==', eventId),
-        orderBy('createdAt', 'desc')
+        where('eventId', '==', eventId)
+        // Tymczasowo usunięte orderBy ze względu na potencjalne problemy z indeksem
+        // orderBy('createdAt', 'desc')
       );
       
+      console.log('Wykonywanie zapytania o gości...');
       const guestsSnapshot = await getDocs(guestsQuery);
+      console.log('Otrzymano gości:', guestsSnapshot.docs.length);
       const guests = guestsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -114,6 +122,8 @@ export class EventService {
 
       return event;
     } catch (error: any) {
+      console.error('Pełny błąd Firebase:', error);
+      console.error('Auth state:', auth.currentUser);
       throw new Error(`Błąd podczas pobierania wydarzenia: ${error.message}`);
     }
   }
@@ -667,15 +677,17 @@ export class EventService {
       sixMonthsAgo.setDate(1); // Start from first day of the month
       sixMonthsAgo.setHours(0, 0, 0, 0);
 
-      // Get events from last 6 months
+      console.log('Chart data query range:', sixMonthsAgo, 'to', now);
+      console.log('Querying for userId:', userId);
+
+      // First try to get all user events, then filter by date
       const eventsQuery = query(
         collection(db, COLLECTIONS.EVENTS),
-        where('userId', '==', userId),
-        where('createdAt', '>=', Timestamp.fromDate(sixMonthsAgo)),
-        orderBy('createdAt', 'asc')
+        where('userId', '==', userId)
       );
 
       const eventsSnapshot = await getDocs(eventsQuery);
+      console.log('Found events:', eventsSnapshot.size);
       
       // Initialize chart data for last 6 months
       const chartData: EventChartData[] = [];
@@ -697,7 +709,16 @@ export class EventService {
       eventsSnapshot.forEach(doc => {
         const event = doc.data() as FirebaseEvent;
         const eventDate = event.createdAt.toDate();
+        
+        // Skip events outside of our 6 month range
+        if (eventDate < sixMonthsAgo) {
+          console.log('Skipping event outside range:', event.title, eventDate);
+          return;
+        }
+        
         const eventMonth = new Date(eventDate.getFullYear(), eventDate.getMonth(), 1);
+        
+        console.log('Processing event:', event.title, 'created at:', eventDate, 'guests:', event.guestCount);
         
         // Find matching month in chart data
         const chartEntry = chartData.find(entry => 
@@ -707,9 +728,13 @@ export class EventService {
         if (chartEntry) {
           chartEntry.events += 1;
           chartEntry.guests += event.guestCount || 0;
+          console.log('Added to month:', chartEntry.month, 'total events:', chartEntry.events, 'total guests:', chartEntry.guests);
+        } else {
+          console.log('No matching month found for:', eventMonth);
         }
       });
 
+      console.log('Final chart data:', chartData);
       return chartData;
     } catch (error) {
       console.error('Error getting chart data:', error);

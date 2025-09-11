@@ -8,7 +8,6 @@ import {
   Edit,
   Copy,
   Trash2,
-  Share2,
   CheckCircle,
   XCircle,
   Clock,
@@ -39,7 +38,6 @@ const EventDetails: React.FC = () => {
   const { user } = useAuth();  const [event, setEvent] = useState<Event | null>(null);
   const [eventGuests, setEventGuests] = useState<Array<EventGuest & { contact: Contact }>>([]);
   const [loading, setLoading] = useState(true);
-  const [showShareOptions, setShowShareOptions] = useState(false);
   const [showGuestOptions, setShowGuestOptions] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -48,6 +46,7 @@ const EventDetails: React.FC = () => {
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [isAddContactsOpen, setIsAddContactsOpen] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null);
+  const [showEventStatusDropdown, setShowEventStatusDropdown] = useState(false);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -55,11 +54,13 @@ const EventDetails: React.FC = () => {
     const loadEvent = async () => {
       try {
         if (!user) {
+          console.log('Brak użytkownika w EventDetails');
           setEvent(null);
           setEventGuests([]);
           return;
         }
         
+        console.log('Ładowanie wydarzenia - user:', user.id, 'eventId:', id);
         const eventData = await EventService.getEventById(id, user.id);
         setEvent(eventData);
         
@@ -144,17 +145,6 @@ const EventDetails: React.FC = () => {
     } catch (error: any) {
       alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
     }
-  };
-
-  const handleShare = () => {
-    setShowShareOptions(!showShareOptions);
-  };
-
-  const copyEventLink = () => {
-    // TODO: Implement proper event sharing link
-    const link = `${window.location.origin}/event/${id}`;
-    navigator.clipboard.writeText(link);
-    alert('Link został skopiowany do schowka!');
   };
 
   const handleAddGuests = () => {
@@ -363,10 +353,6 @@ const EventDetails: React.FC = () => {
             <Copy size={20} />
             Duplikuj
           </button>
-          <button onClick={handleShare} className="event-details__action">
-            <Share2 size={20} />
-            Udostępnij
-          </button>
           <button onClick={handleDelete} className="event-details__action event-details__action--delete">
             <Trash2 size={20} />
             Usuń
@@ -404,20 +390,6 @@ const EventDetails: React.FC = () => {
             <span>{event.guestCount} / {event.maxGuests} gości</span>
           </div>
         </div>
-
-        {/* Menu udostępniania */}
-        {showShareOptions && (
-          <div className="event-details__share-menu">
-            <button onClick={copyEventLink}>
-              <Copy size={16} />
-              Kopiuj link
-            </button>
-            <button onClick={() => {}}>
-              <Mail size={16} />
-              Wyślij przez email
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Opis */}

@@ -164,6 +164,25 @@ export interface FirebaseErrorLog {
   resolved: boolean;
 }
 
+// Firebase Contact type
+export interface FirebaseContact {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  notes?: string;
+  tags?: string[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  isActive: boolean;
+  source: 'manual' | 'import' | 'guest_conversion';
+  lastContactedAt?: Timestamp;
+  dietaryRestrictions?: string;
+}
+
 // Collection names
 export const COLLECTIONS = {
   USERS: 'users',
@@ -174,7 +193,8 @@ export const COLLECTIONS = {
   ANALYTICS: 'analytics',
   ERROR_LOGS: 'error_logs',
   SUBSCRIPTIONS: 'subscriptions',
-  TEMPLATES: 'templates'
+  TEMPLATES: 'templates',
+  CONTACTS: 'contacts'
 } as const;
 
 // Firestore query types

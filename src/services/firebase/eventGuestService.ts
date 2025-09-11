@@ -27,7 +27,7 @@ export class EventGuestService {
     try {
       // Sprawdź czy kontakt już istnieje w wydarzeniu
       const existingQuery = query(
-        collection(db, 'eventGuests'),
+        collection(db, COLLECTIONS.GUESTS),
         where('eventId', '==', eventId),
         where('contactId', '==', contactId)
       );
@@ -53,7 +53,7 @@ export class EventGuestService {
       }
 
       const docRef = await addDoc(
-        collection(db, 'eventGuests'), 
+        collection(db, COLLECTIONS.GUESTS), 
         newEventGuest
       );
 
@@ -77,7 +77,7 @@ export class EventGuestService {
   static async getEventGuests(eventId: string): Promise<(EventGuest & { contact: Contact })[]> {
     try {
       const eventGuestsQuery = query(
-        collection(db, 'eventGuests'),
+        collection(db, COLLECTIONS.GUESTS),
         where('eventId', '==', eventId)
       );
 
@@ -88,7 +88,7 @@ export class EventGuestService {
         const eventGuestData = eventGuestDoc.data();
         
         // Pobierz dane kontaktu
-        const contactRef = doc(db, 'contacts', eventGuestData.contactId);
+        const contactRef = doc(db, COLLECTIONS.CONTACTS, eventGuestData.contactId);
         const contactDoc = await getDoc(contactRef);
         
         if (contactDoc.exists()) {
@@ -143,7 +143,7 @@ export class EventGuestService {
   ): Promise<void> {
     try {
       const eventGuestQuery = query(
-        collection(db, 'eventGuests'),
+        collection(db, COLLECTIONS.GUESTS),
         where('eventId', '==', eventId),
         where('contactId', '==', contactId)
       );
@@ -181,7 +181,7 @@ export class EventGuestService {
   static async removeContactFromEvent(eventId: string, contactId: string): Promise<void> {
     try {
       const eventGuestQuery = query(
-        collection(db, 'eventGuests'),
+        collection(db, COLLECTIONS.GUESTS),
         where('eventId', '==', eventId),
         where('contactId', '==', contactId)
       );
@@ -256,7 +256,7 @@ export class EventGuestService {
   static async getContactEvents(contactId: string): Promise<string[]> {
     try {
       const eventGuestsQuery = query(
-        collection(db, 'eventGuests'),
+        collection(db, COLLECTIONS.GUESTS),
         where('contactId', '==', contactId)
       );
 

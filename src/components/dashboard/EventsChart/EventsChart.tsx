@@ -19,11 +19,14 @@ const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => 
       
       try {
         setLoading(true);
+        console.log('Loading chart data for user:', user.id);
         const data = await EventService.getEventChartData(user.id);
+        console.log('Chart data received:', data);
         setChartData(data);
       } catch (error) {
         console.error('Error loading chart data:', error);
         // Fallback to mock data
+        console.log('Using mock data for chart');
         setChartData([
           { month: 'Lut', events: 4, guests: 45, date: new Date() },
           { month: 'Mar', events: 6, guests: 78, date: new Date() },
@@ -51,8 +54,20 @@ const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => 
     );
   }
 
-  const maxEvents = Math.max(...chartData.map(d => d.events));
-  const maxGuests = Math.max(...chartData.map(d => d.guests));
+  console.log('Chart data to render:', chartData);
+  
+  if (!chartData || chartData.length === 0) {
+    return (
+      <div className="events-chart">
+        <div className="events-chart__empty">
+          <p>Brak danych do wyświetlenia wykresu</p>
+        </div>
+      </div>
+    );
+  }
+
+  const maxEvents = Math.max(...chartData.map(d => d.events), 1); // Minimum 1 to avoid division by 0
+  const maxGuests = Math.max(...chartData.map(d => d.guests), 1);
 
   return (
     <div className="events-chart">

@@ -1,19 +1,24 @@
 // components/dashboard/Settings/SecuritySettings/SecuritySettings.tsx
 import React, { useState } from 'react';
-import { Shield, Lock, Smartphone, Key, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { Shield, Lock, Smartphone, Key, Eye, EyeOff, AlertTriangle, Trash2 } from 'lucide-react';
+import { useAuth } from '../../../../hooks/useAuth';
 import './SecuritySettings.scss';
 
 const SecuritySettings: React.FC = () => {
+  const { changePassword, deleteAccount, error, clearError } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
+    delete: false
   });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,22 +34,56 @@ const SecuritySettings: React.FC = () => {
     }
     
     setIsLoading(true);
+    clearError();
     
-    // Symulacja API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    alert('Hasło zostało zmienione!');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setIsLoading(false);
+    try {
+      await changePassword(currentPassword, newPassword);
+      alert('Hasło zostało zmienione!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Błąd podczas zmiany hasła:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleTogglePassword = (field: 'current' | 'new' | 'confirm') => {
+  const handleTogglePassword = (field: 'current' | 'new' | 'confirm' | 'delete') => {
     setShowPasswords(prev => ({
       ...prev,
       [field]: !prev[field]
     }));
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      alert('Wprowadź hasło aby usunąć konto');
+      return;
+    }
+
+    const confirmText = 'USUŃ KONTO';
+    const userConfirmation = prompt(
+      `⚠️ UWAGA! Ta operacja jest nieodwracalna!\n\nWszystkie Twoje dane, wydarzenia i goście zostaną trwale usunięte.\n\nAby potwierdzić, wpisz: ${confirmText}`
+    );
+
+    if (userConfirmation !== confirmText) {
+      alert('Nieprawidłowe potwierdzenie. Usuwanie konta zostało anulowane.');
+      return;
+    }
+
+    setIsLoading(true);
+    clearError();
+
+    try {
+      await deleteAccount(deletePassword);
+      alert('Konto zostało pomyślnie usunięte. Żegnamy!');
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Błąd podczas usuwania konta:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handle2FAToggle = async () => {
@@ -338,6 +377,125 @@ const SecuritySettings: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete Account */}
+      <div className="security-settings__section security-settings__danger-section">
+        <div className="security-settings__section-header">
+          <div className="security-settings__section-icon security-settings__danger-icon">
+            <Trash2 size={20} />
+          </div>
+          <div>
+            <h3>Usuń konto</h3>
+            <p>Trwale usuń swoje konto i wszystkie powiązane dane</p>
+          </div>
+        </div>
+
+        <div className="security-settings__danger-zone">
+          <div className="security-settings__warning">
+            <AlertTriangle size={20} />
+            <div>
+              <strong>Uwaga! Ta operacja jest nieodwracalna.</strong>
+              <p>Usunięcie konta spowoduje trwałe usunięcie:</p>
+              <ul>
+                <li>Wszystkich wydarzeń i ich danych</li>
+                <li>Listy gości i RSVP</li>
+                <li>Historii aktywności</li>
+                <li>Ustawień i preferencji</li>
+              </ul>
+            </div>
+          </div>
+
+          <button 
+            className="security-settings__delete-trigger"
+            onClick={() => setShowDeleteModal(true)}
+            disabled={isLoading}
+          >
+            <Trash2 size={16} />
+            Usuń konto
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="security-settings__modal-overlay">
+          <div className="security-settings__modal">
+            <div className="security-settings__modal-header">
+              <h3>Potwierdź usunięcie konta</h3>
+              <button 
+                className="security-settings__modal-close"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="security-settings__modal-content">
+              <div className="security-settings__final-warning">
+                <AlertTriangle size={24} />
+                <p>
+                  <strong>Ostatnie ostrzeżenie!</strong><br />
+                  Ta operacja usunie trwale Twoje konto i wszystkie dane.
+                </p>
+              </div>
+
+              {error && (
+                <div className="security-settings__error-message">
+                  {error}
+                </div>
+              )}
+
+              <div className="security-settings__field">
+                <label>Wprowadź swoje hasło aby potwierdzić:</label>
+                <div className="security-settings__input-wrapper">
+                  <input
+                    type={showPasswords.delete ? 'text' : 'password'}
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Twoje hasło"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="security-settings__password-toggle"
+                    onClick={() => handleTogglePassword('delete')}
+                  >
+                    {showPasswords.delete ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="security-settings__modal-actions">
+                <button 
+                  className="security-settings__modal-cancel"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeletePassword('');
+                    clearError();
+                  }}
+                  disabled={isLoading}
+                >
+                  Anuluj
+                </button>
+                <button 
+                  className="security-settings__modal-delete"
+                  onClick={handleDeleteAccount}
+                  disabled={isLoading || !deletePassword}
+                >
+                  {isLoading ? (
+                    <div className="security-settings__spinner"></div>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      Usuń konto
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

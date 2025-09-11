@@ -1,19 +1,6 @@
 // components/dashboard/Contacts/AddContact/AddContact.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Save, User, Tag } from 'lucide-react';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  TextField, 
-  Button, 
-  Box, 
-  Typography,
-  Chip,
-  Alert
-} from '@mui/material';
+import { Save, User, Tag, X, AlertCircle, UserPlus } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { ContactService } from '../../../../services/firebase/contactService';
 import { CreateContactData } from '../../../../types';
@@ -131,188 +118,235 @@ const AddContact: React.FC<AddContactProps> = ({ open, onClose, onContactAdded }
     }
   };
 
+  if (!open) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && !loading) {
+      onClose();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && !loading) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          maxHeight: '90vh'
-        }
-      }}
+    <div 
+      className="add-contact-modal__overlay" 
+      onClick={handleBackdropClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 1,
-        pb: 2
-      }}>
-        <User size={24} />
-        <Typography variant="h6" component="span">
-          Dodaj nowy kontakt
-        </Typography>
-      </DialogTitle>
-
-      <form onSubmit={handleSubmit}>
-        <DialogContent sx={{ pt: 0 }}>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          <Box className="add-contact__form">
-            <Box className="add-contact__row">
-              <TextField
-                fullWidth
-                label="Imię"
-                value={formData.firstName}
-                onChange={handleInputChange('firstName')}
-                required
-                disabled={loading}
-                sx={{ mb: 2 }}
-              />
-            </Box>
-
-            <Box className="add-contact__row">
-              <TextField
-                fullWidth
-                label="Nazwisko"
-                value={formData.lastName}
-                onChange={handleInputChange('lastName')}
-                required
-                disabled={loading}
-                sx={{ mb: 2 }}
-              />
-            </Box>
-
-            <Box className="add-contact__row">
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange('email')}
-                required
-                disabled={loading}
-                sx={{ mb: 2 }}
-              />
-            </Box>
-
-            <Box className="add-contact__row">
-              <TextField
-                fullWidth
-                label="Telefon"
-                value={formData.phone}
-                onChange={handleInputChange('phone')}
-                disabled={loading}
-                sx={{ mb: 2 }}
-              />
-            </Box>
-
-            <Box className="add-contact__row">
-              <TextField
-                fullWidth
-                label="Preferencje żywieniowe"
-                multiline
-                rows={2}
-                value={formData.dietaryRestrictions}
-                onChange={handleInputChange('dietaryRestrictions')}
-                disabled={loading}
-                sx={{ mb: 2 }}
-              />
-            </Box>
-
-            <Box className="add-contact__row">
-              <TextField
-                fullWidth
-                label="Notatki"
-                multiline
-                rows={3}
-                value={formData.notes}
-                onChange={handleInputChange('notes')}
-                disabled={loading}
-                sx={{ mb: 2 }}
-              />
-            </Box>
-
-            <Box className="add-contact__tags">
-              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                Tagi
-              </Typography>
-              
-              <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                {formData.tags?.map((tag, index) => (
-                  <Chip
-                    key={index}
-                    label={tag}
-                    onDelete={() => handleRemoveTag(tag)}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                ))}
-              </Box>
-
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  size="small"
-                  label="Nowy tag"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                  disabled={loading}
-                  sx={{ flexGrow: 1 }}
-                />
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={handleAddTag}
-                  disabled={loading || !newTag.trim()}
-                  size="small"
-                  sx={{ minWidth: 'auto', px: 2 }}
-                >
-                  <Tag size={16} />
-                </Button>
-              </Box>
-            </Box>
-          </Box>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 3, pt: 1 }}>
-          <Button 
+      <div className="add-contact-modal__container">
+        <div className="add-contact-modal__header">
+          <div className="add-contact-modal__icon">
+            <UserPlus size={24} />
+          </div>
+          <h2 className="add-contact-modal__title">
+            Dodaj nowy kontakt
+          </h2>
+          <button
+            className="add-contact-modal__close"
             onClick={handleClose}
             disabled={loading}
-            color="inherit"
+            aria-label="Zamknij"
           >
-            Anuluj
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading}
-            startIcon={loading ? undefined : <Save size={18} />}
-            sx={{
-              minWidth: 120,
-              background: 'var(--primary-500)',
-              '&:hover': {
-                background: 'var(--primary-600)'
-              }
-            }}
-          >
-            {loading ? 'Zapisywanie...' : 'Zapisz'}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="add-contact-modal__form">
+          <div className="add-contact-modal__content">
+            {error && (
+              <div className="add-contact-modal__error">
+                <AlertCircle size={16} />
+                {error}
+              </div>
+            )}
+
+            <div className="add-contact-modal__contact-preview">
+              <div className="add-contact-modal__avatar">
+                {(formData.firstName?.[0] || '?')}{(formData.lastName?.[0] || '?')}
+              </div>
+              <div className="add-contact-modal__preview-info">
+                <div className="add-contact-modal__preview-name">
+                  {formData.firstName || 'Imię'} {formData.lastName || 'Nazwisko'}
+                </div>
+                <div className="add-contact-modal__preview-email">
+                  {formData.email || 'email@example.com'}
+                </div>
+              </div>
+            </div>
+
+            <div className="add-contact-modal__fields">
+              <div className="add-contact-modal__row">
+                <div className="add-contact-modal__field-group">
+                  <label className="add-contact-modal__label">
+                    Imię <span className="add-contact-modal__required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="add-contact-modal__input"
+                    value={formData.firstName}
+                    onChange={handleInputChange('firstName')}
+                    required
+                    disabled={loading}
+                    placeholder="Wprowadź imię"
+                  />
+                </div>
+                <div className="add-contact-modal__field-group">
+                  <label className="add-contact-modal__label">
+                    Nazwisko <span className="add-contact-modal__required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="add-contact-modal__input"
+                    value={formData.lastName}
+                    onChange={handleInputChange('lastName')}
+                    required
+                    disabled={loading}
+                    placeholder="Wprowadź nazwisko"
+                  />
+                </div>
+              </div>
+
+              <div className="add-contact-modal__field-group">
+                <label className="add-contact-modal__label">
+                  Email <span className="add-contact-modal__required">*</span>
+                </label>
+                <input
+                  type="email"
+                  className="add-contact-modal__input"
+                  value={formData.email}
+                  onChange={handleInputChange('email')}
+                  required
+                  disabled={loading}
+                  placeholder="Wprowadź adres email"
+                />
+              </div>
+
+              <div className="add-contact-modal__field-group">
+                <label className="add-contact-modal__label">Telefon</label>
+                <input
+                  type="tel"
+                  className="add-contact-modal__input"
+                  value={formData.phone}
+                  onChange={handleInputChange('phone')}
+                  disabled={loading}
+                  placeholder="Wprowadź numer telefonu"
+                />
+              </div>
+
+              <div className="add-contact-modal__field-group">
+                <label className="add-contact-modal__label">Preferencje żywieniowe</label>
+                <textarea
+                  className="add-contact-modal__textarea"
+                  value={formData.dietaryRestrictions}
+                  onChange={handleInputChange('dietaryRestrictions')}
+                  disabled={loading}
+                  placeholder="Opisz preferencje żywieniowe..."
+                  rows={2}
+                />
+              </div>
+
+              <div className="add-contact-modal__field-group">
+                <label className="add-contact-modal__label">Notatki</label>
+                <textarea
+                  className="add-contact-modal__textarea"
+                  value={formData.notes}
+                  onChange={handleInputChange('notes')}
+                  disabled={loading}
+                  placeholder="Dodaj notatki..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="add-contact-modal__field-group">
+                <label className="add-contact-modal__label">Tagi</label>
+                
+                {formData.tags && formData.tags.length > 0 && (
+                  <div className="add-contact-modal__tags">
+                    {formData.tags.map((tag, index) => (
+                      <div key={index} className="add-contact-modal__tag">
+                        <span>{tag}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="add-contact-modal__tag-remove"
+                          disabled={loading}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="add-contact-modal__tag-input">
+                  <input
+                    type="text"
+                    className="add-contact-modal__input"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                    disabled={loading}
+                    placeholder="Dodaj tag"
+                  />
+                  <button
+                    type="button"
+                    className="add-contact-modal__tag-add-btn"
+                    onClick={handleAddTag}
+                    disabled={loading || !newTag.trim()}
+                  >
+                    <Tag size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="add-contact-modal__actions">
+            <button
+              type="button"
+              className="add-contact-modal__btn add-contact-modal__btn--cancel"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Anuluj
+            </button>
+            <button
+              type="submit"
+              className="add-contact-modal__btn add-contact-modal__btn--primary"
+              disabled={loading}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                color: 'white',
+                borderColor: '#6366f1'
+              }}
+            >
+              {loading ? (
+                <>
+                  <div className="add-contact-modal__spinner" />
+                  Zapisywanie...
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  Dodaj kontakt
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

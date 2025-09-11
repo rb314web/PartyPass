@@ -20,6 +20,11 @@
       margin-left: 80px;
     }
     
+    // Medium screens - dostosuj do wąskiego sidebara
+    @media (min-width: 770px) and (max-width: 1200px) {
+      margin-left: 80px; // Sidebar jest wąski na średnich ekranach
+    }
+    
     @media (max-width: 768px) {
       margin-left: 0;
       
@@ -37,6 +42,12 @@
     
     @media (max-width: 1300px) {
       padding-top: calc(70px + var(--space-xl));
+    }
+    
+    // Medium screens - optymalizuj szerokość dla wąskiego sidebara
+    @media (min-width: 770px) and (max-width: 1200px) {
+      padding: var(--space-lg) var(--space-xl);
+      padding-top: calc(70px + var(--space-lg));
     }
     
     @media (max-width: 1200px) {

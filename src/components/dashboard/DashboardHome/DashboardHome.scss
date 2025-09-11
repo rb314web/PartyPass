@@ -17,6 +17,10 @@
     font-weight: 700;
     color: var(--gray-900);
     margin: 0 0 var(--space-xs) 0;
+    line-height: 1.2;
+    min-height: 2.4rem; // Zapewnia stałą wysokość niezależnie od treści
+    display: flex;
+    align-items: center;
   }
   
   &__subtitle {

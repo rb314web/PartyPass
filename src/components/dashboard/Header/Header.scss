@@ -67,8 +67,9 @@
 
 .dashboard-header {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
+  justify-content: space-between;
   padding: 1rem 2rem;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-bottom: 1px solid #e2e8f0;
@@ -176,43 +177,7 @@
     }
   }
   
-  &__logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    
-    @media (max-width: 768px) {
-      gap: 0.25rem;
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    }
-  }
-  
-  &__logo-icon {
-    font-size: 1.5rem;
-    line-height: 1;
-    
-    @media (max-width: 768px) {
-      font-size: 1.25rem;
-    }
-  }
-  
-  &__logo-text {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--primary-color);
-    
-    @media (max-width: 768px) {
-      font-size: 1rem;
-    }
-    
-    @media (max-width: 480px) {
-      display: none; // Hide text on very small screens, show only icon
-    }
-  }
+  // Logo styles moved to sidebar - removed from header
   
   &__left {
     min-width: 0;

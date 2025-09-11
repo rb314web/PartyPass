@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { Contact, CreateContactData, UpdateContactData } from '../../types';
+import { COLLECTIONS } from '../../types/firebase';
 
 export interface ContactFilters {
   search?: string;
@@ -30,7 +31,7 @@ export interface ContactResult {
 }
 
 export class ContactService {
-  private static readonly COLLECTION = 'contacts';
+  private static readonly COLLECTION = COLLECTIONS.CONTACTS;
 
   static async createContact(userId: string, data: CreateContactData): Promise<Contact> {
     try {

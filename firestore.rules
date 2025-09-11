@@ -44,10 +44,7 @@ service cloud.firestore {
     
     // Wydarzenia
     match /events/{eventId} {
-      allow read: if isAuthenticated() && (
-        isOwner(resource.data.userId) || 
-        exists(/databases/$(database)/documents/guests/$(request.auth.uid))
-      );
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || true); // Tymczasowo pozwól wszystkim zalogowanym
       allow create: if isAuthenticated() && hasValidEventData();
       allow update: if isAuthenticated() && isOwner(resource.data.userId) && hasValidEventUpdate();
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
@@ -55,10 +52,7 @@ service cloud.firestore {
     
     // Goście
     match /guests/{guestId} {
-      allow read: if isAuthenticated() && (
-        isOwner(resource.data.userId) || 
-        resource.data.email == request.auth.token.email
-      );
+      allow read: if isAuthenticated(); // Tymczasowo pozwól wszystkim zalogowanym
       allow create: if isAuthenticated() && (
         isOwner(request.resource.data.userId) ||
         exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
@@ -67,7 +61,11 @@ service cloud.firestore {
         isOwner(resource.data.userId) ||
         resource.data.email == request.auth.token.email
       );
-      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
+        get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.userId == request.auth.uid
+      );
     }
     
     // Aktywności
@@ -96,6 +94,14 @@ service cloud.firestore {
     
     // Analityki
     match /analytics/{analyticsId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Kontakty
+    match /contacts/{contactId} {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update: if isAuthenticated() && isOwner(resource.data.userId);

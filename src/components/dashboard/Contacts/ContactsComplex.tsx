@@ -20,7 +20,30 @@ import EditContactModal from './EditContactModal';
 import DeleteContactModal from './DeleteContactModal';
 import './Contacts.scss';
 
-const Contacts: React.FC = () => {
+// Stable search input component to prevent losing focus
+const StableSearchInput = React.memo<{
+  value: string;
+  onChange: (value: string) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}>(({ value, onChange, inputRef }) => {
+  return (
+    <div className="contacts__search">
+      <Search size={20} />
+      <input
+        ref={inputRef}
+        id="contacts-search"
+        name="contactsSearch"
+        type="text"
+        placeholder="Szukaj kontaktów..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete="off"
+      />
+    </div>
+  );
+});
+
+const ContactsComponent: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -45,8 +68,8 @@ const Contacts: React.FC = () => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // STABLE loadContacts - memoized with useCallback
-  const loadContacts = useCallback(async (resetList = true) => {
+  // STABLE loadContacts - memoized with useCallback (without searchQuery dependency)
+  const loadContacts = useCallback(async (resetList = true, customSearchQuery?: string) => {
     if (!user?.id) return;
     
     try {
@@ -56,8 +79,9 @@ const Contacts: React.FC = () => {
       }
       
       const filters: ContactFilters = {};
-      if (searchQuery.trim()) {
-        filters.search = searchQuery.trim();
+      const queryToUse = customSearchQuery !== undefined ? customSearchQuery : searchQuery;
+      if (queryToUse.trim()) {
+        filters.search = queryToUse.trim();
       }
 
       const result = await ContactService.getUserContacts(
@@ -78,7 +102,7 @@ const Contacts: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, searchQuery]);
+  }, [user?.id]);
 
   // STABLE filtered and sorted contacts - fully memoized
   const filteredAndSortedContacts = useMemo(() => {
@@ -199,18 +223,6 @@ const Contacts: React.FC = () => {
     }
   }, [contacts, handleEditContact, handleOpenDeleteModal]);
 
-  // STABLE search handler - preserves focus
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    // Keep focus on input
-    setTimeout(() => {
-      if (searchInputRef.current) {
-        searchInputRef.current.focus();
-      }
-    }, 0);
-  }, []);
-
   const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const [, direction] = e.target.value.split('-');
     setSortDirection(direction as 'asc' | 'desc');
@@ -221,9 +233,19 @@ const Contacts: React.FC = () => {
     let timeoutId: NodeJS.Timeout;
     
     if (user?.id) {
-      // Debounce search
+      // Debounce search - preserve focus
       timeoutId = setTimeout(() => {
-        loadContacts(true);
+        const activeElement = document.activeElement;
+        const wasSearchFocused = activeElement === searchInputRef.current;
+        
+        loadContacts(true, searchQuery);
+        
+        // Restore focus if search was focused
+        if (wasSearchFocused && searchInputRef.current) {
+          setTimeout(() => {
+            searchInputRef.current?.focus();
+          }, 50);
+        }
       }, searchQuery ? 300 : 0);
     }
 
@@ -562,19 +584,11 @@ const Contacts: React.FC = () => {
       </div>
 
       <div className="contacts__filters">
-        <div className="contacts__search">
-          <Search size={20} />
-          <input
-            ref={searchInputRef}
-            id="contacts-search"
-            name="contactsSearch"
-            type="text"
-            placeholder="Szukaj kontaktów..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            autoComplete="off"
-          />
-        </div>
+        <StableSearchInput 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          inputRef={searchInputRef}
+        />
 
         <div className="contacts__filter-group">
           <select
@@ -638,5 +652,8 @@ const Contacts: React.FC = () => {
     </>
   );
 };
+
+// Memoized component to prevent unnecessary rerenders
+const Contacts = React.memo(ContactsComponent);
 
 export default Contacts;

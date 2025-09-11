@@ -164,6 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <Link
                   to={item.path}
                   className={`sidebar__link ${isActive(item.path, item.exact) ? 'sidebar__link--active' : ''}`}
+                  title={item.label}
                   onClick={() => {
                     handleMobileClose();
                     // Focus management - focus on main content after navigation

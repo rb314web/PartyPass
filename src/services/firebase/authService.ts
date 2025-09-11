@@ -276,13 +276,81 @@ export class AuthService {
       const credential = EmailAuthProvider.credential(firebaseUser.email, password);
       await reauthenticateWithCredential(firebaseUser, credential);
 
-      // Delete user data from Firestore
-      await deleteDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid));
+      // Delete all user-related data from Firestore
+      await this.deleteUserData(firebaseUser.uid);
 
       // Delete user from Firebase Auth
       await deleteUser(firebaseUser);
     } catch (error: any) {
       throw this.handleAuthError(error);
+    }
+  }
+
+  // Delete all user data from Firestore
+  private static async deleteUserData(userId: string): Promise<void> {
+    try {
+      // Import additional Firestore functions
+      const { getDocs, query, where, collection } = await import('firebase/firestore');
+      
+      // Delete user document
+      await deleteDoc(doc(db, COLLECTIONS.USERS, userId));
+
+      // Get all user's events
+      const eventsQuery = query(collection(db, COLLECTIONS.EVENTS), where('userId', '==', userId));
+      const eventsSnapshot = await getDocs(eventsQuery);
+      
+      // Delete each event and its guests
+      for (const eventDoc of eventsSnapshot.docs) {
+        const eventId = eventDoc.id;
+        
+        // Delete event's guests
+        const guestsQuery = query(collection(db, COLLECTIONS.GUESTS), where('eventId', '==', eventId));
+        const guestsSnapshot = await getDocs(guestsQuery);
+        
+        for (const guestDoc of guestsSnapshot.docs) {
+          await deleteDoc(doc(db, COLLECTIONS.GUESTS, guestDoc.id));
+        }
+        
+        // Delete the event
+        await deleteDoc(doc(db, COLLECTIONS.EVENTS, eventId));
+      }
+
+      // Delete user's activities
+      const activitiesQuery = query(collection(db, COLLECTIONS.ACTIVITIES), where('userId', '==', userId));
+      const activitiesSnapshot = await getDocs(activitiesQuery);
+      
+      for (const activityDoc of activitiesSnapshot.docs) {
+        await deleteDoc(doc(db, COLLECTIONS.ACTIVITIES, activityDoc.id));
+      }
+
+      // Delete user's notifications
+      const notificationsQuery = query(collection(db, COLLECTIONS.NOTIFICATIONS), where('userId', '==', userId));
+      const notificationsSnapshot = await getDocs(notificationsQuery);
+      
+      for (const notificationDoc of notificationsSnapshot.docs) {
+        await deleteDoc(doc(db, COLLECTIONS.NOTIFICATIONS, notificationDoc.id));
+      }
+
+      // Delete user's analytics
+      const analyticsQuery = query(collection(db, COLLECTIONS.ANALYTICS), where('userId', '==', userId));
+      const analyticsSnapshot = await getDocs(analyticsQuery);
+      
+      for (const analyticsDoc of analyticsSnapshot.docs) {
+        await deleteDoc(doc(db, COLLECTIONS.ANALYTICS, analyticsDoc.id));
+      }
+
+      // Delete user's avatar from storage if exists
+      try {
+        const avatarRef = ref(storage, `avatars/${userId}`);
+        await deleteObject(avatarRef);
+      } catch (error) {
+        // Avatar might not exist, ignore error
+        console.log('No avatar to delete or error deleting avatar:', error);
+      }
+
+    } catch (error) {
+      console.error('Error deleting user data:', error);
+      throw error;
     }
   }
 
