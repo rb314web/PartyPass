@@ -139,6 +139,13 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    
+    &:hover {
+      opacity: 0.8;
+    }
     
     &-icon {
       font-size: 1.5rem;

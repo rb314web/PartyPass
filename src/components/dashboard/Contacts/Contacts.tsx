@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Users, 
   Search, 
@@ -23,6 +23,7 @@ import './Contacts.scss';
 const Contacts: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Stable refs for search
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -215,6 +216,15 @@ const Contacts: React.FC = () => {
     const [, direction] = e.target.value.split('-');
     setSortDirection(direction as 'asc' | 'desc');
   }, []);
+
+  // Auto-open add modal when navigating to /add
+  useEffect(() => {
+    if (location.pathname === '/dashboard/contacts/add') {
+      setAddContactOpen(true);
+      // Navigate back to contacts list but keep modal open
+      navigate('/dashboard/contacts', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   // Load contacts on mount and search change
   useEffect(() => {
@@ -608,6 +618,7 @@ const Contacts: React.FC = () => {
     <>
       <Routes>
         <Route index element={<ContactsListPage />} />
+        <Route path="add" element={<ContactsListPage />} />
         <Route path="import" element={<div>Import kontaktów</div>} />
       </Routes>
 

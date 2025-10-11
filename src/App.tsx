@@ -10,6 +10,7 @@ import Landing from './pages/Landing/Landing';
 import Login from './components/auth/Login/Login';
 import Register from './components/auth/Register/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
+import DemoPage from './pages/Demo/Demo';
 import PaymentReturn from './pages/PaymentReturn/PaymentReturn';
 import RSVP from './pages/RSVP/RSVP';
 import FloatingActionButton from './components/common/FloatingActionButton/FloatingActionButton';
@@ -40,6 +41,7 @@ function App() {
             <div className="App">
               <Routes>                {/* Publiczne strony */}
                 <Route path="/" element={<Landing />} />
+                <Route path="/demo" element={<DemoPage />} />
                 <Route path="/rsvp/:token" element={<RSVP />} />
                 
                 {/* Strony autoryzacji - tylko dla niezalogowanych */}

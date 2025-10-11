@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { EventService } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
+import { useNotifications } from '../../../hooks/useNotifications';
 import { Activity } from '../../../types';
 import './Activities.scss';
 
@@ -25,11 +26,13 @@ type ActivityType = Activity['type'] | 'all';
 const Activities: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { notifications, markAsRead, markAllAsRead } = useNotifications(20);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ActivityType>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(true);
 
   const loadActivities = async () => {
     if (!user?.id) return;
@@ -54,6 +57,16 @@ const Activities: React.FC = () => {
     setRefreshing(true);
     await loadActivities();
     setRefreshing(false);
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    // Mark as read
+    await markAsRead(notification.id);
+    
+    // Navigate to action URL if available
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    }
   };
 
   const handleActivityClick = (activity: Activity) => {
@@ -157,6 +170,60 @@ const Activities: React.FC = () => {
           </select>
         </div>
       </div>
+
+      {/* Notifications Section */}
+      {showNotifications && notifications.length > 0 && (
+        <div className="activities__notifications">
+          <div className="activities__notifications-header">
+            <h2>Powiadomienia</h2>
+            <div className="activities__notifications-actions">
+              <button 
+                onClick={markAllAsRead}
+                className="activities__mark-all-read"
+              >
+                Oznacz wszystkie jako przeczytane
+              </button>
+              <button 
+                onClick={() => setShowNotifications(false)}
+                className="activities__hide-notifications"
+              >
+                Ukryj
+              </button>
+            </div>
+          </div>
+          
+          <div className="activities__notifications-list">
+            {notifications.slice(0, 5).map((notification) => (
+              <div 
+                key={notification.id}
+                className={`activities__notification ${!notification.read ? 'activities__notification--unread' : ''}`}
+                onClick={() => handleNotificationClick(notification)}
+                style={{ cursor: notification.actionUrl ? 'pointer' : 'default' }}
+              >
+                <div className={`activities__notification-icon activities__notification-icon--${notification.priority}`}>
+                  {notification.type === 'activity' && <CheckCircle size={20} />}
+                  {notification.type === 'system' && <AlertCircle size={20} />}
+                  {notification.type === 'reminder' && <Calendar size={20} />}
+                  {notification.type === 'warning' && <AlertCircle size={20} />}
+                </div>
+                <div className="activities__notification-content">
+                  <div className="activities__notification-title">{notification.title}</div>
+                  <div className="activities__notification-message">{notification.message}</div>
+                  <div className="activities__notification-time">
+                    {formatDistanceToNow(notification.timestamp, { 
+                      addSuffix: true, 
+                      locale: pl 
+                    })}
+                  </div>
+                </div>
+                {!notification.read && (
+                  <div className="activities__notification-badge"></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="activities__content">
         {loading ? (

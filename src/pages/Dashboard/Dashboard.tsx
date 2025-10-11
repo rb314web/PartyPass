@@ -9,6 +9,8 @@ import Contacts from '../../components/dashboard/Contacts/Contacts';
 import Analytics from '../../components/dashboard/Analytics/Analytics';
 import Settings from '../../components/dashboard/Settings/Settings';
 import Activities from '../../components/dashboard/Activities/Activities';
+import ContactUs from '../../components/dashboard/ContactUs/ContactUs';
+import Search from '../Search/Search';
 import usePageAnalytics from '../../hooks/usePageAnalytics';
 import './Dashboard.scss';
 
@@ -47,6 +49,8 @@ const Dashboard: React.FC = () => {
               <Route path="activities" element={<Activities />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="contact-us" element={<ContactUs />} />
+              <Route path="search" element={<Search />} />
             </Routes>
           </div>
         </div>

@@ -20,7 +20,8 @@ import {
   Mail,
   Phone,
   MessageCircle,
-  Zap
+  Zap,
+  Ticket
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import './Navigation.scss';
@@ -133,9 +134,6 @@ const Navigation: React.FC<NavigationProps> = ({ variant = 'landing' }) => {
         
         {/* Logo */}
         <Link to="/" className="navigation__logo">
-          <div className="navigation__logo-icon">
-            <span className="navigation__logo-emoji">🎉</span>
-          </div>
           <span className="navigation__logo-text">
             <span className="navigation__logo-main">Party</span>
             <span className="navigation__logo-accent">Pass</span>
@@ -423,7 +421,7 @@ const Navigation: React.FC<NavigationProps> = ({ variant = 'landing' }) => {
                   className="navigation__mobile-btn navigation__mobile-btn--primary"
                 >
                   <Sparkles size={20} />
-                  Rozpocznij za darmo
+                  Rozpocznij
                   <ArrowRight size={20} />
                 </button>
               </div>

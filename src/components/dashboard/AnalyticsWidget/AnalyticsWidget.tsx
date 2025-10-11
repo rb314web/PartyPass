@@ -91,7 +91,7 @@ const AnalyticsWidget: React.FC = () => {
       <div className="analytics-widget__header">
         <div className="analytics-widget__title">
           <BarChart3 size={20} />
-          <h3>Analityka - Ostatnie 30 dni</h3>
+          <h3>Podsumowanie miesiąca</h3>
         </div>
         <Link to="/dashboard/analytics" className="analytics-widget__link">
           <ArrowRight size={16} />
@@ -99,87 +99,85 @@ const AnalyticsWidget: React.FC = () => {
       </div>
 
       <div className="analytics-widget__content">
-        {/* Quick Stats */}
-        <div className="analytics-widget__stats">
-          <div className="analytics-widget__stat">
-            <div className="analytics-widget__stat-icon analytics-widget__stat-icon--events">
-              <Calendar size={16} />
+        {/* Key Metrics */}
+        <div className="analytics-widget__metrics">
+          <div className="analytics-widget__metric-group">
+            <div className="analytics-widget__metric">
+              <div className="analytics-widget__metric-header">
+                <Calendar size={16} />
+                <h5>Wydarzenia</h5>
+              </div>
+              <div className="analytics-widget__metric-value">
+                <strong>{analyticsData.totalEvents}</strong>
+                {getGrowthIcon(analyticsData.growthRate)}
+                <span className={`analytics-widget__trend analytics-widget__trend--${getGrowthColor(analyticsData.growthRate)}`}>
+                  {analyticsData.growthRate > 0 ? '+' : ''}{analyticsData.growthRate}%
+                </span>
+              </div>
             </div>
-            <div className="analytics-widget__stat-content">
-              <span className="analytics-widget__stat-value">{analyticsData.totalEvents}</span>
-              <span className="analytics-widget__stat-label">Wydarzenia</span>
+            <div className="analytics-widget__metric">
+              <div className="analytics-widget__metric-header">
+                <Users size={16} />
+                <h5>Średnia frekwencja</h5>
+              </div>
+              <div className="analytics-widget__metric-value">
+                <strong>{Math.round(analyticsData.totalGuests / analyticsData.totalEvents)} os.</strong>
+                <span className="analytics-widget__metric-label">na wydarzenie</span>
+              </div>
             </div>
           </div>
 
-          <div className="analytics-widget__stat">
-            <div className="analytics-widget__stat-icon analytics-widget__stat-icon--guests">
-              <Users size={16} />
+          <div className="analytics-widget__metric-group">
+            <div className="analytics-widget__metric">
+              <div className="analytics-widget__metric-header">
+                <Eye size={16} />
+                <h5>Wskaźnik odpowiedzi</h5>
+              </div>
+              <div className="analytics-widget__metric-value">
+                <strong>{analyticsData.rsvpRate}%</strong>
+                <span className={`analytics-widget__trend analytics-widget__trend--success`}>
+                  cel: 85%
+                </span>
+              </div>
             </div>
-            <div className="analytics-widget__stat-content">
-              <span className="analytics-widget__stat-value">{analyticsData.totalGuests}</span>
-              <span className="analytics-widget__stat-label">Goście</span>
-            </div>
-          </div>
-
-          <div className="analytics-widget__stat">
-            <div className="analytics-widget__stat-icon analytics-widget__stat-icon--rsvp">
-              <Eye size={16} />
-            </div>
-            <div className="analytics-widget__stat-content">
-              <span className="analytics-widget__stat-value">{analyticsData.rsvpRate}%</span>
-              <span className="analytics-widget__stat-label">RSVP</span>
+            <div className="analytics-widget__metric">
+              <div className="analytics-widget__metric-header">
+                <Activity size={16} />
+                <h5>Aktywność</h5>
+              </div>
+              <div className="analytics-widget__metric-value">
+                <strong>{analyticsData.guestEngagement.confirmed + analyticsData.guestEngagement.pending}</strong>
+                <span className="analytics-widget__metric-label">interakcji</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Growth Indicator */}
-        <div className="analytics-widget__growth">
-          <div className="analytics-widget__growth-label">Wzrost w tym miesiącu</div>
-          <div className={`analytics-widget__growth-value analytics-widget__growth-value--${getGrowthColor(analyticsData.growthRate)}`}>
-            {getGrowthIcon(analyticsData.growthRate)}
-            <span>{Math.abs(analyticsData.growthRate)}%</span>
-          </div>
-        </div>
-
-        {/* Top Event Types */}
-        {analyticsData.popularEventTypes.length > 0 && (
-          <div className="analytics-widget__chart">
-            <h4>Popularne typy wydarzeń</h4>
-            <div className="analytics-widget__chart-bars">
-              {analyticsData.popularEventTypes.slice(0, 3).map((type, index) => (
-                <div key={index} className="analytics-widget__chart-bar">
-                  <div className="analytics-widget__chart-bar-label">{type.type}</div>
-                  <div className="analytics-widget__chart-bar-container">
-                    <div 
-                      className="analytics-widget__chart-bar-fill"
-                      style={{ 
-                        width: `${type.percentage}%`,
-                        backgroundColor: `hsl(${220 + index * 30}, 70%, 50%)`
-                      }}
-                    />
-                  </div>
-                  <div className="analytics-widget__chart-bar-value">{type.count}</div>
-                </div>
-              ))}
+        {/* Response Status */}
+        <div className="analytics-widget__response-status">
+          <h4>Status zaproszeń</h4>
+          <div className="analytics-widget__response-bars">
+            <div className="analytics-widget__response-bar">
+              <div className="analytics-widget__response-fill analytics-widget__response-fill--confirmed" 
+                   style={{ width: `${(analyticsData.guestEngagement.confirmed / analyticsData.totalGuests) * 100}%` }} />
+              <div className="analytics-widget__response-fill analytics-widget__response-fill--pending" 
+                   style={{ width: `${(analyticsData.guestEngagement.pending / analyticsData.totalGuests) * 100}%` }} />
+              <div className="analytics-widget__response-fill analytics-widget__response-fill--declined" 
+                   style={{ width: `${(analyticsData.guestEngagement.declined / analyticsData.totalGuests) * 100}%` }} />
             </div>
-          </div>
-        )}
-
-        {/* Guest Engagement */}
-        <div className="analytics-widget__engagement">
-          <h4>Status odpowiedzi gości</h4>
-          <div className="analytics-widget__engagement-stats">
-            <div className="analytics-widget__engagement-stat">
-              <div className="analytics-widget__engagement-dot analytics-widget__engagement-dot--confirmed" />
-              <span>Potwierdzone: {analyticsData.guestEngagement.confirmed}</span>
-            </div>
-            <div className="analytics-widget__engagement-stat">
-              <div className="analytics-widget__engagement-dot analytics-widget__engagement-dot--pending" />
-              <span>Oczekujące: {analyticsData.guestEngagement.pending}</span>
-            </div>
-            <div className="analytics-widget__engagement-stat">
-              <div className="analytics-widget__engagement-dot analytics-widget__engagement-dot--declined" />
-              <span>Odrzucone: {analyticsData.guestEngagement.declined}</span>
+            <div className="analytics-widget__response-legend">
+              <div className="analytics-widget__legend-item">
+                <div className="analytics-widget__legend-dot analytics-widget__legend-dot--confirmed" />
+                <span>{Math.round((analyticsData.guestEngagement.confirmed / analyticsData.totalGuests) * 100)}% Potwierdzone</span>
+              </div>
+              <div className="analytics-widget__legend-item">
+                <div className="analytics-widget__legend-dot analytics-widget__legend-dot--pending" />
+                <span>{Math.round((analyticsData.guestEngagement.pending / analyticsData.totalGuests) * 100)}% Oczekujące</span>
+              </div>
+              <div className="analytics-widget__legend-item">
+                <div className="analytics-widget__legend-dot analytics-widget__legend-dot--declined" />
+                <span>{Math.round((analyticsData.guestEngagement.declined / analyticsData.totalGuests) * 100)}% Odrzucone</span>
+              </div>
             </div>
           </div>
         </div>
@@ -187,8 +185,8 @@ const AnalyticsWidget: React.FC = () => {
         {/* Action Button */}
         <div className="analytics-widget__action">
           <Link to="/dashboard/analytics" className="analytics-widget__view-all">
-            <Activity size={16} />
-            Zobacz pełną analitykę
+            <BarChart3 size={16} />
+            Zobacz szczegółowe statystyki
           </Link>
         </div>
       </div>

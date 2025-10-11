@@ -46,7 +46,6 @@ const EventDetails: React.FC = () => {
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [isAddContactsOpen, setIsAddContactsOpen] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null);
-  const [showEventStatusDropdown, setShowEventStatusDropdown] = useState(false);
 
   useEffect(() => {
     if (!id || !user) return;

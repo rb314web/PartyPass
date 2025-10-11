@@ -22,6 +22,7 @@ import { db, storage, auth } from '../../config/firebase';
 import { FirebaseEvent, COLLECTIONS, CreateEventData as BaseCreateEventData } from '../../types/firebase';
 import { Event, Activity, Guest } from '../../types';
 import { AnalyticsService } from './analyticsService';
+import { notificationService } from '../notificationService';
 
 export interface CreateEventData extends BaseCreateEventData {
   category?: string;
@@ -195,13 +196,11 @@ export class EventService {
 
       // Create activity for event creation
       try {
-        await addDoc(collection(db, COLLECTIONS.ACTIVITIES), {
+        await EventService.createActivityWithNotification({
           type: 'event_created',
           message: `Utworzono wydarzenie "${eventData.title}"`,
-          timestamp: Timestamp.now(),
-          eventId: docRef.id,
-          userId: userId
-        });
+          eventId: docRef.id
+        }, userId);
       } catch (activityError) {
         console.warn('Failed to create activity for event creation:', activityError);
       }
@@ -261,13 +260,11 @@ export class EventService {
         const eventDoc = await getDoc(eventRef);
         const eventData = eventDoc.data() as FirebaseEvent;
         
-        await addDoc(collection(db, COLLECTIONS.ACTIVITIES), {
+        await EventService.createActivityWithNotification({
           type: 'event_updated',
           message: `Zaktualizowano wydarzenie "${eventData.title}"`,
-          timestamp: Timestamp.now(),
-          eventId: eventId,
-          userId: eventData.userId
-        });
+          eventId: eventId
+        }, eventData.userId);
       } catch (activityError) {
         console.warn('Failed to create activity for event update:', activityError);
       }
@@ -370,6 +367,18 @@ export class EventService {
         );
       } catch (analyticsError) {
         console.warn('Failed to track event deletion analytics:', analyticsError);
+      }
+
+      // Create notification for event deletion
+      try {
+        await notificationService.createSystemNotification(
+          eventData.userId,
+          'Wydarzenie usunięte',
+          `Wydarzenie "${eventData.title}" zostało pomyślnie usunięte`,
+          'medium'
+        );
+      } catch (notificationError) {
+        console.warn('Failed to create deletion notification:', notificationError);
       }
 
     } catch (error: any) {
@@ -874,6 +883,39 @@ export class EventService {
       additionalInfo: firebaseEvent.additionalInfo,
       guests: [] // Używamy liczników zamiast tablicy gości
     };
+  }
+
+  // Helper function to create activity with notification
+  static async createActivityWithNotification(
+    activityData: {
+      type: Activity['type'];
+      message: string;
+      eventId?: string;
+      contactId?: string;
+      eventGuestId?: string;
+    },
+    userId: string
+  ): Promise<void> {
+    try {
+      // Create activity
+      const activityRef = await addDoc(collection(db, COLLECTIONS.ACTIVITIES), {
+        ...activityData,
+        timestamp: Timestamp.now(),
+        userId: userId
+      });
+
+      // Create notification from activity
+      const activity: Activity = {
+        id: activityRef.id,
+        ...activityData,
+        timestamp: new Date()
+      };
+
+      await notificationService.createFromActivity(activity, userId);
+    } catch (error) {
+      console.error('Error creating activity with notification:', error);
+      // Don't throw - this is a non-critical operation
+    }
   }
 
   // Monitor Firebase connection status

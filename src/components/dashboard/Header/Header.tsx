@@ -7,7 +7,6 @@ import {
   Search, 
   Plus, 
   Menu, 
-  Sparkles,
   Calendar,
   Users,
   Settings,
@@ -23,22 +22,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { EventService } from '../../../services/firebase/eventService';
-import NavigationButtons from '../../common/NavigationButtons/NavigationButtons';
+import { useNotifications } from '../../../hooks/useNotifications';
+import { Notification } from '../../../services/notificationService';
 import './Header.scss';
 
 interface HeaderProps {
   onMobileToggle?: () => void;
   isMobileOpen?: boolean;
-}
-
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  read: boolean;
-  timestamp: Date;
-  actionUrl?: string;
 }
 
 interface QuickAction {
@@ -47,11 +37,12 @@ interface QuickAction {
   description: string;
   icon: React.ReactNode;
   href: string;
-  category: 'create' | 'manage' | 'analyze';
+  category: 'search' | 'create' | 'manage' | 'analyze';
 }
 
 const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false }) => {
   const { user } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(10);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -82,39 +73,16 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
     };
   };
   
-  // Mock notifications data
-  const [notifications] = useState<Notification[]>([
-    {
-      id: 1,
-      title: 'Nowe RSVP',
-      message: 'Jan Kowalski potwierdził uczestnictwo w "Impreza urodzinowa"',
-      type: 'success',
-      read: false,
-      timestamp: new Date(Date.now() - 5 * 60 * 1000),
-      actionUrl: '/dashboard/events/123'
-    },
-    {
-      id: 2,
-      title: 'Przypomnienie',
-      message: 'Sprawdź listę gości dla wydarzenia jutro',
-      type: 'warning',
-      read: false,
-      timestamp: new Date(Date.now() - 30 * 60 * 1000),
-      actionUrl: '/dashboard/events/124'
-    },
-    {
-      id: 3,
-      title: 'Analityka gotowa',
-      message: 'Raport miesięczny został wygenerowany',
-      type: 'info',
-      read: true,
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      actionUrl: '/dashboard/analytics'
-    }
-  ]);
-
   // Enhanced quick actions
   const quickActions: QuickAction[] = [
+    {
+      id: 'search',
+      label: 'Wyszukaj',
+      description: 'Przeszukaj wydarzenia, kontakty i aktywności',
+      icon: <Search size={20} />,
+      href: '/dashboard/search',
+      category: 'search'
+    },
     {
       id: 'new-event',
       label: 'Nowe wydarzenie',
@@ -242,24 +210,18 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
     return 'Sprawdź swoje nadchodzące wydarzenia i zaplanuj kolejne';
   }, [location.pathname]);
 
-  // Mock search functionality
+  // Handle search - navigate to search page
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
     }
 
-    // Simulate API call
-    const mockResults = [
-      { type: 'event', title: 'Impreza urodzinowa', url: '/dashboard/events/123' },
-      { type: 'contact', title: 'Jan Kowalski', url: '/dashboard/contacts/456' },
-      { type: 'setting', title: 'Ustawienia powiadomień', url: '/dashboard/settings#notifications' }
-    ].filter(item => 
-      item.title.toLowerCase().includes(query.toLowerCase())
-    );
-
-    setSearchResults(mockResults);
-  }, []);
+    // Navigate to search page with query parameter
+    navigate(`/dashboard/search?q=${encodeURIComponent(query.trim())}`);
+    setSearchQuery(''); // Clear search input
+    setSearchResults([]);
+  }, [navigate]);
 
   // Handle search input
   const handleSearchInput = useCallback((value: string) => {
@@ -287,10 +249,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
     }
     setIsNotificationsOpen(false);
   }, [navigate]);
-
-  // Get unread notifications count
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   // Format notification timestamp
   const formatTimestamp = useCallback((timestamp: Date) => {
     const now = new Date();
@@ -321,19 +279,16 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
       )}
       
       <header className="dashboard-header">
-      {/* Left Section - Greeting */}
+      {/* Left Section - Logo */}
       <div className="dashboard-header__left">
-        <div className="dashboard-header__greeting-container">
-          <h1 className="dashboard-header__greeting">
-            {getGreeting()}
-            <span className="dashboard-header__greeting-emoji">👋</span>
-          </h1>
-          <p className="dashboard-header__subtitle">
-            {getSubtitle()}
-          </p>
+        <div className="dashboard-header__logo">
+          <img 
+            src="/logo192.png" 
+            alt="PartyPass Logo" 
+            className="dashboard-header__logo-image"
+          />
+          <span className="dashboard-header__logo-text">PartyPass</span>
         </div>
-        
-        {/* Breadcrumb moved to page content - removed from header */}
       </div>
 
       {/* Logo Section moved to sidebar - remove from header */}
@@ -348,21 +303,15 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
           </div>
         )}
         
-        {/* Navigation Buttons */}
-        <NavigationButtons className="dashboard-header__nav-buttons" />
-        
         {/* Enhanced Search */}
         <div className="dashboard-header__search-container">
           <button
-            onClick={() => setIsSearchOpen(true)}
+            onClick={() => navigate('/dashboard/search')}
             className="dashboard-header__search-trigger"
-            aria-label="Otwórz wyszukiwanie"
+            aria-label="Wyszukaj"
             title="Wyszukaj"
           >
             <Search size={18} />
-            {!isMobile && (
-              <span className="dashboard-header__search-hint">Szukaj...</span>
-            )}
           </button>
         </div>
 
@@ -413,11 +362,11 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
                       onClick={() => handleNotificationClick(notification)}
                       className={`dashboard-header__notification ${!notification.read ? 'dashboard-header__notification--unread' : ''}`}
                     >
-                      <div className={`dashboard-header__notification-icon dashboard-header__notification-icon--${notification.type}`}>
-                        {notification.type === 'success' && <Check size={16} />}
+                      <div className={`dashboard-header__notification-icon dashboard-header__notification-icon--${notification.priority}`}>
+                        {notification.type === 'activity' && <Bell size={16} />}
+                        {notification.type === 'system' && <Check size={16} />}
+                        {notification.type === 'reminder' && <Clock size={16} />}
                         {notification.type === 'warning' && <AlertCircle size={16} />}
-                        {notification.type === 'error' && <X size={16} />}
-                        {notification.type === 'info' && <Bell size={16} />}
                       </div>
                       
                       <div className="dashboard-header__notification-content">
@@ -465,7 +414,6 @@ const Header: React.FC<HeaderProps> = ({ onMobileToggle, isMobileOpen = false })
             >
               <Plus size={18} />
               <span>Akcje</span>
-              <Sparkles size={16} className="dashboard-header__quick-actions-sparkle" />
             </button>
           
           {/* Quick Actions Dropdown */}

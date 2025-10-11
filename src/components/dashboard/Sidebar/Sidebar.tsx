@@ -12,7 +12,9 @@ import {
   X,
   Crown,
   ChevronRight,
-  Activity
+  Activity,
+  Search,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import './Sidebar.scss';
@@ -41,10 +43,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },
+    { icon: Search, label: 'Wyszukaj', path: '/dashboard/search' },
     { icon: Calendar, label: 'Wydarzenia', path: '/dashboard/events' },
     { icon: Users, label: 'Kontakty', path: '/dashboard/contacts' },
     { icon: Activity, label: 'Aktywności', path: '/dashboard/activities' },
     { icon: BarChart3, label: 'Analityka', path: '/dashboard/analytics' },
+    { icon: MessageCircle, label: 'Kontakt', path: 'contact-us' },
     { icon: Settings, label: 'Ustawienia', path: '/dashboard/settings' }
   ];
 
@@ -125,10 +129,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         aria-label="Menu nawigacyjne"
       >
         <div className="sidebar__header">
-          <div className="sidebar__logo">
+          <Link 
+            to="/dashboard" 
+            className="sidebar__logo"
+            onClick={() => console.log('Logo clicked - navigating to /dashboard')}
+          >
             <div className="sidebar__logo-icon">🎉</div>
             {!isCollapsed && <span className="sidebar__logo-text">PartyPass</span>}
-          </div>
+          </Link>
           
           {/* Mobile close button - only visible on mobile when open */}
           <button 

@@ -1,49 +1,72 @@
-import React from 'react';
-import { ArrowRight, Calendar, Users, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, Calendar, Users, Sparkles, Play } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Demo from '../Demo/Demo';
 import './Hero.scss';
 
 const Hero: React.FC = () => {
+  const navigate = useNavigate();
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+
+  const handleStartFree = () => {
+    navigate('/register');
+  };
+
+  const handleWatchDemo = () => {
+    setIsDemoOpen(true);
+  };
+
   return (
+    <>
+      <Demo isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
     <section className="hero">
       <div className="hero__container">
         <div className="hero__content">
           <div className="hero__badge">
-            <Zap size={16} />
-            <span>Nowa era zarządzania wydarzeniami</span>
+            <Sparkles size={16} />
+            <span>Już ponad 25,000 zadowolonych organizatorów</span>
           </div>
           
           <h1 className="hero__title">
-            Organizuj <span className="hero__title--highlight">niezapomniane</span> wydarzenia
+            Twórz <span className="hero__title--highlight">magiczne</span> wydarzenia w kilka kliknięć
           </h1>
           
           <p className="hero__subtitle">
-            PartyPass to kompleksna platforma do tworzenia, zarządzania i śledzenia 
-            wydarzeń. Od intymnych spotkań po wielkie imprezy - mamy wszystko czego potrzebujesz.
+            Odkryj najinteligentniejszą platformę do organizacji wydarzeń w Polsce. 
+            Oszczędzaj czas, zwiększaj zaangażowanie gości i twórz niezapomniane doświadczenia.
           </p>
           
           <div className="hero__stats">
             <div className="hero__stat">
-              <Calendar className="hero__stat-icon" />
+              {Calendar && <Calendar className="hero__stat-icon" size={24} strokeWidth={2} />}
               <div>
-                <div className="hero__stat-number">10,000+</div>
-                <div className="hero__stat-label">Wydarzeń</div>
+                <div className="hero__stat-number">25,000+</div>
+                <div className="hero__stat-label">Zorganizowanych wydarzeń</div>
               </div>
             </div>
             <div className="hero__stat">
-              <Users className="hero__stat-icon" />
+              {Users && <Users className="hero__stat-icon" size={24} strokeWidth={2} />}
               <div>
-                <div className="hero__stat-number">50,000+</div>
-                <div className="hero__stat-label">Gości</div>
+                <div className="hero__stat-number">150,000+</div>
+                <div className="hero__stat-label">Zadowolonych gości</div>
               </div>
             </div>
           </div>
           
           <div className="hero__actions">
-            <button className="hero__cta-primary">
-              Rozpocznij za darmo
+            <button 
+              className="hero__cta-primary"
+              onClick={handleStartFree}
+            >
+              Rozpocznij
               <ArrowRight size={20} />
             </button>
-            <button className="hero__cta-secondary">
+            <button 
+              className="hero__cta-secondary"
+              onClick={handleWatchDemo}
+            >
+              <Play size={20} />
               Zobacz demo
             </button>
           </div>
@@ -52,24 +75,25 @@ const Hero: React.FC = () => {
         <div className="hero__visual">
           <div className="hero__cards">
             <div className="hero__card hero__card--primary">
-              <h3>Urodziny Ani</h3>
-              <p>15 maja 2024</p>
+              <h3>🎂 Urodziny Marii</h3>
+              <p>Sobota, 20:00</p>
               <div className="hero__card-guests">
-                <span>24/30 gości</span>
+                <span>28/35 gości potwierdziło</span>
                 <div className="hero__progress">
                   <div className="hero__progress-bar" style={{width: '80%'}}></div>
                 </div>
               </div>
             </div>
             <div className="hero__card hero__card--secondary">
-              <h3>Spotkanie firmowe</h3>
-              <p>Jutro, 14:00</p>
-              <span className="hero__status hero__status--confirmed">Potwierdzone</span>
+              <h3>🏢 Konferencja IT 2024</h3>
+              <p>15 października, 9:00</p>
+              <span className="hero__status hero__status--confirmed">120 uczestników</span>
             </div>
           </div>
         </div>
       </div>
     </section>
+    </>
   );
 };
 

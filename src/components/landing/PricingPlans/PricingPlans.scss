@@ -1,32 +1,91 @@
 @import '../../../styles/globals/mixins';
 
 .pricing-plans {
-  padding: var(--space-2xl) 0;
-  background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
+  padding: 4rem 0;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -2rem;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: 
+      radial-gradient(circle at 0% 0%, rgba(var(--primary-rgb), 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(var(--primary-rgb), 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb), 0.03) 0%, transparent 70%);
+    pointer-events: none;
+    opacity: 0.8;
+  }
   
   &__container {
-    @include container;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
   }
   
   &__header {
-    text-align: center;
-    margin-bottom: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    position: relative;
+    width: 100%;
+  }
+  
+  &__label {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 100px;
+    margin-bottom: 1rem;
   }
   
   &__title {
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: 1.75rem;
     font-weight: 700;
     color: var(--gray-900);
-    margin-bottom: var(--space-md);
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+    text-align: center;
+    
+    @media (max-width: 768px) {
+      font-size: 1.5rem;
+      padding: 0 var(--space-md);
+    }
+    
+    &-highlight {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
   }
   
   &__subtitle {
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: var(--gray-600);
-    margin-bottom: var(--space-2xl);
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+    text-align: center;
+    margin: 0 auto 1rem;
+    max-width: 500px;
+    line-height: 1.5;
+    display: block;
+    width: 100%;
   }
   
   &__billing-toggle {
@@ -68,84 +127,83 @@
   }
   
   &__grid {
-    @include responsive-grid(320px);
-    margin-bottom: var(--space-2xl);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
   }
   
   &__card {
-    @include card;
+    flex: 1;
+    min-width: 280px;
+    max-width: 340px;
+    background: linear-gradient(to bottom right, rgba(255,255,255,1), rgba(255,255,255,0.9));
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
     position: relative;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     
     &:hover {
       transform: translateY(-8px);
-      box-shadow: var(--shadow-xl);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
     }
     
-    &--popular {
-      border-color: var(--primary);
-      transform: scale(1.05);
-      
-      &:hover {
-        transform: scale(1.05) translateY(-8px);
-      }
-    }
+
   }
   
-  &__popular-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--radius-xl);
-    font-size: 0.875rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    box-shadow: var(--shadow-md);
-  }
+
   
   &__card-header {
     text-align: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: 1rem;
   }
   
   &__plan-icon {
-    width: 60px;
-    height: 60px;
+    width: 32px;
+    height: 32px;
     @include flex-center;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    border-radius: var(--radius-xl);
-    margin: 0 auto var(--space-lg);
+    border-radius: var(--radius-lg);
+    margin: 0 auto 0.5rem;
   }
   
   &__plan-name {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--gray-900);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
   }
   
   &__plan-price {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
   }
   
   &__price {
-    font-size: 3rem;
-    font-weight: 800;
-    color: var(--gray-900);
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 0.25rem;
   }
   
   &__price-interval {
-    font-size: 1rem;
+    font-size: 0.875rem;
     color: var(--gray-600);
     font-weight: 500;
+    opacity: 0.8;
   }
   
   &__monthly-equivalent {
@@ -156,20 +214,22 @@
   
   &__card-body {
     flex: 1;
-    margin-bottom: var(--space-xl);
   }
   
   &__features {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 1.5rem 0;
+    font-size: 0.875rem;
   }
   
   &__feature {
     display: flex;
-    align-items: flex-start;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    color: var(--gray-700);
+    font-weight: 400;
     
     &:last-child {
       margin-bottom: 0;
@@ -177,66 +237,53 @@
   }
   
   &__feature-icon {
-    color: var(--success);
+    color: #4285f4;
     flex-shrink: 0;
-    margin-top: 2px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.9;
   }
   
   &__card-footer {
     margin-top: auto;
+    padding-top: 1rem;
   }
   
   &__cta {
     @include button-base;
     width: 100%;
-    padding: var(--space-md) var(--space-lg);
-    font-size: 1.125rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
     
     &--primary {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
       
       &:hover {
         transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.4);
+        filter: brightness(1.1);
       }
     }
     
     &--secondary {
-      background: var(--gray-100);
+      background: rgba(255, 255, 255, 0.8);
       color: var(--gray-800);
-      border: 2px solid var(--gray-200);
+      border: 1px solid rgba(var(--primary-rgb), 0.2);
+      backdrop-filter: blur(8px);
       
       &:hover {
-        background: var(--gray-200);
-        border-color: var(--gray-300);
+        background: rgba(255, 255, 255, 0.95);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
     }
-  }
-  
-  &__guarantee {
-    @include flex-center;
-    gap: var(--space-lg);
-    background: var(--gray-50);
-    padding: var(--space-xl);
-    border-radius: var(--radius-lg);
-    text-align: center;
-    
-    @media (max-width: 640px) {
-      flex-direction: column;
-      text-align: center;
-    }
-  }
-  
-  &__guarantee-icon {
-    width: 60px;
-    height: 60px;
-    @include flex-center;
-    background: var(--success);
-    color: white;
-    border-radius: 50%;
-    flex-shrink: 0;
   }
   
   h4 {

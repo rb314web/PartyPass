@@ -6,7 +6,8 @@ import {
   Calendar, 
   Users, 
   BarChart3, 
-  Settings 
+  Settings,
+  Search
 } from 'lucide-react';
 import './BottomNavigation.scss';
 
@@ -26,6 +27,11 @@ const BottomNavigation: React.FC = () => {
       label: 'Dashboard',
       icon: <Home size={20} />,
       exact: true
+    },
+    {
+      path: '/dashboard/search',
+      label: 'Wyszukaj',
+      icon: <Search size={20} />
     },
     {
       path: '/dashboard/events',

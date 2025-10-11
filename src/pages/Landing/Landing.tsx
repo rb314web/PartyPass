@@ -4,6 +4,7 @@ import Navigation from '../../components/common/Navigation/Navigation';
 import Hero from '../../components/landing/Hero/Hero';
 import Features from '../../components/landing/Features/Features';
 import PricingPlans from '../../components/landing/PricingPlans/PricingPlans';
+import ContactSection from '../../components/landing/ContactSection/ContactSection';
 import Footer from '../../components/common/Footer/Footer';
 import './Landing.scss';
 
@@ -22,7 +23,7 @@ const Landing: React.FC = () => {
           <PricingPlans />
         </section>
         <section id="contact">
-          {/* Contact section will be handled by Footer */}
+          <ContactSection />
         </section>
       </main>
       <Footer />

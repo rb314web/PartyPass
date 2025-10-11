@@ -1,88 +1,35 @@
-// styles/globals/_mixins.scss - PartyPass Mixins
+// Global mixins for consistent styling
 
-// ==========================================================================
-// Responsive Mixins
-// ==========================================================================
+// Layout mixins
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
+// Responsive mixins
 @mixin mobile {
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     @content;
   }
 }
 
 @mixin tablet {
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     @content;
   }
 }
 
 @mixin desktop {
-  @media (min-width: 1025px) {
+  @media (min-width: 1024px) {
     @content;
   }
 }
 
-// ==========================================================================
-// Layout Mixins
-// ==========================================================================
-
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@mixin flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-@mixin flex-start {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-@mixin flex-end {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-@mixin flex-column {
-  display: flex;
-  flex-direction: column;
-}
-
-@mixin flex-column-center {
-  @include flex-column;
-  align-items: center;
-  justify-content: center;
-}
-
-@mixin grid-center {
-  display: grid;
-  place-items: center;
-}
-
-@mixin absolute-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-@mixin absolute-cover {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-@mixin container($max-width: 1200px) {
-  max-width: $max-width;
+// Container mixin for consistent section widths and padding
+@mixin container {
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-md);
   
@@ -95,89 +42,236 @@
   }
 }
 
-@mixin responsive-grid($min-width: 300px, $gap: var(--space-lg)) {
+// Section padding mixin for consistent vertical spacing
+@mixin section-padding {
+  padding: var(--space-xl) 0;
+  
+  @media (min-width: 768px) {
+    padding: var(--space-2xl) 0;
+  }
+  
+  @media (min-width: 1024px) {
+    padding: var(--space-3xl) 0;
+  }
+}
+
+// Responsive grid with auto-fit columns
+@mixin responsive-grid($minWidth: 300px) {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax($min-width, 1fr));
-  gap: $gap;
+  grid-template-columns: repeat(auto-fit, minmax($minWidth, 1fr));
+  gap: var(--space-lg);
+  width: 100%;
 }
 
-// ==========================================================================
-// Component Mixins
-// ==========================================================================
-
-@mixin card($padding: var(--space-xl)) {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  padding: $padding;
-  border: 1px solid var(--border-primary);
+// Flex center helper
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+// Card base styles
+@mixin card {
+  background: var(--background-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-lg);
+  border: 1px solid var(--border-color);
+}
+
+// Button base styles
 @mixin button-base {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  font-weight: var(--font-medium);
-  font-size: var(--text-sm);
-  line-height: var(--leading-tight);
-  transition: var(--transition-all);
-  cursor: pointer;
   border: none;
-  text-decoration: none;
-  user-select: none;
-  white-space: nowrap;
-  min-height: 44px; // Minimum touch target for mobile
-  
-  @media (max-width: 768px) {
-    min-height: 48px; // Larger touch targets on mobile
-    min-width: 48px;
-  }
-  
-  &:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-  }
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
   
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.7;
     cursor: not-allowed;
-    pointer-events: none;
   }
 }
 
-@mixin button-primary {
-  @include button-base;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
-  padding: var(--space-3) var(--space-6);
-  
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-primary);
+// Section title styles
+@mixin section-title {
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+  text-align: center;
+  line-height: 1.2;
+}
+
+// Section subtitle styles
+@mixin section-subtitle {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto var(--space-xl);
+  line-height: 1.6;
+}
+
+// Typography mixins
+@mixin heading-1 {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+@mixin heading-2 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+@mixin heading-3 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+@mixin heading-4 {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+@mixin body-large {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+@mixin body-regular {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+// Alias for body-regular to maintain compatibility
+@mixin body-base {
+  @include body-regular;
+}
+
+@mixin body-small {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+@mixin caption {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+}
+
+// Text style system
+@mixin text-style($size: base, $weight: regular, $color: normal) {
+  // Font sizes
+  @if $size == xs {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  } @else if $size == sm {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  } @else if $size == base {
+    font-size: 1rem;
+    line-height: 1.6;
+  } @else if $size == lg {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  } @else if $size == xl {
+    font-size: 1.25rem;
+    line-height: 1.5;
+  } @else if $size == 2xl {
+    font-size: 1.5rem;
+    line-height: 1.4;
   }
-  
-  &:active {
-    transform: translateY(0);
+
+  // Font weights
+  @if $weight == light {
+    font-weight: 300;
+  } @else if $weight == regular {
+    font-weight: 400;
+  } @else if $weight == medium {
+    font-weight: 500;
+  } @else if $weight == semibold {
+    font-weight: 600;
+  } @else if $weight == bold {
+    font-weight: 700;
+  }
+
+  // Colors
+  @if $color == normal {
+    color: var(--text-primary);
+  } @else if $color == secondary {
+    color: var(--text-secondary);
+  } @else if $color == tertiary {
+    color: var(--text-tertiary);
+  } @else if $color == light {
+    color: var(--text-light);
+  } @else if $color == white {
+    color: white;
   }
 }
 
-// Touch-friendly interactive elements
-@mixin touch-target($size: 44px) {
-  min-height: $size;
-  min-width: $size;
+// Section diagonal separator
+@mixin section-diagonal-separator {
+  position: relative;
   
-  @media (max-width: 768px) {
-    min-height: 48px;
-    min-width: 48px;
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: inherit;
+    transform: skewY(-3deg);
+    z-index: 0;
   }
 }
 
-// Mobile-optimized input styles
-@mixin input-mobile {
-  @media (max-width: 768px) {
-    font-size: 16px; // Prevents zoom on iOS
-    padding: var(--space-4) var(--space-4);
-    border-radius: var(--radius-lg);
+// Section background shapes
+@mixin section-background-shapes {
+  position: relative;
+  overflow: hidden;
+  
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.1;
+  }
+  
+  &::before {
+    width: 300px;
+    height: 300px;
+    background: var(--primary);
+    top: -100px;
+    right: -100px;
+    filter: blur(30px);
+  }
+  
+  &::after {
+    width: 200px;
+    height: 200px;
+    background: var(--secondary);
+    bottom: -50px;
+    left: -50px;
+    filter: blur(20px);
   }
 }

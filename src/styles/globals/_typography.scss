@@ -1,0 +1,165 @@
+// Global typography styles and scale
+
+// Font sizes
+$font-sizes: (
+  xs: 0.75rem,    // 12px
+  sm: 0.875rem,   // 14px
+  base: 1rem,     // 16px
+  lg: 1.125rem,   // 18px
+  xl: 1.25rem,    // 20px
+  2xl: 1.5rem,    // 24px
+  3xl: 1.875rem,  // 30px
+  4xl: 2.25rem,   // 36px
+  5xl: 3rem,      // 48px
+  6xl: 3.75rem,   // 60px
+  7xl: 4.5rem,    // 72px
+);
+
+// Line heights
+$line-heights: (
+  none: 1,
+  tight: 1.25,
+  snug: 1.375,
+  normal: 1.5,
+  relaxed: 1.625,
+  loose: 2,
+);
+
+// Font weights
+$font-weights: (
+  thin: 100,
+  extralight: 200,
+  light: 300,
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+  bold: 700,
+  extrabold: 800,
+  black: 900,
+);
+
+// Letter spacing
+$letter-spacing: (
+  tighter: -0.05em,
+  tight: -0.025em,
+  normal: 0,
+  wide: 0.025em,
+  wider: 0.05em,
+  widest: 0.1em,
+);
+
+// Typography mixins
+@mixin text-style($size, $weight: normal, $line-height: normal, $spacing: normal) {
+  font-size: map-get($font-sizes, $size);
+  font-weight: map-get($font-weights, $weight);
+  line-height: map-get($line-heights, $line-height);
+  letter-spacing: map-get($letter-spacing, $spacing);
+}
+
+// Heading styles
+@mixin heading-1 {
+  @include text-style(7xl, extrabold, tight);
+  margin-bottom: var(--space-lg);
+  
+  @media (max-width: 768px) {
+    @include text-style(5xl, extrabold, tight);
+  }
+}
+
+@mixin heading-2 {
+  @include text-style(4xl, bold, tight);
+  margin-bottom: var(--space-md);
+  
+  @media (max-width: 768px) {
+    @include text-style(3xl, bold, tight);
+  }
+}
+
+@mixin heading-3 {
+  @include text-style(2xl, semibold, snug);
+  margin-bottom: var(--space-sm);
+  
+  @media (max-width: 768px) {
+    @include text-style(xl, semibold, snug);
+  }
+}
+
+// Body text styles
+@mixin body-large {
+  @include text-style(lg, normal, relaxed);
+  margin-bottom: var(--space-md);
+}
+
+@mixin body-base {
+  @include text-style(base, normal, normal);
+  margin-bottom: var(--space-sm);
+}
+
+@mixin body-small {
+  @include text-style(sm, normal, normal);
+  margin-bottom: var(--space-xs);
+}
+
+// Special text styles
+@mixin caption {
+  @include text-style(xs, medium, normal);
+  text-transform: uppercase;
+  letter-spacing: wider;
+}
+
+@mixin overline {
+  @include text-style(sm, semibold, normal);
+  text-transform: uppercase;
+  letter-spacing: widest;
+  margin-bottom: var(--space-xs);
+}
+
+@mixin quote {
+  @include text-style(xl, normal, relaxed);
+  font-style: italic;
+  margin: var(--space-lg) 0;
+  padding-left: var(--space-lg);
+  border-left: 4px solid var(--primary);
+}
+
+// Link styles
+@mixin link {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+  }
+}
+
+// List styles
+@mixin list {
+  margin: var(--space-md) 0;
+  padding-left: var(--space-lg);
+  
+  li {
+    margin-bottom: var(--space-xs);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Text truncation
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Text gradient
+@mixin text-gradient($start-color, $end-color) {
+  background: linear-gradient(135deg, $start-color, $end-color);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}

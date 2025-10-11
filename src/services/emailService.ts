@@ -166,6 +166,62 @@ PartyPass - Zarządzanie wydarzeniami
   }
 
   /**
+   * Wysyła wiadomość z formularza kontaktowego
+   */
+  static async sendContactForm(data: {
+    email: string;
+    name: string;
+    message: string;
+  }): Promise<void> {
+    try {
+      if (!this.SERVICE_ID || !this.TEMPLATE_ID || !this.PUBLIC_KEY) {
+        console.warn('EmailJS nie został skonfigurowany. Wiadomość zostanie wyświetlona w konsoli.');
+        this.logContactFormToConsole(data);
+        return;
+      }
+
+      const templateParams = {
+        to_name: 'Administrator PartyPass',
+        to_email: process.env.REACT_APP_ADMIN_EMAIL || 'kontakt@partypass.pl',
+        from_name: data.name,
+        reply_to: data.email,
+        subject: 'Nowa wiadomość z formularza kontaktowego',
+        message: data.message
+      };
+
+      await emailjs.send(
+        this.SERVICE_ID,
+        this.TEMPLATE_ID, // Używamy głównego template ID
+        templateParams,
+        this.PUBLIC_KEY
+      );
+
+      console.log('✅ Wiadomość kontaktowa wysłana pomyślnie');
+    } catch (error) {
+      console.error('❌ Błąd podczas wysyłania wiadomości:', error);
+      this.logContactFormToConsole(data);
+      throw new Error('Nie udało się wysłać wiadomości');
+    }
+  }
+
+  /**
+   * Loguje wiadomość z formularza kontaktowego do konsoli (fallback)
+   */
+  private static logContactFormToConsole(data: {
+    email: string;
+    name: string;
+    message: string;
+  }): void {
+    console.log('📧 WIADOMOŚĆ KONTAKTOWA (Fallback):');
+    console.log('━'.repeat(50));
+    console.log(`Od: ${data.name} <${data.email}>`);
+    console.log('Temat: Nowa wiadomość z formularza kontaktowego');
+    console.log('━'.repeat(50));
+    console.log(data.message);
+    console.log('━'.repeat(50));
+  }
+
+  /**
    * Sprawdza czy EmailJS jest skonfigurowany
    */
   static isConfigured(): boolean {
