@@ -1,0 +1,214 @@
+// components/common/UnifiedHeader/components/NavigationLinks/NavigationLinks.scss
+@use '../../../../../styles/globals' as *;
+
+.navigation-links {
+  display: flex;
+  align-items: center;
+
+  &__list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__item {
+    display: flex;
+    animation: fadeInUp 0.4s ease backwards;
+
+    @for $i from 1 through 10 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.05}s;
+      }
+    }
+  }
+
+  &__button {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+
+    // Subtle gradient overlay on hover
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.1),
+        rgba(139, 92, 246, 0.1)
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+
+    &:hover {
+      background: var(--background-elevated);
+      color: var(--primary, #3b82f6);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+      &::before {
+        opacity: 1;
+      }
+
+      .navigation-links__icon {
+        color: var(--primary, #3b82f6);
+        transform: translateY(-2px) scale(1.1);
+      }
+
+      .navigation-links__description {
+        opacity: 1;
+      }
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary, #3b82f6);
+      outline-offset: 2px;
+    }
+
+    // Active state
+    &--active {
+      background: rgba(99, 102, 241, 0.12);
+      color: var(--primary, #3b82f6);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+
+      .navigation-links__icon {
+        color: var(--primary, #3b82f6);
+      }
+    }
+  }
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  &__label {
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  &__description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.75;
+    transition: opacity 0.3s ease;
+    line-height: 1.4;
+    margin-top: 3px;
+    max-width: 220px;
+    font-weight: 400;
+  }
+
+  // ============================================
+  // RESPONSIVE
+  // ============================================
+
+  @include respond-below('tablet-lg') {
+    &__description {
+      display: none;
+    }
+
+    &__button {
+      padding: 0.625rem 0.875rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  @include respond-below('tablet') {
+    // Hidden on mobile - shown in mobile menu instead
+    display: none;
+  }
+}
+
+// ============================================
+// DARK MODE
+// ============================================
+
+@media (prefers-color-scheme: dark) {
+  .navigation-links {
+    &__button {
+      &:hover {
+        background: var(--background-elevated-dark, rgba(255, 255, 255, 0.05));
+      }
+
+      &--active {
+        background: rgba(var(--color-primary-rgb), 0.15);
+      }
+    }
+  }
+}
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================
+// ACCESSIBILITY
+// ============================================
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation-links {
+    &__button,
+    &__icon,
+    &__description {
+      transition: none;
+    }
+
+    &__item {
+      animation: none;
+    }
+  }
+}

@@ -2,17 +2,27 @@
 
 // Font sizes
 $font-sizes: (
-  xs: 0.75rem,    // 12px
-  sm: 0.875rem,   // 14px
-  base: 1rem,     // 16px
-  lg: 1.125rem,   // 18px
-  xl: 1.25rem,    // 20px
-  2xl: 1.5rem,    // 24px
-  3xl: 1.875rem,  // 30px
-  4xl: 2.25rem,   // 36px
-  5xl: 3rem,      // 48px
-  6xl: 3.75rem,   // 60px
-  7xl: 4.5rem,    // 72px
+  xs: 0.75rem,
+  // 12px
+  sm: 0.875rem,
+  // 14px
+  base: 1rem,
+  // 16px
+  lg: 1.125rem,
+  // 18px
+  xl: 1.25rem,
+  // 20px
+  2xl: 1.5rem,
+  // 24px
+  3xl: 1.875rem,
+  // 30px
+  4xl: 2.25rem,
+  // 36px
+  5xl: 3rem,
+  // 48px
+  6xl: 3.75rem,
+  // 60px
+  7xl: 4.5rem, // 72px
 );
 
 // Line heights
@@ -49,7 +59,12 @@ $letter-spacing: (
 );
 
 // Typography mixins
-@mixin text-style($size, $weight: normal, $line-height: normal, $spacing: normal) {
+@mixin text-style(
+  $size,
+  $weight: normal,
+  $line-height: normal,
+  $spacing: normal
+) {
   font-size: map-get($font-sizes, $size);
   font-weight: map-get($font-weights, $weight);
   line-height: map-get($line-heights, $line-height);
@@ -60,7 +75,7 @@ $letter-spacing: (
 @mixin heading-1 {
   @include text-style(7xl, extrabold, tight);
   margin-bottom: var(--space-lg);
-  
+
   @media (max-width: 768px) {
     @include text-style(5xl, extrabold, tight);
   }
@@ -69,7 +84,7 @@ $letter-spacing: (
 @mixin heading-2 {
   @include text-style(4xl, bold, tight);
   margin-bottom: var(--space-md);
-  
+
   @media (max-width: 768px) {
     @include text-style(3xl, bold, tight);
   }
@@ -78,7 +93,7 @@ $letter-spacing: (
 @mixin heading-3 {
   @include text-style(2xl, semibold, snug);
   margin-bottom: var(--space-sm);
-  
+
   @media (max-width: 768px) {
     @include text-style(xl, semibold, snug);
   }
@@ -127,7 +142,7 @@ $letter-spacing: (
   color: var(--primary);
   text-decoration: none;
   transition: all 0.2s ease;
-  
+
   &:hover {
     color: var(--primary-dark);
     text-decoration: underline;
@@ -138,10 +153,10 @@ $letter-spacing: (
 @mixin list {
   margin: var(--space-md) 0;
   padding-left: var(--space-lg);
-  
+
   li {
     margin-bottom: var(--space-xs);
-    
+
     &:last-child {
       margin-bottom: 0;
     }

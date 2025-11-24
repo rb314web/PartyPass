@@ -13,11 +13,11 @@ interface LineChartProps {
   height?: number;
 }
 
-const LineChart: React.FC<LineChartProps> = ({ 
-  data, 
-  title, 
+const LineChart: React.FC<LineChartProps> = ({
+  data,
+  title,
   color = '#3b82f6',
-  height = 200 
+  height = 200,
 }) => {
   if (!data || data.length === 0) {
     return (
@@ -42,11 +42,13 @@ const LineChart: React.FC<LineChartProps> = ({
     return (index / (data.length - 1)) * 280 + 20;
   };
 
-  const pathData = data.map((point, index) => {
-    const x = getX(index);
-    const y = getY(point.value);
-    return index === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
-  }).join(' ');
+  const pathData = data
+    .map((point, index) => {
+      const x = getX(index);
+      const y = getY(point.value);
+      return index === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
+    })
+    .join(' ');
 
   return (
     <div className="line-chart">
@@ -119,7 +121,13 @@ const LineChart: React.FC<LineChartProps> = ({
 
           {/* Gradient definition */}
           <defs>
-            <linearGradient id={`gradient-${color.replace('#', '')}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient
+              id={`gradient-${color.replace('#', '')}`}
+              x1="0%"
+              y1="0%"
+              x2="0%"
+              y2="100%"
+            >
               <stop offset="0%" stopColor={color} stopOpacity="0.3" />
               <stop offset="100%" stopColor={color} stopOpacity="0" />
             </linearGradient>
@@ -127,7 +135,10 @@ const LineChart: React.FC<LineChartProps> = ({
         </svg>
 
         {/* Tooltip container */}
-        <div className="line-chart__tooltip" id={`tooltip-${title.replace(/\s+/g, '-')}`}>
+        <div
+          className="line-chart__tooltip"
+          id={`tooltip-${title.replace(/\s+/g, '-')}`}
+        >
           <div className="line-chart__tooltip-content">
             <span className="line-chart__tooltip-date"></span>
             <span className="line-chart__tooltip-value"></span>
@@ -138,8 +149,8 @@ const LineChart: React.FC<LineChartProps> = ({
       {/* Legend */}
       <div className="line-chart__legend">
         <div className="line-chart__legend-item">
-          <span 
-            className="line-chart__legend-color" 
+          <span
+            className="line-chart__legend-color"
             style={{ backgroundColor: color }}
           ></span>
           <span className="line-chart__legend-label">{title}</span>

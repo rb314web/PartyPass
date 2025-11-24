@@ -1,19 +1,19 @@
 // components/dashboard/Activities/Activities.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { 
-  Calendar, 
-  UserX, 
-  UserCheck, 
-  Trash2, 
-  UserPlus, 
-  AlertCircle, 
+import {
+  Calendar,
+  UserX,
+  UserCheck,
+  Trash2,
+  UserPlus,
+  AlertCircle,
   CheckCircle,
   Filter,
   Search,
-  RefreshCw
+  Activity as ActivityIcon,
 } from 'lucide-react';
 import { EventService } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
@@ -31,12 +31,11 @@ const Activities: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ActivityType>('all');
-  const [refreshing, setRefreshing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(true);
 
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       setLoading(true);
       const data = await EventService.getRecentActivities(user.id, 50); // Load more activities
@@ -47,22 +46,16 @@ const Activities: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     loadActivities();
-  }, [user]);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadActivities();
-    setRefreshing(false);
-  };
+  }, [user, loadActivities]);
 
   const handleNotificationClick = async (notification: any) => {
     // Mark as read
     await markAsRead(notification.id);
-    
+
     // Navigate to action URL if available
     if (notification.actionUrl) {
       navigate(notification.actionUrl);
@@ -104,7 +97,9 @@ const Activities: React.FC = () => {
   };
 
   const filteredActivities = activities.filter(activity => {
-    const matchesSearch = activity.message.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = activity.message
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesFilter = filterType === 'all' || activity.type === filterType;
     return matchesSearch && matchesFilter;
   });
@@ -120,27 +115,21 @@ const Activities: React.FC = () => {
     guest_maybe: 'Niezdecydowani',
     guest_response: 'Odpowiedzi gości',
     contact_added: 'Kontakty dodane',
-    contact_updated: 'Kontakty zaktualizowane'
+    contact_updated: 'Kontakty zaktualizowane',
   };
 
   return (
     <div className="activities">
       <div className="activities__header">
-        <div className="activities__title-section">
-          <h1 className="activities__title">Aktywności</h1>
-          <p className="activities__subtitle">
-            Historia wszystkich aktywności w Twoich wydarzeniach
-          </p>
+        <div className="activities__title-wrapper">
+          <div className="activities__icon" aria-hidden="true">
+            <ActivityIcon size={24} />
+          </div>
+          <div>
+            <h1>Aktywności</h1>
+            <p>Historia wszystkich aktywności w Twoich wydarzeniach</p>
+          </div>
         </div>
-        
-        <button 
-          className="activities__refresh-btn"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <RefreshCw size={16} className={refreshing ? 'activities__refresh-icon--spinning' : ''} />
-          Odśwież
-        </button>
       </div>
 
       <div className="activities__controls">
@@ -150,7 +139,7 @@ const Activities: React.FC = () => {
             type="text"
             placeholder="Szukaj aktywności..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="activities__search-input"
           />
         </div>
@@ -159,7 +148,7 @@ const Activities: React.FC = () => {
           <Filter size={16} />
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value as ActivityType)}
+            onChange={e => setFilterType(e.target.value as ActivityType)}
             className="activities__filter-select"
           >
             {Object.entries(activityTypeLabels).map(([value, label]) => (
@@ -177,13 +166,13 @@ const Activities: React.FC = () => {
           <div className="activities__notifications-header">
             <h2>Powiadomienia</h2>
             <div className="activities__notifications-actions">
-              <button 
+              <button
                 onClick={markAllAsRead}
                 className="activities__mark-all-read"
               >
                 Oznacz wszystkie jako przeczytane
               </button>
-              <button 
+              <button
                 onClick={() => setShowNotifications(false)}
                 className="activities__hide-notifications"
               >
@@ -191,28 +180,38 @@ const Activities: React.FC = () => {
               </button>
             </div>
           </div>
-          
+
           <div className="activities__notifications-list">
-            {notifications.slice(0, 5).map((notification) => (
-              <div 
+            {notifications.slice(0, 5).map(notification => (
+              <div
                 key={notification.id}
                 className={`activities__notification ${!notification.read ? 'activities__notification--unread' : ''}`}
                 onClick={() => handleNotificationClick(notification)}
-                style={{ cursor: notification.actionUrl ? 'pointer' : 'default' }}
+                style={{
+                  cursor: notification.actionUrl ? 'pointer' : 'default',
+                }}
               >
-                <div className={`activities__notification-icon activities__notification-icon--${notification.priority}`}>
-                  {notification.type === 'activity' && <CheckCircle size={20} />}
+                <div
+                  className={`activities__notification-icon activities__notification-icon--${notification.priority}`}
+                >
+                  {notification.type === 'activity' && (
+                    <CheckCircle size={20} />
+                  )}
                   {notification.type === 'system' && <AlertCircle size={20} />}
                   {notification.type === 'reminder' && <Calendar size={20} />}
                   {notification.type === 'warning' && <AlertCircle size={20} />}
                 </div>
                 <div className="activities__notification-content">
-                  <div className="activities__notification-title">{notification.title}</div>
-                  <div className="activities__notification-message">{notification.message}</div>
+                  <div className="activities__notification-title">
+                    {notification.title}
+                  </div>
+                  <div className="activities__notification-message">
+                    {notification.message}
+                  </div>
                   <div className="activities__notification-time">
-                    {formatDistanceToNow(notification.timestamp, { 
-                      addSuffix: true, 
-                      locale: pl 
+                    {formatDistanceToNow(notification.timestamp, {
+                      addSuffix: true,
+                      locale: pl,
                     })}
                   </div>
                 </div>
@@ -235,26 +234,31 @@ const Activities: React.FC = () => {
           <div className="activities__empty">
             <Calendar size={64} />
             <h3>
-              {searchQuery || filterType !== 'all' 
+              {searchQuery || filterType !== 'all'
                 ? 'Brak aktywności pasujących do filtrów'
-                : 'Brak aktywności'
-              }
+                : 'Brak aktywności'}
             </h3>
             <p>
               {searchQuery || filterType !== 'all'
                 ? 'Spróbuj zmienić kryteria wyszukiwania lub filtry'
-                : 'Aktywności pojawią się tutaj gdy goście będą odpowiadać na zaproszenia lub gdy utworzysz nowe wydarzenia'
-              }
+                : 'Aktywności pojawią się tutaj gdy goście będą odpowiadać na zaproszenia lub gdy utworzysz nowe wydarzenia'}
             </p>
           </div>
         ) : (
           <div className="activities__list">
-            {filteredActivities.map((activity) => (
-              <div 
-                key={activity.id} 
+            {filteredActivities.map(activity => (
+              <div
+                key={activity.id}
                 className="activities__item"
                 onClick={() => handleActivityClick(activity)}
-                style={{ cursor: activity.eventId || activity.contactId || activity.eventGuestId ? 'pointer' : 'default' }}
+                style={{
+                  cursor:
+                    activity.eventId ||
+                    activity.contactId ||
+                    activity.eventGuestId
+                      ? 'pointer'
+                      : 'default',
+                }}
               >
                 <div className="activities__icon">
                   {getActivityIcon(activity.type)}
@@ -263,9 +267,9 @@ const Activities: React.FC = () => {
                   <p className="activities__message">{activity.message}</p>
                   <div className="activities__meta">
                     <span className="activities__time">
-                      {formatDistanceToNow(activity.timestamp, { 
-                        addSuffix: true, 
-                        locale: pl 
+                      {formatDistanceToNow(activity.timestamp, {
+                        addSuffix: true,
+                        locale: pl,
                       })}
                     </span>
                     <span className="activities__date">

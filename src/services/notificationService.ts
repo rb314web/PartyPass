@@ -1,19 +1,19 @@
 // services/notificationService.ts
 import { db } from '../config/firebase';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
   limit,
   onSnapshot,
   Timestamp,
-  serverTimestamp
+  serverTimestamp,
 } from 'firebase/firestore';
 import { Activity } from '../types';
 
@@ -54,7 +54,10 @@ class NotificationService {
   private readonly collection = 'notifications';
 
   // Create notification from activity
-  async createFromActivity(activity: Activity, userId: string): Promise<string> {
+  async createFromActivity(
+    activity: Activity,
+    userId: string
+  ): Promise<string> {
     const notificationData = this.activityToNotification(activity, userId);
     return this.create(notificationData);
   }
@@ -67,10 +70,9 @@ class NotificationService {
         read: false,
         timestamp: serverTimestamp(),
         createdAt: serverTimestamp(),
-        expiresAt: data.expiresAt ? Timestamp.fromDate(data.expiresAt) : null
+        expiresAt: data.expiresAt ? Timestamp.fromDate(data.expiresAt) : null,
       });
-      
-      console.log('Notification created:', docRef.id);
+
       return docRef.id;
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -79,7 +81,10 @@ class NotificationService {
   }
 
   // Get notifications for user
-  async getNotifications(userId: string, limitCount = 20): Promise<Notification[]> {
+  async getNotifications(
+    userId: string,
+    limitCount = 20
+  ): Promise<Notification[]> {
     try {
       const q = query(
         collection(db, this.collection),
@@ -93,7 +98,7 @@ class NotificationService {
         id: doc.id,
         ...doc.data(),
         timestamp: doc.data().timestamp?.toDate() || new Date(),
-        expiresAt: doc.data().expiresAt?.toDate()
+        expiresAt: doc.data().expiresAt?.toDate(),
       })) as Notification[];
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -103,7 +108,7 @@ class NotificationService {
 
   // Subscribe to real-time notifications
   subscribeToNotifications(
-    userId: string, 
+    userId: string,
     callback: (notifications: Notification[]) => void,
     limitCount = 20
   ): () => void {
@@ -114,19 +119,23 @@ class NotificationService {
       limit(limitCount)
     );
 
-    return onSnapshot(q, (snapshot) => {
-      const notifications = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate() || new Date(),
-        expiresAt: doc.data().expiresAt?.toDate()
-      })) as Notification[];
-      
-      callback(notifications);
-    }, (error) => {
-      console.error('Error in notifications subscription:', error);
-      callback([]);
-    });
+    return onSnapshot(
+      q,
+      snapshot => {
+        const notifications = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp?.toDate() || new Date(),
+          expiresAt: doc.data().expiresAt?.toDate(),
+        })) as Notification[];
+
+        callback(notifications);
+      },
+      error => {
+        console.error('Error in notifications subscription:', error);
+        callback([]);
+      }
+    );
   }
 
   // Mark notification as read
@@ -135,7 +144,7 @@ class NotificationService {
       const docRef = doc(db, this.collection, notificationId);
       await updateDoc(docRef, {
         read: true,
-        readAt: serverTimestamp()
+        readAt: serverTimestamp(),
       });
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -153,10 +162,10 @@ class NotificationService {
       );
 
       const snapshot = await getDocs(q);
-      const updates = snapshot.docs.map(doc => 
+      const updates = snapshot.docs.map(doc =>
         updateDoc(doc.ref, {
           read: true,
-          readAt: serverTimestamp()
+          readAt: serverTimestamp(),
         })
       );
 
@@ -189,15 +198,16 @@ class NotificationService {
       const snapshot = await getDocs(q);
       const deletions = snapshot.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletions);
-      
-      console.log(`Deleted ${deletions.length} expired notifications`);
     } catch (error) {
       console.error('Error deleting expired notifications:', error);
     }
   }
 
   // Convert activity to notification
-  private activityToNotification(activity: Activity, userId: string): CreateNotificationData {
+  private activityToNotification(
+    activity: Activity,
+    userId: string
+  ): CreateNotificationData {
     const baseData: CreateNotificationData = {
       userId,
       type: 'activity',
@@ -206,7 +216,7 @@ class NotificationService {
       message: activity.message,
       activityId: activity.id,
       eventId: activity.eventId,
-      contactId: activity.contactId
+      contactId: activity.contactId,
     };
 
     // Set action URL based on activity type
@@ -227,7 +237,9 @@ class NotificationService {
     return baseData;
   }
 
-  private getActivityPriority(activityType: Activity['type']): Notification['priority'] {
+  private getActivityPriority(
+    activityType: Activity['type']
+  ): Notification['priority'] {
     switch (activityType) {
       case 'guest_accepted':
       case 'guest_declined':
@@ -292,7 +304,7 @@ class NotificationService {
       title,
       message,
       actionUrl,
-      actionLabel
+      actionLabel,
     });
   }
 
@@ -313,7 +325,7 @@ class NotificationService {
       eventId,
       actionUrl: eventId ? `/dashboard/events/${eventId}` : undefined,
       actionLabel: 'Zobacz wydarzenie',
-      expiresAt: reminderDate
+      expiresAt: reminderDate,
     });
   }
 }

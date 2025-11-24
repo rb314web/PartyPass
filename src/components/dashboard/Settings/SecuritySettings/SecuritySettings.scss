@@ -1,45 +1,46 @@
-@import '../../../../styles/globals/mixins';
+@use '../../../../styles/globals/mixins' as *;
 
 .security-settings {
   padding: 0;
-  
+
   &__header {
     margin-bottom: var(--space-2xl);
     padding-bottom: var(--space-lg);
-    border-bottom: 1px solid var(--gray-200);
-    
-    h2 {
+    border-bottom: 1px solid var(--border-primary);
+
+    h1 {
       font-size: 1.5rem;
       font-weight: 600;
-      color: var(--gray-900);
+      color: var(--text-primary);
       margin: 0 0 var(--space-sm) 0;
     }
-    
+
     p {
-      color: var(--gray-600);
+      color: var(--text-secondary);
       margin: 0;
     }
   }
-  
+
   &__section {
     margin-bottom: var(--space-2xl);
     padding: var(--space-xl);
-    background: white;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    
+    background: var(--card-bg);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+
     &:last-child {
       margin-bottom: 0;
     }
   }
-  
+
   &__section-header {
     display: flex;
     align-items: flex-start;
     gap: var(--space-md);
     margin-bottom: var(--space-xl);
   }
-  
+
   &__section-icon {
     width: 40px;
     height: 40px;
@@ -49,44 +50,44 @@
     border-radius: var(--radius-lg);
     flex-shrink: 0;
   }
-  
+
   &__section-header h3 {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--gray-900);
     margin: 0 0 var(--space-xs) 0;
   }
-  
+
   &__section-header p {
     color: var(--gray-600);
     margin: 0;
     font-size: 0.875rem;
   }
-  
+
   &__form {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
     max-width: 400px;
   }
-  
+
   &__field {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    
+
     label {
       font-weight: 500;
       color: var(--gray-700);
       font-size: 0.875rem;
     }
   }
-  
+
   &__input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
-    
+
     input {
       width: 100%;
       padding: var(--space-md);
@@ -95,7 +96,7 @@
       border-radius: var(--radius-md);
       font-size: 1rem;
       transition: border-color 0.3s ease;
-      
+
       &:focus {
         outline: none;
         border-color: var(--primary);
@@ -103,7 +104,7 @@
       }
     }
   }
-  
+
   &__password-toggle {
     @include button-base;
     position: absolute;
@@ -111,18 +112,18 @@
     background: none;
     border: none;
     color: var(--gray-400);
-    
+
     &:hover {
       color: var(--gray-600);
     }
   }
-  
+
   &__strength {
     display: flex;
     align-items: center;
     gap: var(--space-md);
   }
-  
+
   &__strength-bar {
     flex: 1;
     height: 4px;
@@ -130,25 +131,25 @@
     border-radius: 2px;
     overflow: hidden;
   }
-  
+
   &__strength-fill {
     height: 100%;
     transition: all 0.3s ease;
     border-radius: 2px;
   }
-  
+
   &__strength-label {
     font-size: 0.875rem;
     font-weight: 500;
     min-width: 80px;
   }
-  
+
   &__error {
     color: var(--error);
     font-size: 0.875rem;
     margin-top: var(--space-xs);
   }
-  
+
   &__save-btn {
     @include button-base;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -157,19 +158,19 @@
     gap: var(--space-sm);
     font-weight: 500;
     align-self: flex-start;
-    
+
     &:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: var(--shadow-md);
     }
-    
+
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
     }
   }
-  
+
   &__spinner {
     width: 16px;
     height: 16px;
@@ -178,14 +179,14 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
-  
+
   // 2FA Section
   &__2fa {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
   }
-  
+
   &__2fa-status {
     @include flex-between;
     padding: var(--space-lg);
@@ -193,17 +194,17 @@
     border-radius: var(--radius-md);
     border: 1px solid var(--gray-200);
     gap: var(--space-lg);
-    
+
     @media (max-width: 640px) {
       flex-direction: column;
       align-items: flex-start;
     }
   }
-  
+
   &__2fa-info {
     flex: 1;
   }
-  
+
   &__status-badge {
     display: inline-flex;
     align-items: center;
@@ -213,68 +214,68 @@
     font-size: 0.875rem;
     font-weight: 600;
     margin-bottom: var(--space-sm);
-    
+
     &--enabled {
       background: rgba(16, 185, 129, 0.1);
       color: var(--success);
     }
-    
+
     &--disabled {
       background: rgba(245, 158, 11, 0.1);
       color: var(--secondary);
     }
   }
-  
+
   &__2fa-btn {
     @include button-base;
     padding: var(--space-sm) var(--space-lg);
     font-weight: 500;
-    
+
     &--primary {
       background: var(--primary);
       color: white;
-      
+
       &:hover {
         background: var(--primary-dark);
       }
     }
-    
+
     &--danger {
       background: var(--error);
       color: white;
-      
+
       &:hover {
         background: #dc2626;
       }
     }
   }
-  
+
   &__2fa-details {
     padding: var(--space-lg);
     background: rgba(16, 185, 129, 0.05);
     border-radius: var(--radius-md);
     border: 1px solid rgba(16, 185, 129, 0.2);
-    
+
     h4 {
       font-size: 1rem;
       font-weight: 600;
       color: var(--gray-900);
       margin: 0 0 var(--space-sm) 0;
     }
-    
+
     p {
       color: var(--gray-600);
       margin: 0 0 var(--space-lg) 0;
       font-size: 0.875rem;
     }
   }
-  
+
   &__backup-codes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: var(--space-sm);
     margin-bottom: var(--space-lg);
-    
+
     code {
       background: var(--gray-100);
       padding: var(--space-sm);
@@ -285,14 +286,14 @@
       border: 1px solid var(--gray-200);
     }
   }
-  
+
   &__generate-codes {
     @include button-base;
     background: var(--gray-100);
     color: var(--gray-700);
     padding: var(--space-sm) var(--space-lg);
     font-size: 0.875rem;
-    
+
     &:hover {
       background: var(--error);
       color: white;
@@ -306,7 +307,7 @@
     gap: var(--space-md);
     margin-bottom: var(--space-lg);
   }
-  
+
   &__session {
     @include flex-between;
     padding: var(--space-lg);
@@ -314,17 +315,17 @@
     border-radius: var(--radius-md);
     border: 1px solid var(--gray-200);
     gap: var(--space-lg);
-    
+
     @media (max-width: 640px) {
       flex-direction: column;
       align-items: flex-start;
     }
   }
-  
+
   &__session-info {
     flex: 1;
   }
-  
+
   &__session-device {
     font-weight: 600;
     color: var(--gray-900);
@@ -333,7 +334,7 @@
     align-items: center;
     gap: var(--space-sm);
   }
-  
+
   &__current-badge {
     background: rgba(16, 185, 129, 0.1);
     color: var(--success);
@@ -342,7 +343,7 @@
     font-size: 0.75rem;
     font-weight: 500;
   }
-  
+
   &__session-details {
     color: var(--gray-600);
     font-size: 0.875rem;
@@ -351,31 +352,31 @@
     gap: var(--space-xs);
     flex-wrap: wrap;
   }
-  
+
   &__logout-btn {
     @include button-base;
     background: var(--gray-100);
     color: var(--gray-700);
     padding: var(--space-sm) var(--space-md);
     font-size: 0.875rem;
-    
+
     &:hover {
       background: var(--error);
       color: white;
     }
   }
-  
+
   &__sessions-actions {
     padding-top: var(--space-lg);
     border-top: 1px solid var(--gray-200);
   }
-  
+
   &__logout-all {
     @include button-base;
     background: var(--gray-100);
     color: var(--gray-700);
     padding: var(--space-sm) var(--space-lg);
-    
+
     &:hover {
       background: var(--error);
       color: white;
@@ -387,17 +388,17 @@
     border-color: rgba(239, 68, 68, 0.2);
     background: rgba(239, 68, 68, 0.02);
   }
-  
+
   &__danger-icon {
     background: linear-gradient(135deg, var(--error), #dc2626);
   }
-  
+
   &__danger-zone {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
   }
-  
+
   &__warning {
     display: flex;
     gap: var(--space-md);
@@ -405,35 +406,35 @@
     background: rgba(245, 158, 11, 0.1);
     border: 1px solid rgba(245, 158, 11, 0.3);
     border-radius: var(--radius-md);
-    
+
     svg {
       color: var(--secondary);
       flex-shrink: 0;
       margin-top: 2px;
     }
-    
+
     strong {
       color: var(--gray-900);
       display: block;
       margin-bottom: var(--space-xs);
     }
-    
+
     p {
       color: var(--gray-700);
       margin: 0 0 var(--space-sm) 0;
     }
-    
+
     ul {
       color: var(--gray-600);
       margin: 0;
       padding-left: var(--space-lg);
-      
+
       li {
         margin-bottom: var(--space-xs);
       }
     }
   }
-  
+
   &__delete-trigger {
     @include button-base;
     background: var(--error);
@@ -442,13 +443,13 @@
     gap: var(--space-sm);
     font-weight: 500;
     align-self: flex-start;
-    
+
     &:hover:not(:disabled) {
       background: #dc2626;
       transform: translateY(-1px);
       box-shadow: var(--shadow-md);
     }
-    
+
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -468,7 +469,7 @@
     z-index: 1000;
     padding: var(--space-lg);
   }
-  
+
   &__modal {
     background: white;
     border-radius: var(--radius-lg);
@@ -478,12 +479,12 @@
     max-height: 90vh;
     overflow-y: auto;
   }
-  
+
   &__modal-header {
     @include flex-between;
     padding: var(--space-xl);
     border-bottom: 1px solid var(--gray-200);
-    
+
     h3 {
       font-size: 1.25rem;
       font-weight: 600;
@@ -491,7 +492,7 @@
       margin: 0;
     }
   }
-  
+
   &__modal-close {
     @include button-base;
     background: none;
@@ -501,21 +502,21 @@
     width: 32px;
     height: 32px;
     @include flex-center;
-    
+
     &:hover {
       color: var(--gray-600);
       background: var(--gray-100);
       border-radius: var(--radius-sm);
     }
   }
-  
+
   &__modal-content {
     padding: var(--space-xl);
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
   }
-  
+
   &__final-warning {
     display: flex;
     align-items: flex-start;
@@ -524,23 +525,23 @@
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: var(--radius-md);
-    
+
     svg {
       color: var(--error);
       flex-shrink: 0;
       margin-top: 2px;
     }
-    
+
     p {
       margin: 0;
       color: var(--gray-700);
     }
-    
+
     strong {
       color: var(--error);
     }
   }
-  
+
   &__error-message {
     padding: var(--space-md);
     background: rgba(239, 68, 68, 0.1);
@@ -549,7 +550,7 @@
     color: var(--error);
     font-size: 0.875rem;
   }
-  
+
   &__modal-actions {
     display: flex;
     gap: var(--space-md);
@@ -557,23 +558,23 @@
     padding-top: var(--space-lg);
     border-top: 1px solid var(--gray-200);
   }
-  
+
   &__modal-cancel {
     @include button-base;
     background: var(--gray-100);
     color: var(--gray-700);
     padding: var(--space-md) var(--space-xl);
-    
+
     &:hover:not(:disabled) {
       background: var(--gray-200);
     }
-    
+
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
   }
-  
+
   &__modal-delete {
     @include button-base;
     background: var(--error);
@@ -581,11 +582,11 @@
     padding: var(--space-md) var(--space-xl);
     gap: var(--space-sm);
     font-weight: 500;
-    
+
     &:hover:not(:disabled) {
       background: #dc2626;
     }
-    
+
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -594,6 +595,10 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

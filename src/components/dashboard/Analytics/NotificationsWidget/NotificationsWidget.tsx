@@ -1,12 +1,6 @@
 // components/dashboard/Analytics/NotificationsWidget/NotificationsWidget.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Bell, 
-  AlertTriangle, 
-  CheckCircle,
-  X,
-  Settings
-} from 'lucide-react';
+import { Bell, AlertTriangle, CheckCircle, X, Settings } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import './NotificationsWidget.scss';
 
@@ -23,7 +17,9 @@ interface AnalyticsNotification {
 
 const NotificationsWidget: React.FC = () => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<AnalyticsNotification[]>([]);
+  const [notifications, setNotifications] = useState<AnalyticsNotification[]>(
+    []
+  );
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
@@ -35,21 +31,23 @@ const NotificationsWidget: React.FC = () => {
         id: '1',
         type: 'success',
         title: 'Świetny wzrost!',
-        message: 'Twoje wydarzenia przyciągnęły 40% więcej gości w tym miesiącu',
+        message:
+          'Twoje wydarzenia przyciągnęły 40% więcej gości w tym miesiącu',
         timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
         isRead: false,
         actionUrl: '/dashboard/analytics',
-        metadata: { growthRate: 40 }
+        metadata: { growthRate: 40 },
       },
       {
         id: '2',
         type: 'warning',
         title: 'Niski wskaźnik odpowiedzi',
-        message: 'Wydarzenie "Spotkanie zespołu" ma tylko 45% potwierdzonych gości',
+        message:
+          'Wydarzenie "Spotkanie zespołu" ma tylko 45% potwierdzonych gości',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
         isRead: false,
         actionUrl: '/dashboard/events/123',
-        metadata: { eventId: '123', rsvpRate: 45 }
+        metadata: { eventId: '123', rsvpRate: 45 },
       },
       {
         id: '3',
@@ -59,36 +57,33 @@ const NotificationsWidget: React.FC = () => {
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
         isRead: true,
         actionUrl: '/dashboard/analytics',
-        metadata: { reportType: 'weekly' }
+        metadata: { reportType: 'weekly' },
       },
       {
         id: '4',
         type: 'error',
         title: 'Problem z synchronizacją',
-        message: 'Wystąpił problem z synchronizacją danych. Niektóre metryki mogą być opóźnione',
+        message:
+          'Wystąpił problem z synchronizacją danych. Niektóre metryki mogą być opóźnione',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
         isRead: true,
-        metadata: { errorCode: 'SYNC_ERROR' }
-      }
+        metadata: { errorCode: 'SYNC_ERROR' },
+      },
     ];
 
     setNotifications(mockNotifications);
   }, [user?.id]);
 
   const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId 
-          ? { ...notif, isRead: true }
-          : notif
+    setNotifications(prev =>
+      prev.map(notif =>
+        notif.id === notificationId ? { ...notif, isRead: true } : notif
       )
     );
   };
 
   const dismissNotification = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.filter(notif => notif.id !== notificationId)
-    );
+    setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
   };
 
   const getIcon = (type: AnalyticsNotification['type']) => {
@@ -123,7 +118,9 @@ const NotificationsWidget: React.FC = () => {
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
-  const displayedNotifications = showAll ? notifications : notifications.slice(0, 3);
+  const displayedNotifications = showAll
+    ? notifications
+    : notifications.slice(0, 3);
 
   return (
     <div className="notifications-widget">
@@ -135,7 +132,7 @@ const NotificationsWidget: React.FC = () => {
             <span className="notifications-widget__badge">{unreadCount}</span>
           )}
         </div>
-        <button 
+        <button
           className="notifications-widget__settings"
           title="Ustawienia powiadomień"
         >
@@ -151,18 +148,22 @@ const NotificationsWidget: React.FC = () => {
           </div>
         ) : (
           <div className="notifications-widget__list">
-            {displayedNotifications.map((notification) => (
-              <div 
+            {displayedNotifications.map(notification => (
+              <div
                 key={notification.id}
                 className={`notifications-widget__item notifications-widget__item--${notification.type} ${
-                  !notification.isRead ? 'notifications-widget__item--unread' : ''
+                  !notification.isRead
+                    ? 'notifications-widget__item--unread'
+                    : ''
                 }`}
-                onClick={() => !notification.isRead && markAsRead(notification.id)}
+                onClick={() =>
+                  !notification.isRead && markAsRead(notification.id)
+                }
               >
                 <div className="notifications-widget__item-icon">
                   {getIcon(notification.type)}
                 </div>
-                
+
                 <div className="notifications-widget__item-content">
                   <div className="notifications-widget__item-header">
                     <h4 className="notifications-widget__item-title">
@@ -172,16 +173,16 @@ const NotificationsWidget: React.FC = () => {
                       {formatTimestamp(notification.timestamp)}
                     </span>
                   </div>
-                  
+
                   <p className="notifications-widget__item-message">
                     {notification.message}
                   </p>
-                  
+
                   {notification.actionUrl && (
-                    <a 
+                    <a
                       href={notification.actionUrl}
                       className="notifications-widget__item-action"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
                     >
                       Zobacz szczegóły
                     </a>
@@ -190,7 +191,7 @@ const NotificationsWidget: React.FC = () => {
 
                 <button
                   className="notifications-widget__item-dismiss"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     dismissNotification(notification.id);
                   }}
@@ -205,11 +206,13 @@ const NotificationsWidget: React.FC = () => {
 
         {notifications.length > 3 && (
           <div className="notifications-widget__footer">
-            <button 
+            <button
               className="notifications-widget__toggle"
               onClick={() => setShowAll(!showAll)}
             >
-              {showAll ? 'Pokaż mniej' : `Pokaż wszystkie (${notifications.length})`}
+              {showAll
+                ? 'Pokaż mniej'
+                : `Pokaż wszystkie (${notifications.length})`}
             </button>
           </div>
         )}

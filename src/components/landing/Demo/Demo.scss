@@ -1,4 +1,4 @@
-@import '../../../styles/globals/mixins';
+@use '../../../styles/globals/mixins' as *;
 
 .demo {
   position: fixed;
@@ -411,10 +411,18 @@
       background: var(--accent-color);
     }
 
-    &--blue { --accent-color: var(--primary); }
-    &--green { --accent-color: var(--success); }
-    &--purple { --accent-color: #8b5cf6; }
-    &--orange { --accent-color: #f59e0b; }
+    &--blue {
+      --accent-color: var(--primary);
+    }
+    &--green {
+      --accent-color: var(--success);
+    }
+    &--purple {
+      --accent-color: #8b5cf6;
+    }
+    &--orange {
+      --accent-color: #f59e0b;
+    }
   }
 
   &__stat-header {
@@ -562,9 +570,15 @@
   &__activity-icon {
     flex-shrink: 0;
 
-    &--success { color: var(--success); }
-    &--blue { color: var(--primary); }
-    &--purple { color: #8b5cf6; }
+    &--success {
+      color: var(--success);
+    }
+    &--blue {
+      color: var(--primary);
+    }
+    &--purple {
+      color: #8b5cf6;
+    }
   }
 
   // Events page styles
@@ -864,7 +878,7 @@
   }
 
   // Dark mode adjustments for demo
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     &__overlay {
       background: rgba(0, 0, 0, 0.9);
     }

@@ -1,6 +1,9 @@
 // components/dashboard/EventsChart/EventsChart.tsx
 import React, { useState, useEffect } from 'react';
-import { EventService, EventChartData } from '../../../services/firebase/eventService';
+import {
+  EventService,
+  EventChartData,
+} from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
 import './EventsChart.scss';
 
@@ -8,7 +11,9 @@ interface EventsChartProps {
   timeFilter?: string;
 }
 
-const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => {
+const EventsChart: React.FC<EventsChartProps> = ({
+  timeFilter = '6months',
+}) => {
   const { user } = useAuth();
   const [chartData, setChartData] = useState<EventChartData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,24 +21,21 @@ const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => 
   useEffect(() => {
     const loadChartData = async () => {
       if (!user?.id) return;
-      
+
       try {
         setLoading(true);
-        console.log('Loading chart data for user:', user.id);
         const data = await EventService.getEventChartData(user.id);
-        console.log('Chart data received:', data);
         setChartData(data);
       } catch (error) {
         console.error('Error loading chart data:', error);
         // Fallback to mock data
-        console.log('Using mock data for chart');
         setChartData([
           { month: 'Lut', events: 4, guests: 45, date: new Date() },
           { month: 'Mar', events: 6, guests: 78, date: new Date() },
           { month: 'Kwi', events: 3, guests: 32, date: new Date() },
           { month: 'Maj', events: 8, guests: 95, date: new Date() },
           { month: 'Cze', events: 5, guests: 67, date: new Date() },
-          { month: 'Lip', events: 7, guests: 89, date: new Date() }
+          { month: 'Lip', events: 7, guests: 89, date: new Date() },
         ]);
       } finally {
         setLoading(false);
@@ -54,8 +56,6 @@ const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => 
     );
   }
 
-  console.log('Chart data to render:', chartData);
-  
   if (!chartData || chartData.length === 0) {
     return (
       <div className="events-chart">
@@ -81,7 +81,7 @@ const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => 
           <span>Goście</span>
         </div>
       </div>
-      
+
       <div className="events-chart__container">
         <div className="events-chart__y-axis">
           <span>100</span>
@@ -90,17 +90,17 @@ const EventsChart: React.FC<EventsChartProps> = ({ timeFilter = '6months' }) => 
           <span>25</span>
           <span>0</span>
         </div>
-        
+
         <div className="events-chart__chart">
           {chartData.map((data, index) => (
             <div key={data.month} className="events-chart__bar-group">
               <div className="events-chart__bars">
-                <div 
+                <div
                   className="events-chart__bar events-chart__bar--events"
                   style={{ height: `${(data.events / maxEvents) * 100}%` }}
                   title={`${data.events} wydarzeń`}
                 />
-                <div 
+                <div
                   className="events-chart__bar events-chart__bar--guests"
                   style={{ height: `${(data.guests / maxGuests) * 100}%` }}
                   title={`${data.guests} gości`}

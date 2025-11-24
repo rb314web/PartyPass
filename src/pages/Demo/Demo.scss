@@ -3,7 +3,8 @@
 .demo-page {
   min-height: 100vh;
   background: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   &__layout {
     display: flex;
@@ -464,10 +465,18 @@
       background: var(--accent-color);
     }
 
-    &--blue { --accent-color: #3b82f6; }
-    &--green { --accent-color: #10b981; }
-    &--purple { --accent-color: #8b5cf6; }
-    &--orange { --accent-color: #f59e0b; }
+    &--blue {
+      --accent-color: #3b82f6;
+    }
+    &--green {
+      --accent-color: #10b981;
+    }
+    &--purple {
+      --accent-color: #8b5cf6;
+    }
+    &--orange {
+      --accent-color: #f59e0b;
+    }
   }
 
   &__stat-header {
@@ -651,10 +660,18 @@
   &__activity-icon {
     flex-shrink: 0;
 
-    &--success { color: #10b981; }
-    &--blue { color: #3b82f6; }
-    &--purple { color: #8b5cf6; }
-    &--green { color: #10b981; }
+    &--success {
+      color: #10b981;
+    }
+    &--blue {
+      color: #3b82f6;
+    }
+    &--purple {
+      color: #8b5cf6;
+    }
+    &--green {
+      color: #10b981;
+    }
   }
 
   &__quick-actions {

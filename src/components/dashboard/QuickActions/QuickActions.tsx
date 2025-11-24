@@ -12,7 +12,7 @@ const QuickActions: React.FC = () => {
   const handleAction = async (actionName: string, path?: string) => {
     await trackAction(`quick_action_${actionName}`, {
       actionName,
-      targetPath: path
+      targetPath: path,
     });
 
     if (path) {
@@ -25,23 +25,23 @@ const QuickActions: React.FC = () => {
       icon: Plus,
       label: 'Nowe wydarzenie',
       action: () => handleAction('create_event', '/dashboard/events/create'),
-      primary: true
+      primary: true,
     },
     {
       icon: Users,
       label: 'Dodaj gości',
-      action: () => handleAction('add_guests', '/dashboard/guests')
+      action: () => handleAction('add_guests', '/dashboard/guests'),
     },
     {
       icon: BarChart3,
       label: 'Analityki',
-      action: () => handleAction('view_analytics', '/dashboard/analytics')
+      action: () => handleAction('view_analytics', '/dashboard/analytics'),
     },
     {
       icon: Settings,
       label: 'Ustawienia',
-      action: () => handleAction('view_settings', '/dashboard/settings')
-    }
+      action: () => handleAction('view_settings', '/dashboard/settings'),
+    },
   ];
 
   return (

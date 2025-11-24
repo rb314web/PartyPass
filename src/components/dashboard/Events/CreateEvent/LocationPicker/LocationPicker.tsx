@@ -1,7 +1,13 @@
 // components/dashboard/Events/CreateEvent/LocationPicker/LocationPicker.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import { LatLng, Icon, Map } from 'leaflet';
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  useMap,
+} from 'react-leaflet';
+import { Icon } from 'leaflet';
 import { MapPin, Search } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import './LocationPicker.scss';
@@ -9,9 +15,12 @@ import './LocationPicker.scss';
 // Fix for default markers in react-leaflet
 delete (Icon.Default.prototype as any)._getIconUrl;
 Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
 export interface LocationPickerProps {
@@ -32,7 +41,7 @@ const MapClickHandler: React.FC<{
   onLocationSelect: (lat: number, lng: number) => void;
 }> = ({ onLocationSelect }) => {
   useMapEvents({
-    click: (e) => {
+    click: e => {
       onLocationSelect(e.latlng.lat, e.latlng.lng);
     },
   });
@@ -40,27 +49,31 @@ const MapClickHandler: React.FC<{
 };
 
 // Component to update map view when location changes
-const MapUpdater: React.FC<{ center: [number, number] | null }> = ({ center }) => {
+const MapUpdater: React.FC<{ center: [number, number] | null }> = ({
+  center,
+}) => {
   const map = useMap();
-  
+
   useEffect(() => {
     if (center) {
       map.setView(center, 15, { animate: true });
     }
   }, [center, map]);
-  
+
   return null;
 };
 
-const LocationPicker: React.FC<LocationPickerProps> = ({ 
-  value, 
-  onChange, 
+const LocationPicker: React.FC<LocationPickerProps> = ({
+  value,
+  onChange,
   error,
-  placeholder = "Wpisz adres lub wybierz na mapie"
+  placeholder = 'Wpisz adres lub wybierz na mapie',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<LocationData[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
+    null
+  );
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -77,13 +90,13 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=pl`
       );
       const data = await response.json();
-      
+
       const results: LocationData[] = data.map((item: any) => ({
         address: item.display_name,
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lon),
       }));
-      
+
       setSearchResults(results);
     } catch (error) {
       console.error('Error searching locations:', error);
@@ -130,14 +143,15 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
       const data = await response.json();
-      
-      const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+      const address =
+        data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
       const locationData: LocationData = {
         address,
         lat,
         lng,
       };
-      
+
       setSelectedLocation(locationData);
       onChange(address);
       setSearchQuery(address);
@@ -151,7 +165,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         lat,
         lng,
       };
-      
+
       setSelectedLocation(locationData);
       onChange(address);
       setSearchQuery(address);
@@ -173,13 +187,11 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     if (value !== searchQuery) {
       setSearchQuery(value);
     }
-  }, [value]);
+  }, [value, searchQuery]);
 
   return (
     <div className="location-picker">
-      {error && (
-        <span className="location-picker__error">{error}</span>
-      )}
+      {error && <span className="location-picker__error">{error}</span>}
 
       <div className="location-picker__search">
         <div className="location-picker__search-input">
@@ -230,7 +242,11 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
       <div className="location-picker__map-container">
         <div className="location-picker__map">
           <MapContainer
-            center={selectedLocation ? [selectedLocation.lat, selectedLocation.lng] : [52.2297, 21.0122]} // Default to Warsaw
+            center={
+              selectedLocation
+                ? [selectedLocation.lat, selectedLocation.lng]
+                : [52.2297, 21.0122]
+            } // Default to Warsaw
             zoom={selectedLocation ? 15 : 10}
             style={{ height: '300px', width: '100%' }}
           >
@@ -242,7 +258,13 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
               <Marker position={[selectedLocation.lat, selectedLocation.lng]} />
             )}
             <MapClickHandler onLocationSelect={handleMapClick} />
-            <MapUpdater center={selectedLocation ? [selectedLocation.lat, selectedLocation.lng] : null} />
+            <MapUpdater
+              center={
+                selectedLocation
+                  ? [selectedLocation.lat, selectedLocation.lng]
+                  : null
+              }
+            />
           </MapContainer>
         </div>
       </div>

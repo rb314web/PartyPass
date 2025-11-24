@@ -13,18 +13,13 @@ export const usePageAnalytics = () => {
 
     const trackPageView = async () => {
       try {
-        await AnalyticsService.trackMetric(
-          user.id,
-          'page_view',
-          1,
-          {
-            page: location.pathname,
-            timestamp: Date.now(),
-            userAgent: navigator.userAgent,
-            referrer: document.referrer,
-            title: document.title
-          }
-        );
+        await AnalyticsService.trackMetric(user.id, 'page_view', 1, {
+          page: location.pathname,
+          timestamp: Date.now(),
+          userAgent: navigator.userAgent,
+          referrer: document.referrer,
+          title: document.title,
+        });
       } catch (error) {
         console.warn('Failed to track page view:', error);
       }

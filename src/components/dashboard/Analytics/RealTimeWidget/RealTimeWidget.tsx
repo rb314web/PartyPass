@@ -1,13 +1,13 @@
 // components/dashboard/Analytics/RealTimeWidget/RealTimeWidget.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Activity, 
-  Users, 
-  Eye, 
+import {
+  Activity,
+  Users,
+  Eye,
   TrendingUp,
   Wifi,
   WifiOff,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 import { AnalyticsService } from '../../../../services/firebase/analyticsService';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -38,7 +38,7 @@ const RealTimeWidget: React.FC = () => {
         setIsConnected(true);
         unsubscribe = await AnalyticsService.subscribeToMetrics(
           user.id,
-          (newMetrics) => {
+          newMetrics => {
             // Transform array to object with mock data for now
             const metricsData = {
               pageViews: 0,
@@ -48,9 +48,9 @@ const RealTimeWidget: React.FC = () => {
               userActions: 0,
               userActionsChange: 0,
               engagementRate: 0,
-              engagementRateChange: 0
+              engagementRateChange: 0,
             };
-            
+
             const realTimeMetrics: RealTimeMetric[] = [
               {
                 id: 'page_views',
@@ -58,7 +58,7 @@ const RealTimeWidget: React.FC = () => {
                 value: metricsData.pageViews || 0,
                 change: metricsData.pageViewsChange || 0,
                 icon: <Eye size={20} />,
-                color: 'blue'
+                color: 'blue',
               },
               {
                 id: 'active_users',
@@ -66,7 +66,7 @@ const RealTimeWidget: React.FC = () => {
                 value: metricsData.activeUsers || 0,
                 change: metricsData.activeUsersChange || 0,
                 icon: <Users size={20} />,
-                color: 'green'
+                color: 'green',
               },
               {
                 id: 'user_actions',
@@ -74,7 +74,7 @@ const RealTimeWidget: React.FC = () => {
                 value: metricsData.userActions || 0,
                 change: metricsData.userActionsChange || 0,
                 icon: <Activity size={20} />,
-                color: 'purple'
+                color: 'purple',
               },
               {
                 id: 'engagement_rate',
@@ -82,8 +82,8 @@ const RealTimeWidget: React.FC = () => {
                 value: metricsData.engagementRate || 0,
                 change: metricsData.engagementRateChange || 0,
                 icon: <TrendingUp size={20} />,
-                color: 'orange'
-              }
+                color: 'orange',
+              },
             ];
 
             setMetrics(realTimeMetrics);
@@ -114,7 +114,8 @@ const RealTimeWidget: React.FC = () => {
 
   const getChangeIcon = (change: number) => {
     if (change > 0) return <TrendingUp size={14} />;
-    if (change < 0) return <TrendingUp size={14} style={{ transform: 'rotate(180deg)' }} />;
+    if (change < 0)
+      return <TrendingUp size={14} style={{ transform: 'rotate(180deg)' }} />;
     return null;
   };
 
@@ -151,9 +152,11 @@ const RealTimeWidget: React.FC = () => {
       )}
 
       <div className="realtime-widget__metrics">
-        {metrics.map((metric) => (
+        {metrics.map(metric => (
           <div key={metric.id} className="realtime-widget__metric">
-            <div className={`realtime-widget__metric-icon realtime-widget__metric-icon--${metric.color}`}>
+            <div
+              className={`realtime-widget__metric-icon realtime-widget__metric-icon--${metric.color}`}
+            >
               {metric.icon}
             </div>
             <div className="realtime-widget__metric-content">
@@ -164,7 +167,9 @@ const RealTimeWidget: React.FC = () => {
                 {metric.label}
               </div>
               {metric.change !== 0 && (
-                <div className={`realtime-widget__metric-change realtime-widget__metric-change--${getChangeColor(metric.change)}`}>
+                <div
+                  className={`realtime-widget__metric-change realtime-widget__metric-change--${getChangeColor(metric.change)}`}
+                >
                   {getChangeIcon(metric.change)}
                   <span>{Math.abs(metric.change).toFixed(1)}%</span>
                 </div>
@@ -177,7 +182,7 @@ const RealTimeWidget: React.FC = () => {
       {!isConnected && (
         <div className="realtime-widget__error">
           <p>Brak połączenia z danymi w czasie rzeczywistym</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="realtime-widget__retry"
           >

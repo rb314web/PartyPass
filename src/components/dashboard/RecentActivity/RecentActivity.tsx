@@ -3,7 +3,15 @@ import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Calendar, UserX, UserCheck, Trash2, UserPlus, AlertCircle } from 'lucide-react';
+import {
+  CheckCircle,
+  Calendar,
+  UserX,
+  UserCheck,
+  Trash2,
+  UserPlus,
+  AlertCircle,
+} from 'lucide-react';
 import './RecentActivity.scss';
 
 import { Activity as GlobalActivity } from '../../../types';
@@ -12,9 +20,10 @@ type Activity = GlobalActivity;
 
 interface RecentActivityProps {
   activities: Activity[];
+  isLoading?: boolean;
 }
 
-const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
+const RecentActivity: React.FC<RecentActivityProps> = ({ activities, isLoading = false }) => {
   const navigate = useNavigate();
 
   const handleActivityClick = (activity: Activity) => {
@@ -50,6 +59,24 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="recent-activity">
+        <div className="recent-activity__list">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="recent-activity__skeleton">
+              <div className="recent-activity__skeleton-icon"></div>
+              <div className="recent-activity__skeleton-content">
+                <div className="recent-activity__skeleton-line recent-activity__skeleton-line--long"></div>
+                <div className="recent-activity__skeleton-line recent-activity__skeleton-line--short"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="recent-activity">
       {activities.length === 0 ? (
@@ -57,17 +84,25 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
           <Calendar size={48} />
           <p>Brak nowych aktywności</p>
           <span className="recent-activity__empty-hint">
-            Aktywności pojawią się tutaj gdy goście będą odpowiadać na zaproszenia lub gdy utworzysz nowe wydarzenia
+            Aktywności pojawią się tutaj gdy goście będą odpowiadać na
+            zaproszenia lub gdy utworzysz nowe wydarzenia
           </span>
         </div>
       ) : (
         <div className="recent-activity__list">
-          {activities.map((activity) => (
-            <div 
-              key={activity.id} 
+          {activities.map(activity => (
+            <div
+              key={activity.id}
               className="recent-activity__item"
               onClick={() => handleActivityClick(activity)}
-              style={{ cursor: activity.eventId || activity.contactId || activity.eventGuestId ? 'pointer' : 'default' }}
+              style={{
+                cursor:
+                  activity.eventId ||
+                  activity.contactId ||
+                  activity.eventGuestId
+                    ? 'pointer'
+                    : 'default',
+              }}
             >
               <div className="recent-activity__icon">
                 {getActivityIcon(activity.type)}
@@ -75,9 +110,9 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
               <div className="recent-activity__content">
                 <p className="recent-activity__message">{activity.message}</p>
                 <span className="recent-activity__time">
-                  {formatDistanceToNow(activity.timestamp, { 
-                    addSuffix: true, 
-                    locale: pl 
+                  {formatDistanceToNow(activity.timestamp, {
+                    addSuffix: true,
+                    locale: pl,
                   })}
                 </span>
               </div>

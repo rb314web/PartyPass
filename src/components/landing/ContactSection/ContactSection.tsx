@@ -1,6 +1,6 @@
 // components/landing/ContactSection/ContactSection.tsx
 import React, { useState } from 'react';
-import { MessageCircle, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { EmailService } from '../../../services/emailService';
 import Toast from '../../common/Toast/Toast';
 import './ContactSection.scss';
@@ -16,9 +16,9 @@ const ContactSection: React.FC = () => {
   const [formData, setFormData] = useState<ContactFormData>({
     email: '',
     name: '',
-    message: ''
+    message: '',
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Partial<ContactFormData>>({});
@@ -55,7 +55,9 @@ const ContactSection: React.FC = () => {
       setFormData({ email: '', name: '', message: '' });
     } catch (error) {
       console.error('Błąd wysyłania formularza:', error);
-      setError('Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie później.');
+      setError(
+        'Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie później.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -68,9 +70,9 @@ const ContactSection: React.FC = () => {
           <div className="contact-section__info">
             <h2>Skontaktuj się z nami</h2>
             <p className="contact-section__subtitle">
-              Masz pytania? Jesteśmy tutaj, aby pomóc Ci w organizacji idealnego wydarzenia.
+              Masz pytania? Jesteśmy tutaj, aby pomóc Ci w organizacji idealnego
+              wydarzenia.
             </p>
-
           </div>
 
           <div className="contact-section__form-wrapper">
@@ -79,7 +81,7 @@ const ContactSection: React.FC = () => {
                 <CheckCircle size={64} />
                 <h3>Dziękujemy za wiadomość!</h3>
                 <p>Odpowiemy na Twoją wiadomość jak najszybciej.</p>
-                <button 
+                <button
                   className="contact-section__success-button"
                   onClick={() => setIsSubmitted(false)}
                 >
@@ -94,7 +96,7 @@ const ContactSection: React.FC = () => {
                     type="text"
                     id="name"
                     value={formData.name}
-                    onChange={(e) => {
+                    onChange={e => {
                       setFormData(prev => ({ ...prev, name: e.target.value }));
                       if (errors.name) {
                         setErrors(prev => ({ ...prev, name: undefined }));
@@ -122,7 +124,7 @@ const ContactSection: React.FC = () => {
                     type="email"
                     id="email"
                     value={formData.email}
-                    onChange={(e) => {
+                    onChange={e => {
                       setFormData(prev => ({ ...prev, email: e.target.value }));
                       if (errors.email) {
                         setErrors(prev => ({ ...prev, email: undefined }));
@@ -149,8 +151,11 @@ const ContactSection: React.FC = () => {
                   <textarea
                     id="message"
                     value={formData.message}
-                    onChange={(e) => {
-                      setFormData(prev => ({ ...prev, message: e.target.value }));
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        message: e.target.value,
+                      }));
                       if (errors.message) {
                         setErrors(prev => ({ ...prev, message: undefined }));
                       }
@@ -172,8 +177,8 @@ const ContactSection: React.FC = () => {
                   )}
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="contact-section__submit"
                   disabled={isSubmitting}
                 >
@@ -196,11 +201,7 @@ const ContactSection: React.FC = () => {
       </div>
 
       {error && (
-        <Toast 
-          message={error} 
-          onClose={() => setError(null)}
-          duration={5000}
-        />
+        <Toast message={error} onClose={() => setError(null)} duration={5000} />
       )}
 
       {/* Background decoration */}

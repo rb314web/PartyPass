@@ -1,6 +1,16 @@
 // components/dashboard/ContactUs/ContactUs.tsx
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, MessageSquare, Send, CheckCircle, Clock, User } from 'lucide-react';
+import {
+  Mail,
+  Phone,
+  MapPin,
+  MessageSquare,
+  Send,
+  CheckCircle,
+  Clock,
+  User,
+  HelpCircle,
+} from 'lucide-react';
 import './ContactUs.scss';
 
 interface ContactFormData {
@@ -24,7 +34,7 @@ const ContactUs: React.FC = () => {
     email: '',
     subject: '',
     message: '',
-    priority: 'medium'
+    priority: 'medium',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -35,32 +45,32 @@ const ContactUs: React.FC = () => {
       icon: Mail,
       title: 'Email',
       value: 'support@partypass.pl',
-      description: 'Odpowiadamy w ciągu 24 godzin'
+      description: 'Odpowiadamy w ciągu 24 godzin',
     },
     {
       icon: Phone,
       title: 'Telefon',
       value: '+48 123 456 789',
-      description: 'Pn-Pt 9:00-17:00'
+      description: 'Pn-Pt 9:00-17:00',
     },
     {
       icon: MapPin,
       title: 'Adres',
       value: 'ul. Przykładowa 123, 00-001 Warszawa',
-      description: 'Nasze biuro'
+      description: 'Nasze biuro',
     },
     {
       icon: MessageSquare,
       title: 'Chat',
       value: 'Czat na żywo',
-      description: 'Dostępny codziennie 8:00-22:00'
-    }
+      description: 'Dostępny codziennie 8:00-22:00',
+    },
   ];
 
   const priorityOptions = [
     { value: 'low', label: 'Niski', color: 'green' },
     { value: 'medium', label: 'Średni', color: 'orange' },
-    { value: 'high', label: 'Wysoki', color: 'red' }
+    { value: 'high', label: 'Wysoki', color: 'red' },
   ];
 
   const validateForm = (): boolean => {
@@ -100,27 +110,26 @@ const ContactUs: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log('Formularz kontaktowy wysłany:', formData);
+
       setIsSubmitted(true);
-      
+
       // Reset form after successful submission
       setFormData({
         name: '',
         email: '',
         subject: '',
         message: '',
-        priority: 'medium'
+        priority: 'medium',
       });
     } catch (error) {
       console.error('Błąd wysyłania formularza:', error);
@@ -136,7 +145,7 @@ const ContactUs: React.FC = () => {
           <CheckCircle size={64} className="contact-us__success-icon" />
           <h2>Wiadomość została wysłana!</h2>
           <p>Dziękujemy za kontakt. Odpowiemy w ciągu 24 godzin.</p>
-          <button 
+          <button
             className="contact-us__success-btn"
             onClick={() => setIsSubmitted(false)}
           >
@@ -149,10 +158,17 @@ const ContactUs: React.FC = () => {
 
   return (
     <div className="contact-us">
-      <div className="contact-us__header">
-        <h1>Skontaktuj się z nami</h1>
-        <p>Masz pytania? Potrzebujesz pomocy? Jesteśmy tutaj dla Ciebie!</p>
-      </div>
+      <header className="contact-us__header">
+        <div className="contact-us__title-wrapper">
+          <div className="contact-us__icon" aria-hidden="true">
+            <HelpCircle size={24} />
+          </div>
+          <div>
+            <h1>Skontaktuj się z nami</h1>
+            <p>Masz pytania? Potrzebujesz pomocy? Jesteśmy tutaj dla Ciebie!</p>
+          </div>
+        </div>
+      </header>
 
       <div className="contact-us__content">
         {/* Contact Information */}
@@ -167,7 +183,9 @@ const ContactUs: React.FC = () => {
                 <div className="contact-us__info-content">
                   <h3>{info.title}</h3>
                   <p className="contact-us__info-value">{info.value}</p>
-                  <p className="contact-us__info-description">{info.description}</p>
+                  <p className="contact-us__info-description">
+                    {info.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -196,11 +214,13 @@ const ContactUs: React.FC = () => {
                 type="text"
                 id="name"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={e => handleInputChange('name', e.target.value)}
                 className={errors.name ? 'contact-us__input--error' : ''}
                 placeholder="Wprowadź swoje imię i nazwisko"
               />
-              {errors.name && <span className="contact-us__error">{errors.name}</span>}
+              {errors.name && (
+                <span className="contact-us__error">{errors.name}</span>
+              )}
             </div>
 
             <div className="contact-us__form-group">
@@ -212,21 +232,26 @@ const ContactUs: React.FC = () => {
                 type="email"
                 id="email"
                 value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                onChange={e => handleInputChange('email', e.target.value)}
                 className={errors.email ? 'contact-us__input--error' : ''}
                 placeholder="twoj@email.com"
               />
-              {errors.email && <span className="contact-us__error">{errors.email}</span>}
+              {errors.email && (
+                <span className="contact-us__error">{errors.email}</span>
+              )}
             </div>
 
             <div className="contact-us__form-group">
-              <label htmlFor="priority">
-                Priorytet
-              </label>
+              <label htmlFor="priority">Priorytet</label>
               <select
                 id="priority"
                 value={formData.priority}
-                onChange={(e) => handleInputChange('priority', e.target.value as ContactFormData['priority'])}
+                onChange={e =>
+                  handleInputChange(
+                    'priority',
+                    e.target.value as ContactFormData['priority']
+                  )
+                }
               >
                 {priorityOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -245,33 +270,35 @@ const ContactUs: React.FC = () => {
                 type="text"
                 id="subject"
                 value={formData.subject}
-                onChange={(e) => handleInputChange('subject', e.target.value)}
+                onChange={e => handleInputChange('subject', e.target.value)}
                 className={errors.subject ? 'contact-us__input--error' : ''}
                 placeholder="O czym chcesz porozmawiać?"
               />
-              {errors.subject && <span className="contact-us__error">{errors.subject}</span>}
+              {errors.subject && (
+                <span className="contact-us__error">{errors.subject}</span>
+              )}
             </div>
 
             <div className="contact-us__form-group">
-              <label htmlFor="message">
-                Wiadomość *
-              </label>
+              <label htmlFor="message">Wiadomość *</label>
               <textarea
                 id="message"
                 value={formData.message}
-                onChange={(e) => handleInputChange('message', e.target.value)}
+                onChange={e => handleInputChange('message', e.target.value)}
                 className={errors.message ? 'contact-us__input--error' : ''}
                 placeholder="Opisz swoje pytanie lub problem..."
                 rows={6}
               />
-              {errors.message && <span className="contact-us__error">{errors.message}</span>}
+              {errors.message && (
+                <span className="contact-us__error">{errors.message}</span>
+              )}
               <div className="contact-us__char-count">
                 {formData.message.length}/500
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="contact-us__submit"
               disabled={isSubmitting}
             >
@@ -297,19 +324,33 @@ const ContactUs: React.FC = () => {
         <div className="contact-us__faq-grid">
           <div className="contact-us__faq-item">
             <h3>Jak mogę anulować wydarzenie?</h3>
-            <p>Przejdź do sekcji "Wydarzenia", znajdź swoje wydarzenie i kliknij opcję "Anuluj". Pamiętaj, że anulowanie może wiązać się z opłatami.</p>
+            <p>
+              Przejdź do sekcji "Wydarzenia", znajdź swoje wydarzenie i kliknij
+              opcję "Anuluj". Pamiętaj, że anulowanie może wiązać się z
+              opłatami.
+            </p>
           </div>
           <div className="contact-us__faq-item">
             <h3>Czy mogę edytować wydarzenie po opublikowaniu?</h3>
-            <p>Tak, możesz edytować większość szczegółów wydarzenia. Jednak zmiany w dacie lub lokalizacji będą wysłane do wszystkich zaproszonych gości.</p>
+            <p>
+              Tak, możesz edytować większość szczegółów wydarzenia. Jednak
+              zmiany w dacie lub lokalizacji będą wysłane do wszystkich
+              zaproszonych gości.
+            </p>
           </div>
           <div className="contact-us__faq-item">
             <h3>Jak dodać nowych gości do wydarzenia?</h3>
-            <p>W panelu wydarzenia kliknij "Zarządzaj gośćmi", a następnie "Dodaj gościa". Możesz dodawać pojedynczo lub importować listę kontaktów.</p>
+            <p>
+              W panelu wydarzenia kliknij "Zarządzaj gośćmi", a następnie "Dodaj
+              gościa". Możesz dodawać pojedynczo lub importować listę kontaktów.
+            </p>
           </div>
           <div className="contact-us__faq-item">
             <h3>Czy mogę eksportować listę gości?</h3>
-            <p>Tak, w sekcji "Analityka" wydarzenia znajdziesz opcję eksportu danych gości do pliku CSV lub PDF.</p>
+            <p>
+              Tak, w sekcji "Analityka" wydarzenia znajdziesz opcję eksportu
+              danych gości do pliku CSV lub PDF.
+            </p>
           </div>
         </div>
       </div>

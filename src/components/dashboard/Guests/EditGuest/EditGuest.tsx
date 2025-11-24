@@ -27,11 +27,13 @@ export const EditGuest: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guest, setGuest] = useState<Guest | null>(null);
-  const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
+  const [events, setEvents] = useState<Array<{ id: string; title: string }>>(
+    []
+  );
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -40,12 +42,12 @@ export const EditGuest: React.FC = () => {
     dietaryRestrictions: '',
     notes: '',
     plusOne: false,
-    status: 'pending' as Guest['status']
+    status: 'pending' as Guest['status'],
   });
 
   useEffect(() => {
     if (!id || !user) return;
-    
+
     loadGuestData();
     loadEvents();
   }, [id, user]);
@@ -53,11 +55,11 @@ export const EditGuest: React.FC = () => {
   const loadGuestData = async () => {
     try {
       setLoading(true);
-      
+
       // Pobierz dane gościa - musimy przeszukać wszystkich gości użytkownika
       const result = await GuestService.getUserGuests(user!.id, {}, 1000);
       const foundGuest = result.guests.find(g => g.id === id);
-      
+
       if (!foundGuest) {
         enqueueSnackbar('Nie znaleziono gościa', { variant: 'error' });
         navigate('/dashboard/guests');
@@ -73,11 +75,11 @@ export const EditGuest: React.FC = () => {
         dietaryRestrictions: foundGuest.dietaryRestrictions || '',
         notes: foundGuest.notes || '',
         plusOne: foundGuest.plusOne || false,
-        status: foundGuest.status
+        status: foundGuest.status,
       });
     } catch (error: any) {
-      enqueueSnackbar(error.message || 'Błąd podczas ładowania danych gościa', { 
-        variant: 'error' 
+      enqueueSnackbar(error.message || 'Błąd podczas ładowania danych gościa', {
+        variant: 'error',
       });
       navigate('/dashboard/guests');
     } finally {
@@ -90,7 +92,7 @@ export const EditGuest: React.FC = () => {
       const result = await EventService.getUserEvents(user!.id);
       const mappedEvents = result.events.map(event => ({
         id: event.id,
-        title: event.title
+        title: event.title,
       }));
       setEvents(mappedEvents);
     } catch (error) {
@@ -102,7 +104,7 @@ export const EditGuest: React.FC = () => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -120,15 +122,20 @@ export const EditGuest: React.FC = () => {
         dietaryRestrictions: formData.dietaryRestrictions,
         notes: formData.notes,
         plusOne: formData.plusOne,
-        status: formData.status
+        status: formData.status,
       });
 
-      enqueueSnackbar('Dane gościa zostały zaktualizowane!', { variant: 'success' });
+      enqueueSnackbar('Dane gościa zostały zaktualizowane!', {
+        variant: 'success',
+      });
       navigate('/dashboard/guests');
     } catch (error: any) {
-      enqueueSnackbar(error.message || 'Wystąpił błąd podczas aktualizacji gościa', { 
-        variant: 'error' 
-      });
+      enqueueSnackbar(
+        error.message || 'Wystąpił błąd podczas aktualizacji gościa',
+        {
+          variant: 'error',
+        }
+      );
     } finally {
       setSaving(false);
     }
@@ -139,7 +146,7 @@ export const EditGuest: React.FC = () => {
       accepted: 'success',
       pending: 'warning',
       declined: 'error',
-      maybe: 'info'
+      maybe: 'info',
     };
     return colors[status];
   };
@@ -149,7 +156,7 @@ export const EditGuest: React.FC = () => {
       accepted: 'Potwierdzone',
       pending: 'Oczekujące',
       declined: 'Odrzucone',
-      maybe: 'Może'
+      maybe: 'Może',
     };
     return labels[status];
   };
@@ -174,7 +181,7 @@ export const EditGuest: React.FC = () => {
           <Typography variant="h6" color="error">
             Nie znaleziono gościa
           </Typography>
-          <Button 
+          <Button
             onClick={() => navigate('/dashboard/guests')}
             startIcon={<ArrowLeft size={20} />}
             sx={{ mt: 2 }}
@@ -189,19 +196,23 @@ export const EditGuest: React.FC = () => {
   return (
     <div className="edit-guest">
       <div className="edit-guest__header">
-        <IconButton 
+        <IconButton
           onClick={() => navigate('/dashboard/guests')}
           className="edit-guest__back-btn"
         >
           <ArrowLeft size={24} />
         </IconButton>
-        
+
         <div className="edit-guest__title-section">
           <div className="edit-guest__avatar">
             <User size={32} />
           </div>
           <div>
-            <Typography variant="h4" component="h1" className="edit-guest__title">
+            <Typography
+              variant="h4"
+              component="h1"
+              className="edit-guest__title"
+            >
               Edytuj gościa
             </Typography>
             <Typography variant="subtitle1" color="textSecondary">
@@ -211,13 +222,13 @@ export const EditGuest: React.FC = () => {
         </div>
 
         <div className="edit-guest__event-info">
-          <Chip 
+          <Chip
             icon={<Calendar size={16} />}
             label={guest.eventName}
             variant="outlined"
             color="primary"
           />
-          <Chip 
+          <Chip
             label={getStatusLabel(guest.status)}
             color={getStatusColor(guest.status) as any}
             size="small"
@@ -232,8 +243,14 @@ export const EditGuest: React.FC = () => {
             <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
               Podstawowe informacje
             </Typography>
-            
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 2,
+              }}
+            >
               <TextField
                 required
                 fullWidth
@@ -243,7 +260,9 @@ export const EditGuest: React.FC = () => {
                 onChange={handleChange}
                 disabled={saving}
                 InputProps={{
-                  startAdornment: <User size={20} style={{ marginRight: 8, color: '#666' }} />
+                  startAdornment: (
+                    <User size={20} style={{ marginRight: 8, color: '#666' }} />
+                  ),
                 }}
               />
               <TextField
@@ -267,10 +286,12 @@ export const EditGuest: React.FC = () => {
               onChange={handleChange}
               disabled={saving}
               InputProps={{
-                startAdornment: <Mail size={20} style={{ marginRight: 8, color: '#666' }} />
+                startAdornment: (
+                  <Mail size={20} style={{ marginRight: 8, color: '#666' }} />
+                ),
               }}
             />
-            
+
             <TextField
               fullWidth
               label="Telefon"
@@ -279,7 +300,9 @@ export const EditGuest: React.FC = () => {
               onChange={handleChange}
               disabled={saving}
               InputProps={{
-                startAdornment: <Phone size={20} style={{ marginRight: 8, color: '#666' }} />
+                startAdornment: (
+                  <Phone size={20} style={{ marginRight: 8, color: '#666' }} />
+                ),
               }}
             />
 
@@ -287,7 +310,7 @@ export const EditGuest: React.FC = () => {
             <Typography variant="h6" component="h2" sx={{ mb: 1, mt: 2 }}>
               Status odpowiedzi
             </Typography>
-            
+
             <TextField
               select
               fullWidth
@@ -308,7 +331,7 @@ export const EditGuest: React.FC = () => {
             <Typography variant="h6" component="h2" sx={{ mb: 1, mt: 2 }}>
               Dodatkowe informacje
             </Typography>
-            
+
             <TextField
               fullWidth
               label="Preferencje żywieniowe"
@@ -320,7 +343,7 @@ export const EditGuest: React.FC = () => {
               disabled={saving}
               placeholder="np. wegetariańska, bezglutenowa, alergia na orzechy..."
             />
-            
+
             <TextField
               fullWidth
               label="Notatki"
@@ -332,7 +355,7 @@ export const EditGuest: React.FC = () => {
               disabled={saving}
               placeholder="Dodatkowe informacje o gościu..."
             />
-            
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -342,17 +365,13 @@ export const EditGuest: React.FC = () => {
                   disabled={saving}
                 />
               }
-              label={
-                <Typography>
-                  Osoba towarzysząca (+1)
-                </Typography>
-              }
+              label={<Typography>Osoba towarzysząca (+1)</Typography>}
             />
           </Box>
         </div>
 
         <div className="edit-guest__form-actions">
-          <Button 
+          <Button
             type="button"
             onClick={() => navigate('/dashboard/guests')}
             disabled={saving}
@@ -361,13 +380,15 @@ export const EditGuest: React.FC = () => {
           >
             Anuluj
           </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             color="primary"
             disabled={saving}
             size="large"
-            startIcon={saving ? <CircularProgress size={20} /> : <Save size={20} />}
+            startIcon={
+              saving ? <CircularProgress size={20} /> : <Save size={20} />
+            }
           >
             {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
           </Button>

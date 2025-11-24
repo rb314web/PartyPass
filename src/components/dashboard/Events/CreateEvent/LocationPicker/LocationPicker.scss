@@ -4,7 +4,7 @@
 
 .location-picker {
   position: relative; // Establish stacking context
-  
+
   &__input-group {
     display: flex;
     align-items: center;
@@ -14,24 +14,26 @@
   &__input {
     flex: 1;
     padding: 0.75rem;
-    border: 1px solid var(--border-primary);
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    font-size: 0.875rem;
-    background: var(--bg-surface);
-    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 400;
+    background: #ffffff;
+    color: #1f2937;
     transition: border-color 0.2s ease;
 
     &:focus {
       outline: none;
-      border-color: var(--primary);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     &::placeholder {
-      color: var(--text-secondary);
+      color: #9ca3af;
     }
 
     &--error {
-      border-color: var(--error);
+      border-color: #ef4444;
     }
   }
 
@@ -39,7 +41,7 @@
     display: block;
     margin-top: 0.25rem;
     font-size: 0.75rem;
-    color: var(--error);
+    color: var(--color-error);
   }
 
   &__search {
@@ -64,24 +66,26 @@
   &__search-field {
     width: 100%;
     padding: 0.75rem 2.5rem 0.75rem 2.5rem;
-    border: 1px solid var(--border-primary);
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    font-size: 0.875rem;
-    background: var(--bg-surface);
-    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 400;
+    background: #ffffff;
+    color: #1f2937;
     transition: border-color 0.2s ease;
 
     &:focus {
       outline: none;
-      border-color: var(--primary);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     &::placeholder {
-      color: var(--text-secondary);
+      color: #9ca3af;
     }
 
     &--error {
-      border-color: var(--error);
+      border-color: #ef4444;
     }
   }
 
@@ -90,8 +94,8 @@
     right: 0.75rem;
     width: 16px;
     height: 16px;
-    border: 2px solid var(--border-primary);
-    border-top: 2px solid var(--primary);
+    border: 2px solid var(--border-secondary);
+    border-top: 2px solid var(--color-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -101,14 +105,14 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-primary);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-top: none;
     border-radius: 0 0 8px 8px;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 30; // Higher than map container
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 30;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   &__search-result {
@@ -122,19 +126,20 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-primary);
+    font-size: 0.95rem;
+    color: #1f2937;
+    font-weight: 400;
 
     &:hover {
-      background: var(--surface-hover);
+      background: #f3f4f6;
     }
 
     &:not(:last-child) {
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid #f3f4f6;
     }
 
     svg {
-      color: var(--text-secondary);
+      color: #9ca3af;
       flex-shrink: 0;
     }
 
@@ -151,7 +156,7 @@
     border: 1px solid var(--border-primary);
     border-radius: 8px;
     overflow: hidden;
-    background: var(--bg-surface);
+    background: #ffffff;
     position: relative;
     z-index: 1; // Lower than search results
   }
@@ -161,11 +166,11 @@
     height: 300px;
 
     .leaflet-container {
-      background: var(--bg-surface);
+      background: #ffffff;
     }
 
     .leaflet-control-attribution {
-      background: rgba(255, 255, 255, 0.8);
+      background: #ffffff;
       font-size: 0.7rem;
     }
   }
@@ -173,29 +178,30 @@
   &__hints {
     margin-top: 1rem;
     padding: 1rem;
-    background: var(--bg-accent);
-    border: 1px solid var(--border-light);
+    background: #f0f4f8;
+    border: 1px solid #d1d5db;
     border-radius: 8px;
     position: relative;
-    z-index: 1; // Same as map, below search results
+    z-index: 1;
   }
 
   &__hint {
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: #1f2937;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
 
   &__hint-item {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 0.25rem 0;
+    font-size: 0.9rem;
+    color: #374151;
+    margin: 0.5rem 0;
     padding-left: 1rem;
-    line-height: 1.4;
+    line-height: 1.5;
+    font-weight: 500;
   }
 }
 

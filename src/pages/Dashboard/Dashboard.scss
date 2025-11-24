@@ -1,85 +1,71 @@
 // pages/Dashboard/Dashboard.scss
 .dashboard {
   min-height: 100vh;
-  background: var(--gray-50);
-  
+  background: linear-gradient(135deg, #f8f9fb 0%, #f0f4f8 100%);
+  display: flex;
+
   &__layout {
     display: flex;
     height: 100vh;
+    width: 100%;
   }
-  
+
   &__main {
     flex: 1;
-    margin-left: 280px;
+    margin-left: 260px;
     display: flex;
     flex-direction: column;
-    transition: margin-left 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    
+    min-height: 100vh;
+
     &--collapsed {
       margin-left: 80px;
     }
-    
-    // Medium screens - dostosuj do wąskiego sidebara
-    @media (min-width: 770px) and (max-width: 1200px) {
-      margin-left: 80px; // Sidebar jest wąski na średnich ekranach
+
+    // Tablet screens - dopasowane do sidebara
+    @media (min-width: 769px) and (max-width: 1200px) {
+      margin-left: 80px;
     }
-    
+
     @media (max-width: 768px) {
       margin-left: 0;
-      
+
       &--collapsed {
         margin-left: 0;
       }
     }
   }
-  
+
   &__content {
     flex: 1;
-    padding: var(--space-2xl);
-    padding-top: calc(80px + var(--space-2xl)); // Add space for fixed header
+    padding: 0;
     overflow-y: auto;
-    
-    @media (max-width: 1300px) {
-      padding-top: calc(70px + var(--space-xl));
-    }
-    
-    // Medium screens - optymalizuj szerokość dla wąskiego sidebara
-    @media (min-width: 770px) and (max-width: 1200px) {
-      padding: var(--space-lg) var(--space-xl);
-      padding-top: calc(70px + var(--space-lg));
-    }
-    
-    @media (max-width: 1200px) {
-      padding: var(--space-xl);
-      padding-top: calc(70px + var(--space-xl));
-    }
-    
+    background: linear-gradient(135deg, #f8f9fb 0%, #f0f4f8 100%);
+
     @media (max-width: 768px) {
-      padding: var(--space-lg);
-      padding-top: calc(60px + var(--space-lg));
-      padding-bottom: 100px; // Space for mobile navigation
+      padding: 0;
+      padding-bottom: 80px;
     }
-    
+
     @media (max-width: 480px) {
-      padding: var(--space-md);
-      padding-bottom: 100px;
+      padding: 0;
+      padding-bottom: 80px;
     }
   }
-  
-  // Mobile-first improvements
+
+  // Mobile optimizations
   @media (max-width: 768px) {
     &__layout {
       flex-direction: column;
       height: auto;
       min-height: 100vh;
     }
-    
+
     &__main {
       order: 2;
       margin-left: 0;
-      min-height: calc(100vh - 70px); // Account for header height
+      min-height: calc(100vh - 70px);
     }
   }
 }
-

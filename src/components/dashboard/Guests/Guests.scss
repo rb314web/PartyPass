@@ -1,5 +1,5 @@
 // components/dashboard/Guests/Guests.scss
-@import '../../../styles/globals/index.scss';
+@use '../../../styles/globals/index' as *;
 
 .guests {
   padding: 2rem;
@@ -8,45 +8,78 @@
 
   &__header {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 2rem;
-    gap: 2rem;
-
-    @media (max-width: 768px) {
-      flex-direction: column;
-      align-items: stretch;
-    }
+    justify-content: space-between;
+    gap: var(--space-xl);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-xl);
   }
 
-  &__title {
+  &__title-wrapper {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 1rem;
-    color: var(--text-primary);
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
 
     h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0;
+      font-size: clamp(1.9rem, 3vw, 2.5rem);
+      font-weight: 600;
       color: var(--text-primary);
+      margin: 0;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 1.75rem;
+      }
     }
 
     p {
-      margin: 0.5rem 0 0 0;
+      font-size: 0.95rem;
       color: var(--text-secondary);
-      font-size: 1rem;
+      margin: 0;
+      font-weight: 400;
     }
   }
 
-  &__actions {
-    display: flex;
-    gap: 1rem;
+  &__icon {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-xl);
+    background: var(--color-primary-soft, rgba(99, 102, 241, 0.12));
+    color: var(--color-primary);
+    flex-shrink: 0;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2.5;
+    }
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
 
     @media (max-width: 768px) {
-      flex-direction: column;
       width: 100%;
+      justify-content: flex-start;
     }
   }
 
@@ -232,7 +265,8 @@
       border-collapse: collapse;
     }
 
-    th, td {
+    th,
+    td {
       padding: 1rem;
       text-align: left;
       border-bottom: 1px solid var(--border-color);

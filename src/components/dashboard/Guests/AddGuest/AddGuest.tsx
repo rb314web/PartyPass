@@ -31,14 +31,14 @@ interface AddGuestProps {
   onEventChange: (eventId: string) => void;
 }
 
-export const AddGuest: React.FC<AddGuestProps> = ({ 
-  open, 
-  onClose, 
-  userId, 
+export const AddGuest: React.FC<AddGuestProps> = ({
+  open,
+  onClose,
+  userId,
   eventId,
   events,
   onEventChange,
-  onGuestAdded 
+  onGuestAdded,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -54,15 +54,15 @@ export const AddGuest: React.FC<AddGuestProps> = ({
     plusOneDetails: {
       firstName: '',
       lastName: '',
-      dietaryRestrictions: ''
-    }
+      dietaryRestrictions: '',
+    },
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -72,8 +72,8 @@ export const AddGuest: React.FC<AddGuestProps> = ({
       ...prev,
       plusOneDetails: {
         ...prev.plusOneDetails,
-        [name]: value
-      }
+        [name]: value,
+      },
     }));
   };
 
@@ -84,11 +84,14 @@ export const AddGuest: React.FC<AddGuestProps> = ({
       plusOneType: value,
       plusOne: value !== 'none',
       // Reset szczegółów gdy przełączamy na 'simple'
-      plusOneDetails: value === 'simple' ? {
-        firstName: '',
-        lastName: '',
-        dietaryRestrictions: ''
-      } : prev.plusOneDetails
+      plusOneDetails:
+        value === 'simple'
+          ? {
+              firstName: '',
+              lastName: '',
+              dietaryRestrictions: '',
+            }
+          : prev.plusOneDetails,
     }));
   };
 
@@ -99,19 +102,35 @@ export const AddGuest: React.FC<AddGuestProps> = ({
     try {
       const guestData = {
         ...formData,
+        // Ensure plusOneType is correctly typed
+        plusOneType:
+          formData.plusOneType === 'none' ||
+          formData.plusOneType === 'simple' ||
+          formData.plusOneType === 'detailed'
+            ? formData.plusOneType === 'simple'
+              ? 'withoutDetails'
+              : formData.plusOneType === 'detailed'
+                ? 'withDetails'
+                : 'none'
+            : ('none' as 'none' | 'withoutDetails' | 'withDetails'),
         // Ustaw plusOne na podstawie typu
         plusOne: formData.plusOneType !== 'none',
         // Tylko przekaż plusOneDetails jeśli typ to 'detailed' i pola są wypełnione
-        plusOneDetails: formData.plusOneType === 'detailed' && (
-          formData.plusOneDetails.firstName?.trim() || 
-          formData.plusOneDetails.lastName?.trim()
-        ) ? {
-          firstName: formData.plusOneDetails.firstName?.trim() || undefined,
-          lastName: formData.plusOneDetails.lastName?.trim() || undefined,
-          dietaryRestrictions: formData.plusOneDetails.dietaryRestrictions?.trim() || undefined
-        } : undefined
+        plusOneDetails:
+          formData.plusOneType === 'detailed' &&
+          (formData.plusOneDetails.firstName?.trim() ||
+            formData.plusOneDetails.lastName?.trim())
+            ? {
+                firstName:
+                  formData.plusOneDetails.firstName?.trim() || undefined,
+                lastName: formData.plusOneDetails.lastName?.trim() || undefined,
+                dietaryRestrictions:
+                  formData.plusOneDetails.dietaryRestrictions?.trim() ||
+                  undefined,
+              }
+            : undefined,
       };
-      
+
       await GuestService.createGuest(userId, eventId, guestData);
       enqueueSnackbar('Gość został dodany pomyślnie!', { variant: 'success' });
       onGuestAdded();
@@ -128,13 +147,16 @@ export const AddGuest: React.FC<AddGuestProps> = ({
         plusOneDetails: {
           firstName: '',
           lastName: '',
-          dietaryRestrictions: ''
-        }
+          dietaryRestrictions: '',
+        },
       });
     } catch (error: any) {
-      enqueueSnackbar(error.message || 'Wystąpił błąd podczas dodawania gościa', { 
-        variant: 'error' 
-      });
+      enqueueSnackbar(
+        error.message || 'Wystąpił błąd podczas dodawania gościa',
+        {
+          variant: 'error',
+        }
+      );
     } finally {
       setLoading(false);
     }
@@ -152,18 +174,24 @@ export const AddGuest: React.FC<AddGuestProps> = ({
               fullWidth
               label="Wydarzenie"
               value={eventId}
-              onChange={(e) => onEventChange(e.target.value)}
+              onChange={e => onEventChange(e.target.value)}
               disabled={loading}
               sx={{ mb: 2 }}
             >
-              {events.map((event) => (
+              {events.map(event => (
                 <MenuItem key={event.id} value={event.id}>
                   {event.title}
                 </MenuItem>
               ))}
             </TextField>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 2,
+              }}
+            >
               <TextField
                 required
                 fullWidth
@@ -247,15 +275,17 @@ export const AddGuest: React.FC<AddGuestProps> = ({
                 />
               </RadioGroup>
             </FormControl>
-            
+
             {formData.plusOneType === 'detailed' && (
-              <Box sx={{ 
-                mt: 2, 
-                p: 2, 
-                backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                borderRadius: 1,
-                border: '1px solid rgba(25, 118, 210, 0.12)'
-              }}>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                  borderRadius: 1,
+                  border: '1px solid rgba(25, 118, 210, 0.12)',
+                }}
+              >
                 <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
                   Dane osoby towarzyszącej
                 </Typography>
@@ -298,9 +328,9 @@ export const AddGuest: React.FC<AddGuestProps> = ({
           <Button onClick={onClose} disabled={loading}>
             Anuluj
           </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             color="primary"
             disabled={loading}
           >

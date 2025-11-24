@@ -3,24 +3,25 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import Navigation from '../../common/Navigation/Navigation';
+import Header from '../../common/Header/Header';
 import GoogleIcon from './GoogleIcon';
+import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import './Login.scss';
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
     email: 'demo@partypass.pl',
-    password: 'demo123'
+    password: 'demo123',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  
+
   const { login, loginWithGoogle, loading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    
+
     try {
       await login(formData.email, formData.password);
     } catch (err) {
@@ -40,13 +41,14 @@ const Login: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
   return (
-    <>
-      <Navigation variant="auth" />
+    <ErrorBoundary>
+      <>
+        <Header />
       <div className="login">
         <div className="login__container">
           <div className="login__card">
@@ -108,7 +110,7 @@ const Login: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
+                    onChange={e => setRememberMe(e.target.checked)}
                   />
                   <span className="login__checkbox-custom"></span>
                   Zapamiętaj mnie
@@ -148,7 +150,7 @@ const Login: React.FC = () => {
 
             <div className="login__footer">
               <p>
-                Nie masz konta? {' '}
+                Nie masz konta?{' '}
                 <Link to="/register" className="login__register-link">
                   Zarejestruj się
                 </Link>
@@ -159,13 +161,18 @@ const Login: React.FC = () => {
               <div className="login__demo-header">
                 <span>🎉 Demo Account</span>
               </div>
-              <p>Email: <code>demo@partypass.pl</code></p>
-              <p>Hasło: <code>demo123</code></p>
+              <p>
+                Email: <code>demo@partypass.pl</code>
+              </p>
+              <p>
+                Hasło: <code>demo123</code>
+              </p>
             </div>
           </div>
         </div>
       </div>
     </>
+    </ErrorBoundary>
   );
 };
 

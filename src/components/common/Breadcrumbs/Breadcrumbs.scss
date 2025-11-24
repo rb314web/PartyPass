@@ -1,5 +1,5 @@
 // components/common/Breadcrumbs/Breadcrumbs.scss
-@import '../../../styles/globals/index.scss';
+@use '../../../styles/globals/index' as *;
 
 .breadcrumbs {
   padding: 1rem 2rem;

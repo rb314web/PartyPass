@@ -1,5 +1,7 @@
 /* Light Theme Global Styles */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -8,6 +10,8 @@ html {
   max-width: 100vw;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  transition: background-color var(--transition-colors, 0.2s ease),
+              color var(--transition-colors, 0.2s ease);
 }
 
 body {
@@ -25,6 +29,8 @@ body {
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
+  transition: background-color var(--transition-colors, 0.2s ease),
+              color var(--transition-colors, 0.2s ease);
 }
 
 #root {
@@ -35,34 +41,55 @@ body {
 }
 
 /* Universal text wrapping improvements */
-p, span, div, h1, h2, h3, h4, h5, h6, li, td, th {
+p,
+span,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+td,
+th {
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
 }
 
 /* Better text handling for flex and grid items */
-.flex-item, .grid-item, [class*="__item"], [class*="__content"] {
+.flex-item,
+.grid-item,
+[class*='__item'],
+[class*='__content'] {
   min-width: 0;
   overflow-wrap: break-word;
 }
 
 /* Prevent text overflow in common UI elements */
-button, .btn, [class*="button"], [class*="btn"] {
+button,
+.btn,
+[class*='button'],
+[class*='btn'] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 /* Enhanced text wrapping for long content */
-[class*="__title"], [class*="__name"], [class*="__label"] {
+[class*='__title'],
+[class*='__name'],
+[class*='__label'] {
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
 }
 
 /* Better wrapping for long URLs and email addresses */
-a[href*="@"], a[href^="http"], a[href^="mailto"] {
+a[href*='@'],
+a[href^='http'],
+a[href^='mailto'] {
   word-break: break-all;
   overflow-wrap: anywhere;
 }
@@ -73,14 +100,17 @@ table {
   width: 100%;
 }
 
-td, th {
+td,
+th {
   word-wrap: break-word;
   overflow-wrap: break-word;
   max-width: 0;
 }
 
 /* Better input and textarea text handling */
-input, textarea, select {
+input,
+textarea,
+select {
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -93,20 +123,29 @@ textarea {
 }
 
 /* Enhanced card and container text handling */
-[class*="__card"], [class*="__container"], [class*="__wrapper"] {
+[class*='__card'],
+[class*='__container'],
+[class*='__wrapper'] {
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 /* Better handling for long text in forms */
-.form-control, .form-input, [class*="__input"], [class*="__field"] {
+.form-control,
+.form-input,
+[class*='__input'],
+[class*='__field'] {
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 /* Improved text wrapping for navigation elements */
-nav, [class*="__nav"], [class*="__menu"] {
-  li, a, span {
+nav,
+[class*='__nav'],
+[class*='__menu'] {
+  li,
+  a,
+  span {
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
@@ -155,7 +194,8 @@ code {
 }
 
 /* Enhanced button styles for light theme */
-button, .btn {
+button,
+.btn {
   font-family: var(--font-sans);
   font-weight: var(--font-medium);
   border-radius: var(--radius-md);
@@ -164,13 +204,16 @@ button, .btn {
   border: 1px solid var(--border-primary);
 }
 
-button:focus, .btn:focus {
+button:focus,
+.btn:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
 /* Enhanced input styles for light theme */
-input, textarea, select {
+input,
+textarea,
+select {
   font-family: var(--font-sans);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
@@ -180,7 +223,9 @@ input, textarea, select {
   transition: var(--transition-colors);
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -198,4 +243,282 @@ input:focus, textarea:focus, select:focus {
 .card:hover {
   box-shadow: var(--shadow-card-hover);
   border-color: var(--border-hover);
+}
+
+/* Leaflet Popup Dark Mode Styles - Global override */
+html.dark .leaflet-popup-content-wrapper {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+html.dark .leaflet-popup-content-wrapper * {
+  color: #f9fafb !important;
+}
+
+html.dark .leaflet-popup-content-wrapper h1,
+html.dark .leaflet-popup-content-wrapper h2,
+html.dark .leaflet-popup-content-wrapper h3,
+html.dark .leaflet-popup-content-wrapper h4,
+html.dark .leaflet-popup-content-wrapper h5,
+html.dark .leaflet-popup-content-wrapper h6,
+html.dark .leaflet-popup-content-wrapper p,
+html.dark .leaflet-popup-content-wrapper span,
+html.dark .leaflet-popup-content-wrapper div {
+  color: #f9fafb !important;
+}
+
+html.dark .leaflet-popup-content-wrapper .events-map__popup-title {
+  color: #f9fafb !important;
+}
+
+html.dark .leaflet-popup-content-wrapper .events-map__popup-item {
+  color: #f9fafb !important;
+}
+
+html.dark .leaflet-popup-content-wrapper .events-map__popup-item span {
+  color: #f9fafb !important;
+}
+
+html.dark .leaflet-popup-content-wrapper .events-map__popup-location {
+  color: #d1d5db !important;
+  border-top-color: #374151 !important;
+}
+
+html.dark .leaflet-popup-content-wrapper svg {
+  color: #60a5fa !important;
+  stroke: #60a5fa !important;
+}
+
+html.dark .leaflet-popup-content {
+  color: #f9fafb !important;
+}
+
+html.dark .leaflet-popup-content * {
+  color: #f9fafb !important;
+}
+
+html.dark .leaflet-popup-tip {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+html.dark .leaflet-popup-close-button {
+  color: #d1d5db !important;
+}
+
+html.dark .leaflet-popup-close-button:hover {
+  color: #f9fafb !important;
+  background-color: #374151 !important;
+}
+
+/* Leaflet Popup Light Mode Styles - Reset dark mode styles */
+html:not(.dark) .leaflet-popup-content-wrapper {
+  background: var(--bg-elevated, #ffffff) !important;
+  border-color: var(--border-primary, #e5e7eb) !important;
+}
+
+html:not(.dark) .leaflet-popup-content-wrapper * {
+  color: var(--text-primary, #1f2937) !important;
+}
+
+html:not(.dark) .leaflet-popup-content-wrapper h1,
+html:not(.dark) .leaflet-popup-content-wrapper h2,
+html:not(.dark) .leaflet-popup-content-wrapper h3,
+html:not(.dark) .leaflet-popup-content-wrapper h4,
+html:not(.dark) .leaflet-popup-content-wrapper h5,
+html:not(.dark) .leaflet-popup-content-wrapper h6,
+html:not(.dark) .leaflet-popup-content-wrapper p,
+html:not(.dark) .leaflet-popup-content-wrapper span,
+html:not(.dark) .leaflet-popup-content-wrapper div {
+  color: var(--text-primary, #1f2937) !important;
+}
+
+html:not(.dark) .leaflet-popup-content-wrapper .events-map__popup-title {
+  color: var(--text-primary, #1f2937) !important;
+}
+
+html:not(.dark) .leaflet-popup-content-wrapper .events-map__popup-item {
+  color: var(--text-primary, #1f2937) !important;
+}
+
+html:not(.dark) .leaflet-popup-content-wrapper .events-map__popup-item span {
+  color: var(--text-primary, #1f2937) !important;
+}
+
+html:not(.dark) .leaflet-popup-content-wrapper .events-map__popup-location {
+  color: var(--text-secondary, #6b7280) !important;
+  border-top-color: var(--border-primary, #e5e7eb) !important;
+}
+
+html:not(.dark) .leaflet-popup-content-wrapper svg {
+  color: var(--color-primary, #3b82f6) !important;
+  stroke: var(--color-primary, #3b82f6) !important;
+}
+
+html:not(.dark) .leaflet-popup-content {
+  color: var(--text-primary, #1f2937) !important;
+}
+
+html:not(.dark) .leaflet-popup-content * {
+  color: var(--text-primary, #1f2937) !important;
+}
+
+html:not(.dark) .leaflet-popup-tip {
+  background: var(--bg-elevated, #ffffff) !important;
+  border-color: var(--border-primary, #e5e7eb) !important;
+}
+
+html:not(.dark) .leaflet-popup-close-button {
+  color: var(--text-secondary, #6b7280) !important;
+}
+
+html:not(.dark) .leaflet-popup-close-button:hover {
+  color: var(--text-primary, #1f2937) !important;
+  background-color: var(--bg-tertiary, #f3f4f6) !important;
+}
+
+/* Leaflet Controls Dark Mode Styles */
+html.dark .leaflet-control {
+  background: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .leaflet-bar {
+  background: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+html.dark .leaflet-bar a {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-bottom: 1px solid #374151 !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+html.dark .leaflet-bar a:hover {
+  background-color: #374151 !important;
+  color: #60a5fa !important;
+}
+
+html.dark .leaflet-bar a:active {
+  background-color: #4b5563 !important;
+}
+
+html.dark .leaflet-bar a.leaflet-disabled {
+  background-color: #1f2937 !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+}
+
+html.dark .leaflet-control-zoom {
+  background: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .leaflet-control-zoom-in,
+html.dark .leaflet-control-zoom-out {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+html.dark .leaflet-control-zoom-in:hover,
+html.dark .leaflet-control-zoom-out:hover {
+  background-color: #374151 !important;
+  color: #60a5fa !important;
+}
+
+html.dark .leaflet-control-attribution {
+  background: rgba(31, 41, 55, 0.9) !important;
+  color: #d1d5db !important;
+  font-size: 0.7rem !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 6px 0 0 0 !important;
+}
+
+html.dark .leaflet-control-attribution a {
+  color: #60a5fa !important;
+}
+
+html.dark .leaflet-control-attribution a:hover {
+  color: #93c5fd !important;
+}
+
+/* Leaflet Controls Light Mode Styles */
+html:not(.dark) .leaflet-control {
+  background: var(--bg-elevated, #ffffff) !important;
+  border: 1px solid var(--border-primary, #e5e7eb) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+html:not(.dark) .leaflet-bar {
+  background: var(--bg-elevated, #ffffff) !important;
+  border: 1px solid var(--border-primary, #e5e7eb) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+html:not(.dark) .leaflet-bar a {
+  background-color: var(--bg-elevated, #ffffff) !important;
+  color: var(--text-primary, #1f2937) !important;
+  border-bottom: 1px solid var(--border-primary, #e5e7eb) !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+html:not(.dark) .leaflet-bar a:hover {
+  background-color: var(--bg-secondary, #f9fafb) !important;
+  color: var(--color-primary, #3b82f6) !important;
+}
+
+html:not(.dark) .leaflet-bar a:active {
+  background-color: var(--bg-tertiary, #f3f4f6) !important;
+}
+
+html:not(.dark) .leaflet-bar a.leaflet-disabled {
+  background-color: var(--bg-elevated, #ffffff) !important;
+  color: var(--text-secondary, #9ca3af) !important;
+  cursor: not-allowed !important;
+}
+
+html:not(.dark) .leaflet-control-zoom {
+  background: var(--bg-elevated, #ffffff) !important;
+  border: 1px solid var(--border-primary, #e5e7eb) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+html:not(.dark) .leaflet-control-zoom-in,
+html:not(.dark) .leaflet-control-zoom-out {
+  background-color: var(--bg-elevated, #ffffff) !important;
+  color: var(--text-primary, #1f2937) !important;
+  border-bottom: 1px solid var(--border-primary, #e5e7eb) !important;
+}
+
+html:not(.dark) .leaflet-control-zoom-in:hover,
+html:not(.dark) .leaflet-control-zoom-out:hover {
+  background-color: var(--bg-secondary, #f9fafb) !important;
+  color: var(--color-primary, #3b82f6) !important;
+}
+
+html:not(.dark) .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: var(--text-secondary, #6b7280) !important;
+  font-size: 0.7rem !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 6px 0 0 0 !important;
+}
+
+html:not(.dark) .leaflet-control-attribution a {
+  color: var(--color-primary, #3b82f6) !important;
+}
+
+html:not(.dark) .leaflet-control-attribution a:hover {
+  color: var(--color-primary-hover, #2563eb) !important;
 }

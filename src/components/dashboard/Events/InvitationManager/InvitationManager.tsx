@@ -1,8 +1,8 @@
 // components/dashboard/Events/InvitationManager/InvitationManager.tsx
-import React, { useState, useEffect } from 'react';
-import { 
-  Mail, 
-  Printer, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Mail,
+  Printer,
   Download,
   Send,
   Copy,
@@ -11,15 +11,11 @@ import {
   Users,
   Eye,
   X,
-  Smartphone
+  Smartphone,
 } from 'lucide-react';
 import RSVPService from '../../../../services/firebase/rsvpService';
 import { NewRSVPService } from '../../../../services/firebase/newRSVPService';
-import { 
-  Event, 
-  GuestInvitation,
-  InvitationDelivery
-} from '../../../../types';
+import { Event, GuestInvitation, InvitationDelivery } from '../../../../types';
 import './InvitationManager.scss';
 
 interface InvitationManagerProps {
@@ -27,25 +23,31 @@ interface InvitationManagerProps {
   onClose: () => void;
 }
 
-const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose }) => {
+const InvitationManager: React.FC<InvitationManagerProps> = ({
+  event,
+  onClose,
+}) => {
   const [invitations, setInvitations] = useState<GuestInvitation[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
-  const [deliveryMethod, setDeliveryMethod] = useState<'email' | 'sms' | 'print'>('email');
-  const [emailSubject, setEmailSubject] = useState(`Zaproszenie na ${event.title}`);
+  const [deliveryMethod, setDeliveryMethod] = useState<
+    'email' | 'sms' | 'print'
+  >('email');
+  const [emailSubject, setEmailSubject] = useState(
+    `Zaproszenie na ${event.title}`
+  );
   const [emailMessage, setEmailMessage] = useState('');
   const [includeQR, setIncludeQR] = useState(true);
   const [showPreview, setShowPreview] = useState<string | null>(null);
-  const [sendingStatus, setSendingStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [sendingStatus, setSendingStatus] = useState<
+    'idle' | 'sending' | 'success' | 'error'
+  >('idle');
 
-  useEffect(() => {
-    generateInvitations();
-  }, [event.id]);
-
-  const generateInvitations = async () => {
+  const generateInvitations = useCallback(async () => {
     try {
       setLoading(true);
-      const generatedInvitations = await NewRSVPService.generateInvitationsForEvent(event.id);
+      const generatedInvitations =
+        await NewRSVPService.generateInvitationsForEvent(event.id);
       setInvitations(generatedInvitations);
       setSelectedGuests(generatedInvitations.map(inv => inv.eventGuestId));
     } catch (error) {
@@ -53,7 +55,11 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     } finally {
       setLoading(false);
     }
-  };
+  }, [event.id]);
+
+  useEffect(() => {
+    generateInvitations();
+  }, [event.id, generateInvitations]);
 
   const handleSelectAll = () => {
     if (selectedGuests.length === invitations.length) {
@@ -74,20 +80,25 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
   const handleSendInvitations = async () => {
     try {
       setSendingStatus('sending');
-      
-    const selectedInvitations = invitations.filter(inv => 
-      selectedGuests.includes(inv.eventGuestId)
-    );      const delivery: InvitationDelivery = {
+
+      const selectedInvitations = invitations.filter(inv =>
+        selectedGuests.includes(inv.eventGuestId)
+      );
+      const delivery: InvitationDelivery = {
         method: deliveryMethod,
         recipients: selectedInvitations.map(inv => inv.email),
         subject: emailSubject,
         message: emailMessage,
-        includeQR
+        includeQR,
       };
 
       switch (deliveryMethod) {
         case 'email':
-          await RSVPService.sendEmailInvitations(selectedInvitations, event, delivery);
+          await RSVPService.sendEmailInvitations(
+            selectedInvitations,
+            event,
+            delivery
+          );
           break;
         case 'sms':
           await handleSMSInvitations(selectedInvitations);
@@ -106,7 +117,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     }
   };
 
-  const handleSMSInvitations = async (selectedInvitations: GuestInvitation[]) => {
+  const handleSMSInvitations = async (
+    selectedInvitations: GuestInvitation[]
+  ) => {
     // Generuj linki SMS dla każdego gościa
     const smsLinks = selectedInvitations.map(invitation => {
       const message = RSVPService.generateSMSMessage(invitation, event);
@@ -117,14 +130,15 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     // Otwórz każdy link SMS (ograniczenie przeglądarek - tylko jeden na raz)
     if (smsLinks.length > 0) {
       window.open(smsLinks[0], '_blank');
-      console.log('Wygenerowano linki SMS:', smsLinks);
     }
   };
 
-  const handlePrintInvitations = async (selectedInvitations: GuestInvitation[]) => {
+  const handlePrintInvitations = async (
+    selectedInvitations: GuestInvitation[]
+  ) => {
     const printContent = generatePrintContent(selectedInvitations);
     const printWindow = window.open('', '_blank');
-    
+
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
@@ -132,7 +146,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     }
   };
 
-  const generatePrintContent = (selectedInvitations: GuestInvitation[]): string => {
+  const generatePrintContent = (
+    selectedInvitations: GuestInvitation[]
+  ): string => {
     return `
 <!DOCTYPE html>
 <html>
@@ -154,7 +170,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
     </style>
 </head>
 <body>
-    ${selectedInvitations.map(invitation => `
+    ${selectedInvitations
+      .map(
+        invitation => `
         <div class="invitation">
             <div class="header">
                 <h1>${event.title}</h1>
@@ -178,7 +196,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
                 <p><small>${invitation.rsvpUrl}</small></p>
             </div>
         </div>
-    `).join('')}
+    `
+      )
+      .join('')}
 </body>
 </html>
     `;
@@ -211,21 +231,19 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
   }
 
   return (
-    <div className="invitation-manager">
-      <div className="invitation-manager__header">
-        <div className="invitation-manager__title">
-          <h2>Zarządzanie zaproszeniami</h2>
-          <p>{event.title} • {invitations.length} gości</p>
-        </div>
-        <button 
-          className="invitation-manager__close"
-          onClick={onClose}
-        >
-          <X size={20} />
-        </button>
-      </div>
-
+    <div className="invitation-manager" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="invitation-manager__content">
+        <div className="invitation-manager__header">
+          <div className="invitation-manager__title">
+            <h2>Zarządzanie zaproszeniami</h2>
+            <p>
+              {event.title} • {invitations.length} gości
+            </p>
+          </div>
+          <button className="invitation-manager__close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
         {/* Lista gości */}
         <div className="invitation-manager__guests">
           <div className="invitation-manager__guests-header">
@@ -233,20 +251,24 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
               <Users size={20} />
               Lista gości ({selectedGuests.length}/{invitations.length})
             </h3>
-            <button 
+            <button
               className="invitation-manager__select-all"
               onClick={handleSelectAll}
             >
-              {selectedGuests.length === invitations.length ? 'Odznacz wszystkich' : 'Zaznacz wszystkich'}
+              {selectedGuests.length === invitations.length
+                ? 'Odznacz wszystkich'
+                : 'Zaznacz wszystkich'}
             </button>
           </div>
 
           <div className="invitation-manager__guests-list">
             {invitations.map(invitation => (
-              <div 
-                key={invitation.eventGuestId} 
+              <div
+                key={invitation.eventGuestId}
                 className={`invitation-manager__guest ${
-                  selectedGuests.includes(invitation.eventGuestId) ? 'selected' : ''
+                  selectedGuests.includes(invitation.eventGuestId)
+                    ? 'selected'
+                    : ''
                 }`}
               >
                 <label className="invitation-manager__guest-checkbox">
@@ -294,36 +316,42 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
         {/* Opcje wysyłania */}
         <div className="invitation-manager__delivery">
           <h3>Metoda wysyłania</h3>
-          
+
           <div className="invitation-manager__delivery-methods">
-            <label className={`invitation-manager__method ${deliveryMethod === 'email' ? 'active' : ''}`}>
+            <label
+              className={`invitation-manager__method ${deliveryMethod === 'email' ? 'active' : ''}`}
+            >
               <input
                 type="radio"
                 value="email"
                 checked={deliveryMethod === 'email'}
-                onChange={(e) => setDeliveryMethod(e.target.value as 'email')}
+                onChange={e => setDeliveryMethod(e.target.value as 'email')}
               />
               <Mail size={20} />
               <span>E-mail</span>
             </label>
 
-            <label className={`invitation-manager__method ${deliveryMethod === 'sms' ? 'active' : ''}`}>
+            <label
+              className={`invitation-manager__method ${deliveryMethod === 'sms' ? 'active' : ''}`}
+            >
               <input
                 type="radio"
                 value="sms"
                 checked={deliveryMethod === 'sms'}
-                onChange={(e) => setDeliveryMethod(e.target.value as 'sms')}
+                onChange={e => setDeliveryMethod(e.target.value as 'sms')}
               />
               <Smartphone size={20} />
               <span>SMS</span>
             </label>
 
-            <label className={`invitation-manager__method ${deliveryMethod === 'print' ? 'active' : ''}`}>
+            <label
+              className={`invitation-manager__method ${deliveryMethod === 'print' ? 'active' : ''}`}
+            >
               <input
                 type="radio"
                 value="print"
                 checked={deliveryMethod === 'print'}
-                onChange={(e) => setDeliveryMethod(e.target.value as 'print')}
+                onChange={e => setDeliveryMethod(e.target.value as 'print')}
               />
               <Printer size={20} />
               <span>Drukuj</span>
@@ -337,7 +365,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
                 <input
                   type="text"
                   value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
+                  onChange={e => setEmailSubject(e.target.value)}
                   placeholder="Temat e-maila"
                 />
               </div>
@@ -346,7 +374,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
                 <label>Treść wiadomości:</label>
                 <textarea
                   value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
+                  onChange={e => setEmailMessage(e.target.value)}
                   placeholder="Dodatkowa treść wiadomości (opcjonalna)"
                   rows={4}
                 />
@@ -356,7 +384,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
                 <input
                   type="checkbox"
                   checked={includeQR}
-                  onChange={(e) => setIncludeQR(e.target.checked)}
+                  onChange={e => setIncludeQR(e.target.checked)}
                 />
                 <span>Dołącz kod QR</span>
               </label>
@@ -365,19 +393,23 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
 
           <div className="invitation-manager__send-section">
             <div className="invitation-manager__send-info">
-              <p>Wyślij zaproszenia do {selectedGuests.length} wybranych gości</p>
+              <p>
+                Wyślij zaproszenia do {selectedGuests.length} wybranych gości
+              </p>
             </div>
 
             <button
               className={`invitation-manager__send-btn ${sendingStatus}`}
               onClick={handleSendInvitations}
-              disabled={selectedGuests.length === 0 || sendingStatus === 'sending'}
+              disabled={
+                selectedGuests.length === 0 || sendingStatus === 'sending'
+              }
             >
               {sendingStatus === 'sending' && <div className="spinner small" />}
               {sendingStatus === 'success' && <CheckCircle size={20} />}
               {sendingStatus === 'error' && <AlertCircle size={20} />}
               {sendingStatus === 'idle' && <Send size={20} />}
-              
+
               <span>
                 {sendingStatus === 'sending' && 'Wysyłanie...'}
                 {sendingStatus === 'success' && 'Wysłano!'}
@@ -401,14 +433,24 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ event, onClose })
             </div>
             <div className="invitation-manager__preview-content">
               {(() => {
-                const invitation = invitations.find(inv => inv.rsvpToken === showPreview);
+                const invitation = invitations.find(
+                  inv => inv.rsvpToken === showPreview
+                );
                 return invitation ? (
                   <>
                     <img src={invitation.qrCode} alt="QR Code" />
-                    <p><strong>{invitation.firstName} {invitation.lastName}</strong></p>
-                    <p className="invitation-manager__preview-url">{invitation.rsvpUrl}</p>
+                    <p>
+                      <strong>
+                        {invitation.firstName} {invitation.lastName}
+                      </strong>
+                    </p>
+                    <p className="invitation-manager__preview-url">
+                      {invitation.rsvpUrl}
+                    </p>
                     <div className="invitation-manager__preview-actions">
-                      <button onClick={() => copyToClipboard(invitation.rsvpUrl)}>
+                      <button
+                        onClick={() => copyToClipboard(invitation.rsvpUrl)}
+                      >
                         <Copy size={16} />
                         Kopiuj link
                       </button>

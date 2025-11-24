@@ -7,7 +7,10 @@ interface StableSearchInputProps {
 }
 
 // Completely isolated search input that maintains its own state
-const StableSearchInput: React.FC<StableSearchInputProps> = ({ onSearch, placeholder = "Szukaj..." }) => {
+const StableSearchInput: React.FC<StableSearchInputProps> = ({
+  onSearch,
+  placeholder = 'Szukaj...',
+}) => {
   const [localValue, setLocalValue] = useState('');
   const [hasInitialized, setHasInitialized] = useState(false);
 
@@ -33,7 +36,7 @@ const StableSearchInput: React.FC<StableSearchInputProps> = ({ onSearch, placeho
         type="text"
         placeholder={placeholder}
         value={localValue}
-        onChange={(e) => setLocalValue(e.target.value)}
+        onChange={e => setLocalValue(e.target.value)}
         autoComplete="off"
       />
     </div>

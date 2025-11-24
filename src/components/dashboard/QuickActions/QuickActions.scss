@@ -3,44 +3,56 @@
 .quick-actions {
   display: flex;
   gap: var(--space-md);
-  
+
   @media (max-width: 768px) {
     flex-wrap: wrap;
   }
-  
+
   &__btn {
-    @include mixins.button-base;
-    background: white;
-    border: 1px solid var(--gray-200);
-    color: var(--gray-600);
-    padding: var(--space-sm) var(--space-lg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     gap: var(--space-sm);
-    font-size: 0.875rem;
-    
-    &:hover {
-      border-color: var(--gray-300);
-      color: var(--gray-800);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition:
+      background-color 0.2s ease,
+      opacity 0.2s ease,
+      color 0.2s ease;
+
+    svg {
+      flex-shrink: 0;
     }
-    
+
+    &:hover:not(.quick-actions__btn--primary) {
+      border-color: var(--border-secondary);
+      color: var(--text-primary);
+    }
+
     &--primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      border-color: var(--primary);
-      color: white;
-      
+      background: var(--color-primary);
+      color: var(--text-inverse) !important;
+      font-weight: 600;
+      border: none;
+      transition: background-color var(--transition-colors, 0.2s ease),
+                  opacity 0.2s ease,
+                  color 0.2s ease;
+
       &:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
+        opacity: 0.92;
+        color: var(--text-inverse) !important;
       }
     }
   }
-  
+
   &__label {
     font-weight: 500;
-    
-    @media (max-width: 640px) {
-      display: none;
-    }
+    display: inline-block;
   }
 }

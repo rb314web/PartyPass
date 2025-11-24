@@ -1,137 +1,218 @@
 // components/dashboard/Settings/AppearanceSettings/AppearanceSettings.tsx
-import React, { useState } from 'react';
-import { Palette, Sun, Globe, Type } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Palette, Globe, Type } from 'lucide-react';
+import AccentColorSection from './AccentColorSection';
 import './AppearanceSettings.scss';
+
+// Kolory akcentu z wartościami CSS - stonowane odcienie
+const accentColors = [
+  {
+    id: 'blue',
+    name: 'Niebieski',
+    value: '#5b7fd4',
+    light: '#7a9ee3',
+    dark: '#4663b8',
+  },
+  {
+    id: 'purple',
+    name: 'Fioletowy',
+    value: '#8b7ab8',
+    light: '#a594cc',
+    dark: '#7461a0',
+  },
+  {
+    id: 'green',
+    name: 'Zielony',
+    value: '#5ba083',
+    light: '#75b89a',
+    dark: '#477066',
+  },
+  {
+    id: 'orange',
+    name: 'Pomarańczowy',
+    value: '#d4945b',
+    light: '#e0ad7c',
+    dark: '#b87a45',
+  },
+  {
+    id: 'red',
+    name: 'Czerwony',
+    value: '#d4695b',
+    light: '#e0857c',
+    dark: '#b85145',
+  },
+  {
+    id: 'teal',
+    name: 'Morski',
+    value: '#5ba8a0',
+    light: '#7cbab4',
+    dark: '#45827c',
+  },
+  {
+    id: 'slate',
+    name: 'Łupkowy',
+    value: '#6b7a8f',
+    light: '#8a96a8',
+    dark: '#535f6f',
+  },
+];
 
 const AppearanceSettings: React.FC = () => {
   const [settings, setSettings] = useState({
     theme: 'light' as 'light',
-    accentColor: 'blue' as 'blue' | 'purple' | 'green' | 'orange' | 'red',
+    accentColor:
+      (localStorage.getItem('accentColor') as
+        | 'blue'
+        | 'purple'
+        | 'green'
+        | 'orange'
+        | 'red'
+        | 'teal'
+        | 'slate'
+        | 'custom') || 'blue',
+    customColor: localStorage.getItem('customAccentColor') || '#5b7fd4',
     language: 'pl' as 'pl' | 'en' | 'de' | 'fr',
     dateFormat: 'DD/MM/YYYY' as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD',
     timeFormat: '24h' as '12h' | '24h',
     currency: 'PLN' as 'PLN' | 'EUR' | 'USD' | 'GBP',
     compactMode: false,
     reducedMotion: false,
-    highContrast: false
+    highContrast: false,
   });
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const applyCustomColor = useCallback((hexColor: string) => {
+    const root = document.documentElement;
+    const light = lightenColor(hexColor, 15);
+    const dark = darkenColor(hexColor, 15);
+
+    root.style.setProperty('--color-primary', hexColor);
+    root.style.setProperty('--primary', hexColor);
+    root.style.setProperty('--color-primary-light', light);
+    root.style.setProperty('--primary-light', light);
+    root.style.setProperty('--color-primary-dark', dark);
+    root.style.setProperty('--primary-dark', dark);
+
+    localStorage.setItem('customAccentColor', hexColor);
+    localStorage.setItem('accentColor', 'custom');
+  }, []);
+
+  const applyAccentColor = useCallback((colorId: string) => {
+    const color = accentColors.find(c => c.id === colorId);
+    if (color) {
+      const root = document.documentElement;
+      root.style.setProperty('--color-primary', color.value);
+      root.style.setProperty('--primary', color.value);
+      root.style.setProperty('--color-primary-light', color.light);
+      root.style.setProperty('--primary-light', color.light);
+      root.style.setProperty('--color-primary-dark', color.dark);
+      root.style.setProperty('--primary-dark', color.dark);
+
+      localStorage.setItem('accentColor', colorId);
+      localStorage.removeItem('customAccentColor');
+    }
+  }, []);
+
+  // Zastosuj kolor akcentu przy montowaniu komponentu
+  useEffect(() => {
+    if (settings.accentColor === 'custom') {
+      applyCustomColor(settings.customColor);
+    } else {
+      applyAccentColor(settings.accentColor);
+    }
+  }, [settings.accentColor, settings.customColor, applyAccentColor, applyCustomColor]);
+
+  const lightenColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = ((num >> 8) & 0x00ff) + amt;
+    const B = (num & 0x0000ff) + amt;
+    return (
+      '#' +
+      (
+        0x1000000 +
+        (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+        (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+        (B < 255 ? (B < 1 ? 0 : B) : 255)
+      )
+        .toString(16)
+        .slice(1)
+    );
+  };
+
+  const darkenColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) - amt;
+    const G = ((num >> 8) & 0x00ff) - amt;
+    const B = (num & 0x0000ff) - amt;
+    return (
+      '#' +
+      (
+        0x1000000 +
+        (R > 0 ? R : 0) * 0x10000 +
+        (G > 0 ? G : 0) * 0x100 +
+        (B > 0 ? B : 0)
+      )
+        .toString(16)
+        .slice(1)
+    );
+  };
+
   const handleSettingChange = (key: keyof typeof settings, value: any) => {
     setSettings(prev => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
+
+    // Natychmiast zastosuj kolor akcentu
+    if (key === 'accentColor') {
+      if (value === 'custom') {
+        applyCustomColor(settings.customColor);
+      } else {
+        applyAccentColor(value);
+      }
+    } else if (key === 'customColor') {
+      applyCustomColor(value);
+      setSettings(prev => ({
+        ...prev,
+        accentColor: 'custom',
+      }));
+    }
   };
 
   const handleSave = async () => {
     setIsLoading(true);
-    
+
     // Symulacja API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     alert('Ustawienia wyglądu zostały zapisane!');
     setIsLoading(false);
   };
-
-  const themes = [
-    { id: 'light', name: 'Jasny', icon: Sun, description: 'Klasyczny jasny motyw' },
-  ];
-
-  const accentColors = [
-    { id: 'blue', name: 'Niebieski', value: '#6366f1' },
-    { id: 'purple', name: 'Fioletowy', value: '#8b5cf6' },
-    { id: 'green', name: 'Zielony', value: '#10b981' },
-    { id: 'orange', name: 'Pomarańczowy', value: '#f59e0b' },
-    { id: 'red', name: 'Czerwony', value: '#ef4444' }
-  ];
 
   const languages = [
     { code: 'pl', name: 'Polski', flag: '🇵🇱' },
     { code: 'en', name: 'English', flag: '🇺🇸' },
     { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' }
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
   ];
 
   return (
     <div className="appearance-settings">
       <div className="appearance-settings__header">
-        <h2>Wygląd i personalizacja</h2>
+        <h1>Wygląd i personalizacja</h1>
         <p>Dostosuj interfejs aplikacji do swoich preferencji</p>
       </div>
 
-      {/* Theme Selection */}
-      <div className="appearance-settings__section">
-        <div className="appearance-settings__section-header">
-          <div className="appearance-settings__section-icon">
-            <Palette size={20} />
-          </div>
-          <div>
-            <h3>Motyw</h3>
-            <p>Wybierz preferowany schemat kolorów</p>
-          </div>
-        </div>
-
-        <div className="appearance-settings__theme-grid">
-          {themes.map((theme) => (
-            <label key={theme.id} className="appearance-settings__theme-option">
-              <input
-                type="radio"
-                name="theme"
-                value={theme.id}
-                checked={settings.theme === theme.id}
-                onChange={(e) => handleSettingChange('theme', e.target.value)}
-              />
-              <div className="appearance-settings__theme-card">
-                <div className="appearance-settings__theme-preview">
-                  <theme.icon size={24} />
-                </div>
-                <div className="appearance-settings__theme-info">
-                  <span className="appearance-settings__theme-name">{theme.name}</span>
-                  <span className="appearance-settings__theme-description">{theme.description}</span>
-                </div>
-              </div>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Accent Color */}
-      <div className="appearance-settings__section">
-        <div className="appearance-settings__section-header">
-          <div className="appearance-settings__section-icon">
-            <Palette size={20} />
-          </div>
-          <div>
-            <h3>Kolor akcentu</h3>
-            <p>Główny kolor używany w interfejsie</p>
-          </div>
-        </div>
-
-        <div className="appearance-settings__color-grid">
-          {accentColors.map((color) => (
-            <label key={color.id} className="appearance-settings__color-option">
-              <input
-                type="radio"
-                name="accentColor"
-                value={color.id}
-                checked={settings.accentColor === color.id}
-                onChange={(e) => handleSettingChange('accentColor', e.target.value)}
-              />
-              <div 
-                className="appearance-settings__color-swatch"
-                style={{ backgroundColor: color.value }}
-              >
-                {settings.accentColor === color.id && (
-                  <div className="appearance-settings__color-check">✓</div>
-                )}
-              </div>
-              <span className="appearance-settings__color-name">{color.name}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <AccentColorSection
+        settings={settings}
+        onSettingChange={handleSettingChange}
+        applyCustomColor={applyCustomColor}
+        accentColors={accentColors}
+      />
 
       {/* Language & Region */}
       <div className="appearance-settings__section">
@@ -150,9 +231,9 @@ const AppearanceSettings: React.FC = () => {
             <label>Język interfejsu</label>
             <select
               value={settings.language}
-              onChange={(e) => handleSettingChange('language', e.target.value)}
+              onChange={e => handleSettingChange('language', e.target.value)}
             >
-              {languages.map((lang) => (
+              {languages.map(lang => (
                 <option key={lang.code} value={lang.code}>
                   {lang.flag} {lang.name}
                 </option>
@@ -164,7 +245,7 @@ const AppearanceSettings: React.FC = () => {
             <label>Format daty</label>
             <select
               value={settings.dateFormat}
-              onChange={(e) => handleSettingChange('dateFormat', e.target.value)}
+              onChange={e => handleSettingChange('dateFormat', e.target.value)}
             >
               <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2024)</option>
               <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2024)</option>
@@ -176,7 +257,7 @@ const AppearanceSettings: React.FC = () => {
             <label>Format czasu</label>
             <select
               value={settings.timeFormat}
-              onChange={(e) => handleSettingChange('timeFormat', e.target.value)}
+              onChange={e => handleSettingChange('timeFormat', e.target.value)}
             >
               <option value="24h">24-godzinny (15:30)</option>
               <option value="12h">12-godzinny (3:30 PM)</option>
@@ -187,7 +268,7 @@ const AppearanceSettings: React.FC = () => {
             <label>Waluta</label>
             <select
               value={settings.currency}
-              onChange={(e) => handleSettingChange('currency', e.target.value)}
+              onChange={e => handleSettingChange('currency', e.target.value)}
             >
               <option value="PLN">PLN (Polski złoty)</option>
               <option value="EUR">EUR (Euro)</option>
@@ -213,7 +294,9 @@ const AppearanceSettings: React.FC = () => {
         <div className="appearance-settings__accessibility-options">
           <div className="appearance-settings__option">
             <div className="appearance-settings__option-info">
-              <span className="appearance-settings__option-title">Tryb kompaktowy</span>
+              <span className="appearance-settings__option-title">
+                Tryb kompaktowy
+              </span>
               <span className="appearance-settings__option-description">
                 Zmniejsza odstępy i rozmiary elementów
               </span>
@@ -222,7 +305,9 @@ const AppearanceSettings: React.FC = () => {
               <input
                 type="checkbox"
                 checked={settings.compactMode}
-                onChange={(e) => handleSettingChange('compactMode', e.target.checked)}
+                onChange={e =>
+                  handleSettingChange('compactMode', e.target.checked)
+                }
               />
               <span className="appearance-settings__slider"></span>
             </label>
@@ -230,7 +315,9 @@ const AppearanceSettings: React.FC = () => {
 
           <div className="appearance-settings__option">
             <div className="appearance-settings__option-info">
-              <span className="appearance-settings__option-title">Ograniczone animacje</span>
+              <span className="appearance-settings__option-title">
+                Ograniczone animacje
+              </span>
               <span className="appearance-settings__option-description">
                 Redukuje ruchy i animacje w interfejsie
               </span>
@@ -239,7 +326,9 @@ const AppearanceSettings: React.FC = () => {
               <input
                 type="checkbox"
                 checked={settings.reducedMotion}
-                onChange={(e) => handleSettingChange('reducedMotion', e.target.checked)}
+                onChange={e =>
+                  handleSettingChange('reducedMotion', e.target.checked)
+                }
               />
               <span className="appearance-settings__slider"></span>
             </label>
@@ -247,7 +336,9 @@ const AppearanceSettings: React.FC = () => {
 
           <div className="appearance-settings__option">
             <div className="appearance-settings__option-info">
-              <span className="appearance-settings__option-title">Wysoki kontrast</span>
+              <span className="appearance-settings__option-title">
+                Wysoki kontrast
+              </span>
               <span className="appearance-settings__option-description">
                 Zwiększa kontrast dla lepszej czytelności
               </span>
@@ -256,7 +347,9 @@ const AppearanceSettings: React.FC = () => {
               <input
                 type="checkbox"
                 checked={settings.highContrast}
-                onChange={(e) => handleSettingChange('highContrast', e.target.checked)}
+                onChange={e =>
+                  handleSettingChange('highContrast', e.target.checked)
+                }
               />
               <span className="appearance-settings__slider"></span>
             </label>
@@ -265,6 +358,19 @@ const AppearanceSettings: React.FC = () => {
       </div>
 
       {/* Preview */}
+      {(() => {
+        // Lokalne accentColors tylko dla podglądu
+        const accentColors = [
+          { id: 'blue', value: '#5b7fd4' },
+          { id: 'purple', value: '#8b7ab8' },
+          { id: 'green', value: '#5ba083' },
+          { id: 'orange', value: '#d4945b' },
+          { id: 'red', value: '#d4695b' },
+          { id: 'teal', value: '#5ba8a0' },
+          { id: 'slate', value: '#6b7a8f' },
+        ];
+
+        return (
       <div className="appearance-settings__section">
         <div className="appearance-settings__section-header">
           <div className="appearance-settings__section-icon">
@@ -289,19 +395,31 @@ const AppearanceSettings: React.FC = () => {
             <div className="appearance-settings__preview-content">
               <div className="appearance-settings__preview-sidebar">
                 <div className="appearance-settings__preview-nav">
-                  <div className="appearance-settings__preview-nav-item active">Dashboard</div>
-                  <div className="appearance-settings__preview-nav-item">Wydarzenia</div>
-                  <div className="appearance-settings__preview-nav-item">Goście</div>
+                  <div className="appearance-settings__preview-nav-item active">
+                    Dashboard
+                  </div>
+                  <div className="appearance-settings__preview-nav-item">
+                    Wydarzenia
+                  </div>
+                  <div className="appearance-settings__preview-nav-item">
+                    Goście
+                  </div>
                 </div>
               </div>
               <div className="appearance-settings__preview-main">
                 <div className="appearance-settings__preview-card">
-                  <div className="appearance-settings__preview-title">Urodziny Ani</div>
-                  <div className="appearance-settings__preview-subtitle">15 maja 2024, 19:00</div>
-                  <div 
+                  <div className="appearance-settings__preview-title">
+                    Urodziny Ani
+                  </div>
+                  <div className="appearance-settings__preview-subtitle">
+                    15 maja 2024, 19:00
+                  </div>
+                  <div
                     className="appearance-settings__preview-button"
-                    style={{ 
-                      backgroundColor: accentColors.find(c => c.id === settings.accentColor)?.value 
+                    style={{
+                      backgroundColor: accentColors.find(
+                        c => c.id === settings.accentColor
+                      )?.value,
                     }}
                   >
                     Zobacz szczegóły
@@ -312,10 +430,12 @@ const AppearanceSettings: React.FC = () => {
           </div>
         </div>
       </div>
+      );
+      })()}
 
       {/* Save Button */}
       <div className="appearance-settings__actions">
-        <button 
+        <button
           className="appearance-settings__save-btn"
           onClick={handleSave}
           disabled={isLoading}

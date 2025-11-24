@@ -34,7 +34,7 @@ export const AddEvent: React.FC<AddEventProps> = ({
   open,
   onClose,
   userId,
-  onEventAdded
+  onEventAdded,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -45,14 +45,14 @@ export const AddEvent: React.FC<AddEventProps> = ({
     location: '',
     maxGuests: '',
     dresscode: '',
-    additionalInfo: ''
+    additionalInfo: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -60,7 +60,7 @@ export const AddEvent: React.FC<AddEventProps> = ({
     if (newDate) {
       setFormData(prev => ({
         ...prev,
-        date: newDate
+        date: newDate,
       }));
     }
   };
@@ -86,10 +86,12 @@ export const AddEvent: React.FC<AddEventProps> = ({
         guestCount: 0,
         acceptedCount: 0,
         declinedCount: 0,
-        pendingCount: 0
+        pendingCount: 0,
       });
 
-      enqueueSnackbar('Wydarzenie zostało utworzone pomyślnie!', { variant: 'success' });
+      enqueueSnackbar('Wydarzenie zostało utworzone pomyślnie!', {
+        variant: 'success',
+      });
       onEventAdded();
       onClose();
       setFormData({
@@ -99,22 +101,25 @@ export const AddEvent: React.FC<AddEventProps> = ({
         location: '',
         maxGuests: '',
         dresscode: '',
-        additionalInfo: ''
+        additionalInfo: '',
       });
     } catch (error: any) {
-      enqueueSnackbar(error.message || 'Wystąpił błąd podczas tworzenia wydarzenia', {
-        variant: 'error'
-      });
+      enqueueSnackbar(
+        error.message || 'Wystąpił błąd podczas tworzenia wydarzenia',
+        {
+          variant: 'error',
+        }
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       className="add-event-dialog"
     >
@@ -144,7 +149,10 @@ export const AddEvent: React.FC<AddEventProps> = ({
               disabled={loading}
             />
 
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
+            <LocalizationProvider
+              dateAdapter={AdapterDateFns}
+              adapterLocale={pl}
+            >
               <DateTimePicker
                 label="Data i godzina wydarzenia"
                 value={formData.date}
@@ -153,8 +161,8 @@ export const AddEvent: React.FC<AddEventProps> = ({
                 slotProps={{
                   textField: {
                     required: true,
-                    fullWidth: true
-                  }
+                    fullWidth: true,
+                  },
                 }}
               />
             </LocalizationProvider>

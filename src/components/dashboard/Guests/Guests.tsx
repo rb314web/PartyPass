@@ -1,24 +1,28 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Plus, 
-  Download, 
+import {
+  Users,
+  Search,
+  Filter,
+  Plus,
+  Download,
   Mail,
   Phone,
   Calendar,
   AlertCircle,
-  Edit3
+  Edit3,
 } from 'lucide-react';
 import { Box, Typography, Skeleton } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import type { Guest } from '../../../types';
-import { GuestService, GuestFilters } from '../../../services/firebase/guestService';
+import {
+  GuestService,
+  GuestFilters,
+} from '../../../services/firebase/guestService';
 import { EventService } from '../../../services/firebase/eventService';
 import { AddGuest } from './AddGuest/AddGuest';
 import { EditGuestModal } from './EditGuestModal/EditGuestModal';
+import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import './Guests.scss';
 
 const Guests: React.FC = () => {
@@ -35,33 +39,38 @@ const Guests: React.FC = () => {
   const [hasMore, setHasMore] = useState(false);
   const [lastDoc, setLastDoc] = useState<any>(null);
 
-  const loadGuests = useCallback(async (isLoadingMore = false) => {
-    try {
-      if (!isLoadingMore) {
-        setIsLoading(true);
-      }
-      const filters: GuestFilters = {};
-      if (searchQuery) {
-        filters.search = searchQuery;
-      }
+  const loadGuests = useCallback(
+    async (isLoadingMore = false) => {
+      try {
+        if (!isLoadingMore) {
+          setIsLoading(true);
+        }
+        const filters: GuestFilters = {};
+        if (searchQuery) {
+          filters.search = searchQuery;
+        }
 
-      const result = await GuestService.getUserGuests(
-        user!.id,
-        filters,
-        10,
-        isLoadingMore ? lastDoc : undefined
-      );
+        const result = await GuestService.getUserGuests(
+          user!.id,
+          filters,
+          10,
+          isLoadingMore ? lastDoc : undefined
+        );
 
-      setGuests(prev => isLoadingMore ? [...prev, ...result.guests] : result.guests);
-      setLastDoc(result.lastDoc);
-      setHasMore(result.hasMore);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, searchQuery, lastDoc]);
+        setGuests(prev =>
+          isLoadingMore ? [...prev, ...result.guests] : result.guests
+        );
+        setLastDoc(result.lastDoc);
+        setHasMore(result.hasMore);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user, searchQuery, lastDoc]
+  );
 
   useEffect(() => {
     if (user?.id) {
@@ -71,9 +80,10 @@ const Guests: React.FC = () => {
 
   const filteredAndSortedGuests = useMemo(() => {
     let filtered = guests.filter(guest => {
-      const matchesSearch = guest.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           guest.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           guest.email.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        guest.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        guest.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        guest.email.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
 
@@ -87,12 +97,12 @@ const Guests: React.FC = () => {
           bValue = `${b.firstName} ${b.lastName}`;
           break;
         case 'event':
-          aValue = a.eventName;
-          bValue = b.eventName;
+          aValue = a.eventName || '';
+          bValue = b.eventName || '';
           break;
         case 'date':
-          aValue = a.eventDate;
-          bValue = b.eventDate;
+          aValue = a.eventDate || new Date(0);
+          bValue = b.eventDate || new Date(0);
           break;
         default:
           return 0;
@@ -109,7 +119,9 @@ const Guests: React.FC = () => {
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [isEditGuestModalOpen, setIsEditGuestModalOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
-  const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
+  const [events, setEvents] = useState<Array<{ id: string; title: string }>>(
+    []
+  );
   const [selectedEventId, setSelectedEventId] = useState<string>('');
 
   useEffect(() => {
@@ -119,7 +131,7 @@ const Guests: React.FC = () => {
           const result = await EventService.getUserEvents(user.id);
           const mappedEvents = result.events.map(event => ({
             id: event.id,
-            title: event.title
+            title: event.title,
           }));
           setEvents(mappedEvents);
           if (mappedEvents.length > 0) {
@@ -179,23 +191,25 @@ const Guests: React.FC = () => {
   const GuestsListPage = () => (
     <div className="guests">
       <div className="guests__header">
-        <div className="guests__title">
-          <Users size={32} />
+        <div className="guests__title-wrapper">
+          <div className="guests__icon">
+            <Users size={24} />
+          </div>
           <div>
             <h1>Goście</h1>
             <p>Zarządzaj listą gości swoich wydarzeń</p>
           </div>
         </div>
-        
-        <div className="guests__actions">
-          <button 
+
+        <div className="guests__header-actions">
+          <button
             className="guests__action-btn guests__action-btn--secondary"
             onClick={() => navigate('/dashboard/guests/import')}
           >
             <Download size={20} />
             Importuj
           </button>
-          <button 
+          <button
             className="guests__action-btn guests__action-btn--primary"
             onClick={handleCreateGuest}
           >
@@ -212,14 +226,14 @@ const Guests: React.FC = () => {
             type="text"
             placeholder="Szukaj gości..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
 
         <div className="guests__filter-group">
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
+            onChange={e => setFilterStatus(e.target.value as any)}
             className="guests__filter-select"
             style={{ display: 'none' }}
           >
@@ -228,7 +242,7 @@ const Guests: React.FC = () => {
 
           <select
             value={`${sortBy}-${sortDirection}`}
-            onChange={(e) => {
+            onChange={e => {
               const [field, direction] = e.target.value.split('-');
               setSortBy(field as any);
               setSortDirection(direction as any);
@@ -263,26 +277,29 @@ const Guests: React.FC = () => {
                   <tr key={index}>
                     <td>
                       <div className="guests__guest-info">
-                        <Skeleton 
-                          variant="circular" 
-                          width={40} 
+                        <Skeleton
+                          variant="circular"
+                          width={40}
                           height={40}
                           animation="wave"
-                          sx={{ 
-                            backgroundColor: '#f0f0f0'
+                          sx={{
+                            backgroundColor: '#f0f0f0',
                           }}
                         />
                         <div>
-                          <Skeleton 
-                            variant="text" 
-                            width={120} 
+                          <Skeleton
+                            variant="text"
+                            width={120}
                             height={20}
                             animation="wave"
-                            sx={{ marginBottom: '4px', backgroundColor: '#f0f0f0' }}
+                            sx={{
+                              marginBottom: '4px',
+                              backgroundColor: '#f0f0f0',
+                            }}
                           />
-                          <Skeleton 
-                            variant="text" 
-                            width={160} 
+                          <Skeleton
+                            variant="text"
+                            width={160}
                             height={16}
                             animation="wave"
                             sx={{ backgroundColor: '#f0f0f0' }}
@@ -292,16 +309,19 @@ const Guests: React.FC = () => {
                     </td>
                     <td>
                       <div className="guests__event-info">
-                        <Skeleton 
-                          variant="text" 
-                          width={140} 
+                        <Skeleton
+                          variant="text"
+                          width={140}
                           height={18}
                           animation="wave"
-                          sx={{ marginBottom: '4px', backgroundColor: '#f0f0f0' }}
+                          sx={{
+                            marginBottom: '4px',
+                            backgroundColor: '#f0f0f0',
+                          }}
                         />
-                        <Skeleton 
-                          variant="text" 
-                          width={100} 
+                        <Skeleton
+                          variant="text"
+                          width={100}
                           height={14}
                           animation="wave"
                           sx={{ backgroundColor: '#f0f0f0' }}
@@ -309,9 +329,9 @@ const Guests: React.FC = () => {
                       </div>
                     </td>
                     <td>
-                      <Skeleton 
-                        variant="text" 
-                        width={100} 
+                      <Skeleton
+                        variant="text"
+                        width={100}
                         height={16}
                         animation="wave"
                         sx={{ backgroundColor: '#f0f0f0' }}
@@ -319,37 +339,49 @@ const Guests: React.FC = () => {
                     </td>
                     <td>
                       <div className="guests__contact">
-                        <Skeleton 
-                          variant="rectangular" 
-                          width={32} 
+                        <Skeleton
+                          variant="rectangular"
+                          width={32}
                           height={32}
                           animation="wave"
-                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                          sx={{
+                            borderRadius: '6px',
+                            backgroundColor: '#f0f0f0',
+                          }}
                         />
-                        <Skeleton 
-                          variant="rectangular" 
-                          width={32} 
+                        <Skeleton
+                          variant="rectangular"
+                          width={32}
                           height={32}
                           animation="wave"
-                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                          sx={{
+                            borderRadius: '6px',
+                            backgroundColor: '#f0f0f0',
+                          }}
                         />
                       </div>
                     </td>
                     <td>
                       <div className="guests__actions-cell">
-                        <Skeleton 
-                          variant="rectangular" 
-                          width={60} 
+                        <Skeleton
+                          variant="rectangular"
+                          width={60}
                           height={32}
                           animation="wave"
-                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                          sx={{
+                            borderRadius: '6px',
+                            backgroundColor: '#f0f0f0',
+                          }}
                         />
-                        <Skeleton 
-                          variant="rectangular" 
-                          width={50} 
+                        <Skeleton
+                          variant="rectangular"
+                          width={50}
                           height={32}
                           animation="wave"
-                          sx={{ borderRadius: '6px', backgroundColor: '#f0f0f0' }}
+                          sx={{
+                            borderRadius: '6px',
+                            backgroundColor: '#f0f0f0',
+                          }}
                         />
                       </div>
                     </td>
@@ -359,99 +391,95 @@ const Guests: React.FC = () => {
             </table>
           </div>
         ) : error ? (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '4rem 2rem',
-              backgroundColor: '#ffffff'
+              backgroundColor: '#ffffff',
             }}
           >
-            <Box 
-              sx={{ 
-                color: '#ef4444', 
-                marginBottom: 2 
+            <Box
+              sx={{
+                color: '#ef4444',
+                marginBottom: 2,
               }}
             >
               <AlertCircle size={48} />
             </Box>
-            <Typography 
-              variant="h6" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              sx={{
                 color: '#333333',
                 fontWeight: 600,
-                marginBottom: 1
+                marginBottom: 1,
               }}
             >
               Wystąpił błąd
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: '#666666',
                 textAlign: 'center',
-                marginBottom: 3
+                marginBottom: 3,
               }}
             >
               {error}
             </Typography>
-            <button 
-              onClick={() => loadGuests()} 
+            <button
+              onClick={() => loadGuests()}
               className="guests__action-btn guests__action-btn--primary"
             >
               Spróbuj ponownie
             </button>
           </Box>
         ) : filteredAndSortedGuests.length === 0 ? (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '4rem 2rem',
-              backgroundColor: '#ffffff'
+              backgroundColor: '#ffffff',
             }}
           >
-            <Box 
-              sx={{ 
-                color: '#94a3b8', 
-                marginBottom: 2 
+            <Box
+              sx={{
+                color: '#94a3b8',
+                marginBottom: 2,
               }}
             >
               <Users size={64} />
             </Box>
-            <Typography 
-              variant="h6" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              sx={{
                 color: '#333333',
                 fontWeight: 600,
-                marginBottom: 1
+                marginBottom: 1,
               }}
             >
-              {searchQuery 
-                ? 'Nie znaleziono gości' 
-                : 'Brak gości'
-              }
+              {searchQuery ? 'Nie znaleziono gości' : 'Brak gości'}
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: '#666666',
                 textAlign: 'center',
                 marginBottom: 3,
-                maxWidth: '400px'
+                maxWidth: '400px',
               }}
             >
               {searchQuery
                 ? 'Spróbuj zmienić wyszukiwanie'
-                : 'Dodaj pierwszego gościa do swoich wydarzeń'
-              }
+                : 'Dodaj pierwszego gościa do swoich wydarzeń'}
             </Typography>
             {!searchQuery && (
-              <button 
+              <button
                 className="guests__action-btn guests__action-btn--primary"
                 onClick={handleCreateGuest}
               >
@@ -474,12 +502,13 @@ const Guests: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedGuests.map((guest) => (
+                {filteredAndSortedGuests.map(guest => (
                   <tr key={guest.id}>
                     <td>
                       <div className="guests__guest-info">
                         <div className="guests__guest-avatar">
-                          {guest.firstName[0]}{guest.lastName[0]}
+                          {guest.firstName[0]}
+                          {guest.lastName[0]}
                         </div>
                         <div>
                           <div className="guests__guest-name">
@@ -493,17 +522,21 @@ const Guests: React.FC = () => {
                     </td>
                     <td>
                       <div className="guests__event-info">
-                        <div className="guests__event-name">{guest.eventName}</div>
+                        <div className="guests__event-name">
+                          {guest.eventName}
+                        </div>
                         <div className="guests__event-date">
                           <Calendar size={14} />
-                          {guest.eventDate.toLocaleDateString('pl-PL')}
+                          {guest.eventDate?.toLocaleDateString('pl-PL') ||
+                            'Brak daty'}
                         </div>
                       </div>
                     </td>
                     <td>
                       <div className="guests__date">
                         <Calendar size={14} />
-                        {guest.eventDate.toLocaleDateString('pl-PL')}
+                        {guest.eventDate?.toLocaleDateString('pl-PL') ||
+                          'Brak daty'}
                       </div>
                     </td>
                     <td>
@@ -514,11 +547,14 @@ const Guests: React.FC = () => {
                               <Users size={14} />
                               +1
                             </div>
-                            {guest.plusOneDetails && (guest.plusOneDetails.firstName || guest.plusOneDetails.lastName) && (
-                              <div className="guests__plus-one-name">
-                                {guest.plusOneDetails.firstName} {guest.plusOneDetails.lastName}
-                              </div>
-                            )}
+                            {guest.plusOneDetails &&
+                              (guest.plusOneDetails.firstName ||
+                                guest.plusOneDetails.lastName) && (
+                                <div className="guests__plus-one-name">
+                                  {guest.plusOneDetails.firstName}{' '}
+                                  {guest.plusOneDetails.lastName}
+                                </div>
+                              )}
                           </div>
                         ) : (
                           <span className="guests__no-plus-one">-</span>
@@ -578,10 +614,12 @@ const Guests: React.FC = () => {
 
   return (
     <>
-      <Routes>
-        <Route index element={<GuestsListPage />} />
-        <Route path="import" element={<div>Import gości</div>} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route index element={<GuestsListPage />} />
+          <Route path="import" element={<div>Import gości</div>} />
+        </Routes>
+      </ErrorBoundary>
 
       <AddGuest
         open={isAddGuestOpen}

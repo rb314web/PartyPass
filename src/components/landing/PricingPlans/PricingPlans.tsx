@@ -1,5 +1,5 @@
 // components/landing/PricingPlans/PricingPlans.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Check, Star, Zap, Crown } from 'lucide-react';
 import { Plan } from '../../../types';
 import './PricingPlans.scss';
@@ -20,8 +20,8 @@ const plans: Plan[] = [
       'Analityki i raporty',
       'QR kody dla gości',
       'SMS powiadomienia',
-      'Priority support'
-    ]
+      'Priority support',
+    ],
   },
   {
     id: 'enterprise',
@@ -39,24 +39,28 @@ const plans: Plan[] = [
       'API dostęp',
       'Dedykowany manager',
       '24/7 support',
-      'Integracje z CRM'
-    ]
-  }
+      'Integracje z CRM',
+    ],
+  },
 ];
 
 const PricingPlans: React.FC = () => {
   const getPlanIcon = (planId: string) => {
     switch (planId) {
-
-      case 'pro': return <Star size={24} />;
-      case 'enterprise': return <Crown size={24} />;
-      default: return <Zap size={24} />;
+      case 'pro':
+        return <Star size={24} />;
+      case 'enterprise':
+        return <Crown size={24} />;
+      default:
+        return <Zap size={24} />;
     }
   };
 
   const getDisplayPrice = (plan: Plan) => (
     <div>
-      <span className="pricing-plans__price">{plan.price} {plan.currency}</span>
+      <span className="pricing-plans__price">
+        {plan.price} {plan.currency}
+      </span>
       <span className="pricing-plans__price-interval">/miesiąc</span>
     </div>
   );
@@ -67,7 +71,10 @@ const PricingPlans: React.FC = () => {
         <div className="pricing-plans__header">
           <span className="pricing-plans__label">Plany i Ceny</span>
           <h2 className="pricing-plans__title">
-            Wybierz plan <span className="pricing-plans__title-highlight">idealny dla Ciebie</span>
+            Wybierz plan{' '}
+            <span className="pricing-plans__title-highlight">
+              idealny dla Ciebie
+            </span>
           </h2>
           <p className="pricing-plans__subtitle">
             Dopasowane rozwiązania dla profesjonalnych organizatorów eventów
@@ -75,12 +82,8 @@ const PricingPlans: React.FC = () => {
         </div>
 
         <div className="pricing-plans__grid">
-          {plans.map((plan) => (
-            <div 
-              key={plan.id} 
-              className="pricing-plans__card"
-            >
-              
+          {plans.map(plan => (
+            <div key={plan.id} className="pricing-plans__card">
               <div className="pricing-plans__card-header">
                 <div className="pricing-plans__plan-icon">
                   {getPlanIcon(plan.id)}
@@ -95,7 +98,10 @@ const PricingPlans: React.FC = () => {
                 <ul className="pricing-plans__features">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="pricing-plans__feature">
-                      <Check size={20} className="pricing-plans__feature-icon" />
+                      <Check
+                        size={20}
+                        className="pricing-plans__feature-icon"
+                      />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -103,9 +109,7 @@ const PricingPlans: React.FC = () => {
               </div>
 
               <div className="pricing-plans__card-footer">
-                <button 
-                  className="pricing-plans__cta pricing-plans__cta--primary"
-                >
+                <button className="pricing-plans__cta pricing-plans__cta--primary">
                   Wybierz plan
                 </button>
               </div>

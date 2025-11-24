@@ -24,7 +24,7 @@ export const useNavigationHistory = () => {
       '/dashboard/analytics': 'Analityka',
       '/dashboard/settings': 'Ustawienia',
       '/login': 'Logowanie',
-      '/register': 'Rejestracja'
+      '/register': 'Rejestracja',
     };
 
     // Sprawdź dokładne dopasowanie
@@ -49,7 +49,7 @@ export const useNavigationHistory = () => {
     const newItem: NavigationHistoryItem = {
       path,
       title,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     setHistory(prev => {
@@ -84,7 +84,7 @@ export const useNavigationHistory = () => {
 
   // Sprawdź czy można iść wstecz
   const canGoBack = currentIndex > 0;
-  
+
   // Sprawdź czy można iść do przodu
   const canGoForward = currentIndex < history.length - 1;
 
@@ -98,7 +98,7 @@ export const useNavigationHistory = () => {
     const historyData = {
       history,
       currentIndex,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
     localStorage.setItem('navigationHistory', JSON.stringify(historyData));
   }, [history, currentIndex]);
@@ -127,6 +127,6 @@ export const useNavigationHistory = () => {
     canGoForward,
     goBack,
     goForward,
-    getPageTitle
+    getPageTitle,
   };
 };

@@ -1,5 +1,5 @@
 // components/landing/ContactSection/ContactSection.scss
-@import '../../../styles/globals/index';
+@use '../../../styles/globals/index' as *;
 
 .contact-section {
   padding: 8rem 0 6rem;
@@ -16,7 +16,6 @@
     margin: 0 auto;
     padding: 0 2rem;
     position: relative;
-    z-index: 2;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -45,7 +44,7 @@
     align-items: center;
     width: 100%;
     margin-top: 4rem;
-    
+
     @media (min-width: 1024px) {
       position: sticky;
       top: 2rem;
@@ -85,19 +84,22 @@
     }
   }
 
-
-
   &__form-wrapper {
-    @include card;
     width: 100%;
     max-width: min(90%, 400px);
     min-width: min(300px, 90%);
     min-height: 380px;
     margin: 0 auto 2rem auto;
-    background: white;
-    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    background-image: none;
+    border: 2px solid #cbd5e0;
     border-radius: var(--radius-md);
     padding: 2.5rem 2rem;
+    box-shadow:
+      0 10px 30px -5px rgba(0, 0, 0, 0.2),
+      0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
 
     @media (min-width: 768px) {
       max-width: 450px;
@@ -214,7 +216,7 @@
     }
   }
 
-    &__error {
+  &__error {
     @include text-style(xs, medium, normal);
     color: #e53e3e;
     position: absolute;
@@ -229,12 +231,14 @@
     padding: 6px 12px;
     border-radius: var(--radius-lg);
     pointer-events: none;
-    box-shadow: 0 4px 6px -1px rgba(229, 62, 62, 0.1),
-                0 2px 4px -1px rgba(229, 62, 62, 0.05);
+    box-shadow:
+      0 4px 6px -1px rgba(229, 62, 62, 0.1),
+      0 2px 4px -1px rgba(229, 62, 62, 0.05);
     z-index: 1;
     font-size: 0.813rem;
     border: 1px solid rgba(229, 62, 62, 0.2);
-    white-space: nowrap;    svg {
+    white-space: nowrap;
+    svg {
       width: 14px;
       height: 14px;
       flex-shrink: 0;
@@ -252,8 +256,9 @@
     gap: 0.75rem;
     width: fit-content;
     margin: 1.5rem auto 0;
-    box-shadow: 0 4px 6px -1px rgba(var(--primary-rgb), 0.2),
-                0 2px 4px -1px rgba(var(--primary-rgb), 0.1);
+    box-shadow:
+      0 4px 6px -1px rgba(var(--primary-rgb), 0.2),
+      0 2px 4px -1px rgba(var(--primary-rgb), 0.1);
     font-size: 0.95rem;
     font-weight: 500;
 
@@ -267,8 +272,9 @@
 
     &:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 8px 12px -2px rgba(var(--primary-rgb), 0.25),
-                  0 4px 6px -1px rgba(var(--primary-rgb), 0.15);
+      box-shadow:
+        0 8px 12px -2px rgba(var(--primary-rgb), 0.25),
+        0 4px 6px -1px rgba(var(--primary-rgb), 0.15);
       background: var(--primary-dark);
 
       svg {
@@ -308,7 +314,7 @@
     box-sizing: border-box;
 
     svg {
-      color: #10B981;
+      color: #10b981;
       width: 32px;
       height: 32px;
       margin-bottom: var(--space-md);
@@ -324,7 +330,7 @@
     p {
       @include body-base;
       margin-bottom: var(--space-md);
-      color: #4B5563;
+      color: #4b5563;
       font-size: 0.875rem;
     }
   }
@@ -387,8 +393,12 @@
 
 // Animations
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes slideUp {
@@ -403,7 +413,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(-50%, -50%);
   }
   50% {
@@ -412,9 +423,15 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes errorSlideIn {
@@ -427,4 +444,3 @@
     transform: translateY(0);
   }
 }
-

@@ -1,0 +1,296 @@
+@use '../../../styles/globals/mixins' as *;
+
+.events-calendar {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: background-color var(--transition-colors, 0.2s ease);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+    padding: 0 var(--space-lg);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  &__navigation {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  &__nav-btn {
+    @include flex-center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-colors, 0.2s ease);
+
+    &:hover {
+      background: var(--bg-secondary);
+      border-color: var(--border-secondary);
+      color: var(--color-primary);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__month-year {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    min-width: 200px;
+    text-align: center;
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__today-btn {
+    padding: var(--space-xs) var(--space-md);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-colors, 0.2s ease);
+
+    &:hover {
+      background: var(--bg-secondary);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+  }
+
+  &__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+    padding: 0 var(--space-lg);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  &__weekday {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    padding: var(--space-xs);
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-xs);
+    flex: 1;
+    padding: 0 var(--space-lg);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  &__day {
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    width: 100%;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated);
+    cursor: pointer;
+    transition: all var(--transition-colors, 0.2s ease);
+    box-sizing: border-box;
+    overflow: hidden;
+
+    &:hover {
+      background: var(--bg-secondary);
+      border-color: var(--border-secondary);
+    }
+
+    &--other-month {
+      opacity: 0.4;
+      background: var(--bg-tertiary);
+      aspect-ratio: 1 / 1;
+    }
+
+    &--today {
+      border-color: var(--color-primary);
+      background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-elevated));
+      
+      .events-calendar__day-number {
+        color: var(--color-primary);
+        font-weight: 700;
+      }
+    }
+
+    &--has-events {
+      border-color: var(--color-primary-light);
+    }
+  }
+
+  &__day-number {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__day-events {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: auto;
+  }
+
+  &__event-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    transition: all var(--transition-colors, 0.2s ease);
+
+    &:hover {
+      transform: scale(1.3);
+      background: var(--color-primary-dark);
+    }
+  }
+
+  &__event-more {
+    font-size: 0.625rem;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    margin-left: 2px;
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    padding: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-primary);
+    transition: border-color var(--transition-colors, 0.2s ease);
+  }
+
+  &__legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+  }
+
+  &__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-2xl);
+    color: var(--text-secondary);
+    transition: color var(--transition-colors, 0.2s ease);
+
+    svg {
+      color: var(--text-tertiary);
+      opacity: 0.5;
+      transition: color var(--transition-colors, 0.2s ease);
+    }
+
+    p {
+      font-size: 0.875rem;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: var(--space-md);
+
+    &__header {
+      padding: 0 var(--space-md);
+      gap: var(--space-xs);
+    }
+
+    &__month-year {
+      font-size: 1rem;
+      min-width: 120px;
+      flex: 1;
+    }
+
+    &__today-btn {
+      padding: var(--space-xs) var(--space-sm);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    &__navigation {
+      gap: var(--space-xs);
+    }
+
+    &__nav-btn {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    &__day {
+      padding: 4px;
+      aspect-ratio: 1 / 1;
+    }
+
+    &__day-number {
+      font-size: 0.75rem;
+    }
+
+    &__event-dot {
+      width: 4px;
+      height: 4px;
+    }
+  }
+}
+

@@ -1,29 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-  Alert,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Avatar,
-  Checkbox,
-  InputAdornment,
-  Divider,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio
-} from '@mui/material';
-import { Search, Users, UserCheck } from 'lucide-react';
+import { Search, Users, UserCheck, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { ContactService } from '../../../../services/firebase/contactService';
 import { EventGuestService } from '../../../../services/firebase/eventGuestService';
@@ -37,6 +13,14 @@ interface AddContactsToEventProps {
   eventTitle: string;
   onContactsAdded: () => void;
 }
+
+type GuestOption = {
+  type: 'alone' | 'spouse' | 'companion';
+  spouseFirstName?: string;
+  spouseLastName?: string;
+  companionFirstName?: string;
+  companionLastName?: string;
+};
 
 const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
   open,
@@ -52,10 +36,9 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
   const [loading, setLoading] = useState(false);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Form data for selected contacts
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [contactGuestOptions, setContactGuestOptions] = useState<Record<string, GuestOption>>({});
   const [globalSettings, setGlobalSettings] = useState({
-    plusOneType: 'none' as 'none' | 'withoutDetails' | 'withDetails',
     eventSpecificNotes: ''
   });
 
@@ -109,18 +92,40 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
   });
 
   const handleContactToggle = (contactId: string) => {
-    setSelectedContacts(prev => 
-      prev.includes(contactId)
-        ? prev.filter(id => id !== contactId)
-        : [...prev, contactId]
-    );
+    if (loading) return;
+    
+    setSelectedContacts(prev => {
+      if (prev.includes(contactId)) {
+        // Usuwanie kontaktu - usuń też jego opcje
+        const updated = { ...contactGuestOptions };
+        delete updated[contactId];
+        setContactGuestOptions(updated);
+        return prev.filter(id => id !== contactId);
+      } else {
+        // Dodawanie kontaktu - domyślnie "idzie sam"
+        setContactGuestOptions({
+          ...contactGuestOptions,
+          [contactId]: { type: 'alone' }
+        });
+        return [...prev, contactId];
+      }
+    });
   };
 
   const handleSelectAll = () => {
+    if (loading || loadingContacts) return;
+    
     if (selectedContacts.length === filteredContacts.length) {
       setSelectedContacts([]);
+      setContactGuestOptions({});
     } else {
-      setSelectedContacts(filteredContacts.map(contact => contact.id));
+      const newSelected = filteredContacts.map(contact => contact.id);
+      setSelectedContacts(newSelected);
+      const newOptions: Record<string, GuestOption> = {};
+      newSelected.forEach(id => {
+        newOptions[id] = { type: 'alone' };
+      });
+      setContactGuestOptions(newOptions);
     }
   };
 
@@ -130,24 +135,50 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
       return;
     }
 
+    // Walidacja pól
+    const newFieldErrors: Record<string, string> = {};
+    for (const contactId of selectedContacts) {
+      const guestOption = contactGuestOptions[contactId] || { type: 'alone' };
+      if (guestOption.type === 'spouse') {
+        if (!guestOption.spouseFirstName || !guestOption.spouseLastName) {
+          newFieldErrors[contactId] = 'Podaj imię i nazwisko żony/męża';
+        }
+      }
+    }
+    setFieldErrors(newFieldErrors);
+    if (Object.keys(newFieldErrors).length > 0) {
+      setError('Uzupełnij wymagane pola dla wybranych kontaktów');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      // Add each selected contact to the event
       for (const contactId of selectedContacts) {
+        const guestOption = contactGuestOptions[contactId] || { type: 'alone' };
+        let plusOneType: 'none' | 'withDetails' = 'none';
+        let plusOneDetails: { firstName?: string; lastName?: string } | undefined = undefined;
+        if (guestOption.type === 'spouse') {
+          plusOneType = 'withDetails';
+          plusOneDetails = {
+            firstName: guestOption.spouseFirstName || '',
+            lastName: guestOption.spouseLastName || ''
+          };
+        } else if (guestOption.type === 'companion') {
+          plusOneType = 'withDetails';
+          plusOneDetails = {
+            firstName: guestOption.companionFirstName || '',
+            lastName: guestOption.companionLastName || ''
+          };
+        }
         await EventGuestService.addContactToEvent(eventId, contactId, {
           contactId,
           eventSpecificNotes: globalSettings.eventSpecificNotes,
-          plusOneType: globalSettings.plusOneType,
-          plusOneDetails: globalSettings.plusOneType === 'withDetails' ? {
-            firstName: '',
-            lastName: '',
-            dietaryRestrictions: ''
-          } : undefined
+          plusOneType,
+          plusOneDetails
         });
       }
-
       onContactsAdded();
       handleClose();
     } catch (err: any) {
@@ -163,210 +194,329 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
       setSelectedContacts([]);
       setSearchQuery('');
       setError(null);
+      setFieldErrors({});
+      setContactGuestOptions({});
       setGlobalSettings({
-        plusOneType: 'none',
         eventSpecificNotes: ''
       });
     }
   };
 
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <UserCheck size={24} />
-          <Box>
-            <Typography variant="h6">
-              Dodaj kontakty do wydarzenia
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {eventTitle}
-            </Typography>
-          </Box>
-        </Box>
-      </DialogTitle>
+  const getInitials = (firstName: string, lastName: string): string => {
+    return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase();
+  };
 
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '600px' }}>
+  const getContactName = (contact: Contact): string => {
+    return `${contact.firstName} ${contact.lastName}`;
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="add-contacts-modal" onClick={(e) => e.target === e.currentTarget && handleClose()}>
+      <div className="add-contacts-modal__dialog">
+        {/* Header */}
+        <div className="add-contacts-modal__header">
+          <div className="add-contacts-modal__title-section">
+            <UserCheck size={24} className="add-contacts-modal__title-icon" />
+            <div className="add-contacts-modal__title-content">
+              <h2 className="add-contacts-modal__title">Dodaj kontakty do wydarzenia</h2>
+              <p className="add-contacts-modal__subtitle">{eventTitle}</p>
+            </div>
+          </div>
+          <button 
+            className="add-contacts-modal__close"
+            onClick={handleClose}
+            disabled={loading}
+            aria-label="Zamknij"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="add-contacts-modal__content">
           {/* Error alert */}
           {error && (
-            <Alert severity="error" onClose={() => setError(null)}>
-              {error}
-            </Alert>
+            <div className="add-contacts-modal__error">
+              <AlertCircle size={18} />
+              <span>{error}</span>
+              <button 
+                className="add-contacts-modal__error-close"
+                onClick={() => setError(null)}
+                aria-label="Zamknij błąd"
+              >
+                <X size={16} />
+              </button>
+            </div>
           )}
 
           {/* Search */}
-          <TextField
-            placeholder="Szukaj kontaktów..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            disabled={loading || loadingContacts}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={20} />
-                </InputAdornment>
-              )
-            }}
-          />
+          <div className="add-contacts-modal__search">
+            <Search size={20} className="add-contacts-modal__search-icon" />
+            <input
+              type="text"
+              placeholder="Szukaj kontaktów..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={loading || loadingContacts}
+              className="add-contacts-modal__search-input"
+            />
+          </div>
 
           {/* Select all */}
           {filteredContacts.length > 0 && (
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Button
-                size="small"
+            <div className="add-contacts-modal__select-all-section">
+              <button
+                className="add-contacts-modal__select-all-btn"
                 onClick={handleSelectAll}
                 disabled={loading || loadingContacts}
               >
                 {selectedContacts.length === filteredContacts.length ? 'Odznacz wszystkie' : 'Zaznacz wszystkie'}
-              </Button>
-              <Typography variant="body2" color="text.secondary">
+              </button>
+              <p className="add-contacts-modal__selected-count">
                 Wybrano: {selectedContacts.length} z {filteredContacts.length}
-              </Typography>
-            </Box>
+              </p>
+            </div>
           )}
 
           {/* Contacts list */}
-          <Box sx={{ flex: 1, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+          <div className="add-contacts-modal__contacts-list">
             {loadingContacts ? (
-              <Box sx={{ p: 3, textAlign: 'center' }}>
-                <Typography>Ładowanie kontaktów...</Typography>
-              </Box>
+              <div className="add-contacts-modal__empty-state">
+                <div className="add-contacts-modal__spinner"></div>
+                <p>Ładowanie kontaktów...</p>
+              </div>
             ) : filteredContacts.length === 0 ? (
-              <Box sx={{ p: 3, textAlign: 'center' }}>
-                <Users size={48} color="#ccc" />
-                <Typography variant="h6" sx={{ mt: 2, color: 'text.secondary' }}>
+              <div className="add-contacts-modal__empty-state">
+                <Users size={48} />
+                <h3>
                   {searchQuery ? 'Nie znaleziono kontaktów' : 'Brak dostępnych kontaktów'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                </h3>
+                <p>
                   {searchQuery 
                     ? 'Spróbuj zmienić wyszukiwanie'
                     : 'Wszystkie kontakty są już dodane do wydarzenia'
                   }
-                </Typography>
-              </Box>
+                </p>
+              </div>
             ) : (
-              <List>
-                {filteredContacts.map((contact, index) => (
-                  <React.Fragment key={contact.id}>
-                    <ListItem
-                      onClick={() => !loading && handleContactToggle(contact.id)}
-                      sx={{
-                        cursor: loading ? 'default' : 'pointer',
-                        backgroundColor: selectedContacts.includes(contact.id) ? 'action.selected' : 'inherit',
-                        '&:hover': {
-                          backgroundColor: loading ? 'inherit' : 'action.hover'
-                        },
-                        opacity: loading ? 0.5 : 1
-                      }}
-                    >
-                      <Checkbox
-                        checked={selectedContacts.includes(contact.id)}
-                        onChange={() => handleContactToggle(contact.id)}
-                        disabled={loading}
-                      />
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: 'primary.main' }}>
-                          {contact.firstName[0]}{contact.lastName[0]}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={`${contact.firstName} ${contact.lastName}`}
-                        secondary={
-                          <Box>
-                            <Typography variant="body2" color="text.secondary">
-                              {contact.email}
-                            </Typography>
+              <div className="add-contacts-modal__contacts">
+                {filteredContacts.map((contact, index) => {
+                  const selected = selectedContacts.includes(contact.id);
+                  const guestOption = contactGuestOptions[contact.id] || { type: 'alone' };
+                  return (
+                    <div key={contact.id}>
+                      <div 
+                        className={`add-contacts-modal__contact ${selected ? 'add-contacts-modal__contact--selected' : ''} ${loading ? 'add-contacts-modal__contact--loading' : ''}`}
+                        onClick={() => handleContactToggle(contact.id)}
+                      >
+                        <label className="add-contacts-modal__contact-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => handleContactToggle(contact.id)}
+                            disabled={loading}
+                          />
+                          <span className="add-contacts-modal__checkbox-custom"></span>
+                        </label>
+                        <div className="add-contacts-modal__contact-avatar">
+                          {getInitials(contact.firstName, contact.lastName)}
+                        </div>
+                        <div className="add-contacts-modal__contact-info">
+                          <div className="add-contacts-modal__contact-name">
+                            {getContactName(contact)}
+                          </div>
+                          <div className="add-contacts-modal__contact-details">
+                            <p className="add-contacts-modal__contact-email">{contact.email}</p>
                             {contact.phone && (
-                              <Typography variant="caption" color="text.secondary">
-                                {contact.phone}
-                              </Typography>
+                              <span className="add-contacts-modal__contact-phone">{contact.phone}</span>
                             )}
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                    {index < filteredContacts.length - 1 && <Divider />}
-                  </React.Fragment>
-                ))}
-              </List>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Guest options */}
+                      {selected && (
+                        <div className="add-contacts-modal__guest-options">
+                          <div className="add-contacts-modal__guest-options-header">
+                            <label className="add-contacts-modal__guest-options-label">Opcje gościa</label>
+                            <div className="add-contacts-modal__guest-options-radio-group">
+                              <label className="add-contacts-modal__radio-label">
+                                <input
+                                  type="radio"
+                                  name={`guest-option-${contact.id}`}
+                                  value="alone"
+                                  checked={guestOption.type === 'alone'}
+                                  onChange={(e) => {
+                                    setContactGuestOptions(prev => ({
+                                      ...prev,
+                                      [contact.id]: { type: 'alone' }
+                                    }));
+                                  }}
+                                />
+                                <span>Idzie sam</span>
+                              </label>
+                              <label className="add-contacts-modal__radio-label">
+                                <input
+                                  type="radio"
+                                  name={`guest-option-${contact.id}`}
+                                  value="spouse"
+                                  checked={guestOption.type === 'spouse'}
+                                  onChange={(e) => {
+                                    setContactGuestOptions(prev => ({
+                                      ...prev,
+                                      [contact.id]: { type: 'spouse' }
+                                    }));
+                                  }}
+                                />
+                                <span>Z żoną/mężem</span>
+                              </label>
+                              <label className="add-contacts-modal__radio-label">
+                                <input
+                                  type="radio"
+                                  name={`guest-option-${contact.id}`}
+                                  value="companion"
+                                  checked={guestOption.type === 'companion'}
+                                  onChange={(e) => {
+                                    setContactGuestOptions(prev => ({
+                                      ...prev,
+                                      [contact.id]: { type: 'companion' }
+                                    }));
+                                  }}
+                                />
+                                <span>Z osobą towarzyszącą</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          {guestOption.type === 'spouse' && (
+                            <div className="add-contacts-modal__guest-fields">
+                              <div className="add-contacts-modal__field">
+                                <label>Imię żony/męża</label>
+                                <input
+                                  type="text"
+                                  value={guestOption.spouseFirstName || ''}
+                                  onChange={(e) => setContactGuestOptions(prev => ({
+                                    ...prev,
+                                    [contact.id]: {
+                                      ...prev[contact.id],
+                                      spouseFirstName: e.target.value
+                                    }
+                                  }))}
+                                  className={fieldErrors[contact.id] && !guestOption.spouseFirstName ? 'add-contacts-modal__field--error' : ''}
+                                />
+                              </div>
+                              <div className="add-contacts-modal__field">
+                                <label>Nazwisko żony/męża</label>
+                                <input
+                                  type="text"
+                                  value={guestOption.spouseLastName || ''}
+                                  onChange={(e) => setContactGuestOptions(prev => ({
+                                    ...prev,
+                                    [contact.id]: {
+                                      ...prev[contact.id],
+                                      spouseLastName: e.target.value
+                                    }
+                                  }))}
+                                  className={fieldErrors[contact.id] && !guestOption.spouseLastName ? 'add-contacts-modal__field--error' : ''}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {guestOption.type === 'companion' && (
+                            <div className="add-contacts-modal__guest-fields">
+                              <div className="add-contacts-modal__field">
+                                <label>Imię osoby towarzyszącej (opcjonalnie)</label>
+                                <input
+                                  type="text"
+                                  value={guestOption.companionFirstName || ''}
+                                  onChange={(e) => setContactGuestOptions(prev => ({
+                                    ...prev,
+                                    [contact.id]: {
+                                      ...prev[contact.id],
+                                      companionFirstName: e.target.value
+                                    }
+                                  }))}
+                                />
+                              </div>
+                              <div className="add-contacts-modal__field">
+                                <label>Nazwisko osoby towarzyszącej (opcjonalnie)</label>
+                                <input
+                                  type="text"
+                                  value={guestOption.companionLastName || ''}
+                                  onChange={(e) => setContactGuestOptions(prev => ({
+                                    ...prev,
+                                    [contact.id]: {
+                                      ...prev[contact.id],
+                                      companionLastName: e.target.value
+                                    }
+                                  }))}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {fieldErrors[contact.id] && (
+                            <p className="add-contacts-modal__field-error">{fieldErrors[contact.id]}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {index < filteredContacts.length - 1 && (
+                        <div className="add-contacts-modal__divider"></div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
-          </Box>
+          </div>
 
-          {/* Global settings */}
+          {/* Global notes */}
           {selectedContacts.length > 0 && (
-            <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Ustawienia dla wybranych kontaktów
-              </Typography>
-              
-              {/* Plus one settings */}
-              <FormControl component="fieldset" sx={{ mb: 2 }}>
-                <FormLabel component="legend">Opcje plus one</FormLabel>
-                <RadioGroup
-                  value={globalSettings.plusOneType}
-                  onChange={(e) => setGlobalSettings(prev => ({ 
-                    ...prev, 
-                    plusOneType: e.target.value as any 
-                  }))}
-                  row
-                >
-                  <FormControlLabel 
-                    value="none" 
-                    control={<Radio />} 
-                    label="Bez plus one"
-                    disabled={loading}
-                  />
-                  <FormControlLabel 
-                    value="withoutDetails" 
-                    control={<Radio />} 
-                    label="Bez szczegółów"
-                    disabled={loading}
-                  />
-                  <FormControlLabel 
-                    value="withDetails" 
-                    control={<Radio />} 
-                    label="Ze szczegółami"
-                    disabled={loading}
-                  />
-                </RadioGroup>
-              </FormControl>
-
-              {/* Event notes */}
-              <TextField
-                fullWidth
-                multiline
-                rows={2}
-                label="Notatki dotyczące wydarzenia"
+            <div className="add-contacts-modal__global-notes">
+              <label className="add-contacts-modal__global-notes-label">
+                Notatki dotyczące wydarzenia (dla wszystkich wybranych)
+              </label>
+              <textarea
+                placeholder="Dodatkowe informacje dla wszystkich wybranych gości..."
                 value={globalSettings.eventSpecificNotes}
                 onChange={(e) => setGlobalSettings(prev => ({
                   ...prev,
                   eventSpecificNotes: e.target.value
                 }))}
                 disabled={loading}
-                placeholder="Dodatkowe informacje dla wszystkich wybranych gości..."
+                rows={3}
+                className="add-contacts-modal__global-notes-textarea"
               />
-            </Box>
+            </div>
           )}
-        </Box>
-      </DialogContent>
+        </div>
 
-      <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
-          Anuluj
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={loading || selectedContacts.length === 0}
-        >
-          {loading 
-            ? 'Dodawanie...' 
-            : `Dodaj ${selectedContacts.length} kontakt${selectedContacts.length === 1 ? '' : selectedContacts.length < 5 ? 'y' : 'ów'}`
-          }
-        </Button>
-      </DialogActions>
-    </Dialog>
+        {/* Footer */}
+        <div className="add-contacts-modal__footer">
+          <button 
+            className="add-contacts-modal__btn add-contacts-modal__btn--secondary"
+            onClick={handleClose}
+            disabled={loading}
+          >
+            Anuluj
+          </button>
+          <button 
+            className="add-contacts-modal__btn add-contacts-modal__btn--primary"
+            onClick={handleSubmit}
+            disabled={loading || selectedContacts.length === 0}
+          >
+            {loading 
+              ? 'Dodawanie...' 
+              : `Dodaj ${selectedContacts.length} kontakt${selectedContacts.length === 1 ? '' : selectedContacts.length < 5 ? 'y' : 'ów'}`
+            }
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

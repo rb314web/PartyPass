@@ -1,0 +1,163 @@
+// styles/globals/_breakpoints.scss
+// Responsive Breakpoints System for PartyPass
+// Unified breakpoints for consistent responsive design
+
+// Breakpoint Values
+$breakpoints: (
+  'mobile': 0,
+  // 0px - 479px (small phones)
+  'mobile-lg': 480px,
+  // 480px - 767px (large phones)
+  'tablet': 768px,
+  // 768px - 1023px (tablets, small laptops)
+  'tablet-lg': 1024px,
+  // 1024px - 1199px (large tablets, medium laptops)
+  'desktop': 1200px,
+  // 1200px - 1439px (desktops)
+  'desktop-lg': 1440px,
+  // 1440px - 1919px (large desktops)
+  'desktop-xl': 1920px, // 1920px+ (extra large screens)
+) !default;
+
+// CSS Custom Properties
+:root {
+  --breakpoint-mobile: 0px;
+  --breakpoint-mobile-lg: 480px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-tablet-lg: 1024px;
+  --breakpoint-desktop: 1200px;
+  --breakpoint-desktop-lg: 1440px;
+  --breakpoint-desktop-xl: 1920px;
+}
+
+// Mixin: Min-width media query (mobile-first approach)
+// Usage: @include respond-to('tablet') { ... }
+@mixin respond-to($breakpoint) {
+  $value: map-get($breakpoints, $breakpoint);
+
+  @if $value == null {
+    @error "Breakpoint '#{$breakpoint}' not found in $breakpoints map.";
+  }
+
+  @if $value == 0 {
+    // No media query needed for mobile (base styles)
+    @content;
+  } @else {
+    @media (min-width: $value) {
+      @content;
+    }
+  }
+}
+
+// Mixin: Max-width media query (desktop-first approach)
+// Usage: @include respond-below('tablet') { ... }
+@mixin respond-below($breakpoint) {
+  $value: map-get($breakpoints, $breakpoint);
+
+  @if $value == null {
+    @error "Breakpoint '#{$breakpoint}' not found in $breakpoints map.";
+  }
+
+  @media (max-width: calc($value - 1px)) {
+    @content;
+  }
+}
+
+// Mixin: Between two breakpoints
+// Usage: @include respond-between('tablet', 'desktop') { ... }
+@mixin respond-between($min-breakpoint, $max-breakpoint) {
+  $min-value: map-get($breakpoints, $min-breakpoint);
+  $max-value: map-get($breakpoints, $max-breakpoint);
+
+  @if $min-value == null or $max-value == null {
+    @error "Breakpoints not found in $breakpoints map.";
+  }
+
+  @media (min-width: $min-value) and (max-width: calc($max-value - 1px)) {
+    @content;
+  }
+}
+
+// Mixin: Specific device orientation
+// Usage: @include orientation('landscape') { ... }
+@mixin orientation($direction) {
+  @if $direction == 'landscape' or $direction == 'portrait' {
+    @media (orientation: $direction) {
+      @content;
+    }
+  } @else {
+    @error "Orientation must be 'landscape' or 'portrait'.";
+  }
+}
+
+// Mixin: High-resolution displays (Retina)
+// Usage: @include retina { ... }
+@mixin retina {
+  @media (-webkit-min-device-pixel-ratio: 2),
+    (min-resolution: 192dpi),
+    (min-resolution: 2dppx) {
+    @content;
+  }
+}
+
+// Mixin: Dark mode
+// Usage: @include dark-mode { ... }
+@mixin dark-mode {
+  @media (prefers-color-scheme: dark) {
+    @content;
+  }
+}
+
+// Mixin: Reduced motion
+// Usage: @include reduced-motion { ... }
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// Helper Functions
+@function breakpoint($name) {
+  @return map-get($breakpoints, $name);
+}
+
+// Common Responsive Patterns
+//
+// 1. Mobile-first (recommended):
+//    .element {
+//      font-size: 14px;
+//      @include respond-to('tablet') { font-size: 16px; }
+//      @include respond-to('desktop') { font-size: 18px; }
+//    }
+//
+// 2. Desktop-first:
+//    .element {
+//      width: 100%;
+//      @include respond-below('desktop') { width: 80%; }
+//      @include respond-below('tablet') { width: 100%; }
+//    }
+//
+// 3. Specific range:
+//    .element {
+//      @include respond-between('tablet', 'desktop') {
+//        // Styles for tablets only
+//      }
+//    }
+//
+// 4. Sidebar example (icons-only on tablets):
+//    .sidebar {
+//      width: 280px;
+//      @include respond-below('tablet') { transform: translateX(-100%); }
+//      @include respond-between('tablet', 'desktop') { width: 80px; }
+//    }
+
+// Export for JavaScript (optional)
+:export {
+  mobile: breakpoint('mobile');
+  mobileLg: breakpoint('mobile-lg');
+  tablet: breakpoint('tablet');
+  tabletLg: breakpoint('tablet-lg');
+  desktop: breakpoint('desktop');
+  desktopLg: breakpoint('desktop-lg');
+  desktopXl: breakpoint('desktop-xl');
+}

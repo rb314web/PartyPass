@@ -7,7 +7,10 @@ export class AnalyticsExportService {
   /**
    * Export analytics data to CSV format
    */
-  static async exportToCSV(data: AnalyticsReport, filters?: any): Promise<void> {
+  static async exportToCSV(
+    data: AnalyticsReport,
+    filters?: any
+  ): Promise<void> {
     try {
       const csvData = this.generateCSVData(data);
       const csvContent = this.convertToCSV(csvData);
@@ -22,7 +25,10 @@ export class AnalyticsExportService {
   /**
    * Export analytics data to PDF format
    */
-  static async exportToPDF(elementId: string, fileName?: string): Promise<void> {
+  static async exportToPDF(
+    elementId: string,
+    fileName?: string
+  ): Promise<void> {
     try {
       const element = document.getElementById(elementId);
       if (!element) {
@@ -36,12 +42,12 @@ export class AnalyticsExportService {
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: element.scrollWidth,
-        height: element.scrollHeight
+        height: element.scrollHeight,
       });
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
+
       // Calculate dimensions to fit A4
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 295; // A4 height in mm
@@ -52,9 +58,13 @@ export class AnalyticsExportService {
       // Add title page
       pdf.setFontSize(20);
       pdf.text('Raport Analityczny PartyPass', 20, 30);
-      
+
       pdf.setFontSize(12);
-      pdf.text(`Data wygenerowania: ${new Date().toLocaleDateString('pl-PL')}`, 20, 50);
+      pdf.text(
+        `Data wygenerowania: ${new Date().toLocaleDateString('pl-PL')}`,
+        20,
+        50
+      );
       pdf.text(`Okres: ${this.getDateRangeText()}`, 20, 60);
 
       // Add charts
@@ -74,10 +84,12 @@ export class AnalyticsExportService {
       pdf.addPage();
       pdf.setFontSize(16);
       pdf.text('Podsumowanie', 20, 30);
-      
+
       // You can add more summary content here
 
-      const pdfFileName = fileName || `analytics-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      const pdfFileName =
+        fileName ||
+        `analytics-report-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(pdfFileName);
     } catch (error) {
       console.error('Error exporting to PDF:', error);
@@ -88,7 +100,10 @@ export class AnalyticsExportService {
   /**
    * Export analytics dashboard as interactive HTML
    */
-  static async exportToHTML(data: AnalyticsReport, elementId: string): Promise<void> {
+  static async exportToHTML(
+    data: AnalyticsReport,
+    elementId: string
+  ): Promise<void> {
     try {
       const element = document.getElementById(elementId);
       if (!element) {
@@ -107,7 +122,10 @@ export class AnalyticsExportService {
   /**
    * Export specific chart data to JSON
    */
-  static async exportChartData(chartData: any, chartName: string): Promise<void> {
+  static async exportChartData(
+    chartData: any,
+    chartName: string
+  ): Promise<void> {
     try {
       const jsonData = JSON.stringify(chartData, null, 2);
       const fileName = `${chartName}-data-${new Date().toISOString().split('T')[0]}.json`;
@@ -123,10 +141,12 @@ export class AnalyticsExportService {
    */
   static generateInsightsReport(data: AnalyticsReport): string {
     const insights = [];
-    
+
     // Growth analysis
     if (data.growthRate > 20) {
-      insights.push('🚀 Doskonały wzrost! Twoje wydarzenia zyskują coraz większą popularność.');
+      insights.push(
+        '🚀 Doskonały wzrost! Twoje wydarzenia zyskują coraz większą popularność.'
+      );
     } else if (data.growthRate > 0) {
       insights.push('📈 Pozytywny trend wzrostu wydarzeń.');
     } else if (data.growthRate < -10) {
@@ -134,27 +154,40 @@ export class AnalyticsExportService {
     }
 
     // Guest engagement analysis
-    const totalGuests = data.guestEngagement.confirmed + data.guestEngagement.pending + 
-                       data.guestEngagement.declined + data.guestEngagement.maybe;
-    const confirmationRate = (data.guestEngagement.confirmed / totalGuests) * 100;
-    
+    const totalGuests =
+      data.guestEngagement.confirmed +
+      data.guestEngagement.pending +
+      data.guestEngagement.declined +
+      data.guestEngagement.maybe;
+    const confirmationRate =
+      (data.guestEngagement.confirmed / totalGuests) * 100;
+
     if (confirmationRate > 80) {
       insights.push('✨ Wysoki wskaźnik potwierdzenia uczestnictwa!');
     } else if (confirmationRate < 50) {
-      insights.push('💡 Rozważ poprawę komunikacji z gośćmi - niski wskaźnik potwierdzeń.');
+      insights.push(
+        '💡 Rozważ poprawę komunikacji z gośćmi - niski wskaźnik potwierdzeń.'
+      );
     }
 
     // Popular events analysis
     if (data.popularEventTypes.length > 0) {
       const topEvent = data.popularEventTypes[0];
-      insights.push(`🎯 Najpopularniejszy typ wydarzeń: ${topEvent.type} (${topEvent.count} wydarzeń)`);
+      insights.push(
+        `🎯 Najpopularniejszy typ wydarzeń: ${topEvent.type} (${topEvent.count} wydarzeń)`
+      );
     }
 
     // Response time analysis
     if ((data as any).avgResponseTime && (data as any).avgResponseTime < 24) {
       insights.push('⚡ Goście szybko odpowiadają na zaproszenia!');
-    } else if ((data as any).avgResponseTime && (data as any).avgResponseTime > 72) {
-      insights.push('⏰ Goście potrzebują więcej czasu na odpowiedź. Rozważ wcześniejsze wysyłanie zaproszeń.');
+    } else if (
+      (data as any).avgResponseTime &&
+      (data as any).avgResponseTime > 72
+    ) {
+      insights.push(
+        '⏰ Goście potrzebują więcej czasu na odpowiedź. Rozważ wcześniejsze wysyłanie zaproszeń.'
+      );
     }
 
     return insights.join('\n\n');
@@ -162,27 +195,27 @@ export class AnalyticsExportService {
 
   private static generateCSVData(data: AnalyticsReport): any[] {
     const csvData = [];
-    
+
     // Summary data
     csvData.push({
       Category: 'Podsumowanie',
       Metric: 'Łącznie wydarzeń',
       Value: data.totalEvents,
-      Date: new Date().toLocaleDateString('pl-PL')
+      Date: new Date().toLocaleDateString('pl-PL'),
     });
-    
+
     csvData.push({
       Category: 'Podsumowanie',
       Metric: 'Łącznie gości',
       Value: data.totalGuests,
-      Date: new Date().toLocaleDateString('pl-PL')
+      Date: new Date().toLocaleDateString('pl-PL'),
     });
-    
+
     csvData.push({
       Category: 'Podsumowanie',
       Metric: 'Średnio gości na wydarzenie',
       Value: data.averageGuestsPerEvent,
-      Date: new Date().toLocaleDateString('pl-PL')
+      Date: new Date().toLocaleDateString('pl-PL'),
     });
 
     // Monthly trends
@@ -191,7 +224,7 @@ export class AnalyticsExportService {
         Category: 'Trendy miesięczne',
         Metric: 'Wydarzenia',
         Value: trend.events,
-        Date: trend.month
+        Date: trend.month,
       });
     });
 
@@ -201,7 +234,7 @@ export class AnalyticsExportService {
         Category: 'Popularne typy',
         Metric: type.type,
         Value: type.count,
-        Date: new Date().toLocaleDateString('pl-PL')
+        Date: new Date().toLocaleDateString('pl-PL'),
       });
     });
 
@@ -210,21 +243,21 @@ export class AnalyticsExportService {
       Category: 'Zaangażowanie gości',
       Metric: 'Potwierdzone',
       Value: data.guestEngagement.confirmed,
-      Date: new Date().toLocaleDateString('pl-PL')
+      Date: new Date().toLocaleDateString('pl-PL'),
     });
-    
+
     csvData.push({
       Category: 'Zaangażowanie gości',
       Metric: 'Oczekujące',
       Value: data.guestEngagement.pending,
-      Date: new Date().toLocaleDateString('pl-PL')
+      Date: new Date().toLocaleDateString('pl-PL'),
     });
-    
+
     csvData.push({
       Category: 'Zaangażowanie gości',
       Metric: 'Odrzucone',
       Value: data.guestEngagement.declined,
-      Date: new Date().toLocaleDateString('pl-PL')
+      Date: new Date().toLocaleDateString('pl-PL'),
     });
 
     return csvData;
@@ -232,24 +265,29 @@ export class AnalyticsExportService {
 
   private static convertToCSV(data: any[]): string {
     if (!data.length) return '';
-    
+
     const headers = Object.keys(data[0]);
     const csvContent = [
       headers.join(','),
-      ...data.map(row => 
-        headers.map(header => {
-          const value = row[header];
-          return typeof value === 'string' && value.includes(',') 
-            ? `"${value}"` 
-            : value;
-        }).join(',')
-      )
+      ...data.map(row =>
+        headers
+          .map(header => {
+            const value = row[header];
+            return typeof value === 'string' && value.includes(',')
+              ? `"${value}"`
+              : value;
+          })
+          .join(',')
+      ),
     ].join('\n');
-    
+
     return csvContent;
   }
 
-  private static generateHTMLReport(data: AnalyticsReport, chartContent: string): string {
+  private static generateHTMLReport(
+    data: AnalyticsReport,
+    chartContent: string
+  ): string {
     return `
 <!DOCTYPE html>
 <html lang="pl">
@@ -309,10 +347,10 @@ export class AnalyticsExportService {
 <body>
     <div class="header">
         <h1>📊 Raport Analityczny PartyPass</h1>
-        <p>Data wygenerowania: ${new Date().toLocaleDateString('pl-PL', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        <p>Data wygenerowania: ${new Date().toLocaleDateString('pl-PL', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         })}</p>
     </div>
     
@@ -348,7 +386,11 @@ export class AnalyticsExportService {
 </html>`;
   }
 
-  private static downloadFile(content: string, fileName: string, mimeType: string): void {
+  private static downloadFile(
+    content: string,
+    fileName: string,
+    mimeType: string
+  ): void {
     const blob = new Blob([content], { type: mimeType });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -364,7 +406,7 @@ export class AnalyticsExportService {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30); // Default to 30 days
-    
+
     return `${startDate.toLocaleDateString('pl-PL')} - ${endDate.toLocaleDateString('pl-PL')}`;
   }
 }

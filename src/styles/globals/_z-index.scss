@@ -1,0 +1,68 @@
+// styles/globals/_z-index.scss
+// Z-Index Hierarchy System for PartyPass
+// Centralized z-index management to prevent layering conflicts
+
+:root {
+  // Base layer - Default document flow
+  --z-base: 1;
+
+  // Dropdown menus, tooltips, popovers
+  --z-dropdown: 100;
+
+  // Sticky elements (headers, filters)
+  --z-sticky: 500;
+
+  // Fixed navigation elements
+  --z-sidebar: 1000;
+  --z-header: 1010;
+  --z-sidebar-mobile: 1050;
+  --z-bottom-nav: 1020;
+
+  // Overlays and backdrops
+  --z-overlay: 1500;
+
+  // Modals, dialogs, drawers
+  --z-modal: 2000;
+  --z-modal-content: 2001;
+
+  // Toast notifications, snackbars
+  --z-toast: 9999;
+
+  // Maximum z-index (emergency use only)
+  --z-maximum: 99999;
+}
+
+// SCSS Variables for backward compatibility
+$z-base: var(--z-base);
+$z-dropdown: var(--z-dropdown);
+$z-sticky: var(--z-sticky);
+$z-header: var(--z-header);
+$z-sidebar: var(--z-sidebar);
+$z-sidebar-mobile: var(--z-sidebar-mobile);
+$z-bottom-nav: var(--z-bottom-nav);
+$z-overlay: var(--z-overlay);
+$z-modal: var(--z-modal);
+$z-modal-content: var(--z-modal-content);
+$z-toast: var(--z-toast);
+$z-maximum: var(--z-maximum);
+
+// Usage Guidelines:
+//
+// 1. ALWAYS use CSS variables, never hardcoded values
+// 2. Stack order (lowest to highest):
+//    - Base content (z-base)
+//    - Dropdowns (z-dropdown)
+//    - Sticky headers (z-sticky)
+//    - Fixed navigation (z-header, z-sidebar, z-bottom-nav)
+//    - Overlays (z-overlay)
+//    - Modals (z-modal)
+//    - Toasts (z-toast)
+//
+// 3. Examples:
+//    .header { z-index: var(--z-header); }
+//    .sidebar { z-index: var(--z-sidebar); }
+//    .modal-overlay { z-index: var(--z-overlay); }
+//    .modal-content { z-index: var(--z-modal); }
+//
+// 4. For dynamic stacking (e.g., nested modals), use calc():
+//    .modal-layer-2 { z-index: calc(var(--z-modal) + 10); }

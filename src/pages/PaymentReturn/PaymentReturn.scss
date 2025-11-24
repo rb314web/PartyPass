@@ -23,19 +23,19 @@
 
   &__icon {
     margin-bottom: var(--space-xl);
-    
+
     &--success {
       color: var(--green-600);
     }
-    
+
     &--error {
       color: var(--red-600);
     }
-    
+
     &--warning {
       color: var(--yellow-600);
     }
-    
+
     &--processing {
       color: var(--blue-600);
       animation: spin 1s linear infinite;
@@ -165,7 +165,11 @@
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 }

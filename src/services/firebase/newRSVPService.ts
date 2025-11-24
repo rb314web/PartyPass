@@ -5,39 +5,41 @@ import {
   addDoc,
   getDoc,
   getDocs,
-  updateDoc,
-  deleteDoc,
   query,
   where,
   writeBatch,
-  Timestamp
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { 
-  EventGuest, 
-  Contact, 
-  Event, 
-  GuestStatus, 
-  RSVPToken, 
+import {
+  EventGuest,
+  Contact,
+  Event,
+  GuestStatus,
+  RSVPToken,
   RSVPResponse,
   GuestInvitation,
-  InvitationDelivery
 } from '../../types';
 import { COLLECTIONS } from '../../types/firebase';
 import { EventGuestService } from './eventGuestService';
+import QRCode from 'qrcode';
 
 export class NewRSVPService {
   private static readonly RSVP_TOKENS_COLLECTION = 'rsvpTokens';
-  private static readonly BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:3000';
+  private static readonly BASE_URL =
+    process.env.REACT_APP_BASE_URL || 'http://localhost:3000';
 
   /**
    * Generuje unikalny token RSVP dla EventGuest
    */
-  static async generateRSVPToken(eventGuestId: string, eventId: string): Promise<RSVPToken> {
+  static async generateRSVPToken(
+    eventGuestId: string,
+    eventId: string
+  ): Promise<RSVPToken> {
     try {
       const token = this.generateUniqueToken();
       const now = new Date();
-      const expiresAt = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 dni
+      const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 dni
 
       const rsvpTokenData = {
         eventGuestId,
@@ -45,10 +47,13 @@ export class NewRSVPService {
         token,
         isUsed: false,
         createdAt: Timestamp.fromDate(now),
-        expiresAt: Timestamp.fromDate(expiresAt)
+        expiresAt: Timestamp.fromDate(expiresAt),
       };
 
-      const docRef = await addDoc(collection(db, this.RSVP_TOKENS_COLLECTION), rsvpTokenData);
+      const docRef = await addDoc(
+        collection(db, this.RSVP_TOKENS_COLLECTION),
+        rsvpTokenData
+      );
 
       return {
         id: docRef.id,
@@ -57,7 +62,7 @@ export class NewRSVPService {
         token,
         isUsed: false,
         createdAt: now,
-        expiresAt
+        expiresAt,
       };
     } catch (error: any) {
       throw new Error(`Błąd podczas generowania tokenu RSVP: ${error.message}`);
@@ -75,7 +80,7 @@ export class NewRSVPService {
       );
 
       const snapshot = await getDocs(tokenQuery);
-      
+
       if (snapshot.empty) {
         return null;
       }
@@ -91,7 +96,7 @@ export class NewRSVPService {
         isUsed: tokenData.isUsed,
         createdAt: tokenData.createdAt.toDate(),
         expiresAt: tokenData.expiresAt?.toDate(),
-        usedAt: tokenData.usedAt?.toDate()
+        usedAt: tokenData.usedAt?.toDate(),
       };
     } catch (error: any) {
       throw new Error(`Błąd podczas pobierania tokenu RSVP: ${error.message}`);
@@ -101,10 +106,12 @@ export class NewRSVPService {
   /**
    * Waliduje token RSVP
    */
-  static async validateRSVPToken(token: string): Promise<{ valid: boolean; reason?: string }> {
+  static async validateRSVPToken(
+    token: string
+  ): Promise<{ valid: boolean; reason?: string }> {
     try {
       const rsvpToken = await this.getRSVPToken(token);
-      
+
       if (!rsvpToken) {
         return { valid: false, reason: 'Token nie istnieje' };
       }
@@ -133,35 +140,63 @@ export class NewRSVPService {
   } | null> {
     try {
       const rsvpToken = await this.getRSVPToken(token);
-      
+
       if (!rsvpToken) {
         return null;
       }
 
       // Pobierz dane EventGuest
-      const eventGuestRef = doc(db, 'eventGuests', rsvpToken.eventGuestId);
+      const eventGuestRef = doc(db, COLLECTIONS.GUESTS, rsvpToken.eventGuestId);
       const eventGuestDoc = await getDoc(eventGuestRef);
-      
+
       if (!eventGuestDoc.exists()) {
         throw new Error('Gość wydarzenia nie istnieje');
       }
 
       const eventGuestData = eventGuestDoc.data();
 
-      // Pobierz dane Contact
+      // Pobierz dane Contact (jeśli istnieje)
+      let contactData: any = null;
+      if (eventGuestData.contactId) {
       const contactRef = doc(db, 'contacts', eventGuestData.contactId);
       const contactDoc = await getDoc(contactRef);
-      
-      if (!contactDoc.exists()) {
-        throw new Error('Kontakt nie istnieje');
+
+        if (contactDoc.exists()) {
+          contactData = contactDoc.data();
+        }
       }
 
-      const contactData = contactDoc.data();
+      // Jeśli brak kontaktu (osoba towarzysząca), użyj legacy fields
+      const contact: Contact = contactData
+        ? {
+            id: contactData.id || eventGuestData.contactId,
+            userId: contactData.userId,
+            firstName: contactData.firstName || '',
+            lastName: contactData.lastName || '',
+            email: contactData.email || '',
+            phone: contactData.phone || '',
+            dietaryRestrictions: contactData.dietaryRestrictions || '',
+            notes: contactData.notes || '',
+            createdAt: contactData.createdAt?.toDate() || new Date(),
+            updatedAt: contactData.updatedAt?.toDate(),
+          }
+        : {
+            id: '',
+            userId: '',
+            firstName: eventGuestData.firstName || '',
+            lastName: eventGuestData.lastName || '',
+            email: eventGuestData.email || '',
+            phone: eventGuestData.phone || '',
+            dietaryRestrictions: eventGuestData.dietaryRestrictions || '',
+            notes: '',
+            createdAt: eventGuestData.createdAt?.toDate() || new Date(),
+            updatedAt: eventGuestData.updatedAt?.toDate(),
+          };
 
       // Pobierz dane Event
       const eventRef = doc(db, COLLECTIONS.EVENTS, rsvpToken.eventId);
       const eventDoc = await getDoc(eventRef);
-      
+
       if (!eventDoc.exists()) {
         throw new Error('Wydarzenie nie istnieje');
       }
@@ -177,68 +212,61 @@ export class NewRSVPService {
         respondedAt: eventGuestData.respondedAt?.toDate(),
         plusOneType: eventGuestData.plusOneType || 'none',
         plusOneDetails: eventGuestData.plusOneDetails,
-        rsvpToken: eventGuestData.rsvpToken,
-        eventSpecificNotes: eventGuestData.eventSpecificNotes,
+        rsvpToken: token,
+        eventSpecificNotes: eventGuestData.eventSpecificNotes || '',
         createdAt: eventGuestData.createdAt.toDate(),
         updatedAt: eventGuestData.updatedAt?.toDate(),
-        contact: {
-          id: contactDoc.id,
-          userId: contactData.userId,
-          email: contactData.email,
-          firstName: contactData.firstName,
-          lastName: contactData.lastName,
-          phone: contactData.phone,
-          dietaryRestrictions: contactData.dietaryRestrictions,
-          notes: contactData.notes,
-          createdAt: contactData.createdAt?.toDate(),
-          updatedAt: contactData.updatedAt?.toDate(),
-          tags: contactData.tags
-        }
+        // Legacy fields for display
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email,
+        phone: contact.phone,
+        dietaryRestrictions: contact.dietaryRestrictions,
+        notes: contact.notes,
       };
 
-      const event = {
+      const event: Event = {
         id: eventDoc.id,
         userId: eventData.userId,
         title: eventData.title,
-        description: eventData.description,
+        description: eventData.description || '',
         date: eventData.date.toDate(),
         location: eventData.location,
-        maxGuests: eventData.maxGuests,
+        maxGuests: eventData.maxGuests || 0,
+        guestCount: eventData.guestCount || 0,
+        acceptedCount: eventData.acceptedCount || 0,
+        declinedCount: eventData.declinedCount || 0,
+        pendingCount: eventData.pendingCount || 0,
+        maybeCount: eventData.maybeCount || 0,
         status: eventData.status,
+        dresscode: eventData.dresscode || '',
+        additionalInfo: eventData.additionalInfo || '',
         createdAt: eventData.createdAt.toDate(),
         updatedAt: eventData.updatedAt?.toDate(),
-        tags: eventData.tags,
-        isPrivate: eventData.isPrivate,
-        requireRSVP: eventData.requireRSVP,
-        allowPlusOne: eventData.allowPlusOne,
-        sendReminders: eventData.sendReminders,
-        imageUrl: eventData.imageUrl,
-        guestCount: eventData.guestCount,
-        acceptedCount: eventData.acceptedCount,
-        pendingCount: eventData.pendingCount,
-        declinedCount: eventData.declinedCount,
-        maybeCount: eventData.maybeCount,
-        dresscode: eventData.dresscode,
-        additionalInfo: eventData.additionalInfo
       };
 
       return {
-        eventGuest,
+        eventGuest: eventGuest as EventGuest & { contact: Contact },
         event,
-        rsvpToken
+        rsvpToken,
       };
     } catch (error: any) {
-      throw new Error(`Błąd podczas pobierania danych RSVP: ${error.message}`);
+      throw new Error(
+        `Błąd podczas pobierania danych RSVP: ${error.message}`
+      );
     }
   }
 
   /**
    * Przetwarza odpowiedź RSVP
    */
-  static async processRSVPResponse(token: string, response: RSVPResponse): Promise<void> {
+  static async processRSVPResponse(
+    token: string,
+    response: RSVPResponse
+  ): Promise<void> {
     try {
       const rsvpToken = await this.getRSVPToken(token);
-      
+
       if (!rsvpToken) {
         throw new Error('Token nie istnieje');
       }
@@ -251,11 +279,11 @@ export class NewRSVPService {
       const batch = writeBatch(db);
 
       // Aktualizuj EventGuest
-      const eventGuestRef = doc(db, 'eventGuests', rsvpToken.eventGuestId);
+      const eventGuestRef = doc(db, COLLECTIONS.GUESTS, rsvpToken.eventGuestId);
       const updateData: any = {
         status: response.status,
         respondedAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
       };
 
       // Dodaj plusOneType i plusOneDetails jeśli są podane
@@ -272,18 +300,26 @@ export class NewRSVPService {
       if (response.dietaryRestrictions || response.notes) {
         const eventGuestDoc = await getDoc(eventGuestRef);
         if (eventGuestDoc.exists()) {
-          const contactRef = doc(db, 'contacts', eventGuestDoc.data().contactId);
+          const eventGuestData = eventGuestDoc.data();
+          if (eventGuestData.contactId) {
+          const contactRef = doc(
+            db,
+            'contacts',
+              eventGuestData.contactId
+          );
           const contactUpdateData: any = {};
-          
+
           if (response.dietaryRestrictions) {
-            contactUpdateData.dietaryRestrictions = response.dietaryRestrictions;
+            contactUpdateData.dietaryRestrictions =
+              response.dietaryRestrictions;
           }
           if (response.notes) {
             contactUpdateData.notes = response.notes;
           }
           contactUpdateData.updatedAt = Timestamp.now();
-          
+
           batch.update(contactRef, contactUpdateData);
+          }
         }
       }
 
@@ -291,15 +327,21 @@ export class NewRSVPService {
       const tokenRef = doc(db, this.RSVP_TOKENS_COLLECTION, rsvpToken.id);
       batch.update(tokenRef, {
         isUsed: true,
-        usedAt: Timestamp.now()
+        usedAt: Timestamp.now(),
       });
 
       await batch.commit();
 
       // Aktualizuj liczniki wydarzenia
-      await EventGuestService.updateEventCounts(rsvpToken.eventId, response.status, 'add');
+      await EventGuestService.updateEventCounts(
+        rsvpToken.eventId,
+        response.status,
+        'add'
+      );
     } catch (error: any) {
-      throw new Error(`Błąd podczas przetwarzania odpowiedzi RSVP: ${error.message}`);
+      throw new Error(
+        `Błąd podczas przetwarzania odpowiedzi RSVP: ${error.message}`
+      );
     }
   }
 
@@ -314,16 +356,59 @@ export class NewRSVPService {
    * Generuje kod QR dla linku RSVP
    */
   static async generateQRCode(token: string): Promise<string> {
+    try {
     const url = this.generateRSVPUrl(token);
-    // Używamy publicznego API do generowania QR kodów
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
-    return qrApiUrl;
+      const qrCodeDataUrl = await QRCode.toDataURL(url, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      });
+      return qrCodeDataUrl;
+    } catch (error: any) {
+      throw new Error('Nie udało się wygenerować kodu QR');
+    }
+  }
+
+  /**
+   * Pobiera lub generuje token RSVP dla EventGuest i zwraca link oraz QR kod
+   */
+  static async getRSVPLinkAndQR(
+    eventGuestId: string,
+    eventId: string
+  ): Promise<{ rsvpUrl: string; qrCode: string; token: string }> {
+    try {
+      // Sprawdź czy gość już ma token RSVP
+      let rsvpToken = await this.getRSVPTokenForEventGuest(eventGuestId);
+
+      if (!rsvpToken) {
+        // Generuj nowy token
+        rsvpToken = await this.generateRSVPToken(eventGuestId, eventId);
+      }
+
+      const rsvpUrl = this.generateRSVPUrl(rsvpToken.token);
+      const qrCode = await this.generateQRCode(rsvpToken.token);
+
+      return {
+        rsvpUrl,
+        qrCode,
+        token: rsvpToken.token,
+      };
+    } catch (error: any) {
+      throw new Error(
+        `Błąd podczas generowania linku RSVP: ${error.message}`
+      );
+    }
   }
 
   /**
    * Tworzy zaproszenia dla wszystkich gości wydarzenia
    */
-  static async generateInvitationsForEvent(eventId: string): Promise<GuestInvitation[]> {
+  static async generateInvitationsForEvent(
+    eventId: string
+  ): Promise<GuestInvitation[]> {
     try {
       // Pobierz wszystkich gości wydarzenia przez EventGuestService
       const eventGuests = await EventGuestService.getEventGuests(eventId);
@@ -332,7 +417,7 @@ export class NewRSVPService {
       for (const eventGuest of eventGuests) {
         // Sprawdź czy gość już ma token RSVP
         let rsvpToken = await this.getRSVPTokenForEventGuest(eventGuest.id);
-        
+
         if (!rsvpToken) {
           // Generuj nowy token
           rsvpToken = await this.generateRSVPToken(eventGuest.id, eventId);
@@ -349,7 +434,7 @@ export class NewRSVPService {
           lastName: eventGuest.contact.lastName,
           rsvpToken: rsvpToken.token,
           rsvpUrl,
-          qrCode
+          qrCode,
         });
       }
 
@@ -362,7 +447,9 @@ export class NewRSVPService {
   /**
    * Pobiera token RSVP dla konkretnego EventGuest
    */
-  private static async getRSVPTokenForEventGuest(eventGuestId: string): Promise<RSVPToken | null> {
+  private static async getRSVPTokenForEventGuest(
+    eventGuestId: string
+  ): Promise<RSVPToken | null> {
     try {
       const tokenQuery = query(
         collection(db, this.RSVP_TOKENS_COLLECTION),
@@ -370,7 +457,7 @@ export class NewRSVPService {
       );
 
       const snapshot = await getDocs(tokenQuery);
-      
+
       if (snapshot.empty) {
         return null;
       }
@@ -386,9 +473,10 @@ export class NewRSVPService {
         isUsed: tokenData.isUsed,
         createdAt: tokenData.createdAt.toDate(),
         expiresAt: tokenData.expiresAt?.toDate(),
-        usedAt: tokenData.usedAt?.toDate()
+        usedAt: tokenData.usedAt?.toDate(),
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Błąd podczas pobierania tokenu RSVP:', error);
       return null;
     }
   }
@@ -412,12 +500,10 @@ export class NewRSVPService {
   /**
    * Śledzi analytics dla RSVP
    */
-  private static async trackRSVPAnalytics(eventId: string, status: GuestStatus): Promise<void> {
-    try {
-      // TODO: Implementacja analytics
-      console.log(`RSVP Analytics: Event ${eventId}, Status ${status}`);
-    } catch (error) {
-      console.warn('Nie udało się zapisać analytics RSVP:', error);
-    }
+  private static async trackRSVPAnalytics(
+    eventId: string,
+    status: GuestStatus
+  ): Promise<void> {
+    // Implementacja śledzenia analytics
   }
 }

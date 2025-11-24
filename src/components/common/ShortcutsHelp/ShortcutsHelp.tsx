@@ -16,33 +16,33 @@ const ShortcutsHelp: React.FC = () => {
     {
       key: 'Ctrl + N',
       description: 'Nowe wydarzenie',
-      category: 'Wydarzenia'
+      category: 'Wydarzenia',
     },
     {
       key: 'Ctrl + G',
       description: 'Dodaj gościa',
-      category: 'Goście'
+      category: 'Goście',
     },
     {
       key: 'Ctrl + A',
       description: 'Analityka',
-      category: 'Nawigacja'
+      category: 'Nawigacja',
     },
     {
       key: 'Ctrl + K',
       description: 'Szybkie wyszukiwanie',
-      category: 'Wyszukiwanie'
+      category: 'Wyszukiwanie',
     },
     {
       key: 'Ctrl + S',
       description: 'Zapisz',
-      category: 'Akcje'
+      category: 'Akcje',
     },
     {
       key: 'Escape',
       description: 'Zamknij modal',
-      category: 'Nawigacja'
-    }
+      category: 'Nawigacja',
+    },
   ];
 
   const categories = Array.from(new Set(shortcuts.map(s => s.category)));
@@ -66,7 +66,10 @@ const ShortcutsHelp: React.FC = () => {
 
   return (
     <div className="shortcuts-help">
-      <div className="shortcuts-help__overlay" onClick={() => setIsOpen(false)} />
+      <div
+        className="shortcuts-help__overlay"
+        onClick={() => setIsOpen(false)}
+      />
       <div className="shortcuts-help__modal">
         <div className="shortcuts-help__header">
           <div className="shortcuts-help__title">
@@ -109,7 +112,9 @@ const ShortcutsHelp: React.FC = () => {
         </div>
 
         <div className="shortcuts-help__footer">
-          <p>Naciśnij <kbd>Escape</kbd> aby zamknąć</p>
+          <p>
+            Naciśnij <kbd>Escape</kbd> aby zamknąć
+          </p>
         </div>
       </div>
     </div>

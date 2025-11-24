@@ -1,8 +1,9 @@
 // pages/Dashboard/Dashboard.tsx
 import React, { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar/Sidebar';
-import Header from '../../components/dashboard/Header/Header';
+import UnifiedHeader from '../../components/common/UnifiedHeader/UnifiedHeader';
+import PageTransition from '../../components/common/PageTransition/PageTransition';
 import DashboardHome from '../../components/dashboard/DashboardHome/DashboardHome';
 import Events from '../../components/dashboard/Events/Events';
 import Contacts from '../../components/dashboard/Contacts/Contacts';
@@ -17,6 +18,7 @@ import './Dashboard.scss';
 const Dashboard: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
 
   // Track page analytics
   usePageAnalytics();
@@ -30,29 +32,46 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard">
-      <div className="dashboard__layout">
-        <Sidebar 
-          isMobileOpen={isMobileOpen} 
+    <div className={`dashboard ${isCollapsed ? 'dashboard--collapsed' : ''}`}>
+      {/* Modern Sidebar Navigation */}
+      <Sidebar
+        isMobileOpen={isMobileOpen}
+        onMobileToggle={handleMobileToggle}
+        isCollapsed={isCollapsed}
+        onCollapsedToggle={handleCollapsedToggle}
+      />
+
+      {/* Main Content Area */}
+      <div
+        className={`dashboard__main ${isCollapsed ? 'dashboard__main--collapsed' : ''}`}
+      >
+        {/* Modern Top Header */}
+        <UnifiedHeader
+          variant="dashboard"
           onMobileToggle={handleMobileToggle}
-          isCollapsed={isCollapsed}
-          onCollapsedToggle={handleCollapsedToggle}
+          isMobileOpen={isMobileOpen}
         />
-        <div className={`dashboard__main ${isCollapsed ? 'dashboard__main--collapsed' : ''}`}>
-          <Header onMobileToggle={handleMobileToggle} isMobileOpen={isMobileOpen} />
-          <div className="dashboard__content" tabIndex={-1}>
-            <Routes>
-              <Route index element={<DashboardHome />} />
-              <Route path="events/*" element={<Events />} />
-              <Route path="guests/*" element={<Navigate to="/dashboard/contacts" replace />} />
-              <Route path="contacts/*" element={<Contacts />} />
-              <Route path="activities" element={<Activities />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="contact-us" element={<ContactUs />} />
-              <Route path="search" element={<Search />} />
-            </Routes>
-          </div>
+
+        {/* Content Container */}
+        <div className="dashboard__content" tabIndex={-1}>
+          <PageTransition location={location}>
+            {(displayLocation) => (
+              <Routes location={displayLocation}>
+                <Route index element={<DashboardHome />} />
+                <Route path="events/*" element={<Events />} />
+                <Route
+                  path="guests/*"
+                  element={<Navigate to="/dashboard/contacts" replace />}
+                />
+                <Route path="contacts/*" element={<Contacts />} />
+                <Route path="activities" element={<Activities />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="contact-us" element={<ContactUs />} />
+                <Route path="search" element={<Search />} />
+              </Routes>
+            )}
+          </PageTransition>
         </div>
       </div>
     </div>

@@ -1,6 +1,14 @@
 // components/dashboard/Settings/NotificationSettings/NotificationSettings.tsx
 import React, { useState } from 'react';
-import { Bell, Mail, Smartphone, Globe, Save, Check, AlertCircle } from 'lucide-react';
+import {
+  Bell,
+  Mail,
+  Smartphone,
+  Globe,
+  Save,
+  Check,
+  AlertCircle,
+} from 'lucide-react';
 import './NotificationSettings.scss';
 
 const NotificationSettings: React.FC = () => {
@@ -10,48 +18,55 @@ const NotificationSettings: React.FC = () => {
       guestResponses: true,
       weeklyDigest: false,
       marketing: false,
-      systemUpdates: true
+      systemUpdates: true,
     },
     sms: {
       eventReminders: false,
       guestResponses: true,
-      emergencyOnly: true
+      emergencyOnly: true,
     },
     push: {
       eventReminders: true,
       guestResponses: true,
       appUpdates: false,
-      marketing: false
+      marketing: false,
     },
     digest: {
       frequency: 'weekly' as 'daily' | 'weekly' | 'monthly' | 'never',
       time: '09:00',
       includeAnalytics: true,
-      includeUpcoming: true
-    }
+      includeUpcoming: true,
+    },
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
 
   const handleToggle = (category: keyof typeof settings, setting: string) => {
     setSettings(prev => ({
       ...prev,
       [category]: {
         ...prev[category],
-        [setting]: !prev[category][setting as keyof typeof prev[typeof category]]
-      }
+        [setting]:
+          !prev[category][setting as keyof (typeof prev)[typeof category]],
+      },
     }));
     setSaveStatus('idle');
   };
 
-  const handleSelectChange = (category: keyof typeof settings, setting: string, value: string | boolean) => {
+  const handleSelectChange = (
+    category: keyof typeof settings,
+    setting: string,
+    value: string | boolean
+  ) => {
     setSettings(prev => ({
       ...prev,
       [category]: {
         ...prev[category],
-        [setting]: value
-      }
+        [setting]: value,
+      },
     }));
     setSaveStatus('idle');
   };
@@ -59,12 +74,12 @@ const NotificationSettings: React.FC = () => {
   const handleSave = async () => {
     setIsLoading(true);
     setSaveStatus('saving');
-    
+
     try {
       // Symulacja API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       setSaveStatus('saved');
-      
+
       // Reset status po 3 sekundach
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
@@ -90,8 +105,10 @@ const NotificationSettings: React.FC = () => {
     <div className="notification-settings">
       <div className="notification-settings__header">
         <div className="notification-settings__title-section">
-          <h2>Powiadomienia</h2>
-          <p>Wybierz jak chcesz otrzymywać powiadomienia o swoich wydarzeniach</p>
+          <h1>Powiadomienia</h1>
+          <p>
+            Wybierz jak chcesz otrzymywać powiadomienia o swoich wydarzeniach
+          </p>
         </div>
         <div className="notification-settings__summary">
           <div className="notification-settings__count">
@@ -139,7 +156,8 @@ const NotificationSettings: React.FC = () => {
                 Odpowiedzi gości
               </span>
               <span className="notification-settings__option-description">
-                Natychmiastowe powiadomienia gdy goście odpowiadają na zaproszenia
+                Natychmiastowe powiadomienia gdy goście odpowiadają na
+                zaproszenia
               </span>
             </div>
             <label className="notification-settings__toggle">
@@ -291,7 +309,9 @@ const NotificationSettings: React.FC = () => {
           </div>
           <div>
             <h3>Powiadomienia push</h3>
-            <p>Powiadomienia wyświetlane w przeglądarce lub aplikacji mobilnej</p>
+            <p>
+              Powiadomienia wyświetlane w przeglądarce lub aplikacji mobilnej
+            </p>
           </div>
         </div>
 
@@ -321,7 +341,8 @@ const NotificationSettings: React.FC = () => {
                 Odpowiedzi gości
               </span>
               <span className="notification-settings__option-description">
-                Natychmiastowe push gdy goście akceptują lub odrzucają zaproszenia
+                Natychmiastowe push gdy goście akceptują lub odrzucają
+                zaproszenia
               </span>
             </div>
             <label className="notification-settings__toggle">
@@ -392,7 +413,9 @@ const NotificationSettings: React.FC = () => {
               <label>Częstotliwość wysyłania</label>
               <select
                 value={settings.digest.frequency}
-                onChange={(e) => handleSelectChange('digest', 'frequency', e.target.value)}
+                onChange={e =>
+                  handleSelectChange('digest', 'frequency', e.target.value)
+                }
               >
                 <option value="daily">Codziennie</option>
                 <option value="weekly">Tygodniowo (w poniedziałki)</option>
@@ -406,7 +429,9 @@ const NotificationSettings: React.FC = () => {
                 <label>Czas wysyłki</label>
                 <select
                   value={settings.digest.time}
-                  onChange={(e) => handleSelectChange('digest', 'time', e.target.value)}
+                  onChange={e =>
+                    handleSelectChange('digest', 'time', e.target.value)
+                  }
                 >
                   <option value="07:00">07:00 - Wczesny poranek</option>
                   <option value="08:00">08:00 - Przed pracą</option>
@@ -427,12 +452,22 @@ const NotificationSettings: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={settings.digest.includeAnalytics}
-                    onChange={(e) => handleSelectChange('digest', 'includeAnalytics', e.target.checked)}
+                    onChange={e =>
+                      handleSelectChange(
+                        'digest',
+                        'includeAnalytics',
+                        e.target.checked
+                      )
+                    }
                   />
                   <span className="notification-settings__checkbox-custom"></span>
                   <div>
-                    <span className="notification-settings__checkbox-title">Analityki i statystyki</span>
-                    <span className="notification-settings__checkbox-description">Wykresy, wskaźniki odpowiedzi, podsumowania</span>
+                    <span className="notification-settings__checkbox-title">
+                      Analityki i statystyki
+                    </span>
+                    <span className="notification-settings__checkbox-description">
+                      Wykresy, wskaźniki odpowiedzi, podsumowania
+                    </span>
                   </div>
                 </label>
 
@@ -440,12 +475,22 @@ const NotificationSettings: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={settings.digest.includeUpcoming}
-                    onChange={(e) => handleSelectChange('digest', 'includeUpcoming', e.target.checked)}
+                    onChange={e =>
+                      handleSelectChange(
+                        'digest',
+                        'includeUpcoming',
+                        e.target.checked
+                      )
+                    }
                   />
                   <span className="notification-settings__checkbox-custom"></span>
                   <div>
-                    <span className="notification-settings__checkbox-title">Nadchodzące wydarzenia</span>
-                    <span className="notification-settings__checkbox-description">Lista najbliższych wydarzeń i przypomnienia</span>
+                    <span className="notification-settings__checkbox-title">
+                      Nadchodzące wydarzenia
+                    </span>
+                    <span className="notification-settings__checkbox-description">
+                      Lista najbliższych wydarzeń i przypomnienia
+                    </span>
                   </div>
                 </label>
               </div>
@@ -498,8 +543,8 @@ const NotificationSettings: React.FC = () => {
             </span>
           )}
         </div>
-        
-        <button 
+
+        <button
           className="notification-settings__save-btn"
           onClick={handleSave}
           disabled={isLoading}

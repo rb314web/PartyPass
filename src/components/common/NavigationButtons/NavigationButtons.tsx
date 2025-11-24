@@ -9,9 +9,9 @@ interface NavigationButtonsProps {
   className?: string;
 }
 
-const NavigationButtons: React.FC<NavigationButtonsProps> = ({ 
-  showRefresh = true, 
-  className = '' 
+const NavigationButtons: React.FC<NavigationButtonsProps> = ({
+  showRefresh = true,
+  className = '',
 }) => {
   const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory();
 

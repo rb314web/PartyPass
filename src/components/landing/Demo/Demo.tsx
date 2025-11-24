@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { X, Calendar, Users, Mail, BarChart3, CheckCircle, Settings, Home, Search, Activity, TrendingUp, Clock, ArrowRight } from 'lucide-react';
+import {
+  X,
+  Calendar,
+  Users,
+  Mail,
+  BarChart3,
+  CheckCircle,
+  Settings,
+  Home,
+  Search,
+  Activity,
+  Clock,
+  ArrowRight,
+} from 'lucide-react';
 import './Demo.scss';
 
 interface DemoProps {
@@ -9,9 +22,11 @@ interface DemoProps {
 
 // Simplified demo component with inline dashboard-like layout
 const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'events' | 'analytics'>('dashboard');
+  const [currentView, setCurrentView] = useState<
+    'dashboard' | 'events' | 'analytics'
+  >('dashboard');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed] = useState(false);
 
   if (!isOpen) return null;
 
@@ -22,15 +37,15 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
       change: '+3 w tym miesiącu',
       trend: 'up' as const,
       icon: Calendar,
-      color: 'blue' as const
+      color: 'blue' as const,
     },
     {
       title: 'Goście łącznie',
       value: 324,
-      change: '+45 w tym miesiącu', 
+      change: '+45 w tym miesiącu',
       trend: 'up' as const,
       icon: Users,
-      color: 'green' as const
+      color: 'green' as const,
     },
     {
       title: 'Potwierdzenia',
@@ -38,7 +53,7 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
       change: '+5% vs poprzedni miesiąc',
       trend: 'up' as const,
       icon: CheckCircle,
-      color: 'purple' as const
+      color: 'purple' as const,
     },
     {
       title: 'Wysłane zaproszenia',
@@ -46,8 +61,8 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
       change: '+120 w tym miesiącu',
       trend: 'up' as const,
       icon: Mail,
-      color: 'orange' as const
-    }
+      color: 'orange' as const,
+    },
   ];
 
   const mockEvents = [
@@ -58,7 +73,7 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
       location: 'ul. Kwiatowa 15, Warszawa',
       guests: 28,
       maxGuests: 35,
-      status: 'active' as const
+      status: 'active' as const,
     },
     {
       id: '2',
@@ -67,7 +82,7 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
       location: 'Centrum Konferencyjne, Kraków',
       guests: 120,
       maxGuests: 150,
-      status: 'completed' as const
+      status: 'completed' as const,
     },
     {
       id: '3',
@@ -76,8 +91,8 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
       location: 'Dom babci, Zakopane',
       guests: 12,
       maxGuests: 20,
-      status: 'active' as const
-    }
+      status: 'active' as const,
+    },
   ];
 
   const sidebarItems = [
@@ -87,7 +102,7 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
     { icon: Users, label: 'Kontakty', view: 'dashboard' },
     { icon: Activity, label: 'Aktywności', view: 'dashboard' },
     { icon: BarChart3, label: 'Analityka', view: 'analytics' },
-    { icon: Settings, label: 'Ustawienia', view: 'dashboard' }
+    { icon: Settings, label: 'Ustawienia', view: 'dashboard' },
   ];
 
   const renderDashboard = () => (
@@ -99,7 +114,10 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
 
       <div className="demo__stats-grid">
         {mockStats.map((stat, index) => (
-          <div key={index} className={`demo__stat-card demo__stat-card--${stat.color}`}>
+          <div
+            key={index}
+            className={`demo__stat-card demo__stat-card--${stat.color}`}
+          >
             <div className="demo__stat-header">
               <stat.icon size={24} className="demo__stat-icon" />
               <span className="demo__stat-title">{stat.title}</span>
@@ -113,27 +131,33 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
       <div className="demo__section">
         <h2>Nadchodzące wydarzenia</h2>
         <div className="demo__events-grid">
-          {mockEvents.filter(event => event.status === 'active').map(event => (
-            <div key={event.id} className="demo__event-card">
-              <div className="demo__event-header">
-                <h3>{event.title}</h3>
-                <span className={`demo__event-status demo__event-status--${event.status}`}>
-                  Aktywne
-                </span>
-              </div>
-              <div className="demo__event-details">
-                <div className="demo__event-date">
-                  <Clock size={16} />
-                  {event.date}
+          {mockEvents
+            .filter(event => event.status === 'active')
+            .map(event => (
+              <div key={event.id} className="demo__event-card">
+                <div className="demo__event-header">
+                  <h3>{event.title}</h3>
+                  <span
+                    className={`demo__event-status demo__event-status--${event.status}`}
+                  >
+                    Aktywne
+                  </span>
                 </div>
-                <div className="demo__event-location">📍 {event.location}</div>
-                <div className="demo__event-guests">
-                  <Users size={16} />
-                  {event.guests}/{event.maxGuests} gości
+                <div className="demo__event-details">
+                  <div className="demo__event-date">
+                    <Clock size={16} />
+                    {event.date}
+                  </div>
+                  <div className="demo__event-location">
+                    📍 {event.location}
+                  </div>
+                  <div className="demo__event-guests">
+                    <Users size={16} />
+                    {event.guests}/{event.maxGuests} gości
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 
@@ -141,17 +165,28 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
         <h2>Ostatnia aktywność</h2>
         <div className="demo__activity-list">
           <div className="demo__activity-item">
-            <CheckCircle size={16} className="demo__activity-icon demo__activity-icon--success" />
-            <span>Anna Kowalska potwierdziła uczestnictwo w "Urodziny Marii"</span>
+            <CheckCircle
+              size={16}
+              className="demo__activity-icon demo__activity-icon--success"
+            />
+            <span>
+              Anna Kowalska potwierdziła uczestnictwo w "Urodziny Marii"
+            </span>
             <small>2 godziny temu</small>
           </div>
           <div className="demo__activity-item">
-            <Mail size={16} className="demo__activity-icon demo__activity-icon--blue" />
+            <Mail
+              size={16}
+              className="demo__activity-icon demo__activity-icon--blue"
+            />
             <span>Wysłano 15 zaproszeń na "Spotkanie rodzinne"</span>
             <small>1 dzień temu</small>
           </div>
           <div className="demo__activity-item">
-            <Calendar size={16} className="demo__activity-icon demo__activity-icon--purple" />
+            <Calendar
+              size={16}
+              className="demo__activity-icon demo__activity-icon--purple"
+            />
             <span>Utworzono nowe wydarzenie "Spotkanie rodzinne"</span>
             <small>3 dni temu</small>
           </div>
@@ -166,10 +201,12 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
         <h1>Wydarzenia</h1>
         <p>Zarządzaj wszystkimi swoimi wydarzeniami w jednym miejscu</p>
       </div>
-      
+
       <div className="demo__events-filters">
         <div className="demo__filter-tabs">
-          <button className="demo__filter-tab demo__filter-tab--active">Wszystkie (3)</button>
+          <button className="demo__filter-tab demo__filter-tab--active">
+            Wszystkie (3)
+          </button>
           <button className="demo__filter-tab">Aktywne (2)</button>
           <button className="demo__filter-tab">Zakończone (1)</button>
         </div>
@@ -180,11 +217,17 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
           <div key={event.id} className="demo__event-row">
             <div className="demo__event-main">
               <h3>{event.title}</h3>
-              <p>{event.date} • {event.location}</p>
+              <p>
+                {event.date} • {event.location}
+              </p>
             </div>
             <div className="demo__event-meta">
-              <span className="demo__event-guests-count">{event.guests}/{event.maxGuests}</span>
-              <span className={`demo__event-status demo__event-status--${event.status}`}>
+              <span className="demo__event-guests-count">
+                {event.guests}/{event.maxGuests}
+              </span>
+              <span
+                className={`demo__event-status demo__event-status--${event.status}`}
+              >
                 {event.status === 'active' ? 'Aktywne' : 'Zakończone'}
               </span>
             </div>
@@ -205,26 +248,35 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
         <div className="demo__metric-card">
           <h4>Średni czas odpowiedzi</h4>
           <div className="demo__metric-value">2.3 dni</div>
-          <div className="demo__metric-change demo__metric-change--positive">-0.5 dni vs poprzedni miesiąc</div>
+          <div className="demo__metric-change demo__metric-change--positive">
+            -0.5 dni vs poprzedni miesiąc
+          </div>
         </div>
-        
+
         <div className="demo__metric-card">
           <h4>Najlepsza frekwencja</h4>
           <div className="demo__metric-value">94%</div>
-          <div className="demo__metric-change demo__metric-change--positive">Konferencja IT 2024</div>
+          <div className="demo__metric-change demo__metric-change--positive">
+            Konferencja IT 2024
+          </div>
         </div>
-        
+
         <div className="demo__metric-card">
           <h4>Średnia wielkość wydarzenia</h4>
           <div className="demo__metric-value">68 gości</div>
-          <div className="demo__metric-change demo__metric-change--positive">+12 vs poprzedni miesiąc</div>
+          <div className="demo__metric-change demo__metric-change--positive">
+            +12 vs poprzedni miesiąc
+          </div>
         </div>
       </div>
 
       <div className="demo__chart-placeholder">
         <BarChart3 size={48} />
         <h4>Wykres frekwencji w czasie</h4>
-        <p>Tutaj byłby wyświetlony interaktywny wykres pokazujący trendy uczestnictwa w wydarzeniach</p>
+        <p>
+          Tutaj byłby wyświetlony interaktywny wykres pokazujący trendy
+          uczestnictwa w wydarzeniach
+        </p>
       </div>
     </div>
   );
@@ -253,17 +305,19 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
             <X size={24} />
           </button>
         </div>
-        
+
         <div className="demo__dashboard-wrapper">
           <div className="demo__dashboard-layout">
             {/* Sidebar */}
-            <div className={`demo__sidebar ${isCollapsed ? 'demo__sidebar--collapsed' : ''} ${isMobileOpen ? 'demo__sidebar--mobile-open' : ''}`}>
+            <div
+              className={`demo__sidebar ${isCollapsed ? 'demo__sidebar--collapsed' : ''} ${isMobileOpen ? 'demo__sidebar--mobile-open' : ''}`}
+            >
               <div className="demo__sidebar-header">
                 <div className="demo__logo">
                   {!isCollapsed && <span>PartyPass</span>}
                 </div>
               </div>
-              
+
               <nav className="demo__sidebar-nav">
                 {sidebarItems.map((item, index) => (
                   <button
@@ -283,7 +337,9 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
                   {!isCollapsed && (
                     <div className="demo__user-details">
                       <span className="demo__user-name">Anna Kowalska</span>
-                      <span className="demo__user-email">demo@partypass.pl</span>
+                      <span className="demo__user-email">
+                        demo@partypass.pl
+                      </span>
                     </div>
                   )}
                 </div>
@@ -294,13 +350,13 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
             <div className="demo__main">
               {/* Header */}
               <div className="demo__top-header">
-                <button 
+                <button
                   className="demo__mobile-toggle"
                   onClick={() => setIsMobileOpen(!isMobileOpen)}
                 >
                   <X size={20} />
                 </button>
-                
+
                 <div className="demo__header-actions">
                   <button className="demo__header-btn">
                     <Search size={20} />
@@ -313,28 +369,26 @@ const Demo: React.FC<DemoProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Content */}
-              <div className="demo__content">
-                {renderCurrentView()}
-              </div>
+              <div className="demo__content">{renderCurrentView()}</div>
             </div>
           </div>
         </div>
 
         <div className="demo__footer">
           <div className="demo__view-selector">
-            <button 
+            <button
               className={`demo__view-btn ${currentView === 'dashboard' ? 'active' : ''}`}
               onClick={() => setCurrentView('dashboard')}
             >
               Dashboard
             </button>
-            <button 
+            <button
               className={`demo__view-btn ${currentView === 'events' ? 'active' : ''}`}
               onClick={() => setCurrentView('events')}
             >
               Wydarzenia
             </button>
-            <button 
+            <button
               className={`demo__view-btn ${currentView === 'analytics' ? 'active' : ''}`}
               onClick={() => setCurrentView('analytics')}
             >

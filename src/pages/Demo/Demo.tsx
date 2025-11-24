@@ -1,28 +1,29 @@
 // pages/Demo/Demo.tsx
 import React, { useState } from 'react';
-import { 
-  Calendar, 
-  Users, 
-  Mail, 
-  BarChart3, 
-  CheckCircle, 
-  Settings, 
-  Home, 
-  Search, 
-  Activity, 
-  Clock, 
+import {
+  Calendar,
+  Users,
+  Mail,
+  BarChart3,
+  CheckCircle,
+  Settings,
+  Home,
+  Search,
+  Activity,
+  Clock,
   ArrowRight,
   Bell,
   Plus,
   Menu,
-  X,
   TrendingUp,
-  LogOut
+  LogOut,
 } from 'lucide-react';
 import './Demo.scss';
 
 const DemoPage: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'events' | 'analytics'>('dashboard');
+  const [currentView, setCurrentView] = useState<
+    'dashboard' | 'events' | 'analytics'
+  >('dashboard');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -31,7 +32,7 @@ const DemoPage: React.FC = () => {
     firstName: 'Anna',
     lastName: 'Kowalska',
     email: 'demo@partypass.pl',
-    avatar: null
+    avatar: null,
   };
 
   const mockStats = [
@@ -41,7 +42,7 @@ const DemoPage: React.FC = () => {
       change: '+3 w tym miesiącu',
       trend: 'up' as const,
       icon: Calendar,
-      color: 'blue' as const
+      color: 'blue' as const,
     },
     {
       title: 'Goście łącznie',
@@ -49,7 +50,7 @@ const DemoPage: React.FC = () => {
       change: '+45 w tym miesiącu',
       trend: 'up' as const,
       icon: Users,
-      color: 'green' as const
+      color: 'green' as const,
     },
     {
       title: 'Potwierdzenia',
@@ -57,7 +58,7 @@ const DemoPage: React.FC = () => {
       change: '+5% vs poprzedni miesiąc',
       trend: 'up' as const,
       icon: CheckCircle,
-      color: 'purple' as const
+      color: 'purple' as const,
     },
     {
       title: 'Wysłane zaproszenia',
@@ -65,8 +66,8 @@ const DemoPage: React.FC = () => {
       change: '+120 w tym miesiącu',
       trend: 'up' as const,
       icon: Mail,
-      color: 'orange' as const
-    }
+      color: 'orange' as const,
+    },
   ];
 
   const mockEvents = [
@@ -78,7 +79,8 @@ const DemoPage: React.FC = () => {
       guests: 28,
       maxGuests: 35,
       status: 'active' as const,
-      description: 'Zapraszam na swoje 25. urodziny! Będzie tort, muzyka i super zabawa.'
+      description:
+        'Zapraszam na swoje 25. urodziny! Będzie tort, muzyka i super zabawa.',
     },
     {
       id: '2',
@@ -88,7 +90,8 @@ const DemoPage: React.FC = () => {
       guests: 120,
       maxGuests: 150,
       status: 'completed' as const,
-      description: 'Największe wydarzenie IT w Polsce. Wykłady, warsztaty, networking.'
+      description:
+        'Największe wydarzenie IT w Polsce. Wykłady, warsztaty, networking.',
     },
     {
       id: '3',
@@ -98,18 +101,48 @@ const DemoPage: React.FC = () => {
       guests: 12,
       maxGuests: 20,
       status: 'active' as const,
-      description: 'Tradycyjny obiad u babci. Przynieście dobre humory!'
-    }
+      description: 'Tradycyjny obiad u babci. Przynieście dobre humory!',
+    },
   ];
 
   const sidebarItems = [
     { icon: Home, label: 'Dashboard', view: 'dashboard', path: '/dashboard' },
-    { icon: Search, label: 'Wyszukaj', view: 'dashboard', path: '/dashboard/search' },
-    { icon: Calendar, label: 'Wydarzenia', view: 'events', path: '/dashboard/events' },
-    { icon: Users, label: 'Kontakty', view: 'dashboard', path: '/dashboard/contacts' },
-    { icon: Activity, label: 'Aktywności', view: 'dashboard', path: '/dashboard/activities' },
-    { icon: BarChart3, label: 'Analityka', view: 'analytics', path: '/dashboard/analytics' },
-    { icon: Settings, label: 'Ustawienia', view: 'dashboard', path: '/dashboard/settings' }
+    {
+      icon: Search,
+      label: 'Wyszukaj',
+      view: 'dashboard',
+      path: '/dashboard/search',
+    },
+    {
+      icon: Calendar,
+      label: 'Wydarzenia',
+      view: 'events',
+      path: '/dashboard/events',
+    },
+    {
+      icon: Users,
+      label: 'Kontakty',
+      view: 'dashboard',
+      path: '/dashboard/contacts',
+    },
+    {
+      icon: Activity,
+      label: 'Aktywności',
+      view: 'dashboard',
+      path: '/dashboard/activities',
+    },
+    {
+      icon: BarChart3,
+      label: 'Analityka',
+      view: 'analytics',
+      path: '/dashboard/analytics',
+    },
+    {
+      icon: Settings,
+      label: 'Ustawienia',
+      view: 'dashboard',
+      path: '/dashboard/settings',
+    },
   ];
 
   const renderDashboard = () => (
@@ -121,7 +154,10 @@ const DemoPage: React.FC = () => {
 
       <div className="demo-page__stats-grid">
         {mockStats.map((stat, index) => (
-          <div key={index} className={`demo-page__stat-card demo-page__stat-card--${stat.color}`}>
+          <div
+            key={index}
+            className={`demo-page__stat-card demo-page__stat-card--${stat.color}`}
+          >
             <div className="demo-page__stat-header">
               <stat.icon size={24} className="demo-page__stat-icon" />
               <span className="demo-page__stat-title">{stat.title}</span>
@@ -135,32 +171,40 @@ const DemoPage: React.FC = () => {
       <div className="demo-page__section">
         <h2>Nadchodzące wydarzenia</h2>
         <div className="demo-page__events-grid">
-          {mockEvents.filter(event => event.status === 'active').map(event => (
-            <div key={event.id} className="demo-page__event-card">
-              <div className="demo-page__event-header">
-                <h3>{event.title}</h3>
-                <span className={`demo-page__event-status demo-page__event-status--${event.status}`}>
-                  Aktywne
-                </span>
-              </div>
-              <div className="demo-page__event-details">
-                <div className="demo-page__event-date">
-                  <Clock size={16} />
-                  {event.date}
+          {mockEvents
+            .filter(event => event.status === 'active')
+            .map(event => (
+              <div key={event.id} className="demo-page__event-card">
+                <div className="demo-page__event-header">
+                  <h3>{event.title}</h3>
+                  <span
+                    className={`demo-page__event-status demo-page__event-status--${event.status}`}
+                  >
+                    Aktywne
+                  </span>
                 </div>
-                <div className="demo-page__event-location">📍 {event.location}</div>
-                <div className="demo-page__event-guests">
-                  <Users size={16} />
-                  {event.guests}/{event.maxGuests} gości
+                <div className="demo-page__event-details">
+                  <div className="demo-page__event-date">
+                    <Clock size={16} />
+                    {event.date}
+                  </div>
+                  <div className="demo-page__event-location">
+                    📍 {event.location}
+                  </div>
+                  <div className="demo-page__event-guests">
+                    <Users size={16} />
+                    {event.guests}/{event.maxGuests} gości
+                  </div>
+                  <p className="demo-page__event-description">
+                    {event.description}
+                  </p>
                 </div>
-                <p className="demo-page__event-description">{event.description}</p>
+                <button className="demo-page__event-action">
+                  Zarządzaj wydarzeniem
+                  <ArrowRight size={16} />
+                </button>
               </div>
-              <button className="demo-page__event-action">
-                Zarządzaj wydarzeniem
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 
@@ -168,22 +212,36 @@ const DemoPage: React.FC = () => {
         <h2>Ostatnia aktywność</h2>
         <div className="demo-page__activity-list">
           <div className="demo-page__activity-item">
-            <CheckCircle size={16} className="demo-page__activity-icon demo-page__activity-icon--success" />
-            <span>Anna Kowalska potwierdziła uczestnictwo w "Urodziny Marii"</span>
+            <CheckCircle
+              size={16}
+              className="demo-page__activity-icon demo-page__activity-icon--success"
+            />
+            <span>
+              Anna Kowalska potwierdziła uczestnictwo w "Urodziny Marii"
+            </span>
             <small>2 godziny temu</small>
           </div>
           <div className="demo-page__activity-item">
-            <Mail size={16} className="demo-page__activity-icon demo-page__activity-icon--blue" />
+            <Mail
+              size={16}
+              className="demo-page__activity-icon demo-page__activity-icon--blue"
+            />
             <span>Wysłano 15 zaproszeń na "Spotkanie rodzinne"</span>
             <small>1 dzień temu</small>
           </div>
           <div className="demo-page__activity-item">
-            <Calendar size={16} className="demo-page__activity-icon demo-page__activity-icon--purple" />
+            <Calendar
+              size={16}
+              className="demo-page__activity-icon demo-page__activity-icon--purple"
+            />
             <span>Utworzono nowe wydarzenie "Spotkanie rodzinne"</span>
             <small>3 dni temu</small>
           </div>
           <div className="demo-page__activity-item">
-            <Users size={16} className="demo-page__activity-icon demo-page__activity-icon--green" />
+            <Users
+              size={16}
+              className="demo-page__activity-icon demo-page__activity-icon--green"
+            />
             <span>5 nowych gości dołączyło do "Konferencja IT 2024"</span>
             <small>3 dni temu</small>
           </div>
@@ -224,13 +282,15 @@ const DemoPage: React.FC = () => {
           Nowe wydarzenie
         </button>
       </div>
-      
+
       <div className="demo-page__events-filters">
         <div className="demo-page__filter-tabs">
-          <button className="demo-page__filter-tab demo-page__filter-tab--active">Wszystkie (3)</button>
+          <button className="demo-page__filter-tab demo-page__filter-tab--active">
+            Wszystkie (3)
+          </button>
           <button className="demo-page__filter-tab">Aktywne (2)</button>
           <button className="demo-page__filter-tab">Zakończone (1)</button>
-          <button className="demo-page__filter-tab">Szkice (0)</button>
+          <button className="demo-page__filter-tab">Planowane (0)</button>
         </div>
       </div>
 
@@ -239,7 +299,9 @@ const DemoPage: React.FC = () => {
           <div key={event.id} className="demo-page__event-row">
             <div className="demo-page__event-main">
               <h3>{event.title}</h3>
-              <p>{event.date} • {event.location}</p>
+              <p>
+                {event.date} • {event.location}
+              </p>
               <p className="demo-page__event-desc">{event.description}</p>
             </div>
             <div className="demo-page__event-meta">
@@ -250,10 +312,13 @@ const DemoPage: React.FC = () => {
                 </span>
                 <span className="demo-page__event-rsvp-rate">
                   <CheckCircle size={16} />
-                  {Math.round((event.guests / event.maxGuests) * 100)}% frekwencja
+                  {Math.round((event.guests / event.maxGuests) * 100)}%
+                  frekwencja
                 </span>
               </div>
-              <span className={`demo-page__event-status demo-page__event-status--${event.status}`}>
+              <span
+                className={`demo-page__event-status demo-page__event-status--${event.status}`}
+              >
                 {event.status === 'active' ? 'Aktywne' : 'Zakończone'}
               </span>
               <button className="demo-page__event-action demo-page__event-action--small">
@@ -282,7 +347,7 @@ const DemoPage: React.FC = () => {
             -0.5 dni vs poprzedni miesiąc
           </div>
         </div>
-        
+
         <div className="demo-page__metric-card">
           <h4>Najlepsza frekwencja</h4>
           <div className="demo-page__metric-value">94%</div>
@@ -291,7 +356,7 @@ const DemoPage: React.FC = () => {
             Konferencja IT 2024
           </div>
         </div>
-        
+
         <div className="demo-page__metric-card">
           <h4>Średnia wielkość wydarzenia</h4>
           <div className="demo-page__metric-value">68 gości</div>
@@ -316,7 +381,10 @@ const DemoPage: React.FC = () => {
         <div className="demo-page__chart-placeholder">
           <BarChart3 size={48} />
           <h4>Wykres frekwencji w czasie</h4>
-          <p>Tutaj byłby wyświetlony interaktywny wykres pokazujący trendy uczestnictwa w wydarzeniach na przestrzeni ostatnich miesięcy</p>
+          <p>
+            Tutaj byłby wyświetlony interaktywny wykres pokazujący trendy
+            uczestnictwa w wydarzeniach na przestrzeni ostatnich miesięcy
+          </p>
         </div>
       </div>
 
@@ -329,7 +397,10 @@ const DemoPage: React.FC = () => {
             </div>
             <div className="demo-page__insight-content">
               <h4>Wzrost zaangażowania</h4>
-              <p>Twoje wydarzenia przyciągają coraz więcej uczestników. Średnia frekwencja wzrosła o 12% w tym miesiącu.</p>
+              <p>
+                Twoje wydarzenia przyciągają coraz więcej uczestników. Średnia
+                frekwencja wzrosła o 12% w tym miesiącu.
+              </p>
             </div>
           </div>
           <div className="demo-page__insight-item">
@@ -338,7 +409,10 @@ const DemoPage: React.FC = () => {
             </div>
             <div className="demo-page__insight-content">
               <h4>Optymalne dni</h4>
-              <p>Wydarzenia organizowane w weekendy mają 23% wyższą frekwencję niż te w dni robocze.</p>
+              <p>
+                Wydarzenia organizowane w weekendy mają 23% wyższą frekwencję
+                niż te w dni robocze.
+              </p>
             </div>
           </div>
         </div>
@@ -361,14 +435,16 @@ const DemoPage: React.FC = () => {
     <div className="demo-page">
       <div className="demo-page__layout">
         {/* Sidebar */}
-        <div className={`demo-page__sidebar ${isCollapsed ? 'demo-page__sidebar--collapsed' : ''} ${isMobileOpen ? 'demo-page__sidebar--mobile-open' : ''}`}>
+        <div
+          className={`demo-page__sidebar ${isCollapsed ? 'demo-page__sidebar--collapsed' : ''} ${isMobileOpen ? 'demo-page__sidebar--mobile-open' : ''}`}
+        >
           <div className="demo-page__sidebar-header">
             <div className="demo-page__logo">
               {!isCollapsed && <span>PartyPass</span>}
               <span className="demo-page__demo-badge">DEMO</span>
             </div>
           </div>
-          
+
           <nav className="demo-page__sidebar-nav">
             {sidebarItems.map((item, index) => (
               <button
@@ -385,12 +461,17 @@ const DemoPage: React.FC = () => {
           <div className="demo-page__sidebar-footer">
             <div className="demo-page__user-info">
               <div className="demo-page__user-avatar">
-                {mockUser.firstName[0]}{mockUser.lastName[0]}
+                {mockUser.firstName[0]}
+                {mockUser.lastName[0]}
               </div>
               {!isCollapsed && (
                 <div className="demo-page__user-details">
-                  <span className="demo-page__user-name">{mockUser.firstName} {mockUser.lastName}</span>
-                  <span className="demo-page__user-email">{mockUser.email}</span>
+                  <span className="demo-page__user-name">
+                    {mockUser.firstName} {mockUser.lastName}
+                  </span>
+                  <span className="demo-page__user-email">
+                    {mockUser.email}
+                  </span>
                 </div>
               )}
             </div>
@@ -407,21 +488,21 @@ const DemoPage: React.FC = () => {
           {/* Header */}
           <div className="demo-page__header">
             <div className="demo-page__header-left">
-              <button 
+              <button
                 className="demo-page__mobile-toggle"
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
               >
                 <Menu size={20} />
               </button>
-              
-              <button 
+
+              <button
                 className="demo-page__collapse-toggle"
                 onClick={() => setIsCollapsed(!isCollapsed)}
               >
                 <Menu size={20} />
               </button>
             </div>
-            
+
             <div className="demo-page__header-center">
               <div className="demo-page__search">
                 <Search size={18} />
@@ -439,7 +520,8 @@ const DemoPage: React.FC = () => {
               </button>
               <div className="demo-page__user-menu">
                 <div className="demo-page__user-avatar demo-page__user-avatar--small">
-                  {mockUser.firstName[0]}{mockUser.lastName[0]}
+                  {mockUser.firstName[0]}
+                  {mockUser.lastName[0]}
                 </div>
               </div>
             </div>
@@ -456,13 +538,17 @@ const DemoPage: React.FC = () => {
       <div className="demo-page__demo-overlay">
         <div className="demo-page__demo-notice">
           <h3>🎉 To jest demo PartyPass!</h3>
-          <p>Wszystkie dane są przykładowe. <a href="/">Wróć do strony głównej</a> żeby zacząć korzystać z aplikacji.</p>
+          <p>
+            Wszystkie dane są przykładowe.{' '}
+            <a href="/">Wróć do strony głównej</a> żeby zacząć korzystać z
+            aplikacji.
+          </p>
         </div>
       </div>
 
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="demo-page__mobile-overlay"
           onClick={() => setIsMobileOpen(false)}
         />

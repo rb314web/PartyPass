@@ -1,14 +1,14 @@
 // components/dashboard/Analytics/AnalyticsFilters/AnalyticsFilters.tsx
 import React, { useState } from 'react';
-import { 
-  Filter, 
-  Calendar, 
-  MapPin, 
-  Users, 
+import {
+  Filter,
+  Calendar,
+  MapPin,
+  Users,
   X,
   Search,
   ChevronDown,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react';
 import './AnalyticsFilters.scss';
 
@@ -40,10 +40,12 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
   onFiltersChange,
   availableEventTypes,
   availableLocations,
-  className = ''
+  className = '',
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeFilterTab, setActiveFilterTab] = useState<'date' | 'type' | 'location' | 'guests' | 'status'>('date');
+  const [activeFilterTab, setActiveFilterTab] = useState<
+    'date' | 'type' | 'location' | 'guests' | 'status'
+  >('date');
 
   const updateFilters = (updates: Partial<AnalyticsFiltersData>) => {
     onFiltersChange({ ...filters, ...updates });
@@ -56,7 +58,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
       locations: [],
       guestCountRange: { min: 0, max: 1000 },
       status: [],
-      searchQuery: ''
+      searchQuery: '',
     });
   };
 
@@ -78,7 +80,8 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
     if (filters.dateRange.start || filters.dateRange.end) count++;
     if (filters.eventTypes.length > 0) count++;
     if (filters.locations.length > 0) count++;
-    if (filters.guestCountRange.min > 0 || filters.guestCountRange.max < 1000) count++;
+    if (filters.guestCountRange.min > 0 || filters.guestCountRange.max < 1000)
+      count++;
     if (filters.status.length > 0) count++;
     if (filters.searchQuery.length > 0) count++;
     return count;
@@ -116,19 +119,21 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
     icon: React.ReactNode;
     children: React.ReactNode;
   }> = ({ id, label, icon, children }) => (
-    <div className={`analytics-filters__tab ${activeFilterTab === id ? 'active' : ''}`}>
+    <div
+      className={`analytics-filters__tab ${activeFilterTab === id ? 'active' : ''}`}
+    >
       <button
         className="analytics-filters__tab-header"
         onClick={() => setActiveFilterTab(activeFilterTab === id ? 'date' : id)}
       >
         {icon}
         <span>{label}</span>
-        <ChevronDown className={`analytics-filters__tab-chevron ${activeFilterTab === id ? 'rotated' : ''}`} />
+        <ChevronDown
+          className={`analytics-filters__tab-chevron ${activeFilterTab === id ? 'rotated' : ''}`}
+        />
       </button>
       {activeFilterTab === id && (
-        <div className="analytics-filters__tab-content">
-          {children}
-        </div>
+        <div className="analytics-filters__tab-content">{children}</div>
       )}
     </div>
   );
@@ -144,9 +149,13 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
           <Filter size={18} />
           <span>Filtry</span>
           {hasActiveFilters() && (
-            <span className="analytics-filters__count">{getActiveFiltersCount()}</span>
+            <span className="analytics-filters__count">
+              {getActiveFiltersCount()}
+            </span>
           )}
-          <ChevronDown className={`analytics-filters__chevron ${isExpanded ? 'rotated' : ''}`} />
+          <ChevronDown
+            className={`analytics-filters__chevron ${isExpanded ? 'rotated' : ''}`}
+          />
         </button>
 
         {hasActiveFilters() && (
@@ -168,7 +177,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
           type="text"
           placeholder="Szukaj wydarzeń, lokalizacji..."
           value={filters.searchQuery}
-          onChange={(e) => updateFilters({ searchQuery: e.target.value })}
+          onChange={e => updateFilters({ searchQuery: e.target.value })}
           className="analytics-filters__search-input"
         />
         {filters.searchQuery && (
@@ -191,32 +200,50 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                   <label>Od:</label>
                   <input
                     type="date"
-                    value={filters.dateRange.start ? filters.dateRange.start.toISOString().split('T')[0] : ''}
-                    onChange={(e) => updateFilters({
-                      dateRange: {
-                        ...filters.dateRange,
-                        start: e.target.value ? new Date(e.target.value) : null
-                      }
-                    })}
+                    value={
+                      filters.dateRange.start
+                        ? filters.dateRange.start.toISOString().split('T')[0]
+                        : ''
+                    }
+                    onChange={e =>
+                      updateFilters({
+                        dateRange: {
+                          ...filters.dateRange,
+                          start: e.target.value
+                            ? new Date(e.target.value)
+                            : null,
+                        },
+                      })
+                    }
                   />
                 </div>
                 <div className="analytics-filters__date-field">
                   <label>Do:</label>
                   <input
                     type="date"
-                    value={filters.dateRange.end ? filters.dateRange.end.toISOString().split('T')[0] : ''}
-                    onChange={(e) => updateFilters({
-                      dateRange: {
-                        ...filters.dateRange,
-                        end: e.target.value ? new Date(e.target.value) : null
-                      }
-                    })}
+                    value={
+                      filters.dateRange.end
+                        ? filters.dateRange.end.toISOString().split('T')[0]
+                        : ''
+                    }
+                    onChange={e =>
+                      updateFilters({
+                        dateRange: {
+                          ...filters.dateRange,
+                          end: e.target.value ? new Date(e.target.value) : null,
+                        },
+                      })
+                    }
                   />
                 </div>
               </div>
             </FilterTab>
 
-            <FilterTab id="type" label="Typ wydarzenia" icon={<Calendar size={16} />}>
+            <FilterTab
+              id="type"
+              label="Typ wydarzenia"
+              icon={<Calendar size={16} />}
+            >
               <div className="analytics-filters__checkbox-group">
                 {availableEventTypes.map(type => (
                   <label key={type} className="analytics-filters__checkbox">
@@ -225,13 +252,19 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                       checked={filters.eventTypes.includes(type)}
                       onChange={() => toggleEventType(type)}
                     />
-                    <span className="analytics-filters__checkbox-label">{type}</span>
+                    <span className="analytics-filters__checkbox-label">
+                      {type}
+                    </span>
                   </label>
                 ))}
               </div>
             </FilterTab>
 
-            <FilterTab id="location" label="Lokalizacja" icon={<MapPin size={16} />}>
+            <FilterTab
+              id="location"
+              label="Lokalizacja"
+              icon={<MapPin size={16} />}
+            >
               <div className="analytics-filters__checkbox-group">
                 {availableLocations.map(location => (
                   <label key={location} className="analytics-filters__checkbox">
@@ -240,25 +273,33 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                       checked={filters.locations.includes(location)}
                       onChange={() => toggleLocation(location)}
                     />
-                    <span className="analytics-filters__checkbox-label">{location}</span>
+                    <span className="analytics-filters__checkbox-label">
+                      {location}
+                    </span>
                   </label>
                 ))}
               </div>
             </FilterTab>
 
-            <FilterTab id="guests" label="Liczba gości" icon={<Users size={16} />}>
+            <FilterTab
+              id="guests"
+              label="Liczba gości"
+              icon={<Users size={16} />}
+            >
               <div className="analytics-filters__range">
                 <div className="analytics-filters__range-field">
                   <label>Min:</label>
                   <input
                     type="number"
                     value={filters.guestCountRange.min}
-                    onChange={(e) => updateFilters({
-                      guestCountRange: {
-                        ...filters.guestCountRange,
-                        min: parseInt(e.target.value) || 0
-                      }
-                    })}
+                    onChange={e =>
+                      updateFilters({
+                        guestCountRange: {
+                          ...filters.guestCountRange,
+                          min: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
                     min="0"
                   />
                 </div>
@@ -267,12 +308,14 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                   <input
                     type="number"
                     value={filters.guestCountRange.max}
-                    onChange={(e) => updateFilters({
-                      guestCountRange: {
-                        ...filters.guestCountRange,
-                        max: parseInt(e.target.value) || 1000
-                      }
-                    })}
+                    onChange={e =>
+                      updateFilters({
+                        guestCountRange: {
+                          ...filters.guestCountRange,
+                          max: parseInt(e.target.value) || 1000,
+                        },
+                      })
+                    }
                     min="0"
                   />
                 </div>
@@ -289,9 +332,13 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                       onChange={() => toggleStatus(status)}
                     />
                     <span className="analytics-filters__checkbox-label">
-                      {status === 'active' ? 'Aktywne' :
-                       status === 'completed' ? 'Zakończone' :
-                       status === 'cancelled' ? 'Anulowane' : 'Szkic'}
+                      {status === 'active'
+                        ? 'Aktywne'
+                        : status === 'completed'
+                          ? 'Zakończone'
+                          : status === 'cancelled'
+                            ? 'Anulowane'
+                            : 'Planowane'}
                     </span>
                   </label>
                 ))}
@@ -309,7 +356,13 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
             {filters.dateRange.start && (
               <span className="analytics-filters__active-filter">
                 Od: {formatDate(filters.dateRange.start)}
-                <button onClick={() => updateFilters({ dateRange: { ...filters.dateRange, start: null } })}>
+                <button
+                  onClick={() =>
+                    updateFilters({
+                      dateRange: { ...filters.dateRange, start: null },
+                    })
+                  }
+                >
                   <X size={12} />
                 </button>
               </span>
@@ -317,7 +370,13 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
             {filters.dateRange.end && (
               <span className="analytics-filters__active-filter">
                 Do: {formatDate(filters.dateRange.end)}
-                <button onClick={() => updateFilters({ dateRange: { ...filters.dateRange, end: null } })}>
+                <button
+                  onClick={() =>
+                    updateFilters({
+                      dateRange: { ...filters.dateRange, end: null },
+                    })
+                  }
+                >
                   <X size={12} />
                 </button>
               </span>

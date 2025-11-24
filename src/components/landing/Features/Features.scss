@@ -1,11 +1,11 @@
-@import '../../../styles/globals/mixins';
+@use '../../../styles/globals/mixins' as *;
 
 .features {
   padding: 4rem 0;
   position: relative;
   background: linear-gradient(180deg, #ffffff, #f8fafc);
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -13,22 +13,29 @@
     height: 100%;
     top: 0;
     left: 0;
-    background: 
-      radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(79, 172, 254, 0.08) 0%, transparent 50%);
+    background:
+      radial-gradient(
+        circle at 20% 20%,
+        rgba(99, 102, 241, 0.05) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 80%,
+        rgba(79, 172, 254, 0.08) 0%,
+        transparent 50%
+      );
     pointer-events: none;
   }
-  
+
   &__container {
     @include container;
     position: relative;
-    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
   }
-  
+
   &__header {
     text-align: center;
     margin-bottom: 1.5rem;
@@ -36,7 +43,7 @@
     margin-left: auto;
     margin-right: auto;
   }
-  
+
   &__title {
     font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 600;
@@ -44,13 +51,13 @@
     margin-bottom: 0.5rem;
     line-height: 1.2;
   }
-  
+
   &__subtitle {
     font-size: 1rem;
     color: var(--gray-700);
     line-height: 1.4;
   }
-  
+
   &__grid {
     display: grid;
     gap: 1rem;
@@ -58,10 +65,10 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    
+
     // Układ dla 6 kart
     grid-template-columns: repeat(3, 1fr);
-    
+
     @media (max-width: 900px) {
       grid-template-columns: repeat(2, 1fr);
       max-width: 800px;
@@ -73,18 +80,29 @@
       padding: 0 0.5rem;
     }
   }
-  
+
   &__card {
-    background: transparent;
-    padding: 1rem;
+    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
     text-align: center;
-    transition: transform 0.2s ease;
     display: flex;
     flex-direction: column;
     height: 100%;
-    
-    &:hover {
-      transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+
+    // Wyraźny akcent na górze karty
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
 
     // Wyrównanie opisów w kartach
@@ -92,34 +110,40 @@
       margin-top: auto;
     }
   }
-  
+
   &__icon {
-    width: 44px;
-    height: 44px;
-    margin: 0 auto 0.75rem;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto var(--space-md);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--primary);
-    
+    background: linear-gradient(
+      135deg,
+      rgba(99, 102, 241, 0.1),
+      rgba(99, 102, 241, 0.05)
+    );
+    border-radius: var(--radius-lg);
+
     svg {
-      width: 24px;
-      height: 24px;
-      stroke-width: 1.5;
+      width: 28px;
+      height: 28px;
+      stroke-width: 2;
     }
   }
-  
+
   &__card-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 0.5rem;
+    color: var(--gray-900);
+    margin-bottom: var(--space-sm);
   }
-  
+
   &__card-description {
     font-size: 0.875rem;
-    color: #4a4a4a;
-    line-height: 1.4;
+    color: var(--gray-700);
+    line-height: 1.5;
   }
 
   @media (max-width: 768px) {
@@ -138,7 +162,7 @@
   @supports (display: grid) {
     &__grid {
       align-items: start;
-      
+
       @media (min-width: 601px) {
         & > * {
           height: 100%;

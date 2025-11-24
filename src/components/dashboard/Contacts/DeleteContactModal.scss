@@ -1,5 +1,5 @@
 // components/dashboard/Contacts/DeleteContactModal.scss
-@import '../../../styles/globals/index.scss';
+@use '../../../styles/globals/index' as *;
 
 .delete-contact-modal {
   &__overlay {
@@ -8,36 +8,41 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--bg-overlay);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: var(--z-overlay);
     padding: 2rem;
     animation: fadeIn 0.2s ease-out;
-    
+    min-height: 100vh;
+
     @media (max-width: 768px) {
-      padding: 1rem;
-      align-items: center;
+      padding: calc(1.5rem + env(safe-area-inset-top, 0)) 1rem
+        calc(3rem + env(safe-area-inset-bottom, 0));
     }
   }
 
   &__container {
-    background: var(--bg-primary);
+    background: var(--bg-elevated);
     border-radius: 1rem;
-    box-shadow: 
-      0 10px 25px rgba(0, 0, 0, 0.2),
-      0 4px 10px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-primary);
     max-width: 420px;
     width: 100%;
     max-height: 90vh;
     overflow: hidden;
     animation: slideUp 0.3s ease-out;
-    
+    position: relative;
+    z-index: var(--z-modal);
+    margin: 0 0 1.5rem 0;
+    transition: background-color var(--transition-colors, 0.2s ease),
+                border-color var(--transition-colors, 0.2s ease);
+
     @media (max-width: 768px) {
-      animation: slideUp 0.3s ease-out;
+      max-height: calc(100vh - 4.5rem - env(safe-area-inset-bottom, 0));
+      margin: 0 0 2rem 0;
     }
   }
 
@@ -55,9 +60,11 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--error-100) 0%, var(--error-50) 100%);
-    color: var(--error-600);
+    background: var(--color-error-light);
+    color: var(--color-error);
     flex-shrink: 0;
+    transition: background-color var(--transition-colors, 0.2s ease),
+                color var(--transition-colors, 0.2s ease);
   }
 
   &__close {
@@ -67,17 +74,19 @@
     width: 32px;
     height: 32px;
     border: none;
-    background: var(--gray-100);
+    background: var(--bg-tertiary);
     color: var(--text-secondary);
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.2s ease;
-    
+    transition: all 0.2s ease,
+                background-color var(--transition-colors, 0.2s ease),
+                color var(--transition-colors, 0.2s ease);
+
     &:hover:not(:disabled) {
-      background: var(--gray-200);
+      background: var(--bg-secondary);
       color: var(--text-primary);
     }
-    
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -85,15 +94,16 @@
   }
 
   &__content {
-    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    padding: 1rem 1.5rem 2.5rem 1.5rem;
   }
 
   &__title {
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 1.5rem 0;
     text-align: center;
+    transition: color var(--transition-colors, 0.2s ease);
   }
 
   &__contact-info {
@@ -101,26 +111,27 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: linear-gradient(135deg, var(--gray-50) 0%, #f8fafc 100%);
+    background: var(--bg-secondary);
     border-radius: 0.75rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-primary);
     margin-bottom: 1.5rem;
+    transition: background-color var(--transition-colors, 0.2s ease),
+                border-color var(--transition-colors, 0.2s ease);
   }
 
   &__avatar {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-    color: white;
+    background: var(--color-primary);
+    color: var(--text-inverse);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 1.125rem;
     flex-shrink: 0;
     text-transform: uppercase;
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
   }
 
   &__details {
@@ -134,6 +145,7 @@
     margin-bottom: 0.25rem;
     font-size: 1rem;
     line-height: 1.4;
+    transition: color var(--transition-colors, 0.2s ease);
   }
 
   &__email {
@@ -142,6 +154,7 @@
     word-break: break-all;
     overflow-wrap: anywhere;
     line-height: 1.4;
+    transition: color var(--transition-colors, 0.2s ease);
   }
 
   &__message {
@@ -150,9 +163,10 @@
     margin: 0;
     text-align: center;
     font-size: 0.95rem;
-    
+    transition: color var(--transition-colors, 0.2s ease);
+
     strong {
-      color: var(--error-600);
+      color: var(--color-error);
       font-weight: 600;
     }
   }
@@ -161,9 +175,16 @@
     display: flex;
     gap: 0.75rem;
     padding: 1.5rem;
-    border-top: 1px solid var(--border-color);
-    background: linear-gradient(135deg, var(--gray-25) 0%, #fefefe 100%);
-    
+    border-top: 1px solid var(--border-primary);
+    background: var(--bg-elevated);
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    box-shadow: var(--shadow-md);
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0));
+    transition: background-color var(--transition-colors, 0.2s ease),
+                border-color var(--transition-colors, 0.2s ease);
+
     @media (max-width: 480px) {
       flex-direction: column;
     }
@@ -183,7 +204,7 @@
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid transparent;
     min-height: 44px;
-    
+
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -193,32 +214,31 @@
     &--cancel {
       background: var(--bg-primary);
       color: var(--text-primary);
-      border-color: var(--border-color);
-      
+      border: 2px solid var(--border-primary);
+
       &:hover:not(:disabled) {
-        background: var(--gray-50);
-        border-color: var(--gray-300);
+        background: var(--bg-secondary);
+        border-color: var(--border-secondary);
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
       }
     }
 
     &--danger {
-      background: linear-gradient(135deg, var(--error-500) 0%, var(--error-600) 100%);
-      color: white;
-      border-color: var(--error-500);
-      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-      
+      background: linear-gradient(135deg, var(--color-error), var(--color-error-hover));
+      color: var(--text-inverse);
+      border: none;
+      box-shadow: var(--shadow-sm);
+
       &:hover:not(:disabled) {
-        background: linear-gradient(135deg, var(--error-600) 0%, var(--error-700) 100%);
-        border-color: var(--error-600);
+        background: linear-gradient(135deg, var(--color-error-hover), var(--color-error));
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        box-shadow: var(--shadow-md);
       }
-      
+
       &:active:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+        box-shadow: var(--shadow-sm);
       }
     }
   }
@@ -227,7 +247,7 @@
     width: 16px;
     height: 16px;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
+    border-top: 2px solid var(--text-inverse);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }

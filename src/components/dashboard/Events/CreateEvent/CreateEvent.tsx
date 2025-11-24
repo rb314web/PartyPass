@@ -1,21 +1,18 @@
 // components/dashboard/Events/CreateEvent/CreateEvent.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Save, 
-  Calendar, 
-  MapPin, 
-  Users, 
+import {
+  ArrowLeft,
+  Save,
+  Calendar,
+  MapPin,
+  Users,
   FileText,
   Clock,
   Plus,
   X,
-  Upload,
-  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
-import { Event } from '../../../../types';
 import { EventService } from '../../../../services/firebase/eventService';
 import LocationPicker from './LocationPicker/LocationPicker';
 import './CreateEvent.scss';
@@ -56,7 +53,7 @@ const CreateEvent: React.FC = () => {
     allowPlusOne: false,
     sendReminders: true,
     dresscode: '',
-    additionalInfo: ''
+    additionalInfo: '',
   });
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -65,10 +62,165 @@ const CreateEvent: React.FC = () => {
   const [newTag, setNewTag] = useState('');
 
   const steps = [
-    { id: 1, title: 'Podstawowe informacje', icon: FileText },
-    { id: 2, title: 'Data i miejsce', icon: Calendar },
-    { id: 3, title: 'Goście i ustawienia', icon: Users }
+    {
+      id: 1,
+      title: 'Podstawowe informacje',
+      icon: FileText,
+      description: 'Nazwij wydarzenie i opowiedz, co planujesz.',
+    },
+    {
+      id: 2,
+      title: 'Data i miejsce',
+      icon: Calendar,
+      description: 'Ustal termin oraz lokalizację spotkania.',
+    },
+    {
+      id: 3,
+      title: 'Goście i ustawienia',
+      icon: Users,
+      description: 'Określ limit miejsc i dodatkowe preferencje.',
+    },
   ];
+
+  const planLimits = {
+    starter: { maxGuests: 50 },
+    pro: { maxGuests: 200 },
+    enterprise: { maxGuests: 9999 },
+  } as const;
+
+  const planNames: Record<keyof typeof planLimits, string> = {
+    starter: 'Starter',
+    pro: 'Pro',
+    enterprise: 'Enterprise',
+  };
+
+  const resolvePlan = (plan?: string): keyof typeof planLimits => {
+    if (plan && plan in planLimits) {
+      return plan as keyof typeof planLimits;
+    }
+    return 'starter';
+  };
+
+  const userPlan = resolvePlan(user?.planType);
+  const maxAllowed = planLimits[userPlan].maxGuests;
+  const planDisplayName = planNames[userPlan];
+  const totalSteps = steps.length;
+
+  const renderSummaryValue = (
+    value: string | null,
+    placeholder: string
+  ): React.ReactNode => {
+    if (value && value.trim().length > 0) {
+      return value;
+    }
+
+    return (
+      <span className="create-event__summary-placeholder">{placeholder}</span>
+    );
+  };
+
+  const renderSidebarContent = (): React.ReactNode => {
+    const titleValue = formData.title.trim() || null;
+    const dateValue = (() => {
+      if (formData.date && formData.time) {
+        const eventDate = new Date(`${formData.date}T${formData.time}`);
+        if (!Number.isNaN(eventDate.getTime())) {
+          return `${eventDate.toLocaleDateString('pl-PL', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })} o ${formData.time}`;
+        }
+      }
+      return null;
+    })();
+
+    const locationValue = formData.location.trim() || null;
+    const guestsValue =
+      Number(formData.maxGuests) > 0
+        ? `Do ${Number(formData.maxGuests)} gości`
+        : null;
+
+    const tipsByStep: Record<number, string[]> = {
+      1: [
+        'Wybierz klarowny tytuł i opisz najważniejsze elementy wydarzenia.',
+        'Opis skróć do najistotniejszych informacji – goście powinni wiedzieć, czego się spodziewać.',
+        'Tagi pomagają później filtrować wydarzenia według tematu czy typu.',
+      ],
+      2: [
+        'Ustal datę i godzinę, które nie kolidują z innymi firmowymi wydarzeniami.',
+        'Dodaj pełną lokalizację – adres lub nazwę miejsca przyspieszy wysyłkę zaproszeń.',
+        'Skorzystaj z podglądu po lewej, by upewnić się, że termin i miejsce wyglądają poprawnie.',
+      ],
+      3: [
+        'Limit gości dostosuj do realnych możliwości organizacyjnych.',
+        'Włącz RSVP, aby na bieżąco śledzić potwierdzenia i listę obecności.',
+        'Dodatkowe informacje wykorzystaj na agendę, wskazówki dojazdu lub prośby organizacyjne.',
+      ],
+    };
+
+    const tips = tipsByStep[currentStep] || [];
+
+    return (
+      <>
+        <div className="create-event__sidebar-card create-event__sidebar-card--summary">
+          <h4 className="create-event__sidebar-title">Podsumowanie</h4>
+          <div className="create-event__summary-list">
+            <div className="create-event__summary-row">
+              <FileText size={16} />
+              <div>
+                {renderSummaryValue(titleValue, 'Nadaj nazwę wydarzeniu')}
+              </div>
+            </div>
+            <div className="create-event__summary-row">
+              <Calendar size={16} />
+              <div>
+                {renderSummaryValue(dateValue, 'Wybierz datę i godzinę')}
+              </div>
+            </div>
+            <div className="create-event__summary-row">
+              <MapPin size={16} />
+              <div>
+                {renderSummaryValue(locationValue, 'Dodaj lokalizację')}
+              </div>
+            </div>
+            <div className="create-event__summary-row">
+              <Users size={16} />
+              <div>{renderSummaryValue(guestsValue, 'Ustal limit gości')}</div>
+            </div>
+          </div>
+          {formData.tags.length > 0 ? (
+            <div className="create-event__summary-tags">
+              {formData.tags.map(tag => (
+                <span key={tag} className="create-event__summary-tag">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="create-event__summary-placeholder create-event__summary-placeholder--muted">
+              Dodaj tagi, aby łatwiej grupować wydarzenia
+            </div>
+          )}
+          <div className="create-event__summary-footnote">
+            Plan {planDisplayName} • limit {maxAllowed} gości
+          </div>
+        </div>
+
+        <div className="create-event__sidebar-card">
+          <h4 className="create-event__sidebar-title">
+            Wskazówki dla tego kroku
+          </h4>
+          <ul className="create-event__tips">
+            {tips.map((tip, index) => (
+              <li key={index}>{tip}</li>
+            ))}
+          </ul>
+        </div>
+      </>
+    );
+  };
 
   // Load event data if editing
   useEffect(() => {
@@ -77,13 +229,13 @@ const CreateEvent: React.FC = () => {
         try {
           setIsLoading(true);
           const event = await EventService.getEventById(id, user.id);
-          
+
           if (event) {
             // Convert event data to form format
             const eventDate = new Date(event.date);
             const dateStr = eventDate.toISOString().split('T')[0];
             const timeStr = eventDate.toTimeString().split(' ')[0].slice(0, 5);
-            
+
             setFormData({
               title: event.title,
               description: event.description,
@@ -97,7 +249,7 @@ const CreateEvent: React.FC = () => {
               allowPlusOne: event.allowPlusOne || false,
               sendReminders: event.sendReminders || false,
               dresscode: event.dresscode || '',
-              additionalInfo: event.additionalInfo || ''
+              additionalInfo: event.additionalInfo || '',
             });
           }
         } catch (error) {
@@ -118,20 +270,22 @@ const CreateEvent: React.FC = () => {
     switch (step) {
       case 1:
         if (!formData.title.trim()) newErrors.title = 'Tytuł jest wymagany';
-        if (!formData.description.trim()) newErrors.description = 'Opis jest wymagany';
+        if (!formData.description.trim())
+          newErrors.description = 'Opis jest wymagany';
         break;
       case 2:
         if (!formData.date) newErrors.date = 'Data jest wymagana';
         if (!formData.time) newErrors.time = 'Godzina jest wymagana';
-        if (!formData.location.trim()) newErrors.location = 'Lokalizacja jest wymagana';
-        
+        if (!formData.location.trim())
+          newErrors.location = 'Lokalizacja jest wymagana';
+
         // Validate date format and value
         if (formData.date && formData.time) {
           try {
             // Check date format
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
             const timeRegex = /^\d{2}:\d{2}$/;
-            
+
             if (!dateRegex.test(formData.date)) {
               newErrors.date = 'Nieprawidłowy format daty';
             } else if (!timeRegex.test(formData.time)) {
@@ -140,11 +294,13 @@ const CreateEvent: React.FC = () => {
               // Check year is reasonable
               const year = parseInt(formData.date.split('-')[0]);
               const currentYear = new Date().getFullYear();
-              
+
               if (year < currentYear || year > currentYear + 10) {
                 newErrors.date = `Rok musi być między ${currentYear} a ${currentYear + 10}`;
               } else {
-                const eventDateTime = new Date(`${formData.date}T${formData.time}`);
+                const eventDateTime = new Date(
+                  `${formData.date}T${formData.time}`
+                );
                 if (isNaN(eventDateTime.getTime())) {
                   newErrors.date = 'Nieprawidłowa data lub godzina';
                 } else if (eventDateTime < new Date()) {
@@ -158,18 +314,10 @@ const CreateEvent: React.FC = () => {
         }
         break;
       case 3:
-  if (Number(formData.maxGuests) < 1) newErrors.maxGuests = 'Musi być co najmniej 1 gość';
-        
-        // Check plan limits
-        const planLimits = {
-          starter: { maxGuests: 50 },
-          pro: { maxGuests: 200 },
-          enterprise: { maxGuests: 9999 }
-        };
-        
-        const userPlan = user?.planType || 'starter';
-        const maxAllowed = planLimits[userPlan].maxGuests;
-        
+        if (Number(formData.maxGuests) < 1) {
+          newErrors.maxGuests = 'Musi być co najmniej 1 gość';
+        }
+
         if (Number(formData.maxGuests) > maxAllowed) {
           newErrors.maxGuests = `Twój plan pozwala na maksymalnie ${maxAllowed} gości`;
         }
@@ -180,20 +328,22 @@ const CreateEvent: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name as keyof EventFormData]) {
       setErrors(prev => ({
         ...prev,
-        [name]: undefined
+        [name]: undefined,
       }));
     }
   };
@@ -202,7 +352,7 @@ const CreateEvent: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: parseInt(value) || 0
+      [name]: parseInt(value) || 0,
     }));
   };
 
@@ -210,7 +360,7 @@ const CreateEvent: React.FC = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()]
+        tags: [...prev.tags, newTag.trim()],
       }));
       setNewTag('');
     }
@@ -219,21 +369,48 @@ const CreateEvent: React.FC = () => {
   const handleRemoveTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter(tag => tag !== tagToRemove),
     }));
   };
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (currentStep < 3) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        handleSubmit();
+    if (!validateStep(currentStep)) {
+      // Scroll to first error field
+      const firstErrorKey = Object.keys(errors)[0];
+      if (firstErrorKey) {
+        const errorElement = document.querySelector(
+          `[name="${firstErrorKey}"]`
+        );
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          (errorElement as HTMLInputElement).focus();
+        }
       }
+      return; // Block transition!
+    }
+
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      handleSubmit();
     }
   };
 
   const handlePrev = () => {
+    // Check if form has unsaved changes
+    const hasChanges = Object.values(formData).some(v => {
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === 'string') return v.trim().length > 0;
+      return v;
+    });
+
+    if (hasChanges && currentStep > 1) {
+      const confirmed = window.confirm(
+        'Masz niezapisane zmiany. Czy chcesz je porzucić i wrócić?'
+      );
+      if (!confirmed) return;
+    }
+
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
@@ -269,45 +446,44 @@ const CreateEvent: React.FC = () => {
       // Validate date format
       let eventDate: Date;
       try {
-        console.log('Date string:', formData.date, 'Time string:', formData.time);
-        
         // Basic format validation
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         const timeRegex = /^\d{2}:\d{2}$/;
-        
+
         if (!dateRegex.test(formData.date)) {
           throw new Error('Nieprawidłowy format daty (wymagany: YYYY-MM-DD)');
         }
-        
+
         if (!timeRegex.test(formData.time)) {
           throw new Error('Nieprawidłowy format godziny (wymagany: HH:MM)');
         }
-        
+
         // Check year is reasonable (between current year and 10 years from now)
         const year = parseInt(formData.date.split('-')[0]);
         const currentYear = new Date().getFullYear();
-        
+
         if (year < currentYear || year > currentYear + 10) {
-          throw new Error(`Rok musi być między ${currentYear} a ${currentYear + 10}`);
+          throw new Error(
+            `Rok musi być między ${currentYear} a ${currentYear + 10}`
+          );
         }
-        
+
         const dateTimeString = `${formData.date}T${formData.time}`;
-        console.log('Combined string:', dateTimeString);
         eventDate = new Date(dateTimeString);
-        console.log('Parsed date:', eventDate);
-        
+
         if (isNaN(eventDate.getTime())) {
           throw new Error('Nieprawidłowa data lub godzina');
         }
-        
+
         // Check if date is not in the past
         if (eventDate < new Date()) {
           throw new Error('Data wydarzenia nie może być w przeszłości');
         }
-        
       } catch (error) {
         console.error('Date parsing error:', error);
-        throw error instanceof Error ? error : new Error('Nieprawidłowy format daty lub godziny');
+        throw error instanceof Error
+          ? error
+          : new Error('Nieprawidłowy format daty lub godziny');
       }
 
       const eventData = {
@@ -326,17 +502,15 @@ const CreateEvent: React.FC = () => {
         guestCount: 0,
         acceptedCount: 0,
         declinedCount: 0,
-        pendingCount: 0
+        pendingCount: 0,
       };
 
       if (isEditing && id) {
         // Update existing event
         await EventService.updateEvent(id, eventData);
-        console.log('Event updated successfully');
       } else {
         // Create new event
         const newEvent = await EventService.createEvent(user.id, eventData);
-        console.log('Event created successfully:', newEvent);
       }
 
       navigate('/dashboard/events');
@@ -354,9 +528,7 @@ const CreateEvent: React.FC = () => {
         return (
           <div className="create-event__step-content">
             <div className="create-event__field">
-              <label className="create-event__label">
-                Tytuł wydarzenia *
-              </label>
+              <label className="create-event__label">Tytuł wydarzenia *</label>
               <input
                 type="text"
                 name="title"
@@ -375,9 +547,7 @@ const CreateEvent: React.FC = () => {
             </div>
 
             <div className="create-event__field">
-              <label className="create-event__label">
-                Opis wydarzenia *
-              </label>
+              <label className="create-event__label">Opis wydarzenia *</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -388,7 +558,9 @@ const CreateEvent: React.FC = () => {
                 maxLength={500}
               />
               {errors.description && (
-                <span className="create-event__error">{errors.description}</span>
+                <span className="create-event__error">
+                  {errors.description}
+                </span>
               )}
               <div className="create-event__char-count">
                 {formData.description.length}/500
@@ -396,9 +568,7 @@ const CreateEvent: React.FC = () => {
             </div>
 
             <div className="create-event__field">
-              <label className="create-event__label">
-                Tagi (opcjonalne)
-              </label>
+              <label className="create-event__label">Tagi (opcjonalne)</label>
               <div className="create-event__tags-input">
                 <div className="create-event__tags">
                   {formData.tags.map((tag, index) => (
@@ -418,8 +588,10 @@ const CreateEvent: React.FC = () => {
                   <input
                     type="text"
                     value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                    onChange={e => setNewTag(e.target.value)}
+                    onKeyPress={e =>
+                      e.key === 'Enter' && (e.preventDefault(), handleAddTag())
+                    }
                     className="create-event__tag-input"
                     placeholder="Dodaj tag..."
                     maxLength={20}
@@ -428,7 +600,9 @@ const CreateEvent: React.FC = () => {
                     type="button"
                     onClick={handleAddTag}
                     className="create-event__add-tag-btn"
-                    disabled={!newTag.trim() || formData.tags.includes(newTag.trim())}
+                    disabled={
+                      !newTag.trim() || formData.tags.includes(newTag.trim())
+                    }
                   >
                     <Plus size={16} />
                   </button>
@@ -457,7 +631,11 @@ const CreateEvent: React.FC = () => {
                   onChange={handleInputChange}
                   className={`create-event__input ${errors.date ? 'create-event__input--error' : ''}`}
                   min={new Date().toISOString().split('T')[0]}
-                  max={new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0]}
+                  max={
+                    new Date(new Date().getFullYear() + 10, 11, 31)
+                      .toISOString()
+                      .split('T')[0]
+                  }
                 />
                 {errors.date && (
                   <span className="create-event__error">{errors.date}</span>
@@ -489,7 +667,9 @@ const CreateEvent: React.FC = () => {
               </label>
               <LocationPicker
                 value={formData.location}
-                onChange={(location: string) => setFormData(prev => ({ ...prev, location }))}
+                onChange={(location: string) =>
+                  setFormData(prev => ({ ...prev, location }))
+                }
                 error={errors.location}
                 placeholder="np. Sala konferencyjna, Restauracja Roma, ul. Kwiatowa 15..."
               />
@@ -510,7 +690,7 @@ const CreateEvent: React.FC = () => {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
-                        day: 'numeric'
+                        day: 'numeric',
                       })}
                     </span>
                   </div>
@@ -531,14 +711,6 @@ const CreateEvent: React.FC = () => {
         );
 
       case 3:
-        const planLimits = {
-          starter: { maxGuests: 50 },
-          pro: { maxGuests: 200 },
-          enterprise: { maxGuests: 9999 }
-        };
-        const userPlan = user?.planType || 'starter';
-        const maxAllowed = planLimits[userPlan].maxGuests;
-
         return (
           <div className="create-event__step-content">
             <div className="create-event__field">
@@ -559,12 +731,15 @@ const CreateEvent: React.FC = () => {
                 <span className="create-event__error">{errors.maxGuests}</span>
               )}
               <div className="create-event__field-help">
-                Twój plan {userPlan} pozwala na maksymalnie {maxAllowed} gości
+                Twój plan {planDisplayName} pozwala na maksymalnie {maxAllowed}{' '}
+                gości
               </div>
             </div>
 
             <div className="create-event__field">
-              <label className="create-event__label">Ustawienia wydarzenia</label>
+              <label className="create-event__label">
+                Ustawienia wydarzenia
+              </label>
               <div className="create-event__options">
                 <label className="create-event__option">
                   <input
@@ -575,7 +750,9 @@ const CreateEvent: React.FC = () => {
                   />
                   <span className="create-event__option-custom"></span>
                   <div className="create-event__option-content">
-                    <span className="create-event__option-title">Wymagaj potwierdzenia obecności</span>
+                    <span className="create-event__option-title">
+                      Wymagaj potwierdzenia obecności
+                    </span>
                     <span className="create-event__option-description">
                       Goście będą musieli potwierdzić lub odrzucić zaproszenie
                     </span>
@@ -591,7 +768,9 @@ const CreateEvent: React.FC = () => {
                   />
                   <span className="create-event__option-custom"></span>
                   <div className="create-event__option-content">
-                    <span className="create-event__option-title">Pozwól na towarzysza (+1)</span>
+                    <span className="create-event__option-title">
+                      Pozwól na towarzysza (+1)
+                    </span>
                     <span className="create-event__option-description">
                       Goście będą mogli przywieść jedną dodatkową osobę
                     </span>
@@ -607,7 +786,9 @@ const CreateEvent: React.FC = () => {
                   />
                   <span className="create-event__option-custom"></span>
                   <div className="create-event__option-content">
-                    <span className="create-event__option-title">Wysyłaj przypomnienia</span>
+                    <span className="create-event__option-title">
+                      Wysyłaj przypomnienia
+                    </span>
                     <span className="create-event__option-description">
                       Automatyczne przypomnienia 24h i 1h przed wydarzeniem
                     </span>
@@ -623,7 +804,9 @@ const CreateEvent: React.FC = () => {
                   />
                   <span className="create-event__option-custom"></span>
                   <div className="create-event__option-content">
-                    <span className="create-event__option-title">Wydarzenie prywatne</span>
+                    <span className="create-event__option-title">
+                      Wydarzenie prywatne
+                    </span>
                     <span className="create-event__option-description">
                       Tylko zaproszeni goście będą mogli zobaczyć szczegóły
                     </span>
@@ -633,9 +816,7 @@ const CreateEvent: React.FC = () => {
             </div>
 
             <div className="create-event__field">
-              <label className="create-event__label">
-                Dress code
-              </label>
+              <label className="create-event__label">Dress code</label>
               <input
                 type="text"
                 name="dresscode"
@@ -665,47 +846,6 @@ const CreateEvent: React.FC = () => {
                 Wszelkie dodatkowe informacje dla gości
               </div>
             </div>
-
-            {/* Summary */}
-            <div className="create-event__summary">
-              <h4>Podsumowanie</h4>
-              <div className="create-event__summary-content">
-                <div className="create-event__summary-item">
-                  <strong>{formData.title}</strong>
-                </div>
-                <div className="create-event__summary-item">
-                  {formData.date && formData.time && (
-                    <>
-                      {new Date(`${formData.date}T${formData.time}`).toLocaleDateString('pl-PL', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })} o {formData.time}
-                    </>
-                  )}
-                </div>
-                <div className="create-event__summary-item">
-                  <MapPin size={14} />
-                  {formData.location}
-                </div>
-                <div className="create-event__summary-item">
-                  <Users size={14} />
-                  Do {formData.maxGuests} gości
-                </div>
-                {formData.tags.length > 0 && (
-                  <div className="create-event__summary-item">
-                    <div className="create-event__summary-tags">
-                      {formData.tags.map((tag, index) => (
-                        <span key={index} className="create-event__summary-tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         );
 
@@ -719,35 +859,73 @@ const CreateEvent: React.FC = () => {
       <div className="create-event__container">
         {/* Header */}
         <div className="create-event__header">
-          <button 
+          <button
             className="create-event__back"
             onClick={() => navigate('/dashboard/events')}
           >
             <ArrowLeft size={20} />
             <span>Wróć do wydarzeń</span>
           </button>
-          
+
           <h1 className="create-event__title">
             {isEditing ? 'Edytuj wydarzenie' : 'Nowe wydarzenie'}
           </h1>
         </div>
 
+        <div className="create-event__hero">
+          <div className="create-event__hero-main">
+            <h2 className="create-event__hero-title">
+              {isEditing
+                ? 'Aktualizuj wydarzenie i zachwyć gości'
+                : 'Zaplanuj wydarzenie, które zapamiętają'}
+            </h2>
+            <p className="create-event__hero-subtitle">
+              Przejdź przez trzy krótkie kroki, aby przygotować zaproszenia,
+              zebrać RSVP i ustawić przypomnienia.
+            </p>
+            <div className="create-event__hero-badges">
+              <span className="create-event__hero-badge">
+                Plan {planDisplayName}
+              </span>
+              <span className="create-event__hero-badge">
+                Limit {maxAllowed} gości
+              </span>
+              <span className="create-event__hero-badge">
+                RSVP i przypomnienia w pakiecie
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Progress Steps */}
         <div className="create-event__progress">
           {steps.map((step, index) => (
-            <div 
+            <div
               key={step.id}
               className={`create-event__progress-step ${
-                step.id === currentStep ? 'create-event__progress-step--active' : ''
+                step.id === currentStep
+                  ? 'create-event__progress-step--active'
+                  : ''
               } ${
-                step.id < currentStep ? 'create-event__progress-step--completed' : ''
+                step.id < currentStep
+                  ? 'create-event__progress-step--completed'
+                  : ''
               }`}
+              aria-current={step.id === currentStep ? 'step' : undefined}
             >
               <div className="create-event__progress-icon">
                 <step.icon size={20} />
               </div>
               <div className="create-event__progress-content">
-                <span className="create-event__progress-title">{step.title}</span>
+                <span className="create-event__progress-index">
+                  {String(step.id).padStart(2, '0')}
+                </span>
+                <span className="create-event__progress-title">
+                  {step.title}
+                </span>
+                <p className="create-event__progress-description">
+                  {step.description}
+                </p>
               </div>
               {index < steps.length - 1 && (
                 <div className="create-event__progress-line"></div>
@@ -758,24 +936,36 @@ const CreateEvent: React.FC = () => {
 
         {/* Form Content */}
         <div className="create-event__content">
-          {renderStepContent()}
+          <div className="create-event__layout">
+            <div className="create-event__main">{renderStepContent()}</div>
+            <aside className="create-event__sidebar">
+              {renderSidebarContent()}
+            </aside>
+          </div>
         </div>
 
         {/* Navigation */}
         <div className="create-event__navigation">
-          {currentStep > 1 && (
-            <button 
-              className="create-event__nav-btn create-event__nav-btn--secondary"
-              onClick={handlePrev}
-              disabled={isLoading}
-            >
-              Wstecz
-            </button>
-          )}
-          
-          <div className="create-event__nav-spacer"></div>
-          
-          <button 
+          <div>
+            {currentStep > 1 && (
+              <button
+                className="create-event__nav-btn create-event__nav-btn--secondary"
+                onClick={handlePrev}
+                disabled={isLoading}
+              >
+                Wstecz
+              </button>
+            )}
+          </div>
+
+          <div className="create-event__nav-step-info">
+            <span className="create-event__nav-step-label">Krok</span>
+            <span className="create-event__nav-step-number">
+              {currentStep} z {totalSteps}
+            </span>
+          </div>
+
+          <button
             className="create-event__nav-btn create-event__nav-btn--primary"
             onClick={handleNext}
             disabled={isLoading}
@@ -784,7 +974,7 @@ const CreateEvent: React.FC = () => {
               <div className="create-event__spinner"></div>
             ) : (
               <>
-                {currentStep === 3 ? (
+                {currentStep === totalSteps ? (
                   <>
                     <Save size={20} />
                     {isEditing ? 'Zapisz zmiany' : 'Stwórz wydarzenie'}

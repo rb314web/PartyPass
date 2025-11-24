@@ -1,6 +1,15 @@
 // components/dashboard/Settings/SecuritySettings/SecuritySettings.tsx
 import React, { useState } from 'react';
-import { Shield, Lock, Smartphone, Key, Eye, EyeOff, AlertTriangle, Trash2 } from 'lucide-react';
+import {
+  Shield,
+  Lock,
+  Smartphone,
+  Key,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  Trash2,
+} from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import './SecuritySettings.scss';
 
@@ -14,7 +23,7 @@ const SecuritySettings: React.FC = () => {
     current: false,
     new: false,
     confirm: false,
-    delete: false
+    delete: false,
   });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,20 +31,20 @@ const SecuritySettings: React.FC = () => {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmPassword) {
       alert('Nowe hasła nie są identyczne');
       return;
     }
-    
+
     if (newPassword.length < 8) {
       alert('Hasło musi mieć co najmniej 8 znaków');
       return;
     }
-    
+
     setIsLoading(true);
     clearError();
-    
+
     try {
       await changePassword(currentPassword, newPassword);
       alert('Hasło zostało zmienione!');
@@ -49,10 +58,12 @@ const SecuritySettings: React.FC = () => {
     }
   };
 
-  const handleTogglePassword = (field: 'current' | 'new' | 'confirm' | 'delete') => {
+  const handleTogglePassword = (
+    field: 'current' | 'new' | 'confirm' | 'delete'
+  ) => {
     setShowPasswords(prev => ({
       ...prev,
-      [field]: !prev[field]
+      [field]: !prev[field],
     }));
   };
 
@@ -92,7 +103,11 @@ const SecuritySettings: React.FC = () => {
       alert('Funkcja włączania 2FA zostanie wkrótce dodana!');
     } else {
       // Disable 2FA
-      if (window.confirm('Czy na pewno chcesz wyłączyć dwuskładnikowe uwierzytelnianie?')) {
+      if (
+        window.confirm(
+          'Czy na pewno chcesz wyłączyć dwuskładnikowe uwierzytelnianie?'
+        )
+      ) {
         setTwoFactorEnabled(false);
         alert('Dwuskładnikowe uwierzytelnianie zostało wyłączone.');
       }
@@ -106,7 +121,7 @@ const SecuritySettings: React.FC = () => {
       location: 'Warszawa, Polska',
       ipAddress: '192.168.1.100',
       lastActive: '2024-08-06T14:30:00Z',
-      current: true
+      current: true,
     },
     {
       id: '2',
@@ -114,7 +129,7 @@ const SecuritySettings: React.FC = () => {
       location: 'Warszawa, Polska',
       ipAddress: '192.168.1.101',
       lastActive: '2024-08-06T09:15:00Z',
-      current: false
+      current: false,
     },
     {
       id: '3',
@@ -122,8 +137,8 @@ const SecuritySettings: React.FC = () => {
       location: 'Kraków, Polska',
       ipAddress: '10.0.0.50',
       lastActive: '2024-08-05T16:22:00Z',
-      current: false
-    }
+      current: false,
+    },
   ];
 
   const handleLogoutSession = (sessionId: string) => {
@@ -134,9 +149,12 @@ const SecuritySettings: React.FC = () => {
 
   const getPasswordStrength = (password: string) => {
     if (password.length === 0) return { strength: 0, label: '', color: '' };
-    if (password.length < 6) return { strength: 25, label: 'Słabe', color: 'var(--error)' };
-    if (password.length < 8) return { strength: 50, label: 'Średnie', color: 'var(--secondary)' };
-    if (password.length < 12) return { strength: 75, label: 'Dobre', color: '#10b981' };
+    if (password.length < 6)
+      return { strength: 25, label: 'Słabe', color: 'var(--error)' };
+    if (password.length < 8)
+      return { strength: 50, label: 'Średnie', color: 'var(--secondary)' };
+    if (password.length < 12)
+      return { strength: 75, label: 'Dobre', color: '#10b981' };
     return { strength: 100, label: 'Bardzo silne', color: 'var(--success)' };
   };
 
@@ -145,7 +163,7 @@ const SecuritySettings: React.FC = () => {
   return (
     <div className="security-settings">
       <div className="security-settings__header">
-        <h2>Bezpieczeństwo</h2>
+        <h1>Bezpieczeństwo</h1>
         <p>Zarządzaj hasłem, dwuskładnikowym uwierzytelnianiem i sesjami</p>
       </div>
 
@@ -161,14 +179,17 @@ const SecuritySettings: React.FC = () => {
           </div>
         </div>
 
-        <form onSubmit={handlePasswordChange} className="security-settings__form">
+        <form
+          onSubmit={handlePasswordChange}
+          className="security-settings__form"
+        >
           <div className="security-settings__field">
             <label>Obecne hasło</label>
             <div className="security-settings__input-wrapper">
               <input
                 type={showPasswords.current ? 'text' : 'password'}
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                onChange={e => setCurrentPassword(e.target.value)}
                 required
               />
               <button
@@ -176,7 +197,11 @@ const SecuritySettings: React.FC = () => {
                 className="security-settings__password-toggle"
                 onClick={() => handleTogglePassword('current')}
               >
-                {showPasswords.current ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPasswords.current ? (
+                  <EyeOff size={20} />
+                ) : (
+                  <Eye size={20} />
+                )}
               </button>
             </div>
           </div>
@@ -187,7 +212,7 @@ const SecuritySettings: React.FC = () => {
               <input
                 type={showPasswords.new ? 'text' : 'password'}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={e => setNewPassword(e.target.value)}
                 required
               />
               <button
@@ -198,19 +223,19 @@ const SecuritySettings: React.FC = () => {
                 {showPasswords.new ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            
+
             {newPassword && (
               <div className="security-settings__strength">
                 <div className="security-settings__strength-bar">
-                  <div 
+                  <div
                     className="security-settings__strength-fill"
-                    style={{ 
+                    style={{
                       width: `${passwordStrength.strength}%`,
-                      backgroundColor: passwordStrength.color
+                      backgroundColor: passwordStrength.color,
                     }}
                   />
                 </div>
-                <span 
+                <span
                   className="security-settings__strength-label"
                   style={{ color: passwordStrength.color }}
                 >
@@ -226,7 +251,7 @@ const SecuritySettings: React.FC = () => {
               <input
                 type={showPasswords.confirm ? 'text' : 'password'}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={e => setConfirmPassword(e.target.value)}
                 required
               />
               <button
@@ -234,10 +259,14 @@ const SecuritySettings: React.FC = () => {
                 className="security-settings__password-toggle"
                 onClick={() => handleTogglePassword('confirm')}
               >
-                {showPasswords.confirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPasswords.confirm ? (
+                  <EyeOff size={20} />
+                ) : (
+                  <Eye size={20} />
+                )}
               </button>
             </div>
-            
+
             {confirmPassword && newPassword !== confirmPassword && (
               <span className="security-settings__error">
                 Hasła nie są identyczne
@@ -245,10 +274,16 @@ const SecuritySettings: React.FC = () => {
             )}
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="security-settings__save-btn"
-            disabled={isLoading || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+            disabled={
+              isLoading ||
+              !currentPassword ||
+              !newPassword ||
+              !confirmPassword ||
+              newPassword !== confirmPassword
+            }
           >
             {isLoading ? (
               <div className="security-settings__spinner"></div>
@@ -277,7 +312,9 @@ const SecuritySettings: React.FC = () => {
         <div className="security-settings__2fa">
           <div className="security-settings__2fa-status">
             <div className="security-settings__2fa-info">
-              <div className={`security-settings__status-badge ${twoFactorEnabled ? 'security-settings__status-badge--enabled' : 'security-settings__status-badge--disabled'}`}>
+              <div
+                className={`security-settings__status-badge ${twoFactorEnabled ? 'security-settings__status-badge--enabled' : 'security-settings__status-badge--disabled'}`}
+              >
                 {twoFactorEnabled ? (
                   <>
                     <Shield size={16} />
@@ -291,14 +328,13 @@ const SecuritySettings: React.FC = () => {
                 )}
               </div>
               <p>
-                {twoFactorEnabled 
+                {twoFactorEnabled
                   ? 'Twoje konto jest chronione dodatkowym kodem weryfikacyjnym'
-                  : 'Włącz 2FA aby zwiększyć bezpieczeństwo swojego konta'
-                }
+                  : 'Włącz 2FA aby zwiększyć bezpieczeństwo swojego konta'}
               </p>
             </div>
-            
-            <button 
+
+            <button
               className={`security-settings__2fa-btn ${twoFactorEnabled ? 'security-settings__2fa-btn--danger' : 'security-settings__2fa-btn--primary'}`}
               onClick={handle2FAToggle}
             >
@@ -309,7 +345,10 @@ const SecuritySettings: React.FC = () => {
           {twoFactorEnabled && (
             <div className="security-settings__2fa-details">
               <h4>Kody zapasowe</h4>
-              <p>Zapisz te kody w bezpiecznym miejscu. Możesz ich użyć gdy nie masz dostępu do telefonu.</p>
+              <p>
+                Zapisz te kody w bezpiecznym miejscu. Możesz ich użyć gdy nie
+                masz dostępu do telefonu.
+              </p>
               <div className="security-settings__backup-codes">
                 <code>A4B7-C9D2</code>
                 <code>E8F1-G3H6</code>
@@ -337,7 +376,7 @@ const SecuritySettings: React.FC = () => {
         </div>
 
         <div className="security-settings__sessions">
-          {mockSessions.map((session) => (
+          {mockSessions.map(session => (
             <div key={session.id} className="security-settings__session">
               <div className="security-settings__session-info">
                 <div className="security-settings__session-device">
@@ -358,9 +397,9 @@ const SecuritySettings: React.FC = () => {
                   </span>
                 </div>
               </div>
-              
+
               {!session.current && (
-                <button 
+                <button
                   className="security-settings__logout-btn"
                   onClick={() => handleLogoutSession(session.id)}
                 >
@@ -405,7 +444,7 @@ const SecuritySettings: React.FC = () => {
             </div>
           </div>
 
-          <button 
+          <button
             className="security-settings__delete-trigger"
             onClick={() => setShowDeleteModal(true)}
             disabled={isLoading}
@@ -422,7 +461,7 @@ const SecuritySettings: React.FC = () => {
           <div className="security-settings__modal">
             <div className="security-settings__modal-header">
               <h3>Potwierdź usunięcie konta</h3>
-              <button 
+              <button
                 className="security-settings__modal-close"
                 onClick={() => setShowDeleteModal(false)}
               >
@@ -434,15 +473,14 @@ const SecuritySettings: React.FC = () => {
               <div className="security-settings__final-warning">
                 <AlertTriangle size={24} />
                 <p>
-                  <strong>Ostatnie ostrzeżenie!</strong><br />
+                  <strong>Ostatnie ostrzeżenie!</strong>
+                  <br />
                   Ta operacja usunie trwale Twoje konto i wszystkie dane.
                 </p>
               </div>
 
               {error && (
-                <div className="security-settings__error-message">
-                  {error}
-                </div>
+                <div className="security-settings__error-message">{error}</div>
               )}
 
               <div className="security-settings__field">
@@ -451,7 +489,7 @@ const SecuritySettings: React.FC = () => {
                   <input
                     type={showPasswords.delete ? 'text' : 'password'}
                     value={deletePassword}
-                    onChange={(e) => setDeletePassword(e.target.value)}
+                    onChange={e => setDeletePassword(e.target.value)}
                     placeholder="Twoje hasło"
                     disabled={isLoading}
                   />
@@ -460,13 +498,17 @@ const SecuritySettings: React.FC = () => {
                     className="security-settings__password-toggle"
                     onClick={() => handleTogglePassword('delete')}
                   >
-                    {showPasswords.delete ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showPasswords.delete ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="security-settings__modal-actions">
-                <button 
+                <button
                   className="security-settings__modal-cancel"
                   onClick={() => {
                     setShowDeleteModal(false);
@@ -477,7 +519,7 @@ const SecuritySettings: React.FC = () => {
                 >
                   Anuluj
                 </button>
-                <button 
+                <button
                   className="security-settings__modal-delete"
                   onClick={handleDeleteAccount}
                   disabled={isLoading || !deletePassword}

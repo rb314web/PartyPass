@@ -3,7 +3,7 @@
 // Section separator effect
 @mixin section-separator($color: var(--border-color), $opacity: 0.1) {
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -26,7 +26,7 @@
 @mixin section-background-transition($startColor, $endColor) {
   position: relative;
   background: linear-gradient(180deg, $startColor 0%, $endColor 100%);
-  
+
   &::before,
   &::after {
     content: '';
@@ -36,12 +36,12 @@
     height: var(--space-md);
     opacity: 0.1;
   }
-  
+
   &::before {
     top: 0;
     background: linear-gradient(180deg, transparent, $startColor);
   }
-  
+
   &::after {
     bottom: 0;
     background: linear-gradient(0deg, transparent, $endColor);
@@ -53,7 +53,7 @@
   opacity: 0;
   transform: translateY(30px);
   animation: sectionReveal 0.8s ease-out forwards;
-  
+
   @keyframes sectionReveal {
     from {
       opacity: 0;
@@ -70,7 +70,7 @@
 @mixin section-background-shapes($color: var(--primary), $opacity: 0.05) {
   position: relative;
   overflow: hidden;
-  
+
   &::before,
   &::after {
     content: '';
@@ -80,14 +80,14 @@
     opacity: $opacity;
     pointer-events: none;
   }
-  
+
   &::before {
     width: 300px;
     height: 300px;
     top: -100px;
     right: -100px;
   }
-  
+
   &::after {
     width: 200px;
     height: 200px;
@@ -99,7 +99,7 @@
 // Section background grid
 @mixin section-background-grid($color: var(--border-color), $opacity: 0.05) {
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -107,8 +107,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: linear-gradient($color 1px, transparent 1px),
-                    linear-gradient(90deg, $color 1px, transparent 1px);
+    background-image:
+      linear-gradient($color 1px, transparent 1px),
+      linear-gradient(90deg, $color 1px, transparent 1px);
     background-size: 20px 20px;
     opacity: $opacity;
     pointer-events: none;
@@ -118,7 +119,7 @@
 // Section wave separator
 @mixin section-wave-separator($color: var(--border-color), $opacity: 0.1) {
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -135,7 +136,7 @@
 // Section diagonal separator
 @mixin section-diagonal-separator($color: var(--border-color), $opacity: 0.1) {
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;

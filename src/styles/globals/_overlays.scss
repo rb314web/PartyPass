@@ -1,0 +1,340 @@
+// styles/globals/_overlays.scss
+// Unified Overlay and Animation System for PartyPass
+// Consistent overlays, backdrops, and modal animations
+
+// Import z-index system
+@use './z-index' as *;
+
+// ============================================
+// BASE OVERLAY STYLES
+// ============================================
+
+// Full-screen backdrop overlay
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: var(--z-overlay);
+  cursor: pointer;
+  animation: overlayFadeIn 0.2s ease;
+
+  // Prevent body scroll
+  &.no-scroll {
+    overflow: hidden;
+  }
+
+  // Variants
+  &--dark {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  &--light {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  &--blur-heavy {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+// ============================================
+// MOBILE MENU ANIMATIONS
+// ============================================
+
+// Slide from right (default mobile menu)
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 90%;
+  max-width: 400px;
+  background: white;
+  z-index: calc(var(--z-overlay) + 1);
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.15);
+
+  // Smooth scrolling
+  -webkit-overflow-scrolling: touch;
+
+  // Hide initially
+  &--hidden {
+    animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// Slide from left (sidebar style)
+.mobile-menu--left {
+  right: auto;
+  left: 0;
+  animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
+
+  &.mobile-menu--hidden {
+    animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// Full-screen mobile menu
+.mobile-menu--full {
+  width: 100%;
+  max-width: none;
+  animation: fadeIn 0.3s ease;
+
+  &.mobile-menu--hidden {
+    animation: fadeOut 0.3s ease;
+  }
+}
+
+// ============================================
+// MODAL ANIMATIONS
+// ============================================
+
+// Centered modal container
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--z-modal);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.6, 1);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+
+  // Mobile adjustments
+  @media (max-width: 768px) {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 16px 16px 0 0;
+    animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &--hidden {
+    animation: modalFadeOut 0.2s ease;
+
+    @media (max-width: 768px) {
+      animation: modalSlideDown 0.2s ease;
+    }
+  }
+}
+
+// Dropdown (smaller, positioned near trigger)
+.dropdown {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  animation: dropdownFadeIn 0.2s ease;
+  min-width: 200px;
+
+  &--hidden {
+    animation: dropdownFadeOut 0.15s ease;
+  }
+}
+
+// ============================================
+// KEYFRAME ANIMATIONS
+// ============================================
+
+// Overlay fade
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+// Slide animations
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+// Modal animations (desktop)
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}
+
+// Modal animations (mobile - slide up from bottom)
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+// Dropdown animations
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dropdownFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+}
+
+// Simple fade
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+// ============================================
+// UTILITY CLASSES
+// ============================================
+
+// Prevent body scroll when overlay is active
+.no-scroll {
+  overflow: hidden;
+  height: 100vh;
+
+  // Prevent iOS bounce
+  @supports (-webkit-overflow-scrolling: touch) {
+    position: fixed;
+    width: 100%;
+  }
+}
+
+// Smooth scrolling for modals
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+// Focus trap (for accessibility)
+.focus-trap {
+  &:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+// ============================================
+// USAGE EXAMPLES
+// ============================================
+
+// Example 1: Mobile Menu with Overlay
+// <div className="overlay" onClick={closeMenu}></div>
+// <div className="mobile-menu">...</div>
+
+// Example 2: Modal Dialog
+// <div className="overlay overlay--dark"></div>
+// <div className="modal">...</div>
+
+// Example 3: Dropdown Menu
+// <div className="dropdown">...</div>
+
+// Example 4: Sidebar (slide from left)
+// <div className="overlay" onClick={closeSidebar}></div>
+// <div className="mobile-menu mobile-menu--left">...</div>

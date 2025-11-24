@@ -128,12 +128,12 @@ export interface Event {
 // Activity/Notification types
 export interface Activity {
   id: string;
-  type: 
-    | 'guest_response' 
-    | 'event_created' 
-    | 'guest_declined' 
-    | 'event_updated' 
-    | 'guest_accepted' 
+  type:
+    | 'guest_response'
+    | 'event_created'
+    | 'guest_declined'
+    | 'event_updated'
+    | 'guest_accepted'
     | 'event_deleted'
     | 'guest_maybe'
     | 'event_cancelled';

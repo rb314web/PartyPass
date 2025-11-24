@@ -16,7 +16,7 @@ const DeleteContactModal: React.FC<DeleteContactModalProps> = ({
   contact,
   onClose,
   onConfirm,
-  isDeleting = false
+  isDeleting = false,
 }) => {
   if (!open || !contact) return null;
 
@@ -36,8 +36,8 @@ const DeleteContactModal: React.FC<DeleteContactModalProps> = ({
   };
 
   return (
-    <div 
-      className="delete-contact-modal__overlay" 
+    <div
+      className="delete-contact-modal__overlay"
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
       tabIndex={-1}
@@ -58,26 +58,23 @@ const DeleteContactModal: React.FC<DeleteContactModalProps> = ({
         </div>
 
         <div className="delete-contact-modal__content">
-          <h2 className="delete-contact-modal__title">
-            Usuń kontakt
-          </h2>
-          
+          <h2 className="delete-contact-modal__title">Usuń kontakt</h2>
+
           <div className="delete-contact-modal__contact-info">
             <div className="delete-contact-modal__avatar">
-              {contact.firstName[0]}{contact.lastName[0]}
+              {contact.firstName[0]}
+              {contact.lastName[0]}
             </div>
             <div className="delete-contact-modal__details">
               <div className="delete-contact-modal__name">
                 {contact.firstName} {contact.lastName}
               </div>
-              <div className="delete-contact-modal__email">
-                {contact.email}
-              </div>
+              <div className="delete-contact-modal__email">{contact.email}</div>
             </div>
           </div>
 
           <p className="delete-contact-modal__message">
-            Czy na pewno chcesz usunąć ten kontakt? 
+            Czy na pewno chcesz usunąć ten kontakt?
             <strong> Ta akcja jest nieodwracalna.</strong>
           </p>
         </div>

@@ -52,15 +52,34 @@ service cloud.firestore {
     
     // Goście
     match /guests/{guestId} {
-      allow read: if isAuthenticated(); // Tymczasowo pozwól wszystkim zalogowanym
+      // Odczyt - publiczny (potrzebny dla strony RSVP)
+      allow get: if true;
+      // Zapytania - tylko dla zalogowanych
+      allow list: if isAuthenticated();
+      
       allow create: if isAuthenticated() && (
         isOwner(request.resource.data.userId) ||
         exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
       );
-      allow update: if isAuthenticated() && (
-        isOwner(resource.data.userId) ||
-        resource.data.email == request.auth.token.email
-      );
+      
+      // Aktualizacja - pozwól publicznie (przez stronę RSVP) lub dla zalogowanych użytkowników
+      // Walidacja tokenu RSVP odbywa się w kodzie aplikacji przed aktualizacją
+      allow update: if 
+        // Publiczna aktualizacja przez stronę RSVP
+        (!isAuthenticated()) ||
+        // Aktualizacja przez zalogowanego użytkownika
+        (
+          isAuthenticated() && (
+            isOwner(resource.data.userId) ||
+            resource.data.email == request.auth.token.email ||
+            // Właściciel wydarzenia może aktualizować gości
+            (
+              exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
+              get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.userId == request.auth.uid
+            )
+          )
+        );
+      
       allow delete: if isAuthenticated() && (
         isOwner(resource.data.userId) ||
         exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
@@ -71,7 +90,10 @@ service cloud.firestore {
     // Aktywności
     match /activities/{activityId} {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Pozwól na tworzenie aktywności publicznie (przez system RSVP) lub przez zalogowanych
+      allow create: if 
+        !isAuthenticated() || 
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid);
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
@@ -106,6 +128,32 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Tokeny RSVP
+    match /rsvpTokens/{tokenId} {
+      // Odczyt pojedynczego tokenu - publiczny (potrzebny dla strony RSVP)
+      allow get: if true;
+      
+      // Odczyt listy tokenów (queries) - tylko dla zalogowanych użytkowników
+      // (potrzebny do sprawdzania czy token już istnieje)
+      allow list: if isAuthenticated();
+      
+      // Tworzenie tokenu - tylko dla zalogowanych użytkowników
+      allow create: if isAuthenticated() && (
+        request.resource.data.eventGuestId is string &&
+        request.resource.data.eventId is string &&
+        request.resource.data.token is string &&
+        request.resource.data.isUsed == false &&
+        request.resource.data.createdAt is timestamp &&
+        (request.resource.data.expiresAt is timestamp || request.resource.data.expiresAt == null)
+      );
+      
+      // Aktualizacja tokenu - do oznaczania jako użyty (przez system RSVP)
+      allow update: if true;
+      
+      // Usuwanie tokenów - tylko dla zalogowanych użytkowników
+      allow delete: if isAuthenticated();
     }
   }
 }

@@ -33,7 +33,7 @@ export interface Event {
   maybeCount: number;
   dresscode?: string;
   additionalInfo?: string;
-  
+
   // Legacy field for backward compatibility
   guests?: EventGuest[];
 }
@@ -55,7 +55,7 @@ export interface Contact {
 export interface EventGuest {
   id: string;
   eventId: string;
-  contactId: string;
+  contactId?: string; // Made optional for backward compatibility
   status: GuestStatus;
   invitedAt: Date;
   respondedAt?: Date;
@@ -69,12 +69,12 @@ export interface EventGuest {
   eventSpecificNotes?: string;
   createdAt: Date;
   updatedAt?: Date;
-  
+
   // Legacy fields for backward compatibility
   userId?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  firstName: string; // Required for display
+  lastName: string; // Required for display
+  email: string; // Required for invitations
   phone?: string;
   dietaryRestrictions?: string;
   notes?: string;
@@ -107,12 +107,12 @@ export interface Plan {
 
 export interface Activity {
   id: string;
-  type: 
-    | 'guest_response' 
-    | 'event_created' 
-    | 'guest_declined' 
-    | 'event_updated' 
-    | 'guest_accepted' 
+  type:
+    | 'guest_response'
+    | 'event_created'
+    | 'guest_declined'
+    | 'event_updated'
+    | 'guest_accepted'
     | 'event_deleted'
     | 'guest_maybe'
     | 'event_cancelled'
@@ -150,7 +150,7 @@ export interface CreateContactData {
 export interface UpdateContactData extends Partial<CreateContactData> {}
 
 export interface CreateEventGuestData {
-  contactId: string;
+  contactId?: string; // Made optional for backward compatibility
   eventSpecificNotes?: string;
   plusOneType?: 'none' | 'withoutDetails' | 'withDetails';
   plusOneDetails?: {
@@ -158,7 +158,7 @@ export interface CreateEventGuestData {
     lastName?: string;
     dietaryRestrictions?: string;
   };
-  
+
   // Legacy fields for backward compatibility
   firstName?: string;
   lastName?: string;
@@ -171,7 +171,7 @@ export interface CreateEventGuestData {
 
 export interface UpdateEventGuestData extends Partial<CreateEventGuestData> {
   status?: GuestStatus;
-  
+
   // Legacy fields for backward compatibility
   firstName?: string;
   lastName?: string;

@@ -1,5 +1,5 @@
 // pages/Search/Search.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Search as SearchIcon, 
@@ -8,8 +8,7 @@ import {
   Filter,
   Clock,
   X,
-  ChevronRight,
-  ArrowLeft
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import SearchService, { SearchResult, SearchFilters } from '../../services/searchService';
@@ -26,51 +25,95 @@ const Search: React.FC = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [filters, setFilters] = useState<SearchFilters>({
     types: ['event', 'contact'],
     limit: 20
   });
 
+  // Refs for race condition prevention and cleanup
+  const searchRequestId = useRef(0);
+  const isMounted = useRef(true);
+  const searchCount = useRef(0);
+  const lastSearchTime = useRef(0);
+
+  // Constants for validation
+  const MAX_QUERY_LENGTH = 200;
+  const MAX_REQUESTS_PER_MINUTE = 20;
+  const REQUEST_COOLDOWN = 60000; // 1 minute
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   // Load recent searches on mount
   useEffect(() => {
     setRecentSearches(SearchService.getRecentSearches());
   }, []);
 
-  // Perform search
+  // Perform search with race condition protection
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!user?.id || !searchQuery.trim()) {
       setResults([]);
       return;
     }
 
+    // Validate query length
+    if (searchQuery.length > MAX_QUERY_LENGTH) {
+      setError(`Zapytanie jest za długie. Maksymalna długość to ${MAX_QUERY_LENGTH} znaków.`);
+      return;
+    }
+
+    // Rate limiting check
+    const now = Date.now();
+    if (now - lastSearchTime.current > REQUEST_COOLDOWN) {
+      searchCount.current = 0; // Reset counter after cooldown
+    }
+    
+    if (searchCount.current >= MAX_REQUESTS_PER_MINUTE) {
+      setError('Zbyt wiele zapytań. Poczekaj chwilę i spróbuj ponownie.');
+      return;
+    }
+
+    searchCount.current++;
+    lastSearchTime.current = now;
+
+    const currentRequestId = ++searchRequestId.current;
+
     setLoading(true);
+    setError(null);
     try {
       const searchResults = await SearchService.search(user.id, searchQuery, filters);
-      setResults(searchResults);
       
-      // Save to recent searches
-      SearchService.saveRecentSearch(searchQuery);
-      setRecentSearches(SearchService.getRecentSearches());
-      
-      // Update URL
-      setSearchParams({ q: searchQuery });
+      // Only update if this is still the latest request and component is mounted
+      if (currentRequestId === searchRequestId.current && isMounted.current) {
+        setResults(searchResults);
+        
+        // Save to recent searches
+        SearchService.saveRecentSearch(searchQuery);
+        setRecentSearches(SearchService.getRecentSearches());
+        
+        // Update URL
+        setSearchParams({ q: searchQuery });
+      }
     } catch (error) {
       console.error('Search error:', error);
-      setResults([]);
+      if (currentRequestId === searchRequestId.current && isMounted.current) {
+        setResults([]);
+        setError('Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.');
+      }
     } finally {
-      setLoading(false);
+      if (currentRequestId === searchRequestId.current && isMounted.current) {
+        setLoading(false);
+      }
     }
   }, [user?.id, filters, setSearchParams]);
 
-  // Perform search when query is present on mount or change
-  useEffect(() => {
-    if (query.trim()) {
-      performSearch(query);
-    }
-  }, [query, performSearch]);
-
-  // Get suggestions
+  // Get suggestions with debounce
   const getSuggestions = useCallback(async (searchQuery: string) => {
     if (!user?.id || !searchQuery.trim() || searchQuery.length < 2) {
       setSuggestions([]);
@@ -79,22 +122,60 @@ const Search: React.FC = () => {
 
     try {
       const searchSuggestions = await SearchService.getSuggestions(user.id, searchQuery);
-      setSuggestions(searchSuggestions);
+      if (isMounted.current) {
+        setSuggestions(searchSuggestions);
+      }
     } catch (error) {
       console.error('Suggestions error:', error);
-      setSuggestions([]);
+      if (isMounted.current) {
+        setSuggestions([]);
+      }
     }
   }, [user?.id]);
 
-  // Handle search input
+  // Debounced version of getSuggestions with cleanup
+  const debouncedGetSuggestions = useMemo(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    const debouncedFn = (searchQuery: string) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        getSuggestions(searchQuery);
+      }, 300); // 300ms debounce
+    };
+
+    // Return both the function and cleanup
+    return {
+      fn: debouncedFn,
+      cleanup: () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      }
+    };
+  }, [getSuggestions]);
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      debouncedGetSuggestions.cleanup();
+    };
+  }, [debouncedGetSuggestions]);
+
+  // Handle search input with debounce
   const handleSearchInput = (value: string) => {
     setQuery(value);
     
-    if (value.trim()) {
-      getSuggestions(value);
+    if (value.trim() && value.length >= 2) {
+      debouncedGetSuggestions.fn(value);
     } else {
       setSuggestions([]);
-      setResults([]);
+      if (!value.trim()) {
+        setResults([]);
+      }
     }
   };
 
@@ -122,7 +203,15 @@ const Search: React.FC = () => {
   // Handle filter change
   const handleFilterChange = (newFilters: Partial<SearchFilters>) => {
     const updatedFilters = { ...filters, ...newFilters };
+    
+    // Validate: at least one type must be selected
+    if (updatedFilters.types && updatedFilters.types.length === 0) {
+      setError('Wybierz przynajmniej jeden typ wyniku.');
+      return;
+    }
+    
     setFilters(updatedFilters);
+    setError(null);
     
     if (query.trim()) {
       performSearch(query);
@@ -135,14 +224,22 @@ const Search: React.FC = () => {
     setRecentSearches([]);
   };
 
-  // Perform search on mount if query exists
+  // Perform search on mount if query exists (only once)
   useEffect(() => {
     const initialQuery = searchParams.get('q');
-    if (initialQuery && user?.id) {
+    if (initialQuery && user?.id && !query) {
       setQuery(initialQuery);
-      performSearch(initialQuery);
     }
-  }, [searchParams, user?.id, performSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  // Perform search when query changes (but not on initial mount if from URL)
+  useEffect(() => {
+    if (query.trim() && user?.id) {
+      performSearch(query);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, filters]); // Removed performSearch from deps to avoid infinite loop
 
   const getResultIcon = (type: string) => {
     switch (type) {
@@ -161,43 +258,47 @@ const Search: React.FC = () => {
   };
 
   return (
-    <div className="search-page">
-      <div className="search-page__header">
-        <button
-          onClick={() => navigate(-1)}
-          className="search-page__back-btn"
-          aria-label="Wróć"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        
-        <div className="search-page__title-section">
-          <h1 className="search-page__title">Wyszukiwanie</h1>
-          <p className="search-page__subtitle">
-            Przeszukaj wydarzenia, kontakty i więcej
-          </p>
+    <div className="search-page" role="search">
+      <header className="search-page__header">
+        <div className="search-page__title-wrapper">
+          <div className="search-page__icon" aria-hidden="true">
+            <SearchIcon size={24} />
+          </div>
+          <div>
+            <h1>Wyszukiwanie</h1>
+            <p>Przeszukaj wydarzenia, kontakty i więcej</p>
+          </div>
         </div>
 
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`search-page__filter-btn ${showFilters ? 'search-page__filter-btn--active' : ''}`}
-          aria-label="Filtry"
-        >
-          <Filter size={20} />
-        </button>
-      </div>
+        <div className="search-page__header-actions">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`search-page__action-btn ${showFilters ? 'search-page__action-btn--active' : ''}`}
+            aria-label={showFilters ? 'Ukryj filtry' : 'Pokaż filtry'}
+            aria-expanded={showFilters}
+            type="button"
+          >
+            <Filter size={18} aria-hidden="true" />
+            Filtry
+          </button>
+        </div>
+      </header>
 
       {/* Search Form */}
-      <form onSubmit={handleSearchSubmit} className="search-page__form">
+      <form onSubmit={handleSearchSubmit} className="search-page__form" role="search">
         <div className="search-page__input-container">
-          <SearchIcon size={20} className="search-page__search-icon" />
+          <SearchIcon size={20} className="search-page__search-icon" aria-hidden="true" />
           <input
-            type="text"
+            type="search"
             value={query}
             onChange={(e) => handleSearchInput(e.target.value)}
             placeholder="Szukaj wydarzeń, kontaktów..."
             className="search-page__input"
+            aria-label="Pole wyszukiwania"
+            aria-describedby="search-help"
+            maxLength={MAX_QUERY_LENGTH}
             autoFocus
+            autoComplete="off"
           />
           {query && (
             <button
@@ -206,9 +307,10 @@ const Search: React.FC = () => {
                 setQuery('');
                 setResults([]);
                 setSuggestions([]);
+                setError(null);
               }}
               className="search-page__clear-btn"
-              aria-label="Wyczyść"
+              aria-label="Wyczyść pole wyszukiwania"
             >
               <X size={16} />
             </button>
@@ -217,14 +319,21 @@ const Search: React.FC = () => {
 
         {/* Suggestions */}
         {suggestions.length > 0 && (
-          <div className="search-page__suggestions">
+          <div 
+            className="search-page__suggestions" 
+            role="listbox"
+            aria-label="Sugestie wyszukiwania"
+          >
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion)}
                 className="search-page__suggestion"
+                role="option"
+                aria-selected="false"
+                type="button"
               >
-                <SearchIcon size={16} />
+                <SearchIcon size={16} aria-hidden="true" />
                 <span>{suggestion}</span>
               </button>
             ))}
@@ -285,10 +394,25 @@ const Search: React.FC = () => {
       )}
 
       {/* Content */}
-      <div className="search-page__content">
+      <div className="search-page__content" aria-live="polite" aria-busy={loading}>
+        {/* Error State */}
+        {error && (
+          <div className="search-page__error" role="alert">
+            <div className="search-page__error-icon">⚠️</div>
+            <p>{error}</p>
+            <button 
+              onClick={() => setError(null)}
+              className="search-page__error-dismiss"
+              aria-label="Zamknij komunikat o błędzie"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         {loading ? (
-          <div className="search-page__loading">
-            <div className="search-page__spinner"></div>
+          <div className="search-page__loading" role="status">
+            <div className="search-page__spinner" aria-hidden="true"></div>
             <p>Wyszukiwanie...</p>
           </div>
         ) : results.length > 0 ? (
@@ -297,14 +421,22 @@ const Search: React.FC = () => {
               <h2>Wyniki wyszukiwania ({results.length})</h2>
             </div>
             
-            <div className="search-page__results-list">
+            <div className="search-page__results-list" role="list">
               {results.map((result) => (
                 <div
                   key={`${result.type}-${result.id}`}
                   onClick={() => handleResultClick(result)}
                   className="search-page__result"
+                  role="listitem"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleResultClick(result);
+                    }
+                  }}
                 >
-                  <div className="search-page__result-icon">
+                  <div className="search-page__result-icon" aria-hidden="true">
                     {getResultIcon(result.type)}
                   </div>
                   

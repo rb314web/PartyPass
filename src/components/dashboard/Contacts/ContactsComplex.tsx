@@ -1,20 +1,29 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+  useRef,
+} from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Search, 
-  Plus, 
-  Download, 
+import {
+  Users,
+  Search,
+  Plus,
+  Download,
   Mail,
   Phone,
   AlertCircle,
   Edit3,
-  Utensils
+  Utensils,
 } from 'lucide-react';
 import { Box, Typography, Skeleton } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import { Contact } from '../../../types';
-import { ContactService, ContactFilters } from '../../../services/firebase/contactService';
+import {
+  ContactService,
+  ContactFilters,
+} from '../../../services/firebase/contactService';
 import AddContact from './AddContact';
 import EditContactModal from './EditContactModal';
 import DeleteContactModal from './DeleteContactModal';
@@ -36,7 +45,7 @@ const StableSearchInput = React.memo<{
         type="text"
         placeholder="Szukaj kontaktów..."
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         autoComplete="off"
       />
     </div>
@@ -46,21 +55,21 @@ const StableSearchInput = React.memo<{
 const ContactsComponent: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   // Stable refs for search
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Core state
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
+
   // Pagination state
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [hasMore, setHasMore] = useState(true);
-  
+
   // Modal state
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [editContactOpen, setEditContactOpen] = useState(false);
@@ -69,40 +78,46 @@ const ContactsComponent: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // STABLE loadContacts - memoized with useCallback (without searchQuery dependency)
-  const loadContacts = useCallback(async (resetList = true, customSearchQuery?: string) => {
-    if (!user?.id) return;
-    
-    try {
-      if (resetList) {
-        setIsLoading(true);
-        setLastDoc(null);
-      }
-      
-      const filters: ContactFilters = {};
-      const queryToUse = customSearchQuery !== undefined ? customSearchQuery : searchQuery;
-      if (queryToUse.trim()) {
-        filters.search = queryToUse.trim();
-      }
+  const loadContacts = useCallback(
+    async (resetList = true, customSearchQuery?: string) => {
+      if (!user?.id) return;
 
-      const result = await ContactService.getUserContacts(
-        user.id,
-        filters,
-        10,
-        resetList ? undefined : lastDoc
-      );
+      try {
+        if (resetList) {
+          setIsLoading(true);
+          setLastDoc(null);
+        }
 
-      setContacts(prev => resetList ? result.contacts : [...prev, ...result.contacts]);
-      setLastDoc(result.lastDoc);
-      setHasMore(result.hasMore);
-      setError(null);
-    } catch (err: any) {
-      console.error('Error loading contacts:', err);
-      setError(err.message || 'Błąd podczas ładowania kontaktów');
-      setContacts([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
+        const filters: ContactFilters = {};
+        const queryToUse =
+          customSearchQuery !== undefined ? customSearchQuery : searchQuery;
+        if (queryToUse.trim()) {
+          filters.search = queryToUse.trim();
+        }
+
+        const result = await ContactService.getUserContacts(
+          user.id,
+          filters,
+          10,
+          resetList ? undefined : lastDoc
+        );
+
+        setContacts(prev =>
+          resetList ? result.contacts : [...prev, ...result.contacts]
+        );
+        setLastDoc(result.lastDoc);
+        setHasMore(result.hasMore);
+        setError(null);
+      } catch (err: any) {
+        console.error('Error loading contacts:', err);
+        setError(err.message || 'Błąd podczas ładowania kontaktów');
+        setContacts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id]
+  );
 
   // STABLE filtered and sorted contacts - fully memoized
   const filteredAndSortedContacts = useMemo(() => {
@@ -113,10 +128,11 @@ const ContactsComponent: React.FC = () => {
     // Client-side filtering as backup (server should handle this)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(contact => 
-        contact.firstName.toLowerCase().includes(query) ||
-        contact.lastName.toLowerCase().includes(query) ||
-        contact.email.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        contact =>
+          contact.firstName.toLowerCase().includes(query) ||
+          contact.lastName.toLowerCase().includes(query) ||
+          contact.email.toLowerCase().includes(query)
       );
     }
 
@@ -124,7 +140,7 @@ const ContactsComponent: React.FC = () => {
     filtered.sort((a, b) => {
       const aName = `${a.firstName} ${a.lastName}`.toLowerCase();
       const bName = `${b.firstName} ${b.lastName}`.toLowerCase();
-      
+
       if (sortDirection === 'asc') {
         return aName.localeCompare(bName);
       } else {
@@ -151,9 +167,11 @@ const ContactsComponent: React.FC = () => {
   }, []);
 
   const handleContactUpdated = useCallback((updatedContact: Contact) => {
-    setContacts(prev => prev.map(contact => 
-      contact.id === updatedContact.id ? updatedContact : contact
-    ));
+    setContacts(prev =>
+      prev.map(contact =>
+        contact.id === updatedContact.id ? updatedContact : contact
+      )
+    );
     setEditContactOpen(false);
     setSelectedContact(null);
   }, []);
@@ -176,7 +194,7 @@ const ContactsComponent: React.FC = () => {
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedContact) return;
-    
+
     setIsDeleting(true);
     try {
       await handleDeleteContact(selectedContact);
@@ -197,56 +215,65 @@ const ContactsComponent: React.FC = () => {
   }, [isDeleting]);
 
   // STABLE contact actions handler
-  const handleContactAction = useCallback(async (action: string, contactId: string) => {
-    try {
-      const contact = contacts.find(c => c.id === contactId);
-      if (!contact) return;
+  const handleContactAction = useCallback(
+    async (action: string, contactId: string) => {
+      try {
+        const contact = contacts.find(c => c.id === contactId);
+        if (!contact) return;
 
-      switch (action) {
-        case 'edit':
-          handleEditContact(contact);
-          break;
-        case 'delete':
-          handleOpenDeleteModal(contact);
-          break;
-        case 'email':
-          window.open(`mailto:${contact.email}`);
-          break;
-        case 'phone':
-          if (contact.phone) {
-            window.open(`tel:${contact.phone}`);
-          }
-          break;
+        switch (action) {
+          case 'edit':
+            handleEditContact(contact);
+            break;
+          case 'delete':
+            handleOpenDeleteModal(contact);
+            break;
+          case 'email':
+            window.open(`mailto:${contact.email}`);
+            break;
+          case 'phone':
+            if (contact.phone) {
+              window.open(`tel:${contact.phone}`);
+            }
+            break;
+        }
+      } catch (error) {
+        console.error('Error handling contact action:', error);
       }
-    } catch (error) {
-      console.error('Error handling contact action:', error);
-    }
-  }, [contacts, handleEditContact, handleOpenDeleteModal]);
+    },
+    [contacts, handleEditContact, handleOpenDeleteModal]
+  );
 
-  const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const [, direction] = e.target.value.split('-');
-    setSortDirection(direction as 'asc' | 'desc');
-  }, []);
+  const handleSortChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const [, direction] = e.target.value.split('-');
+      setSortDirection(direction as 'asc' | 'desc');
+    },
+    []
+  );
 
   // Load contacts on mount and search change
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     if (user?.id) {
       // Debounce search - preserve focus
-      timeoutId = setTimeout(() => {
-        const activeElement = document.activeElement;
-        const wasSearchFocused = activeElement === searchInputRef.current;
-        
-        loadContacts(true, searchQuery);
-        
-        // Restore focus if search was focused
-        if (wasSearchFocused && searchInputRef.current) {
-          setTimeout(() => {
-            searchInputRef.current?.focus();
-          }, 50);
-        }
-      }, searchQuery ? 300 : 0);
+      timeoutId = setTimeout(
+        () => {
+          const activeElement = document.activeElement;
+          const wasSearchFocused = activeElement === searchInputRef.current;
+
+          loadContacts(true, searchQuery);
+
+          // Restore focus if search was focused
+          if (wasSearchFocused && searchInputRef.current) {
+            setTimeout(() => {
+              searchInputRef.current?.focus();
+            }, 50);
+          }
+        },
+        searchQuery ? 300 : 0
+      );
     }
 
     return () => {
@@ -274,9 +301,9 @@ const ContactsComponent: React.FC = () => {
             <tr key={index}>
               <td>
                 <div className="contacts__contact-info">
-                  <Skeleton 
-                    variant="circular" 
-                    width={40} 
+                  <Skeleton
+                    variant="circular"
+                    width={40}
                     height={40}
                     animation="wave"
                   />
@@ -286,8 +313,12 @@ const ContactsComponent: React.FC = () => {
                   </div>
                 </div>
               </td>
-              <td><Skeleton variant="text" width={100} height={20} /></td>
-              <td><Skeleton variant="text" width={80} height={20} /></td>
+              <td>
+                <Skeleton variant="text" width={100} height={20} />
+              </td>
+              <td>
+                <Skeleton variant="text" width={80} height={20} />
+              </td>
               <td>
                 <div className="contacts__contact-actions">
                   <Skeleton variant="circular" width={32} height={32} />
@@ -309,33 +340,41 @@ const ContactsComponent: React.FC = () => {
 
   // Render error state
   const renderError = () => (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      padding: '4rem 2rem',
-      backgroundColor: '#ffffff'
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '4rem 2rem',
+        backgroundColor: '#ffffff',
+      }}
+    >
       <Box sx={{ color: '#ef4444', marginBottom: 2 }}>
         <AlertCircle size={48} />
       </Box>
-      <Typography variant="h6" sx={{ 
-        color: '#333333',
-        fontWeight: 600,
-        marginBottom: 1
-      }}>
+      <Typography
+        variant="h6"
+        sx={{
+          color: '#333333',
+          fontWeight: 600,
+          marginBottom: 1,
+        }}
+      >
         Wystąpił błąd
       </Typography>
-      <Typography variant="body1" sx={{ 
-        color: '#666666',
-        textAlign: 'center',
-        marginBottom: 3
-      }}>
+      <Typography
+        variant="body1"
+        sx={{
+          color: '#666666',
+          textAlign: 'center',
+          marginBottom: 3,
+        }}
+      >
         {error}
       </Typography>
-      <button 
-        onClick={() => loadContacts(true)} 
+      <button
+        onClick={() => loadContacts(true)}
         className="contacts__action-btn contacts__action-btn--primary"
       >
         Spróbuj ponownie
@@ -345,37 +384,44 @@ const ContactsComponent: React.FC = () => {
 
   // Render empty state
   const renderEmptyState = () => (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      padding: '4rem 2rem',
-      backgroundColor: '#ffffff'
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '4rem 2rem',
+        backgroundColor: '#ffffff',
+      }}
+    >
       <Box sx={{ color: '#94a3b8', marginBottom: 2 }}>
         <Users size={64} />
       </Box>
-      <Typography variant="h6" sx={{ 
-        color: '#333333',
-        fontWeight: 600,
-        marginBottom: 1
-      }}>
+      <Typography
+        variant="h6"
+        sx={{
+          color: '#333333',
+          fontWeight: 600,
+          marginBottom: 1,
+        }}
+      >
         {searchQuery ? 'Nie znaleziono kontaktów' : 'Brak kontaktów'}
       </Typography>
-      <Typography variant="body1" sx={{ 
-        color: '#666666',
-        textAlign: 'center',
-        marginBottom: 3,
-        maxWidth: '400px'
-      }}>
+      <Typography
+        variant="body1"
+        sx={{
+          color: '#666666',
+          textAlign: 'center',
+          marginBottom: 3,
+          maxWidth: '400px',
+        }}
+      >
         {searchQuery
           ? 'Spróbuj zmienić wyszukiwanie'
-          : 'Dodaj pierwszy kontakt do swojej bazy'
-        }
+          : 'Dodaj pierwszy kontakt do swojej bazy'}
       </Typography>
       {!searchQuery && (
-        <button 
+        <button
           className="contacts__action-btn contacts__action-btn--primary"
           onClick={handleAddContact}
         >
@@ -400,12 +446,13 @@ const ContactsComponent: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredAndSortedContacts.map((contact) => (
+          {filteredAndSortedContacts.map(contact => (
             <tr key={contact.id}>
               <td>
                 <div className="contacts__contact-info">
                   <div className="contacts__contact-avatar">
-                    {contact.firstName[0]}{contact.lastName[0]}
+                    {contact.firstName[0]}
+                    {contact.lastName[0]}
                   </div>
                   <div>
                     <div className="contacts__contact-name">
@@ -418,9 +465,7 @@ const ContactsComponent: React.FC = () => {
                 </div>
               </td>
               <td>
-                <div className="contacts__phone">
-                  {contact.phone || '—'}
-                </div>
+                <div className="contacts__phone">{contact.phone || '—'}</div>
               </td>
               <td>
                 <div className="contacts__dietary">
@@ -478,19 +523,18 @@ const ContactsComponent: React.FC = () => {
   // Render mobile cards
   const renderMobileCards = () => (
     <div className="contacts__mobile-cards">
-      {filteredAndSortedContacts.map((contact) => (
+      {filteredAndSortedContacts.map(contact => (
         <div key={contact.id} className="contacts__mobile-card contact-animate">
           <div className="contacts__mobile-card-header">
             <div className="contacts__contact-avatar">
-              {contact.firstName[0]}{contact.lastName[0]}
+              {contact.firstName[0]}
+              {contact.lastName[0]}
             </div>
             <div className="contacts__mobile-card-info">
               <div className="contacts__mobile-card-name">
                 {contact.firstName} {contact.lastName}
               </div>
-              <div className="contacts__mobile-card-email">
-                {contact.email}
-              </div>
+              <div className="contacts__mobile-card-email">{contact.email}</div>
             </div>
           </div>
 
@@ -564,16 +608,16 @@ const ContactsComponent: React.FC = () => {
             <p>Zarządzaj bazą kontaktów</p>
           </div>
         </div>
-        
+
         <div className="contacts__actions">
-          <button 
+          <button
             className="contacts__action-btn contacts__action-btn--secondary"
             onClick={() => navigate('/dashboard/contacts/import')}
           >
             <Download size={20} />
             Importuj
           </button>
-          <button 
+          <button
             className="contacts__action-btn contacts__action-btn--primary"
             onClick={handleAddContact}
           >
@@ -584,7 +628,7 @@ const ContactsComponent: React.FC = () => {
       </div>
 
       <div className="contacts__filters">
-        <StableSearchInput 
+        <StableSearchInput
           value={searchQuery}
           onChange={setSearchQuery}
           inputRef={searchInputRef}
@@ -607,7 +651,10 @@ const ContactsComponent: React.FC = () => {
       <div className="contacts__content">
         {isLoading && renderSkeletons()}
         {!isLoading && error && renderError()}
-        {!isLoading && !error && filteredAndSortedContacts.length === 0 && renderEmptyState()}
+        {!isLoading &&
+          !error &&
+          filteredAndSortedContacts.length === 0 &&
+          renderEmptyState()}
         {!isLoading && !error && filteredAndSortedContacts.length > 0 && (
           <>
             {renderDesktopTable()}

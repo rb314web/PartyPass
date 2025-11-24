@@ -1,7 +1,6 @@
 // components/common/Footer/Footer.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle } from 'lucide-react';
 import './Footer.scss';
 
 const Footer: React.FC = () => {
@@ -15,9 +14,15 @@ const Footer: React.FC = () => {
               PartyPass
             </Link>
             <ul className="footer__links">
-              <li><Link to="/features">Funkcje</Link></li>
-              <li><Link to="/pricing">Cennik</Link></li>
-              <li><Link to="/help">Pomoc</Link></li>
+              <li>
+                <Link to="/features">Funkcje</Link>
+              </li>
+              <li>
+                <Link to="/pricing">Cennik</Link>
+              </li>
+              <li>
+                <Link to="/help">Pomoc</Link>
+              </li>
             </ul>
           </div>
 
@@ -25,9 +30,15 @@ const Footer: React.FC = () => {
           <div className="footer__section">
             <h4 className="footer__section-title">INFORMACJE PRAWNE</h4>
             <ul className="footer__links">
-              <li><Link to="/privacy">Prywatność</Link></li>
-              <li><Link to="/terms">Regulamin</Link></li>
-              <li><Link to="/gdpr">RODO</Link></li>
+              <li>
+                <Link to="/privacy">Prywatność</Link>
+              </li>
+              <li>
+                <Link to="/terms">Regulamin</Link>
+              </li>
+              <li>
+                <Link to="/gdpr">RODO</Link>
+              </li>
             </ul>
           </div>
 
@@ -35,9 +46,7 @@ const Footer: React.FC = () => {
           <div className="footer__section">
             <h4 className="footer__section-title">KONTAKT</h4>
             <div className="footer__links">
-              <div className="footer__contact-item">
-                kontakt@partypass.pl
-              </div>
+              <div className="footer__contact-item">kontakt@partypass.pl</div>
             </div>
           </div>
         </div>
@@ -45,7 +54,10 @@ const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="footer__bottom">
           <div className="footer__bottom-left">
-            <p>&copy; {new Date().getFullYear()} PartyPass. Wszystkie prawa zastrzeżone.</p>
+            <p>
+              &copy; {new Date().getFullYear()} PartyPass. Wszystkie prawa
+              zastrzeżone.
+            </p>
           </div>
         </div>
       </div>

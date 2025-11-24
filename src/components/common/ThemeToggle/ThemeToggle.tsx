@@ -1,7 +1,7 @@
 // components/common/ThemeToggle/ThemeToggle.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { Sun } from 'lucide-react';
-import { useTheme, Theme } from '../../../hooks/useTheme';
+import React from 'react';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../../hooks/useTheme';
 import './ThemeToggle.scss';
 
 interface ThemeToggleProps {
@@ -9,87 +9,28 @@ interface ThemeToggleProps {
 }
 
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
-  const { theme, setTheme } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Close dropdown on escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
-
-  const handleThemeSelect = (selectedTheme: Theme) => {
-    setTheme(selectedTheme);
-    setIsOpen(false);
-  };
-
-  const getThemeIcon = () => {
-    return <Sun size={20} />;
-  };
-
-  const getThemeLabel = () => {
-    return 'Jasny';
-  };
+  const { isDark, toggleTheme } = useTheme();
 
   return (
-    <div className={`theme-toggle ${className || ''}`} ref={dropdownRef}>
+    <div className={`theme-toggle ${className || ''}`}>
       <button
-        className="theme-toggle__button"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Przełącz motyw"
-        aria-expanded={isOpen}
-        aria-haspopup="true"
+        className="theme-toggle__switch"
+        onClick={toggleTheme}
+        aria-label={isDark ? 'Przełącz na tryb jasny' : 'Przełącz na tryb ciemny'}
+        type="button"
+        role="switch"
+        aria-checked={isDark}
       >
-        {getThemeIcon()}
-        <span className="theme-toggle__label">{getThemeLabel()}</span>
-        <svg
-          className={`theme-toggle__arrow ${isOpen ? 'theme-toggle__arrow--open' : ''}`}
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M3 4.5L6 7.5L9 4.5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="theme-toggle__dropdown">
-          <button
-            className={`theme-toggle__option ${theme === 'light' ? 'theme-toggle__option--active' : ''}`}
-            onClick={() => handleThemeSelect('light')}
-          >
-            <Sun size={16} />
-            <span>Jasny</span>
-          </button>
+        <div className="theme-toggle__track">
+          <div className={`theme-toggle__thumb ${isDark ? 'theme-toggle__thumb--dark' : ''}`}>
+            {isDark ? (
+              <Moon size={14} className="theme-toggle__icon" />
+            ) : (
+              <Sun size={14} className="theme-toggle__icon" />
+            )}
+          </div>
         </div>
-      )}
+      </button>
     </div>
   );
 };

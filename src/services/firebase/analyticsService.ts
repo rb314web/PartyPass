@@ -7,7 +7,7 @@ import {
   where,
   orderBy,
   Timestamp,
-  onSnapshot
+  onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { COLLECTIONS } from '../../types/firebase';
@@ -15,10 +15,11 @@ import { EventService } from './eventService';
 
 export interface AnalyticsMetric {
   id: string;
-  userId: string;  metricType: 
-    | 'event_created' 
+  userId: string;
+  metricType:
+    | 'event_created'
     | 'event_updated'
-    | 'event_completed' 
+    | 'event_completed'
     | 'event_deleted'
     | 'guest_invited'
     | 'guest_responded'
@@ -97,7 +98,12 @@ export class AnalyticsService {
   ): Promise<void> {
     // Wyłącz analityki w trybie deweloperskim
     if (process.env.NODE_ENV === 'development') {
-      console.log('Analytics disabled in development mode:', { userId, metricType, value, metadata });
+      console.log('Analytics disabled in development mode:', {
+        userId,
+        metricType,
+        value,
+        metadata,
+      });
       return;
     }
 
@@ -109,7 +115,7 @@ export class AnalyticsService {
         metadata,
         timestamp: Timestamp.now(),
         ...(eventId && { eventId }),
-        ...(guestId && { guestId })
+        ...(guestId && { guestId }),
       };
 
       await addDoc(collection(db, COLLECTIONS.ANALYTICS), metric);
@@ -126,18 +132,18 @@ export class AnalyticsService {
     try {
       // Pobierz wydarzenia użytkownika
       const eventsStats = await EventService.getEventStats(userId);
-      
+
       // Pobierz szczegółowe dane wydarzeń
       const eventsQuery = query(
         collection(db, COLLECTIONS.EVENTS),
         where('userId', '==', userId),
         orderBy('createdAt', 'desc')
       );
-      
+
       const eventsSnapshot = await getDocs(eventsQuery);
       const events = eventsSnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Pobierz dane gości
@@ -145,16 +151,21 @@ export class AnalyticsService {
         collection(db, COLLECTIONS.GUESTS),
         where('userId', '==', userId)
       );
-      
+
       const guestsSnapshot = await getDocs(guestsQuery);
       const guests = guestsSnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Oblicz metryki
-      const report = await this.calculateMetrics(events, guests, eventsStats, filters);
-      
+      const report = await this.calculateMetrics(
+        events,
+        guests,
+        eventsStats,
+        filters
+      );
+
       return report;
     } catch (error) {
       console.error('Błąd podczas generowania raportu:', error);
@@ -185,8 +196,8 @@ export class AnalyticsService {
     }
 
     // Wydarzenia w tym miesiącu
-    const eventsThisMonth = events.filter(event => 
-      event.createdAt.toDate() >= thisMonth
+    const eventsThisMonth = events.filter(
+      event => event.createdAt.toDate() >= thisMonth
     ).length;
 
     // Wydarzenia w poprzednim miesiącu
@@ -196,9 +207,10 @@ export class AnalyticsService {
     }).length;
 
     // Wzrost
-    const growthRate = eventsLastMonth > 0 
-      ? ((eventsThisMonth - eventsLastMonth) / eventsLastMonth) * 100 
-      : 0;
+    const growthRate =
+      eventsLastMonth > 0
+        ? ((eventsThisMonth - eventsLastMonth) / eventsLastMonth) * 100
+        : 0;
 
     // Popularne typy wydarzeń (na podstawie kategorii)
     const eventTypeCount = new Map<string, number>();
@@ -211,7 +223,7 @@ export class AnalyticsService {
       .map(([type, count]) => ({
         type,
         count,
-        percentage: (count / filteredEvents.length) * 100
+        percentage: (count / filteredEvents.length) * 100,
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
@@ -221,7 +233,7 @@ export class AnalyticsService {
     for (let i = 5; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      
+
       const monthEvents = events.filter(event => {
         const eventDate = event.createdAt.toDate();
         return eventDate >= monthStart && eventDate <= monthEnd;
@@ -232,15 +244,18 @@ export class AnalyticsService {
         return invitedAt >= monthStart && invitedAt <= monthEnd;
       });
 
-      const respondedGuests = monthGuests.filter(guest => 
-        guest.status !== 'pending'
+      const respondedGuests = monthGuests.filter(
+        guest => guest.status !== 'pending'
       ).length;
 
       monthlyTrends.push({
         month: monthStart.toLocaleDateString('pl-PL', { month: 'short' }),
         events: monthEvents.length,
         guests: monthGuests.length,
-        rsvpRate: monthGuests.length > 0 ? (respondedGuests / monthGuests.length) * 100 : 0
+        rsvpRate:
+          monthGuests.length > 0
+            ? (respondedGuests / monthGuests.length) * 100
+            : 0,
       });
     }
 
@@ -249,17 +264,23 @@ export class AnalyticsService {
       confirmed: guests.filter(g => g.status === 'accepted').length,
       pending: guests.filter(g => g.status === 'pending').length,
       declined: guests.filter(g => g.status === 'declined').length,
-      maybe: guests.filter(g => g.status === 'maybe').length
+      maybe: guests.filter(g => g.status === 'maybe').length,
     };
 
     // Top lokalizacje
-    const locationCount = new Map<string, { count: number; totalGuests: number }>();
+    const locationCount = new Map<
+      string,
+      { count: number; totalGuests: number }
+    >();
     filteredEvents.forEach(event => {
       const location = event.location;
-      const existing = locationCount.get(location) || { count: 0, totalGuests: 0 };
+      const existing = locationCount.get(location) || {
+        count: 0,
+        totalGuests: 0,
+      };
       locationCount.set(location, {
         count: existing.count + 1,
-        totalGuests: existing.totalGuests + (event.guestCount || 0)
+        totalGuests: existing.totalGuests + (event.guestCount || 0),
       });
     });
 
@@ -267,7 +288,7 @@ export class AnalyticsService {
       .map(([location, data]) => ({
         location,
         count: data.count,
-        avgGuests: data.count > 0 ? data.totalGuests / data.count : 0
+        avgGuests: data.count > 0 ? data.totalGuests / data.count : 0,
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
@@ -278,7 +299,7 @@ export class AnalyticsService {
         const eventDate = event.date.toDate();
         return eventDate.getHours() === hour;
       }).length;
-      
+
       return { hour, count };
     });
 
@@ -289,13 +310,13 @@ export class AnalyticsService {
         const eventDate = event.date.toDate();
         return eventDate.getDay() === index;
       }).length;
-      
+
       return { day, count };
     });
 
     // Analiza czasu odpowiedzi
-    const respondedGuests = guests.filter(guest => 
-      guest.status !== 'pending' && guest.respondedAt
+    const respondedGuests = guests.filter(
+      guest => guest.status !== 'pending' && guest.respondedAt
     );
 
     let totalResponseTime = 0;
@@ -306,34 +327,37 @@ export class AnalyticsService {
     respondedGuests.forEach(guest => {
       const invitedAt = guest.invitedAt.toDate();
       const respondedAt = guest.respondedAt.toDate();
-      const responseTime = (respondedAt.getTime() - invitedAt.getTime()) / (1000 * 60 * 60); // godziny
+      const responseTime =
+        (respondedAt.getTime() - invitedAt.getTime()) / (1000 * 60 * 60); // godziny
 
       totalResponseTime += responseTime;
 
       if (responseTime < 24) {
         fastResponders++;
-      } else if (responseTime < 168) { // 7 dni
+      } else if (responseTime < 168) {
+        // 7 dni
         mediumResponders++;
       } else {
         slowResponders++;
       }
     });
 
-    const averageResponseTime = respondedGuests.length > 0 
-      ? totalResponseTime / respondedGuests.length 
-      : 0;
+    const averageResponseTime =
+      respondedGuests.length > 0
+        ? totalResponseTime / respondedGuests.length
+        : 0;
 
     // RSVP Rate
     const totalInvited = guests.length;
     const totalResponded = respondedGuests.length;
-    const rsvpRate = totalInvited > 0 ? (totalResponded / totalInvited) * 100 : 0;
+    const rsvpRate =
+      totalInvited > 0 ? (totalResponded / totalInvited) * 100 : 0;
 
     return {
       totalEvents: filteredEvents.length,
       totalGuests: guests.length,
-      averageGuestsPerEvent: filteredEvents.length > 0 
-        ? guests.length / filteredEvents.length 
-        : 0,
+      averageGuestsPerEvent:
+        filteredEvents.length > 0 ? guests.length / filteredEvents.length : 0,
       rsvpRate,
       eventsThisMonth,
       eventsLastMonth,
@@ -348,17 +372,20 @@ export class AnalyticsService {
         averageResponseTime,
         fastResponders,
         mediumResponders,
-        slowResponders
-      }
+        slowResponders,
+      },
     };
   }
 
   // Eksport danych do CSV
-  static exportToCSV(data: AnalyticsReport, filename: string = 'analytics-report'): void {
+  static exportToCSV(
+    data: AnalyticsReport,
+    filename: string = 'analytics-report'
+  ): void {
     const csvContent = this.generateCSVContent(data);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    
+
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -384,21 +411,23 @@ export class AnalyticsService {
       '',
       'Trendy miesięczne:',
       'Miesiąc,Wydarzenia,Goście,Wskaźnik RSVP',
-      ...data.monthlyTrends.map(trend => 
-        `${trend.month},${trend.events},${trend.guests},${trend.rsvpRate.toFixed(1)}%`
+      ...data.monthlyTrends.map(
+        trend =>
+          `${trend.month},${trend.events},${trend.guests},${trend.rsvpRate.toFixed(1)}%`
       ),
       '',
       'Popularne typy wydarzeń:',
       'Typ,Liczba,Procent',
-      ...data.popularEventTypes.map(type => 
-        `${type.type},${type.count},${type.percentage.toFixed(1)}%`
+      ...data.popularEventTypes.map(
+        type => `${type.type},${type.count},${type.percentage.toFixed(1)}%`
       ),
       '',
       'Top lokalizacje:',
       'Lokalizacja,Wydarzenia,Średnio gości',
-      ...data.topLocations.map(location => 
-        `${location.location},${location.count},${location.avgGuests.toFixed(1)}`
-      )
+      ...data.topLocations.map(
+        location =>
+          `${location.location},${location.count},${location.avgGuests.toFixed(1)}`
+      ),
     ];
 
     return lines.join('\n');
@@ -415,7 +444,7 @@ export class AnalyticsService {
       orderBy('timestamp', 'desc')
     );
 
-    return onSnapshot(metricsQuery, (snapshot) => {
+    return onSnapshot(metricsQuery, snapshot => {
       const metrics: AnalyticsMetric[] = [];
       snapshot.forEach(doc => {
         metrics.push({ id: doc.id, ...doc.data() } as AnalyticsMetric);
@@ -442,28 +471,34 @@ export class AnalyticsService {
   }> {
     const currentReport = await this.generateReport(userId, {
       startDate: currentStart,
-      endDate: currentEnd
+      endDate: currentEnd,
     });
 
     const previousReport = await this.generateReport(userId, {
       startDate: previousStart,
-      endDate: previousEnd
+      endDate: previousEnd,
     });
 
     const comparison = {
-      eventsChange: previousReport.totalEvents > 0 
-        ? ((currentReport.totalEvents - previousReport.totalEvents) / previousReport.totalEvents) * 100
-        : 0,
-      guestsChange: previousReport.totalGuests > 0
-        ? ((currentReport.totalGuests - previousReport.totalGuests) / previousReport.totalGuests) * 100
-        : 0,
-      rsvpRateChange: currentReport.rsvpRate - previousReport.rsvpRate
+      eventsChange:
+        previousReport.totalEvents > 0
+          ? ((currentReport.totalEvents - previousReport.totalEvents) /
+              previousReport.totalEvents) *
+            100
+          : 0,
+      guestsChange:
+        previousReport.totalGuests > 0
+          ? ((currentReport.totalGuests - previousReport.totalGuests) /
+              previousReport.totalGuests) *
+            100
+          : 0,
+      rsvpRateChange: currentReport.rsvpRate - previousReport.rsvpRate,
     };
 
     return {
       current: currentReport,
       previous: previousReport,
-      comparison
+      comparison,
     };
   }
 }

@@ -1,19 +1,18 @@
 // components/dashboard/Events/Events.tsx
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { 
-  Plus, 
-  Filter, 
-  Search, 
-  Grid3X3, 
-  List, 
+import {
+  Plus,
+  Filter,
+  Search,
+  Grid3X3,
+  List,
   Edit,
-  Copy,
-  Trash2,
   CheckCircle,
   AlertCircle,
   Pause,
-  Bell
+  Bell,
+  Calendar,
 } from 'lucide-react';
 import { EventService } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
@@ -25,11 +24,406 @@ import AddEvent from './AddEvent/AddEvent';
 import CreateEvent from './CreateEvent/CreateEvent';
 import EventDetails from './EventDetails/EventDetails';
 import EditEvent from './EditEvent/EditEvent';
+import DuplicateEventModal, {
+  DuplicateEventData,
+} from './DuplicateEventModal/DuplicateEventModal';
+import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import './Events.scss';
 
 type ViewMode = 'grid' | 'list';
 type FilterStatus = 'all' | 'active' | 'draft' | 'completed' | 'cancelled';
 type SortBy = 'date' | 'name' | 'guests' | 'created';
+type RecentChange = {
+  id: string;
+  type: 'added' | 'modified' | 'removed';
+  timestamp: Date;
+};
+
+interface EventsListPageProps {
+  events: Event[];
+  recentChanges: RecentChange[];
+  onCreateEvent: () => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  showFilters: boolean;
+  onToggleFilters: () => void;
+  sortBy: SortBy;
+  onSortChange: (value: SortBy) => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  filteredEvents: Event[];
+  filterStatus: FilterStatus;
+  onFilterStatusChange: (status: FilterStatus) => void;
+  isLoading: boolean;
+  onEventAction: (
+    eventId: string,
+    action: 'edit' | 'duplicate' | 'delete' | 'view'
+  ) => void;
+  getStatusColor: (status: Event['status']) => string;
+  getStatusLabel: (status: Event['status']) => string;
+  getStatusIcon: (status: Event['status']) => React.ReactNode;
+}
+
+const EventsListPage: React.FC<EventsListPageProps> = ({
+  events,
+  recentChanges,
+  onCreateEvent,
+  searchQuery,
+  onSearchChange,
+  showFilters,
+  onToggleFilters,
+  sortBy,
+  onSortChange,
+  viewMode,
+  onViewModeChange,
+  filteredEvents,
+  filterStatus,
+  onFilterStatusChange,
+  isLoading,
+  onEventAction,
+  getStatusColor,
+  getStatusLabel,
+  getStatusIcon,
+}) => {
+  const { activeCount, plannedCount, completedCount } = useMemo(() => {
+    const active = events.filter(event => event.status === 'active').length;
+    const planned = events.filter(event => event.status === 'draft').length;
+    const completed = events.filter(
+      event => event.status === 'completed'
+    ).length;
+
+    return {
+      activeCount: active,
+      plannedCount: planned,
+      completedCount: completed,
+    };
+  }, [events]);
+
+  const totalEvents = events.length;
+  const totalEventsLabel =
+    totalEvents === 0
+      ? ''
+      : totalEvents === 1
+        ? 'wydarzenie'
+        : totalEvents < 5
+          ? 'wydarzenia'
+          : 'wydarzeń';
+
+  return (
+    <div className="events">
+      <header className="events__header">
+        <div className="events__title-wrapper">
+          <div className="events__icon" aria-hidden="true">
+            <Calendar size={24} />
+          </div>
+          <div>
+            <h1>Wydarzenia</h1>
+            <p>
+              Zarządzaj swoimi wydarzeniami i śledź postępy
+              {totalEvents > 0 && (
+                <span className="events__count">
+                  {' '}
+                  • {totalEvents} {totalEventsLabel}
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="events__header-actions">
+          {recentChanges.length > 0 && (
+            <button
+              type="button"
+              className="events__action-btn events__action-btn--secondary"
+              onClick={() => {
+                const changesList = recentChanges
+                  .map(change => {
+                    const event = events.find(e => e.id === change.id);
+                    const eventTitle = event?.title || 'Nieznane wydarzenie';
+                    const typeLabel =
+                      change.type === 'added'
+                        ? 'Dodano'
+                        : change.type === 'modified'
+                          ? 'Zmieniono'
+                          : 'Usunięto';
+                    const timeAgo = Math.round(
+                      (Date.now() - change.timestamp.getTime()) / 1000
+                    );
+                    const timeLabel =
+                      timeAgo < 60
+                        ? 'przed chwilą'
+                        : timeAgo < 3600
+                          ? `${Math.round(timeAgo / 60)} min temu`
+                          : `${Math.round(timeAgo / 3600)} godz. temu`;
+                    return `${typeLabel}: ${eventTitle} (${timeLabel})`;
+                  })
+                  .join('\n');
+
+                alert(`Ostatnie zmiany:\n\n${changesList}`);
+              }}
+            >
+              <Bell size={16} aria-hidden="true" />
+              <span>Ostatnie zmiany ({recentChanges.length})</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="events__action-btn events__action-btn--primary"
+            onClick={onCreateEvent}
+          >
+            <Plus size={18} aria-hidden="true" />
+            <span>Nowe wydarzenie</span>
+          </button>
+        </div>
+      </header>
+
+      <section className="events__summary" aria-label="Podsumowanie wydarzeń">
+        <div className="events__summary-item">
+          <div className="events__summary-label">
+            <span
+              className="events__summary-dot events__summary-dot--active"
+              aria-hidden="true"
+            />
+            <span>Aktywne</span>
+          </div>
+          <span className="events__summary-value">{activeCount}</span>
+        </div>
+
+        <div className="events__summary-item">
+          <div className="events__summary-label">
+            <span
+              className="events__summary-dot events__summary-dot--draft"
+              aria-hidden="true"
+            />
+            <span>Planowane</span>
+          </div>
+          <span className="events__summary-value">{plannedCount}</span>
+        </div>
+
+        <div className="events__summary-item">
+          <div className="events__summary-label">
+            <span
+              className="events__summary-dot events__summary-dot--completed"
+              aria-hidden="true"
+            />
+            <span>Zakończone</span>
+          </div>
+          <span className="events__summary-value">{completedCount}</span>
+        </div>
+      </section>
+
+      <div className="events__toolbar">
+        <div className="events__search">
+          <Search
+            size={18}
+            className="events__search-icon"
+            aria-hidden="true"
+          />
+          <input
+            type="text"
+            placeholder="Szukaj wydarzeń..."
+            value={searchQuery}
+            onChange={e => onSearchChange(e.target.value)}
+            className="events__search-input"
+            aria-label="Szukaj wydarzeń"
+          />
+          <button
+            type="button"
+            className={`events__search-clear ${searchQuery ? 'events__search-clear--visible' : ''}`}
+            onClick={() => onSearchChange('')}
+            title="Wyczyść wyszukiwanie"
+            aria-label="Wyczyść wyszukiwanie"
+            aria-hidden={!searchQuery}
+            tabIndex={searchQuery ? 0 : -1}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="events__toolbar-actions">
+          <button
+            type="button"
+            className={`events__filter-toggle ${showFilters ? 'events__filter-toggle--active' : ''}`}
+            onClick={onToggleFilters}
+          >
+            <Filter size={16} aria-hidden="true" />
+            <span>Filtry</span>
+          </button>
+
+          <label className="events__sort" aria-label="Sortowanie wydarzeń">
+            <span className="events__sort-label">Sortuj</span>
+            <select
+              value={sortBy}
+              onChange={e => onSortChange(e.target.value as SortBy)}
+            >
+              <option value="date">Data</option>
+              <option value="name">Nazwa</option>
+              <option value="guests">Goście</option>
+              <option value="created">Utworzono</option>
+            </select>
+          </label>
+
+          <div
+            className="events__view-toggle"
+            role="group"
+            aria-label="Tryb widoku"
+          >
+            <button
+              type="button"
+              className={`events__view-btn ${viewMode === 'grid' ? 'events__view-btn--active' : ''}`}
+              onClick={() => onViewModeChange('grid')}
+              aria-pressed={viewMode === 'grid'}
+              aria-label="Widok kafelkowy"
+            >
+              <Grid3X3 size={16} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={`events__view-btn ${viewMode === 'list' ? 'events__view-btn--active' : ''}`}
+              onClick={() => onViewModeChange('list')}
+              aria-pressed={viewMode === 'list'}
+              aria-label="Widok listy"
+            >
+              <List size={16} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showFilters && (
+        <div
+          className="events__status-chips"
+          role="list"
+          aria-label="Filtruj według statusu"
+        >
+          {(
+            [
+              'all',
+              'active',
+              'draft',
+              'completed',
+              'cancelled',
+            ] as FilterStatus[]
+          ).map(status => {
+            const isActive = filterStatus === status;
+            const statusCount =
+              status === 'all'
+                ? events.length
+                : events.filter(e => e.status === status).length;
+
+            return (
+              <button
+                key={status}
+                type="button"
+                className={`events__status-chip ${isActive ? 'events__status-chip--active' : ''}`}
+                onClick={() => onFilterStatusChange(status)}
+                aria-pressed={isActive}
+              >
+                <span>
+                  {status === 'all'
+                    ? 'Wszystkie'
+                    : getStatusLabel(status as Event['status'])}
+                </span>
+                <span className="events__status-count">{statusCount}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="events__content">
+        {isLoading ? (
+          <div className="events__grid">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="event-card-skeleton">
+                <div className="event-card-skeleton__header">
+                  <div className="event-card-skeleton__badge"></div>
+                  <div className="event-card-skeleton__info">
+                    <div className="event-card-skeleton__chip"></div>
+                    <div className="event-card-skeleton__line event-card-skeleton__line--short"></div>
+                    <div className="event-card-skeleton__line event-card-skeleton__line--short"></div>
+                    <div className="event-card-skeleton__line event-card-skeleton__line--medium"></div>
+                  </div>
+                </div>
+                <div className="event-card-skeleton__content">
+                  <div className="event-card-skeleton__title"></div>
+                  <div className="event-card-skeleton__description"></div>
+                  <div className="event-card-skeleton__meta">
+                    <div className="event-card-skeleton__meta-item"></div>
+                    <div className="event-card-skeleton__meta-item"></div>
+                  </div>
+                  <div className="event-card-skeleton__progress"></div>
+                </div>
+                <div className="event-card-skeleton__footer">
+                  <div className="event-card-skeleton__footer-text"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="events__empty">
+            <div className="events__empty-icon" aria-hidden="true">
+              <Calendar size={36} />
+            </div>
+            <h3>
+              {searchQuery || filterStatus !== 'all'
+                ? 'Brak wyników'
+                : 'Nie masz jeszcze żadnych wydarzeń'}
+            </h3>
+            <p>
+              {searchQuery || filterStatus !== 'all'
+                ? 'Dostosuj wyszukiwanie lub filtry, aby zobaczyć wydarzenia.'
+                : 'Dodaj swoje pierwsze wydarzenie i zacznij planowanie.'}
+            </p>
+            {!searchQuery && filterStatus === 'all' && (
+              <button
+                type="button"
+                className="events__empty-btn"
+                onClick={onCreateEvent}
+              >
+                <Plus size={18} aria-hidden="true" />
+                Dodaj wydarzenie
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            {viewMode === 'grid' ? (
+              <div className="events__grid">
+                {filteredEvents.map(event => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onAction={onEventAction}
+                    getStatusColor={getStatusColor}
+                    getStatusLabel={getStatusLabel}
+                  />
+                ))}
+                {filteredEvents.some(ev => ev.status === 'active') &&
+                  filteredEvents
+                    .filter(ev => ev.status === 'active')
+                    .every(ev => ev.guestCount === 0) && (
+                    <div className="events__hint">
+                      <h4>Aktywne wydarzenia nie mają jeszcze gości</h4>
+                      <p>
+                        Dodaj uczestników, aby monitorować postęp zaproszeń.
+                      </p>
+                    </div>
+                  )}
+              </div>
+            ) : (
+              <EventsList
+                events={filteredEvents}
+                onAction={onEventAction}
+                getStatusColor={getStatusColor}
+                getStatusLabel={getStatusLabel}
+              />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Events: React.FC = () => {
   const navigate = useNavigate();
@@ -39,57 +433,72 @@ const Events: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date');
-  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  
-  // Real-time synchronization state  
-  const [recentChanges, setRecentChanges] = useState<{id: string, type: 'added' | 'modified' | 'removed', timestamp: Date}[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [eventToDuplicate, setEventToDuplicate] = useState<Event | null>(null);
+
+  // Real-time synchronization state
+  const [recentChanges, setRecentChanges] = useState<RecentChange[]>([]);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   // Enhanced real-time updates callback
-  const handleRealtimeUpdate = useCallback((updatedEvents: Event[], changeType?: 'added' | 'modified' | 'removed', changedEventId?: string) => {
-    setEvents(prevEvents => {
-      // Detect specific changes for notifications
-      if (changeType && changedEventId) {
-        const timestamp = new Date();
-        setRecentChanges(prev => [
-          { id: changedEventId, type: changeType, timestamp },
-          ...prev.slice(0, 4) // Keep only last 5 changes
-        ]);
-        
-        // Show notification for changes made by others (not current user actions)
-        if (changeType !== 'removed' && hasInitiallyLoaded) {
-          const changedEvent = updatedEvents.find(e => e.id === changedEventId);
-          if (changedEvent) {
-            showChangeNotification(changeType, changedEvent);
+  const handleRealtimeUpdate = useCallback(
+    (
+      updatedEvents: Event[],
+      changeType?: 'added' | 'modified' | 'removed',
+      changedEventId?: string
+    ) => {
+      setEvents(prevEvents => {
+        // Detect specific changes for notifications
+        if (changeType && changedEventId) {
+          const timestamp = new Date();
+          setRecentChanges(prev => [
+            { id: changedEventId, type: changeType, timestamp },
+            ...prev.slice(0, 4), // Keep only last 5 changes
+          ]);
+
+          // Show notification for changes made by others (not current user actions)
+          if (changeType !== 'removed' && hasInitiallyLoaded) {
+            const changedEvent = updatedEvents.find(
+              e => e.id === changedEventId
+            );
+            if (changedEvent) {
+              showChangeNotification(changeType, changedEvent);
+            }
           }
         }
-      }
-      
-      // Mark as initially loaded after first successful update
-      if (!hasInitiallyLoaded) {
-        setHasInitiallyLoaded(true);
-      }
-      
-      return updatedEvents;
-    });
-  }, [hasInitiallyLoaded]);
+
+        // Mark as initially loaded after first successful update
+        if (!hasInitiallyLoaded) {
+          setHasInitiallyLoaded(true);
+          setIsLoading(false);
+        }
+
+        return updatedEvents;
+      });
+    },
+    [hasInitiallyLoaded]
+  );
 
   // Show change notifications
   const showChangeNotification = (type: 'added' | 'modified', event: Event) => {
     // You can integrate with a toast library here
-    const message = type === 'added' 
-      ? `Nowe wydarzenie: ${event.title}` 
-      : `Zaktualizowano: ${event.title}`;
-    
-    console.log(`🔔 Real-time update: ${message}`);
-    
+    const message =
+      type === 'added'
+        ? `Nowe wydarzenie: ${event.title}`
+        : `Zaktualizowano: ${event.title}`;
+
     // Optional: Show browser notification if page is not focused
-    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+    if (
+      document.hidden &&
+      'Notification' in window &&
+      Notification.permission === 'granted'
+    ) {
       new Notification('PartyPass', {
         body: message,
-        icon: '/logo192.png'
+        icon: '/logo192.png',
       });
     }
   };
@@ -104,17 +513,17 @@ const Events: React.FC = () => {
   // Enhanced Firebase subscription with error handling
   useEffect(() => {
     if (!user?.id) return;
-    
+
     try {
       const unsubscribe = EventService.subscribeToUserEvents(
         user.id,
-        (updatedEvents) => handleRealtimeUpdate(updatedEvents),
+        updatedEvents => handleRealtimeUpdate(updatedEvents),
         {
           // Enable real-time filters if needed
-          ...(filterStatus !== 'all' && { status: filterStatus as any })
+          ...(filterStatus !== 'all' && { status: filterStatus as any }),
         }
       );
-      
+
       return () => {
         unsubscribe();
       };
@@ -126,12 +535,14 @@ const Events: React.FC = () => {
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
     let filtered = events.filter(event => {
-      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           event.location.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesStatus = filterStatus === 'all' || event.status === filterStatus;
-      
+      const matchesSearch =
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        filterStatus === 'all' || event.status === filterStatus;
+
       return matchesSearch && matchesStatus;
     });
 
@@ -145,7 +556,9 @@ const Events: React.FC = () => {
         case 'guests':
           return b.guestCount - a.guestCount;
         case 'created':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         default:
           return 0;
       }
@@ -163,7 +576,10 @@ const Events: React.FC = () => {
     // EventService.subscribeToUserEvents automatycznie zaktualizuje stan
   };
 
-  const handleEventAction = (eventId: string, action: 'edit' | 'duplicate' | 'delete' | 'view') => {
+  const handleEventAction = (
+    eventId: string,
+    action: 'edit' | 'duplicate' | 'delete' | 'view'
+  ) => {
     switch (action) {
       case 'edit':
         navigate(`/dashboard/events/edit/${eventId}`);
@@ -181,427 +597,181 @@ const Events: React.FC = () => {
   };
   const handleDuplicateEvent = async (eventId: string) => {
     if (!user) return;
-    
-    const eventToDuplicate = events.find(e => e.id === eventId);
-    if (eventToDuplicate) {
+
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      setEventToDuplicate(event);
+      setShowDuplicateModal(true);
+    }
+  };
+
+  const handleDuplicateConfirm = async (duplicateData: DuplicateEventData) => {
+    if (!user || !eventToDuplicate) return;
+
+    try {
       // Optimistic update - add temporary event immediately
       const tempId = `temp-${Date.now()}`;
-      
-      try {
-        const optimisticEvent: Event = {
-          ...eventToDuplicate,
-          id: tempId,
-          title: `${eventToDuplicate.title} (kopia)`,
-          date: new Date(eventToDuplicate.date.getTime() + 7 * 24 * 60 * 60 * 1000),
-          status: 'draft',
-          createdAt: new Date(),
-          guests: [],
-          guestCount: 0,
-          acceptedCount: 0,
-          declinedCount: 0,
-          pendingCount: 0
-        };
-        
-        setEvents(prev => [optimisticEvent, ...prev]);
-        
-        // Perform actual duplication
-        await EventService.duplicateEvent(eventId, user.id, {
-          title: `${eventToDuplicate.title} (kopia)`,
-          date: new Date(eventToDuplicate.date.getTime() + 7 * 24 * 60 * 60 * 1000),
-          includeGuests: false,
-          guestAction: 'none'
-        });
-        
-        // Remove optimistic event and let real-time update handle the rest
-        setEvents(prev => prev.filter(e => e.id !== tempId));
-        
-        console.log('📋 Event duplicated successfully');
-      } catch (error: any) {
-        // Remove optimistic update on error
-        setEvents(prev => prev.filter(e => e.id !== tempId));
-        
-        alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
-      }
+
+      const optimisticEvent: Event = {
+        ...eventToDuplicate,
+        id: tempId,
+        title: duplicateData.title,
+        date: duplicateData.date,
+        status: 'draft',
+        createdAt: new Date(),
+        guests: duplicateData.includeGuests ? eventToDuplicate.guests : [],
+        guestCount: duplicateData.includeGuests
+          ? eventToDuplicate.guestCount
+          : 0,
+        acceptedCount: 0,
+        declinedCount: 0,
+        pendingCount: duplicateData.includeGuests
+          ? eventToDuplicate.guestCount
+          : 0,
+      };
+
+      setEvents(prev => [optimisticEvent, ...prev]);
+
+      // Perform actual duplication
+      await EventService.duplicateEvent(eventToDuplicate.id, user.id, {
+        title: duplicateData.title,
+        date: duplicateData.date,
+        includeGuests: duplicateData.includeGuests,
+        guestAction: duplicateData.guestAction,
+      });
+
+      // Remove optimistic event and let real-time update handle the rest
+      setEvents(prev => prev.filter(e => e.id !== tempId));
+
+    } catch (error: any) {
+      // Remove optimistic update on error
+      setEvents(prev => prev.filter(e => e.id.startsWith('temp-')));
+
+      alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
     }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      if (window.confirm('Czy na pewno chcesz usunąć to wydarzenie? Ta operacja jest nieodwracalna.')) {
+      if (
+        window.confirm(
+          'Czy na pewno chcesz usunąć to wydarzenie? Ta operacja jest nieodwracalna.'
+        )
+      ) {
         // Optimistic update - remove immediately from UI
         const eventToDelete = events.find(e => e.id === eventId);
         if (eventToDelete) {
           setEvents(prev => prev.filter(e => e.id !== eventId));
-          setSelectedEvents(prev => prev.filter(id => id !== eventId));
-          
+
           // Add to recent changes for tracking
           setRecentChanges(prev => [
             { id: eventId, type: 'removed', timestamp: new Date() },
-            ...prev.slice(0, 4)
+            ...prev.slice(0, 4),
           ]);
         }
-        
+
         // Perform actual deletion
         await EventService.deleteEvent(eventId);
-        
+
         // Success feedback
-        console.log('🗑️ Event deleted successfully');
       }
     } catch (error: any) {
       // Revert optimistic update on error
       console.error('Error deleting event:', error);
-      
+
       // Refresh data to restore the event
       if (user?.id) {
         const unsubscribe = EventService.subscribeToUserEvents(
           user.id,
-          (updatedEvents) => handleRealtimeUpdate(updatedEvents)
+          updatedEvents => handleRealtimeUpdate(updatedEvents)
         );
         setTimeout(() => unsubscribe(), 1000); // Quick refresh
       }
-      
+
       alert(`Nie udało się usunąć wydarzenia: ${error.message}`);
-    }
-  };
-
-  const handleBulkAction = async (action: 'delete' | 'duplicate' | 'archive') => {
-    if (selectedEvents.length === 0) return;
-
-    switch (action) {
-      case 'delete':
-        if (window.confirm(`Czy na pewno chcesz usunąć ${selectedEvents.length} wydarzeń? Ta operacja jest nieodwracalna.`)) {
-          try {
-            await Promise.all(selectedEvents.map(eventId => EventService.deleteEvent(eventId)));
-            // Nie musimy ręcznie aktualizować state'u - subscribeToUserEvents zrobi to za nas
-            setSelectedEvents([]);
-          } catch (error: any) {
-            alert(`Wystąpił błąd podczas usuwania wydarzeń: ${error.message}`);
-          }
-        }
-        break;
-      case 'duplicate':
-        const eventsToduplicate = events.filter(e => selectedEvents.includes(e.id));
-        const duplicatedEvents = eventsToduplicate.map(event => ({
-          ...event,
-          id: Date.now().toString() + Math.random(),
-          title: `${event.title} (kopia)`,
-          status: 'draft' as const,
-          createdAt: new Date(),
-          guests: []
-        }));
-        setEvents(prev => [...duplicatedEvents, ...prev]);
-        setSelectedEvents([]);
-        break;
-      case 'archive':
-        // Implementation for archiving
-        alert('Archiwizowanie zostanie wkrótce dodane!');
-        break;
     }
   };
 
   const getStatusColor = (status: Event['status']) => {
     switch (status) {
-      case 'active': return 'var(--success)';
-      case 'draft': return 'var(--secondary)';
-      case 'completed': return 'var(--primary)';
-      case 'cancelled': return 'var(--error)';
-      default: return 'var(--gray-500)';
+      case 'active':
+        return 'var(--color-success)';
+      case 'draft':
+        return 'var(--color-warning)';
+      case 'completed':
+        return 'var(--color-primary)';
+      case 'cancelled':
+        return 'var(--color-error)';
+      default:
+        return 'var(--text-tertiary)';
     }
   };
 
   const getStatusLabel = (status: Event['status']) => {
     switch (status) {
-      case 'active': return 'Aktywne';
-      case 'draft': return 'Szkic';
-      case 'completed': return 'Zakończone';
-      case 'cancelled': return 'Anulowane';
-      default: return status;
+      case 'active':
+        return 'Aktywne';
+      case 'draft':
+        return 'Planowane';
+      case 'completed':
+        return 'Zakończone';
+      case 'cancelled':
+        return 'Anulowane';
+      default:
+        return status;
     }
   };
 
   const getStatusIcon = (status: Event['status']) => {
     switch (status) {
-      case 'active': return <CheckCircle size={16} />;
-      case 'draft': return <Edit size={16} />;
-      case 'completed': return <CheckCircle size={16} />;
-      case 'cancelled': return <AlertCircle size={16} />;
-      default: return <Pause size={16} />;
+      case 'active':
+        return <CheckCircle size={16} />;
+      case 'draft':
+        return <Edit size={16} />;
+      case 'completed':
+        return <CheckCircle size={16} />;
+      case 'cancelled':
+        return <AlertCircle size={16} />;
+      default:
+        return <Pause size={16} />;
     }
   };
 
-  const EventsListPage = () => (
-    <div className="events">
-      <div className="events__header">
-        <div className="events__header-main">
-          <h1 className="events__title">Wydarzenia</h1>
-          <p className="events__subtitle">
-            Zarządzaj swoimi wydarzeniami i śledź postępy
-          </p>
-        </div>
-        
-        <div className="events__header-actions">
-          {/* Recent changes indicator */}
-          {recentChanges.length > 0 && (
-            <div 
-              className="events__recent-changes" 
-              title="Ostatnie zmiany"
-              onClick={() => {
-                const changesList = recentChanges.map(change => {
-                  const event = events.find(e => e.id === change.id);
-                  const eventTitle = event?.title || 'Nieznane wydarzenie';
-                  const typeLabel = change.type === 'added' ? 'Dodano' : 
-                                   change.type === 'modified' ? 'Zmieniono' : 'Usunięto';
-                  const timeAgo = Math.round((Date.now() - change.timestamp.getTime()) / 1000);
-                  const timeLabel = timeAgo < 60 ? 'przed chwilą' : 
-                                   timeAgo < 3600 ? `${Math.round(timeAgo/60)} min temu` :
-                                   `${Math.round(timeAgo/3600)} godz. temu`;
-                  return `${typeLabel}: ${eventTitle} (${timeLabel})`;
-                }).join('\n');
-                
-                alert(`Ostatnie zmiany:\n\n${changesList}`);
-              }}
-            >
-              <Bell size={16} />
-              <span className="events__changes-count">{recentChanges.length}</span>
-            </div>
-          )}
-          
-          <button 
-            className="events__create-btn"
-            onClick={handleCreateEvent}
-          >
-            <Plus size={20} />
-            <span>Nowe wydarzenie</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Summary */}
-      <div className="events__stats">
-        <div className="events__stat">
-          <div className="events__stat-value">
-            {events.filter(e => e.status === 'active').length}
-          </div>
-          <div className="events__stat-label">Aktywne</div>
-        </div>
-        <div className="events__stat">
-          <div className="events__stat-value">
-            {events.filter(e => e.status === 'draft').length}
-          </div>
-          <div className="events__stat-label">Szkice</div>
-        </div>
-        <div className="events__stat">
-          <div className="events__stat-value">
-            {events.reduce((acc, e) => acc + e.guestCount, 0)}
-          </div>
-          <div className="events__stat-label">Goście</div>
-        </div>
-        <div className="events__stat">
-          <div className="events__stat-value">
-            {Math.round(
-              events.reduce((acc, e) => {
-                const responded = e.acceptedCount + e.declinedCount;
-                return acc + (e.guestCount > 0 ? responded / e.guestCount : 0);
-              }, 0) / events.length * 100
-            ) || 0}%
-          </div>
-          <div className="events__stat-label">Odpowiedzi</div>
-        </div>
-      </div>
-
-      {/* Filters and Search */}
-      <div className="events__controls">
-        <div className="events__search">
-          <Search size={20} className="events__search-icon" />
-          <input
-            type="text"
-            placeholder="Szukaj wydarzeń..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="events__search-input"
-          />
-        </div>
-
-        <div className="events__filters">
-          <button
-            className={`events__filter-btn ${showFilters ? 'events__filter-btn--active' : ''}`}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter size={16} />
-            Filtry
-          </button>
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="events__sort-select"
-          >
-            <option value="date">Sortuj: Data</option>
-            <option value="name">Sortuj: Nazwa</option>
-            <option value="guests">Sortuj: Goście</option>
-            <option value="created">Sortuj: Utworzono</option>
-          </select>
-
-          <div className="events__view-toggle">
-            <button
-              className={`events__view-btn ${viewMode === 'grid' ? 'events__view-btn--active' : ''}`}
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid3X3 size={16} />
-            </button>
-            <button
-              className={`events__view-btn ${viewMode === 'list' ? 'events__view-btn--active' : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              <List size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Advanced Filters */}
-      {showFilters && (
-        <div className="events__advanced-filters">
-          <div className="events__filter-group">
-            <label>Status:</label>
-            <div className="events__status-filters">
-              {(['all', 'active', 'draft', 'completed', 'cancelled'] as FilterStatus[]).map(status => (
-                <button
-                  key={status}
-                  className={`events__status-filter ${filterStatus === status ? 'events__status-filter--active' : ''}`}
-                  onClick={() => setFilterStatus(status)}
-                >
-                  {status === 'all' ? (
-                    <>Wszystkie ({events.length})</>
-                  ) : (
-                    <>
-                      {getStatusIcon(status as Event['status'])}
-                      {getStatusLabel(status as Event['status'])} ({events.filter(e => e.status === status).length})
-                    </>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Actions */}
-      {selectedEvents.length > 0 && (
-        <div className="events__bulk-actions">
-          <div className="events__bulk-info">
-            <span>Wybrano {selectedEvents.length} wydarzeń</span>
-            <button 
-              className="events__clear-selection"
-              onClick={() => setSelectedEvents([])}
-            >
-              Wyczyść
-            </button>
-          </div>
-          <div className="events__bulk-buttons">
-            <button
-              className="events__bulk-btn events__bulk-btn--duplicate"
-              onClick={() => handleBulkAction('duplicate')}
-            >
-              <Copy size={16} />
-              Duplikuj
-            </button>
-            <button
-              className="events__bulk-btn events__bulk-btn--delete"
-              onClick={() => handleBulkAction('delete')}
-            >
-              <Trash2 size={16} />
-              Usuń
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Events Grid/List */}
-      <div className="events__content">
-        {filteredAndSortedEvents.length === 0 ? (
-          <div className="events__empty">
-            <img src="/logo192.png" alt="PartyPass logo" style={{ width: 80, marginBottom: 16 }} />
-            <h3>
-              {searchQuery || filterStatus !== 'all' 
-                ? 'Nie znaleźliśmy żadnych wydarzeń pasujących do Twoich kryteriów.' 
-                : 'Nie masz jeszcze żadnych wydarzeń.'
-              }
-            </h3>
-            <p>
-              {searchQuery || filterStatus !== 'all'
-                ? 'Spróbuj zmienić filtry lub wyszukiwanie, aby znaleźć swoje wydarzenia.'
-                : 'Zacznij od utworzenia swojego pierwszego wydarzenia i zaproś znajomych!'
-              }
-            </p>
-            {!searchQuery && filterStatus === 'all' && (
-              <button 
-                className="events__empty-btn"
-                onClick={handleCreateEvent}
-              >
-                <Plus size={20} />
-                Utwórz pierwsze wydarzenie
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            {viewMode === 'grid' ? (
-              <div className="events__grid">
-                {filteredAndSortedEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    isSelected={selectedEvents.includes(event.id)}
-                    onSelect={(selected) => {
-                      setSelectedEvents(prev => 
-                        selected 
-                          ? [...prev, event.id]
-                          : prev.filter(id => id !== event.id)
-                      );
-                    }}
-                    onAction={handleEventAction}
-                    getStatusColor={getStatusColor}
-                    getStatusLabel={getStatusLabel}
-                  />
-                  ))}
-                  {/* Informacja o braku gości w aktywnych wydarzeniach */}
-                  {filteredAndSortedEvents.some(ev => ev.status === 'active') && 
-                   filteredAndSortedEvents.filter(ev => ev.status === 'active').every(ev => ev.guestCount === 0) && (
-                    <div className="events__no-guests">
-                      <img src="/logo192.png" alt="Brak gości" style={{ width: 48, marginBottom: 8 }} />
-                      <h4>Twoje aktywne wydarzenia czekają na gości!</h4>
-                      <p>Dodaj uczestników do aktywnych wydarzeń, aby rozpocząć planowanie i zarządzanie listą gości.</p>
-                    </div>
-                  )}
-              </div>
-            ) : (
-              <EventsList
-                events={filteredAndSortedEvents}
-                selectedEvents={selectedEvents}
-                onSelect={setSelectedEvents}
-                onAction={handleEventAction}
+  return (
+    <>
+      <ErrorBoundary>
+        <Routes>
+          <Route
+            index
+            element={
+              <EventsListPage
+                events={events}
+                recentChanges={recentChanges}
+                onCreateEvent={handleCreateEvent}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                showFilters={showFilters}
+                onToggleFilters={() => setShowFilters(prev => !prev)}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                filteredEvents={filteredAndSortedEvents}
+                filterStatus={filterStatus}
+                onFilterStatusChange={setFilterStatus}
+                isLoading={isLoading}
+                onEventAction={handleEventAction}
                 getStatusColor={getStatusColor}
                 getStatusLabel={getStatusLabel}
+                getStatusIcon={getStatusIcon}
               />
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-
-  return (
-    <>      <Routes>
-        <Route index element={<EventsListPage />} />
-        <Route path="create" element={<CreateEvent />} />
-        <Route path=":id" element={
-          <EventDetails />
-        } />
-        <Route path="edit/:id" element={
-          <EditEvent />
-        } />
-      </Routes>
+            }
+          />
+          <Route path="create" element={<CreateEvent />} />
+          <Route path=":id" element={<EventDetails />} />
+          <Route path="edit/:id" element={<EditEvent />} />
+        </Routes>
+      </ErrorBoundary>
 
       <AddEvent
         open={isAddEventOpen}
@@ -609,6 +779,18 @@ const Events: React.FC = () => {
         userId={user?.id || ''}
         onEventAdded={handleEventAdded}
       />
+
+      {eventToDuplicate && (
+        <DuplicateEventModal
+          isOpen={showDuplicateModal}
+          onClose={() => {
+            setShowDuplicateModal(false);
+            setEventToDuplicate(null);
+          }}
+          event={eventToDuplicate}
+          onDuplicate={handleDuplicateConfirm}
+        />
+      )}
     </>
   );
 };

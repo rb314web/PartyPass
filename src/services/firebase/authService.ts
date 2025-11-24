@@ -5,11 +5,9 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
-  updateEmail,
   updatePassword,
   deleteUser,
   onAuthStateChanged,
-  User as FirebaseAuthUser,
   sendEmailVerification,
   reauthenticateWithCredential,
   EmailAuthProvider,
@@ -22,12 +20,16 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
-  serverTimestamp,
-  Timestamp
+  Timestamp,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage';
 import { auth, db, storage } from '../../config/firebase';
-import { FirebaseUser, COLLECTIONS } from '../../types/firebase';
+import { FirebaseUser as AppUser, COLLECTIONS } from '../../types/firebase';
 import { User } from '../../types';
 
 export interface AuthError {
@@ -64,7 +66,7 @@ export class AuthService {
       const firebaseUser = userCredential.user;
 
       // Create user profile in Firestore
-      const userProfile: Omit<FirebaseUser, 'uid'> = {
+      const userProfile: Omit<AppUser, 'uid'> = {
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
@@ -77,11 +79,11 @@ export class AuthService {
           notifications: {
             email: true,
             push: true,
-            sms: false
+            sms: false,
           },
           theme: 'light',
-          language: 'pl'
-        }
+          language: 'pl',
+        },
       };
 
       await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), userProfile);
@@ -99,21 +101,27 @@ export class AuthService {
   // Login user
   static async login(email: string, password: string): Promise<User> {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const firebaseUser = userCredential.user;
 
       // Get user profile from Firestore
-      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid));
-      
+      const userDoc = await getDoc(
+        doc(db, COLLECTIONS.USERS, firebaseUser.uid)
+      );
+
       if (!userDoc.exists()) {
         throw new Error('Profil użytkownika nie został znaleziony');
       }
 
-      const userData = userDoc.data() as Omit<FirebaseUser, 'uid'>;
+      const userData = userDoc.data() as Omit<AppUser, 'uid'>;
 
       // Update last login
       await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
-        lastLoginAt: Timestamp.now()
+        lastLoginAt: Timestamp.now(),
       });
 
       return this.convertFirebaseUserToUser(firebaseUser.uid, userData);
@@ -130,14 +138,17 @@ export class AuthService {
       const firebaseUser = result.user;
 
       // Get or create user profile in Firestore
-      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid));
-      let userData: Omit<FirebaseUser, 'uid'>;
+      const userDoc = await getDoc(
+        doc(db, COLLECTIONS.USERS, firebaseUser.uid)
+      );
+      let userData: Omit<AppUser, 'uid'>;
       if (!userDoc.exists()) {
         // Create new profile
         userData = {
           email: firebaseUser.email || '',
           firstName: firebaseUser.displayName?.split(' ')[0] || '',
-          lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+          lastName:
+            firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
           planType: 'starter',
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
@@ -146,16 +157,16 @@ export class AuthService {
           preferences: {
             notifications: { email: true, push: true, sms: false },
             theme: 'light',
-            language: 'pl'
+            language: 'pl',
           },
-          avatar: firebaseUser.photoURL || ''
+          avatar: firebaseUser.photoURL || '',
         };
         await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), userData);
       } else {
-        userData = userDoc.data() as Omit<FirebaseUser, 'uid'>;
+        userData = userDoc.data() as Omit<AppUser, 'uid'>;
         await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
           lastLoginAt: Timestamp.now(),
-          updatedAt: Timestamp.now()
+          updatedAt: Timestamp.now(),
         });
       }
       return this.convertFirebaseUserToUser(firebaseUser.uid, userData);
@@ -179,13 +190,15 @@ export class AuthService {
       const firebaseUser = auth.currentUser;
       if (!firebaseUser) return null;
 
-      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid));
-      
+      const userDoc = await getDoc(
+        doc(db, COLLECTIONS.USERS, firebaseUser.uid)
+      );
+
       if (!userDoc.exists()) {
         return null;
       }
 
-      const userData = userDoc.data() as Omit<FirebaseUser, 'uid'>;
+      const userData = userDoc.data() as Omit<AppUser, 'uid'>;
       return this.convertFirebaseUserToUser(firebaseUser.uid, userData);
     } catch (error: any) {
       console.error('Error getting current user:', error);
@@ -194,10 +207,13 @@ export class AuthService {
   }
 
   // Update user profile
-  static async updateProfile(userId: string, data: UpdateProfileData): Promise<User> {
+  static async updateProfile(
+    userId: string,
+    data: UpdateProfileData
+  ): Promise<User> {
     try {
-      const updateData: Partial<FirebaseUser> = {
-        updatedAt: Timestamp.now()
+      const updateData: Partial<AppUser> = {
+        updatedAt: Timestamp.now(),
       };
 
       if (data.firstName) updateData.firstName = data.firstName;
@@ -206,7 +222,10 @@ export class AuthService {
 
       // Handle avatar upload
       if (data.avatar) {
-        const avatarRef = ref(storage, `avatars/${userId}/${Date.now()}_${data.avatar.name}`);
+        const avatarRef = ref(
+          storage,
+          `avatars/${userId}/${Date.now()}_${data.avatar.name}`
+        );
         await uploadBytes(avatarRef, data.avatar);
         const avatarUrl = await getDownloadURL(avatarRef);
         updateData.avatar = avatarUrl;
@@ -219,7 +238,8 @@ export class AuthService {
       if (firebaseUser) {
         const authUpdateData: any = {};
         if (data.firstName || data.lastName) {
-          authUpdateData.displayName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+          authUpdateData.displayName =
+            `${data.firstName || ''} ${data.lastName || ''}`.trim();
         }
         if (Object.keys(authUpdateData).length > 0) {
           await updateProfile(firebaseUser, authUpdateData);
@@ -228,8 +248,8 @@ export class AuthService {
 
       // Get updated user data
       const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
-      const userData = userDoc.data() as Omit<FirebaseUser, 'uid'>;
-      
+      const userData = userDoc.data() as Omit<AppUser, 'uid'>;
+
       return this.convertFirebaseUserToUser(userId, userData);
     } catch (error: any) {
       throw this.handleAuthError(error);
@@ -237,7 +257,10 @@ export class AuthService {
   }
 
   // Change password
-  static async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  static async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
     try {
       const firebaseUser = auth.currentUser;
       if (!firebaseUser || !firebaseUser.email) {
@@ -245,7 +268,10 @@ export class AuthService {
       }
 
       // Re-authenticate user
-      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+      const credential = EmailAuthProvider.credential(
+        firebaseUser.email,
+        currentPassword
+      );
       await reauthenticateWithCredential(firebaseUser, credential);
 
       // Update password
@@ -273,7 +299,10 @@ export class AuthService {
       }
 
       // Re-authenticate user
-      const credential = EmailAuthProvider.credential(firebaseUser.email, password);
+      const credential = EmailAuthProvider.credential(
+        firebaseUser.email,
+        password
+      );
       await reauthenticateWithCredential(firebaseUser, credential);
 
       // Delete all user-related data from Firestore
@@ -290,51 +319,68 @@ export class AuthService {
   private static async deleteUserData(userId: string): Promise<void> {
     try {
       // Import additional Firestore functions
-      const { getDocs, query, where, collection } = await import('firebase/firestore');
-      
+      const { getDocs, query, where, collection } = await import(
+        'firebase/firestore'
+      );
+
       // Delete user document
       await deleteDoc(doc(db, COLLECTIONS.USERS, userId));
 
       // Get all user's events
-      const eventsQuery = query(collection(db, COLLECTIONS.EVENTS), where('userId', '==', userId));
+      const eventsQuery = query(
+        collection(db, COLLECTIONS.EVENTS),
+        where('userId', '==', userId)
+      );
       const eventsSnapshot = await getDocs(eventsQuery);
-      
+
       // Delete each event and its guests
       for (const eventDoc of eventsSnapshot.docs) {
         const eventId = eventDoc.id;
-        
+
         // Delete event's guests
-        const guestsQuery = query(collection(db, COLLECTIONS.GUESTS), where('eventId', '==', eventId));
+        const guestsQuery = query(
+          collection(db, COLLECTIONS.GUESTS),
+          where('eventId', '==', eventId)
+        );
         const guestsSnapshot = await getDocs(guestsQuery);
-        
+
         for (const guestDoc of guestsSnapshot.docs) {
           await deleteDoc(doc(db, COLLECTIONS.GUESTS, guestDoc.id));
         }
-        
+
         // Delete the event
         await deleteDoc(doc(db, COLLECTIONS.EVENTS, eventId));
       }
 
       // Delete user's activities
-      const activitiesQuery = query(collection(db, COLLECTIONS.ACTIVITIES), where('userId', '==', userId));
+      const activitiesQuery = query(
+        collection(db, COLLECTIONS.ACTIVITIES),
+        where('userId', '==', userId)
+      );
       const activitiesSnapshot = await getDocs(activitiesQuery);
-      
+
       for (const activityDoc of activitiesSnapshot.docs) {
         await deleteDoc(doc(db, COLLECTIONS.ACTIVITIES, activityDoc.id));
       }
 
       // Delete user's notifications
-      const notificationsQuery = query(collection(db, COLLECTIONS.NOTIFICATIONS), where('userId', '==', userId));
+      const notificationsQuery = query(
+        collection(db, COLLECTIONS.NOTIFICATIONS),
+        where('userId', '==', userId)
+      );
       const notificationsSnapshot = await getDocs(notificationsQuery);
-      
+
       for (const notificationDoc of notificationsSnapshot.docs) {
         await deleteDoc(doc(db, COLLECTIONS.NOTIFICATIONS, notificationDoc.id));
       }
 
       // Delete user's analytics
-      const analyticsQuery = query(collection(db, COLLECTIONS.ANALYTICS), where('userId', '==', userId));
+      const analyticsQuery = query(
+        collection(db, COLLECTIONS.ANALYTICS),
+        where('userId', '==', userId)
+      );
       const analyticsSnapshot = await getDocs(analyticsQuery);
-      
+
       for (const analyticsDoc of analyticsSnapshot.docs) {
         await deleteDoc(doc(db, COLLECTIONS.ANALYTICS, analyticsDoc.id));
       }
@@ -347,7 +393,6 @@ export class AuthService {
         // Avatar might not exist, ignore error
         console.log('No avatar to delete or error deleting avatar:', error);
       }
-
     } catch (error) {
       console.error('Error deleting user data:', error);
       throw error;
@@ -356,7 +401,7 @@ export class AuthService {
 
   // Auth state listener
   static onAuthStateChanged(callback: (user: User | null) => void): () => void {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
+    return onAuthStateChanged(auth, async firebaseUser => {
       if (firebaseUser) {
         try {
           const user = await this.getCurrentUser();
@@ -372,7 +417,10 @@ export class AuthService {
   }
 
   // Convert Firebase user to app user
-  private static convertFirebaseUserToUser(uid: string, firebaseUser: Omit<FirebaseUser, 'uid'>): User {
+  private static convertFirebaseUserToUser(
+    uid: string,
+    firebaseUser: Omit<AppUser, 'uid'>
+  ): User {
     return {
       id: uid,
       email: firebaseUser.email,
@@ -380,7 +428,7 @@ export class AuthService {
       lastName: firebaseUser.lastName,
       planType: firebaseUser.planType,
       createdAt: firebaseUser.createdAt.toDate(),
-      avatar: firebaseUser.avatar
+      avatar: firebaseUser.avatar,
     };
   }
 
@@ -416,7 +464,7 @@ export class AuthService {
 
     return {
       code: error.code || 'unknown',
-      message
+      message,
     };
   }
 }

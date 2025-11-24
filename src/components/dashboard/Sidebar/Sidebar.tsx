@@ -1,12 +1,12 @@
 // components/dashboard/Sidebar/Sidebar.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  Calendar, 
-  Users, 
-  BarChart3, 
-  Settings, 
+import {
+  Home,
+  Calendar,
+  Users,
+  BarChart3,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -14,9 +14,9 @@ import {
   ChevronRight,
   Activity,
   Search,
-  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import Logo from '../../common/Logo/Logo';
 import './Sidebar.scss';
 
 interface SidebarProps {
@@ -26,20 +26,22 @@ interface SidebarProps {
   onCollapsedToggle?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  isMobileOpen: externalMobileOpen = false, 
+const Sidebar: React.FC<SidebarProps> = ({
+  isMobileOpen: externalMobileOpen = false,
   onMobileToggle,
   isCollapsed: externalCollapsed,
-  onCollapsedToggle 
+  onCollapsedToggle,
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
-  
+
   // Use external state if provided, otherwise use internal state
-  const isMobileOpen = externalMobileOpen !== false ? externalMobileOpen : internalMobileOpen;
-  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
+  const isMobileOpen =
+    externalMobileOpen !== false ? externalMobileOpen : internalMobileOpen;
+  const isCollapsed =
+    externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },
@@ -48,8 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: Users, label: 'Kontakty', path: '/dashboard/contacts' },
     { icon: Activity, label: 'Aktywności', path: '/dashboard/activities' },
     { icon: BarChart3, label: 'Analityka', path: '/dashboard/analytics' },
-    { icon: MessageCircle, label: 'Kontakt', path: 'contact-us' },
-    { icon: Settings, label: 'Ustawienia', path: '/dashboard/settings' }
+    { icon: Settings, label: 'Ustawienia', path: '/dashboard/settings' },
   ];
 
   const isActive = (path: string, exact = false) => {
@@ -63,21 +64,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     const badges = {
       starter: { label: 'Starter', color: 'gray' },
       pro: { label: 'Pro', color: 'primary' },
-      enterprise: { label: 'Enterprise', color: 'gold' }
+      enterprise: { label: 'Enterprise', color: 'gold' },
     };
     return badges[user?.planType || 'starter'];
   };
 
   // Handle escape key to close mobile menu
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && isMobileOpen) {
-      if (onMobileToggle) {
-        onMobileToggle();
-      } else {
-        setInternalMobileOpen(false);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileOpen) {
+        if (onMobileToggle) {
+          onMobileToggle();
+        } else {
+          setInternalMobileOpen(false);
+        }
       }
-    }
-  }, [isMobileOpen, onMobileToggle]);
+    },
+    [isMobileOpen, onMobileToggle]
+  );
 
   // Handle body scroll when mobile menu is open
   useEffect(() => {
@@ -106,10 +110,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="sidebar__overlay"
           onClick={handleMobileClose}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Escape') {
               handleMobileClose();
             }
@@ -122,24 +126,23 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Mobile toggle moved to Header */}
 
-      <aside 
+      <aside
         id="sidebar"
         className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''} ${isMobileOpen ? 'sidebar--mobile-open' : ''}`}
         role="navigation"
         aria-label="Menu nawigacyjne"
       >
         <div className="sidebar__header">
-          <Link 
-            to="/dashboard" 
+          <Logo
+            size="small"
+            href="/dashboard"
+            showIcon
+            collapsed={isCollapsed}
             className="sidebar__logo"
-            onClick={() => console.log('Logo clicked - navigating to /dashboard')}
-          >
-            <div className="sidebar__logo-icon">🎉</div>
-            {!isCollapsed && <span className="sidebar__logo-text">PartyPass</span>}
-          </Link>
-          
+          />
+
           {/* Mobile close button - only visible on mobile when open */}
-          <button 
+          <button
             className="sidebar__mobile-close"
             onClick={handleMobileClose}
             aria-label="Zamknij menu"
@@ -147,9 +150,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             <X size={20} />
           </button>
-          
+
           {/* Desktop collapse button - hidden on mobile */}
-          <button 
+          <button
             className="sidebar__collapse-btn"
             onClick={() => {
               if (onCollapsedToggle) {
@@ -158,8 +161,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 setInternalCollapsed(!internalCollapsed);
               }
             }}
-            aria-label={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
-            title={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
+            aria-label={isCollapsed ? 'Rozwiń menu' : 'Zwiń menu'}
+            title={isCollapsed ? 'Rozwiń menu' : 'Zwiń menu'}
           >
             {isCollapsed ? <ChevronRight size={20} /> : <Menu size={20} />}
           </button>
@@ -167,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         <nav className="sidebar__nav">
           <ul className="sidebar__menu">
-            {menuItems.map((item) => (
+            {menuItems.map(item => (
               <li key={item.path}>
                 <Link
                   to={item.path}
@@ -177,7 +180,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                     handleMobileClose();
                     // Focus management - focus on main content after navigation
                     setTimeout(() => {
-                      const mainContent = document.querySelector('.dashboard__content');
+                      const mainContent = document.querySelector(
+                        '.dashboard__content'
+                      );
                       if (mainContent) {
                         (mainContent as HTMLElement).focus();
                       }
@@ -200,17 +205,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <img src={user.avatar} alt={user.firstName} />
                 ) : (
                   <div className="sidebar__user-avatar-placeholder">
-                    {user.firstName[0]}{user.lastName[0]}
+                    {user.firstName[0]}
+                    {user.lastName[0]}
                   </div>
                 )}
               </div>
-              
+
               {!isCollapsed && (
                 <div className="sidebar__user-info">
                   <div className="sidebar__user-name">
                     {user.firstName} {user.lastName}
                   </div>
-                  <div className={`sidebar__user-plan sidebar__user-plan--${getPlanBadge().color}`}>
+                  <div
+                    className={`sidebar__user-plan sidebar__user-plan--${getPlanBadge().color}`}
+                  >
                     {user.planType === 'enterprise' && <Crown size={12} />}
                     {getPlanBadge().label}
                   </div>
@@ -218,8 +226,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               )}
             </div>
           )}
-          
-          <button 
+
+          <button
             className="sidebar__logout"
             onClick={logout}
             title="Wyloguj się"

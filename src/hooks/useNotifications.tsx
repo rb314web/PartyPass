@@ -1,6 +1,9 @@
 // hooks/useNotifications.tsx
 import { useState, useEffect, useCallback } from 'react';
-import { notificationService, Notification } from '../services/notificationService';
+import {
+  notificationService,
+  Notification,
+} from '../services/notificationService';
 import { useAuth } from './useAuth';
 
 interface UseNotificationsReturn {
@@ -27,10 +30,10 @@ export const useNotifications = (limit = 20): UseNotificationsReturn => {
     }
 
     setLoading(true);
-    
+
     const unsubscribe = notificationService.subscribeToNotifications(
       user.id,
-      (newNotifications) => {
+      newNotifications => {
         setNotifications(newNotifications);
         setLoading(false);
       },
@@ -42,9 +45,12 @@ export const useNotifications = (limit = 20): UseNotificationsReturn => {
 
   // Clean up expired notifications periodically
   useEffect(() => {
-    const cleanupInterval = setInterval(() => {
-      notificationService.deleteExpired();
-    }, 60 * 60 * 1000); // Every hour
+    const cleanupInterval = setInterval(
+      () => {
+        notificationService.deleteExpired();
+      },
+      60 * 60 * 1000
+    ); // Every hour
 
     return () => clearInterval(cleanupInterval);
   }, []);
@@ -54,12 +60,10 @@ export const useNotifications = (limit = 20): UseNotificationsReturn => {
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await notificationService.markAsRead(notificationId);
-      
+
       // Optimistically update local state
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId ? { ...n, read: true } : n
-        )
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -68,14 +72,12 @@ export const useNotifications = (limit = 20): UseNotificationsReturn => {
 
   const markAllAsRead = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       await notificationService.markAllAsRead(user.id);
-      
+
       // Optimistically update local state
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, read: true }))
-      );
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -84,11 +86,9 @@ export const useNotifications = (limit = 20): UseNotificationsReturn => {
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
       await notificationService.delete(notificationId);
-      
+
       // Optimistically update local state
-      setNotifications(prev => 
-        prev.filter(n => n.id !== notificationId)
-      );
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
@@ -96,10 +96,13 @@ export const useNotifications = (limit = 20): UseNotificationsReturn => {
 
   const refresh = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       setLoading(true);
-      const newNotifications = await notificationService.getNotifications(user.id, limit);
+      const newNotifications = await notificationService.getNotifications(
+        user.id,
+        limit
+      );
       setNotifications(newNotifications);
     } catch (error) {
       console.error('Error refreshing notifications:', error);
@@ -115,6 +118,6 @@ export const useNotifications = (limit = 20): UseNotificationsReturn => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    refresh
+    refresh,
   };
 };

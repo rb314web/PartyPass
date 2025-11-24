@@ -118,7 +118,13 @@ export interface FirebaseGuestData extends Omit<FirebaseGuest, 'id'> {}
 export interface FirebaseActivity {
   id: string;
   userId: string;
-  type: 'event_created' | 'event_updated' | 'event_cancelled' | 'guest_response' | 'guest_declined' | 'guest_maybe';
+  type:
+    | 'event_created'
+    | 'event_updated'
+    | 'event_cancelled'
+    | 'guest_response'
+    | 'guest_declined'
+    | 'guest_maybe';
   message: string;
   timestamp: Timestamp;
   eventId?: string;
@@ -194,13 +200,23 @@ export const COLLECTIONS = {
   ERROR_LOGS: 'error_logs',
   SUBSCRIPTIONS: 'subscriptions',
   TEMPLATES: 'templates',
-  CONTACTS: 'contacts'
+  CONTACTS: 'contacts',
 } as const;
 
 // Firestore query types
 export interface FirestoreQuery {
   field: string;
-  operator: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'array-contains' | 'array-contains-any' | 'in' | 'not-in';
+  operator:
+    | '=='
+    | '!='
+    | '<'
+    | '<='
+    | '>'
+    | '>='
+    | 'array-contains'
+    | 'array-contains-any'
+    | 'in'
+    | 'not-in';
   value: any;
 }
 

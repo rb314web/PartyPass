@@ -5,9 +5,7 @@ interface AppLoaderProps {
   message?: string;
 }
 
-const AppLoader: React.FC<AppLoaderProps> = ({ 
-  message = "Ładowanie..." 
-}) => {
+const AppLoader: React.FC<AppLoaderProps> = ({ message = 'Ładowanie...' }) => {
   return (
     <div className="app-loader">
       <div className="app-loader__container">

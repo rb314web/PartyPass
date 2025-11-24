@@ -1,5 +1,5 @@
 // components/common/NavigationButtons/NavigationButtons.scss
-@import '../../../styles/globals/index.scss';
+@use '../../../styles/globals/index' as *;
 
 .navigation-buttons {
   display: flex;

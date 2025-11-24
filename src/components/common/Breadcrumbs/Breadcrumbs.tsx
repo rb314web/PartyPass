@@ -19,24 +19,18 @@ const Breadcrumbs: React.FC = () => {
 
   // Get event ID from the last segment of the path if we're in events section
   const pathSegments = location.pathname.split('/').filter(Boolean);
-  const eventId = pathSegments.includes('events') ? 
-    pathSegments[pathSegments.indexOf('events') + 1] : null;
+  const eventId = pathSegments.includes('events')
+    ? pathSegments[pathSegments.indexOf('events') + 1]
+    : null;
 
   useEffect(() => {
     const loadEventTitle = async () => {
-      // Debug
-      console.log('Loading title effect triggered');
-      console.log('Event ID:', eventId);
-      console.log('User:', user);
-      console.log('Current title:', eventTitle);
-
       if (!eventId || !user) {
         return;
       }
 
       try {
         const event = await EventService.getEventById(eventId, user.id);
-        console.log('Loaded event:', event);
         if (event) {
           setEventTitle(event.title);
         }
@@ -58,7 +52,7 @@ const Breadcrumbs: React.FC = () => {
     breadcrumbs.push({
       label: 'Strona główna',
       path: '/',
-      icon: <Home size={16} />
+      icon: <Home size={16} />,
     });
 
     // Dodaj segmenty ścieżki
@@ -73,15 +67,14 @@ const Breadcrumbs: React.FC = () => {
           label = eventTitle;
         } else {
           label = 'Ładowanie...';
-          // Debug
-          console.log('Event ID:', eventId);
-          console.log('Current segment:', segment);
-          console.log('Event title:', eventTitle);
-          console.log('User:', user);
         }
-      } 
+      }
       // Obsługa edycji wydarzenia
-      else if (segment === 'edit' && index < pathSegments.length - 1 && pathSegments[index + 1] === eventId) {
+      else if (
+        segment === 'edit' &&
+        index < pathSegments.length - 1 &&
+        pathSegments[index + 1] === eventId
+      ) {
         label = 'Edycja';
         currentPath = currentPath.replace('/edit', '');
       }
@@ -89,33 +82,31 @@ const Breadcrumbs: React.FC = () => {
       else {
         label = labelMap[segment] || segment;
       }
-      
+
       breadcrumbs.push({
         label,
-        path: currentPath
+        path: currentPath,
       });
     });
 
     // Usuń duplikaty ścieżek
-    return breadcrumbs.filter((item, index, self) => 
-      index === self.findIndex((t) => t.path === item.path)
+    return breadcrumbs.filter(
+      (item, index, self) => index === self.findIndex(t => t.path === item.path)
     );
   };
 
   const labelMap: Record<string, string> = {
-    'dashboard': 'Dashboard',
-    'events': 'Wydarzenia',
-    'guests': 'Goście',
-    'contacts': 'Kontakty',
-    'analytics': 'Analityka',
-    'settings': 'Ustawienia',
-    'create': 'Utwórz',
-    'edit': 'Edycja',
-    'login': 'Logowanie',
-    'register': 'Rejestracja'
+    dashboard: 'Dashboard',
+    events: 'Wydarzenia',
+    guests: 'Goście',
+    contacts: 'Kontakty',
+    analytics: 'Analityka',
+    settings: 'Ustawienia',
+    create: 'Utwórz',
+    edit: 'Edycja',
+    login: 'Logowanie',
+    register: 'Rejestracja',
   };
-
-
 
   const breadcrumbs = generateBreadcrumbs();
 
@@ -129,18 +120,22 @@ const Breadcrumbs: React.FC = () => {
       <ol className="breadcrumbs__list">
         {breadcrumbs.map((item, index) => {
           const isLast = index === breadcrumbs.length - 1;
-          
+
           return (
             <li key={item.path} className="breadcrumbs__item">
               {isLast ? (
                 <span className="breadcrumbs__current" aria-current="page">
-                  {item.icon && <span className="breadcrumbs__icon">{item.icon}</span>}
+                  {item.icon && (
+                    <span className="breadcrumbs__icon">{item.icon}</span>
+                  )}
                   {item.label}
                 </span>
               ) : (
                 <>
                   <Link to={item.path} className="breadcrumbs__link">
-                    {item.icon && <span className="breadcrumbs__icon">{item.icon}</span>}
+                    {item.icon && (
+                      <span className="breadcrumbs__icon">{item.icon}</span>
+                    )}
                     {item.label}
                   </Link>
                   <ChevronRight size={16} className="breadcrumbs__separator" />

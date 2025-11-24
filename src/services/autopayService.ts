@@ -6,9 +6,13 @@ export const AUTOPAY_CONFIG = {
   apiUrl: process.env.REACT_APP_AUTOPAY_API_URL || 'https://api.autopay.pl/v1',
   merchantId: process.env.REACT_APP_AUTOPAY_MERCHANT_ID || '',
   secretKey: process.env.REACT_APP_AUTOPAY_SECRET_KEY || '',
-  returnUrl: process.env.REACT_APP_AUTOPAY_RETURN_URL || 'http://localhost:3000/payment/return',
-  notificationUrl: process.env.REACT_APP_AUTOPAY_NOTIFICATION_URL || 'http://localhost:3000/api/autopay/notification',
-  sandbox: process.env.NODE_ENV !== 'production'
+  returnUrl:
+    process.env.REACT_APP_AUTOPAY_RETURN_URL ||
+    'http://localhost:3000/payment/return',
+  notificationUrl:
+    process.env.REACT_APP_AUTOPAY_NOTIFICATION_URL ||
+    'http://localhost:3000/api/autopay/notification',
+  sandbox: process.env.NODE_ENV !== 'production',
 };
 
 export interface AutopayPaymentRequest {
@@ -75,10 +79,10 @@ class AutopayService {
     // W prawdziwej implementacji używamy HMAC-SHA256
     // To jest uproszczona wersja dla demonstracji
     const sortedKeys = Object.keys(data).sort();
-    const signatureString = sortedKeys
-      .map(key => `${key}=${data[key]}`)
-      .join('&') + AUTOPAY_CONFIG.secretKey;
-    
+    const signatureString =
+      sortedKeys.map(key => `${key}=${data[key]}`).join('&') +
+      AUTOPAY_CONFIG.secretKey;
+
     // Symulacja HMAC-SHA256
     return btoa(signatureString).substring(0, 32);
   }
@@ -100,7 +104,9 @@ class AutopayService {
     user?: User
   ): Promise<AutopayPaymentResponse> {
     if (!this.isConfigured()) {
-      throw new Error('Autopay nie jest skonfigurowane. Sprawdź zmienne środowiskowe.');
+      throw new Error(
+        'Autopay nie jest skonfigurowane. Sprawdź zmienne środowiskowe.'
+      );
     }
 
     const requestData = {
@@ -111,14 +117,15 @@ class AutopayService {
       description: paymentData.description || '',
       customer_id: paymentData.customerId || user?.id,
       customer_email: paymentData.customerEmail || user?.email,
-      customer_name: paymentData.customerName || `${user?.firstName} ${user?.lastName}`,
+      customer_name:
+        paymentData.customerName || `${user?.firstName} ${user?.lastName}`,
       return_url: AUTOPAY_CONFIG.returnUrl,
       notification_url: AUTOPAY_CONFIG.notificationUrl,
       merchant_data: JSON.stringify({
         planId: paymentData.planId,
         billingCycle: paymentData.billingCycle,
-        userId: user?.id
-      })
+        userId: user?.id,
+      }),
     };
 
     const signature = this.generateSignature(requestData);
@@ -133,14 +140,16 @@ class AutopayService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${AUTOPAY_CONFIG.secretKey}`,
-          'X-Signature': signature
+          Authorization: `Bearer ${AUTOPAY_CONFIG.secretKey}`,
+          'X-Signature': signature,
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
-        throw new Error(`Błąd Autopay: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Błąd Autopay: ${response.status} ${response.statusText}`
+        );
       }
 
       const responseData = await response.json();
@@ -151,7 +160,7 @@ class AutopayService {
         status: responseData.status,
         amount: responseData.amount / 100, // konwersja z groszy
         currency: responseData.currency,
-        createdAt: responseData.created_at
+        createdAt: responseData.created_at,
       };
     } catch (error) {
       console.error('Błąd podczas tworzenia płatności Autopay:', error);
@@ -167,7 +176,9 @@ class AutopayService {
     user?: User
   ): Promise<AutopaySubscription> {
     if (!this.isConfigured()) {
-      throw new Error('Autopay nie jest skonfigurowane. Sprawdź zmienne środowiskowe.');
+      throw new Error(
+        'Autopay nie jest skonfigurowane. Sprawdź zmienne środowiskowe.'
+      );
     }
 
     const requestData = {
@@ -178,7 +189,7 @@ class AutopayService {
       customer_id: paymentData.customerId || user?.id,
       customer_email: paymentData.customerEmail || user?.email,
       billing_cycle: paymentData.billingCycle,
-      plan_id: paymentData.planId
+      plan_id: paymentData.planId,
     };
 
     const signature = this.generateSignature(requestData);
@@ -192,14 +203,16 @@ class AutopayService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${AUTOPAY_CONFIG.secretKey}`,
-          'X-Signature': signature
+          Authorization: `Bearer ${AUTOPAY_CONFIG.secretKey}`,
+          'X-Signature': signature,
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
-        throw new Error(`Błąd Autopay: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Błąd Autopay: ${response.status} ${response.statusText}`
+        );
       }
 
       const responseData = await response.json();
@@ -211,7 +224,7 @@ class AutopayService {
         nextPaymentDate: responseData.next_payment_date,
         amount: responseData.amount / 100,
         currency: responseData.currency,
-        billingCycle: responseData.billing_cycle
+        billingCycle: responseData.billing_cycle,
       };
     } catch (error) {
       console.error('Błąd podczas tworzenia subskrypcji Autopay:', error);
@@ -222,7 +235,9 @@ class AutopayService {
   /**
    * Sprawdza status płatności
    */
-  public async getPaymentStatus(transactionId: string): Promise<AutopayPaymentResponse> {
+  public async getPaymentStatus(
+    transactionId: string
+  ): Promise<AutopayPaymentResponse> {
     if (!this.isConfigured()) {
       throw new Error('Autopay nie jest skonfigurowane.');
     }
@@ -236,18 +251,23 @@ class AutopayService {
           status: 'confirmed',
           amount: 29,
           currency: 'PLN',
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
       }
 
-      const response = await fetch(`${AUTOPAY_CONFIG.apiUrl}/payments/${transactionId}`, {
-        headers: {
-          'Authorization': `Bearer ${AUTOPAY_CONFIG.secretKey}`
+      const response = await fetch(
+        `${AUTOPAY_CONFIG.apiUrl}/payments/${transactionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${AUTOPAY_CONFIG.secretKey}`,
+          },
         }
-      });
+      );
 
       if (!response.ok) {
-        throw new Error(`Błąd Autopay: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Błąd Autopay: ${response.status} ${response.statusText}`
+        );
       }
 
       const responseData = await response.json();
@@ -258,7 +278,7 @@ class AutopayService {
         status: responseData.status,
         amount: responseData.amount / 100,
         currency: responseData.currency,
-        createdAt: responseData.created_at
+        createdAt: responseData.created_at,
       };
     } catch (error) {
       console.error('Błąd podczas sprawdzania statusu płatności:', error);
@@ -280,12 +300,15 @@ class AutopayService {
         return true;
       }
 
-      const response = await fetch(`${AUTOPAY_CONFIG.apiUrl}/subscriptions/${subscriptionId}/cancel`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${AUTOPAY_CONFIG.secretKey}`
+      const response = await fetch(
+        `${AUTOPAY_CONFIG.apiUrl}/subscriptions/${subscriptionId}/cancel`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${AUTOPAY_CONFIG.secretKey}`,
+          },
         }
-      });
+      );
 
       return response.ok;
     } catch (error) {
@@ -313,7 +336,7 @@ class AutopayService {
             status: 'paid',
             plan: 'Pro',
             period: 'Grudzień 2024',
-            downloadUrl: '#'
+            downloadUrl: '#',
           },
           {
             id: 'inv_2',
@@ -322,19 +345,24 @@ class AutopayService {
             status: 'paid',
             plan: 'Pro',
             period: 'Listopad 2024',
-            downloadUrl: '#'
-          }
+            downloadUrl: '#',
+          },
         ];
       }
 
-      const response = await fetch(`${AUTOPAY_CONFIG.apiUrl}/invoices?customer_id=${customerId}`, {
-        headers: {
-          'Authorization': `Bearer ${AUTOPAY_CONFIG.secretKey}`
+      const response = await fetch(
+        `${AUTOPAY_CONFIG.apiUrl}/invoices?customer_id=${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${AUTOPAY_CONFIG.secretKey}`,
+          },
         }
-      });
+      );
 
       if (!response.ok) {
-        throw new Error(`Błąd Autopay: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Błąd Autopay: ${response.status} ${response.statusText}`
+        );
       }
 
       return await response.json();
@@ -347,26 +375,30 @@ class AutopayService {
   /**
    * Symuluje odpowiedź płatności w trybie sandbox
    */
-  private simulatePaymentResponse(paymentData: AutopayPaymentRequest): AutopayPaymentResponse {
+  private simulatePaymentResponse(
+    paymentData: AutopayPaymentRequest
+  ): AutopayPaymentResponse {
     const transactionId = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     return {
       transactionId,
       paymentUrl: `https://sandbox.autopay.pl/payment/${transactionId}`,
       status: 'pending',
       amount: paymentData.amount,
       currency: paymentData.currency,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
   }
 
   /**
    * Symuluje odpowiedź subskrypcji w trybie sandbox
    */
-  private simulateSubscriptionResponse(paymentData: AutopayPaymentRequest): AutopaySubscription {
+  private simulateSubscriptionResponse(
+    paymentData: AutopayPaymentRequest
+  ): AutopaySubscription {
     const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const nextPaymentDate = new Date();
-    
+
     if (paymentData.billingCycle === 'monthly') {
       nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
     } else {
@@ -380,7 +412,7 @@ class AutopayService {
       nextPaymentDate: nextPaymentDate.toISOString(),
       amount: paymentData.amount,
       currency: paymentData.currency,
-      billingCycle: paymentData.billingCycle
+      billingCycle: paymentData.billingCycle,
     };
   }
 
@@ -393,14 +425,15 @@ class AutopayService {
     missing: string[];
   } {
     const missing: string[] = [];
-    
-    if (!AUTOPAY_CONFIG.merchantId) missing.push('REACT_APP_AUTOPAY_MERCHANT_ID');
+
+    if (!AUTOPAY_CONFIG.merchantId)
+      missing.push('REACT_APP_AUTOPAY_MERCHANT_ID');
     if (!AUTOPAY_CONFIG.secretKey) missing.push('REACT_APP_AUTOPAY_SECRET_KEY');
 
     return {
       configured: missing.length === 0,
       sandbox: AUTOPAY_CONFIG.sandbox,
-      missing
+      missing,
     };
   }
 }

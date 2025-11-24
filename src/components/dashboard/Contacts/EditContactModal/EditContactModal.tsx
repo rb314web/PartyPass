@@ -12,11 +12,11 @@ interface EditContactModalProps {
   onContactUpdated?: (contact: Contact) => void;
 }
 
-const EditContactModal: React.FC<EditContactModalProps> = ({ 
-  open, 
-  contact, 
-  onClose, 
-  onContactUpdated 
+const EditContactModal: React.FC<EditContactModalProps> = ({
+  open,
+  contact,
+  onClose,
+  onContactUpdated,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
     phone: '',
     dietaryRestrictions: '',
     notes: '',
-    tags: []
+    tags: [],
   });
 
   useEffect(() => {
@@ -41,27 +41,27 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
         phone: contact.phone || '',
         dietaryRestrictions: contact.dietaryRestrictions || '',
         notes: contact.notes || '',
-        tags: contact.tags || []
+        tags: contact.tags || [],
       });
       setError(null);
     }
   }, [contact]);
 
-  const handleInputChange = (field: keyof UpdateContactData) => (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
-    setError(null);
-  };
+  const handleInputChange =
+    (field: keyof UpdateContactData) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
+      setError(null);
+    };
 
   const handleAddTag = () => {
     if (newTag.trim() && !formData.tags?.includes(newTag.trim())) {
       setFormData(prev => ({
         ...prev,
-        tags: [...(prev.tags || []), newTag.trim()]
+        tags: [...(prev.tags || []), newTag.trim()],
       }));
       setNewTag('');
     }
@@ -70,19 +70,23 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
   const handleRemoveTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags?.filter(tag => tag !== tagToRemove) || []
+      tags: prev.tags?.filter(tag => tag !== tagToRemove) || [],
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!contact) {
       setError('Brak danych kontaktu');
       return;
     }
 
-    if (!formData.firstName?.trim() || !formData.lastName?.trim() || !formData.email?.trim()) {
+    if (
+      !formData.firstName?.trim() ||
+      !formData.lastName?.trim() ||
+      !formData.email?.trim()
+    ) {
       setError('Imię, nazwisko i email są wymagane');
       return;
     }
@@ -93,11 +97,11 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
     try {
       // Sprawdź czy email już istnieje (z wyłączeniem aktualnego kontaktu)
       const emailExists = await ContactService.checkEmailExists(
-        contact.userId, 
-        formData.email!.trim(), 
+        contact.userId,
+        formData.email!.trim(),
         contact.id
       );
-      
+
       if (emailExists) {
         setError('Kontakt z tym adresem email już istnieje');
         setLoading(false);
@@ -112,7 +116,7 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
         phone: formData.phone?.trim() || undefined,
         dietaryRestrictions: formData.dietaryRestrictions?.trim() || undefined,
         notes: formData.notes?.trim() || undefined,
-        tags: formData.tags?.filter(tag => tag.trim()) || []
+        tags: formData.tags?.filter(tag => tag.trim()) || [],
       });
 
       // Pobierz zaktualizowany kontakt
@@ -151,8 +155,8 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
   };
 
   return (
-    <div 
-      className="edit-contact-modal__overlay" 
+    <div
+      className="edit-contact-modal__overlay"
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
       tabIndex={-1}
@@ -160,11 +164,9 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
       <div className="edit-contact-modal__container">
         <div className="edit-contact-modal__header">
           <div className="edit-contact-modal__icon">
-            <User size={24} />
+            <User size={28} />
           </div>
-          <h2 className="edit-contact-modal__title">
-            Edytuj kontakt
-          </h2>
+          <h2 className="edit-contact-modal__title">Edytuj kontakt</h2>
           <button
             className="edit-contact-modal__close"
             onClick={handleClose}
@@ -186,11 +188,13 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
 
             <div className="edit-contact-modal__contact-preview">
               <div className="edit-contact-modal__avatar">
-                {(formData.firstName?.[0] || contact.firstName[0])}{(formData.lastName?.[0] || contact.lastName[0])}
+                {formData.firstName?.[0] || contact.firstName[0]}
+                {formData.lastName?.[0] || contact.lastName[0]}
               </div>
               <div className="edit-contact-modal__preview-info">
                 <div className="edit-contact-modal__preview-name">
-                  {formData.firstName || contact.firstName} {formData.lastName || contact.lastName}
+                  {formData.firstName || contact.firstName}{' '}
+                  {formData.lastName || contact.lastName}
                 </div>
                 <div className="edit-contact-modal__preview-email">
                   {formData.email || contact.email}
@@ -216,7 +220,8 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
                 </div>
                 <div className="edit-contact-modal__field-group">
                   <label className="edit-contact-modal__label">
-                    Nazwisko <span className="edit-contact-modal__required">*</span>
+                    Nazwisko{' '}
+                    <span className="edit-contact-modal__required">*</span>
                   </label>
                   <input
                     type="text"
@@ -258,7 +263,9 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
               </div>
 
               <div className="edit-contact-modal__field-group">
-                <label className="edit-contact-modal__label">Preferencje żywieniowe</label>
+                <label className="edit-contact-modal__label">
+                  Preferencje żywieniowe
+                </label>
                 <textarea
                   className="edit-contact-modal__textarea"
                   value={formData.dietaryRestrictions}
@@ -283,48 +290,50 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
 
               <div className="edit-contact-modal__field-group">
                 <label className="edit-contact-modal__label">Tagi</label>
-                
-                {formData.tags && formData.tags.length > 0 && (
-                  <div className="edit-contact-modal__tags">
-                    {formData.tags.map((tag, index) => (
-                      <div key={index} className="edit-contact-modal__tag">
-                        <span>{tag}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTag(tag)}
-                          className="edit-contact-modal__tag-remove"
-                          disabled={loading}
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
 
-                <div className="edit-contact-modal__tag-input">
-                  <input
-                    type="text"
-                    className="edit-contact-modal__input"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                    disabled={loading}
-                    placeholder="Dodaj tag"
-                  />
-                  <button
-                    type="button"
-                    className="edit-contact-modal__tag-add-btn"
-                    onClick={handleAddTag}
-                    disabled={loading || !newTag.trim()}
-                  >
-                    <Tag size={16} />
-                  </button>
+                <div className="edit-contact-modal__tag-container">
+                  <div className="edit-contact-modal__tag-input">
+                    <input
+                      type="text"
+                      className="edit-contact-modal__input"
+                      value={newTag}
+                      onChange={e => setNewTag(e.target.value)}
+                      onKeyPress={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      disabled={loading}
+                      placeholder="Dodaj tag"
+                    />
+                    <button
+                      type="button"
+                      className="edit-contact-modal__tag-add-btn"
+                      onClick={handleAddTag}
+                      disabled={loading || !newTag.trim()}
+                    >
+                      <Tag size={16} />
+                    </button>
+                  </div>
+
+                  <div className="edit-contact-modal__tags">
+                    {formData.tags &&
+                      formData.tags.length > 0 &&
+                      formData.tags.map((tag, index) => (
+                        <div key={index} className="edit-contact-modal__tag">
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="edit-contact-modal__tag-remove"
+                            disabled={loading}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -343,11 +352,6 @@ const EditContactModal: React.FC<EditContactModalProps> = ({
               type="submit"
               className="edit-contact-modal__btn edit-contact-modal__btn--primary"
               disabled={loading}
-              style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                color: 'white',
-                borderColor: '#6366f1'
-              }}
             >
               {loading ? (
                 <>

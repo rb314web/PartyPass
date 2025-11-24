@@ -1,1 +1,24 @@
-@import 'mixins';
+// PartyPass - Global Styles
+// Import all global stylesheets in the correct order
+
+// 1. Reset and base styles
+@forward 'reset';
+
+// 2. Design system variables and mixins
+@forward 'party-pass-variables';
+@forward 'party-pass-mixins';
+
+// 3. Legacy variables (for backward compatibility)
+@forward 'variables';
+
+// 4. Other global styles
+@forward 'z-index';
+@forward 'breakpoints';
+@forward 'overlays';
+@forward 'mixins';
+@forward 'animations';
+@forward 'transitions' hide section-background-shapes,
+  section-diagonal-separator;
+@forward 'typography' hide text-style, heading-1, heading-2, heading-3,
+  heading-4, body-large, body-base, body-small, caption;
+@forward 'utilities';

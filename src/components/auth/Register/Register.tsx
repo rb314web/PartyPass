@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import Navigation from '../../common/Navigation/Navigation';
+import Header from '../../common/Header/Header';
+import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import './Register.scss';
 
 const Register: React.FC = () => {
@@ -14,35 +15,35 @@ const Register: React.FC = () => {
     password: '',
     confirmPassword: '',
     planType: 'starter' as 'starter' | 'pro' | 'enterprise',
-    acceptTerms: false
+    acceptTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [step, setStep] = useState(1);
-  
+
   const { register, loading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    
+
     if (formData.password !== formData.confirmPassword) {
       alert('Hasła nie są identyczne');
       return;
     }
-    
+
     if (!formData.acceptTerms) {
       alert('Musisz zaakceptować regulamin');
       return;
     }
-    
+
     try {
       await register({
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        planType: formData.planType
+        planType: formData.planType,
       });
     } catch (err) {
       // Error jest już ustawiony w kontekście
@@ -53,12 +54,17 @@ const Register: React.FC = () => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
   const nextStep = () => {
-    if (step === 1 && formData.firstName && formData.lastName && formData.email) {
+    if (
+      step === 1 &&
+      formData.firstName &&
+      formData.lastName &&
+      formData.email
+    ) {
       setStep(2);
     }
   };
@@ -70,12 +76,18 @@ const Register: React.FC = () => {
   const plans = [
     { id: 'starter', name: 'Starter', price: 'Darmowy', popular: false },
     { id: 'pro', name: 'Pro', price: '29 PLN/mies', popular: true },
-    { id: 'enterprise', name: 'Enterprise', price: '99 PLN/mies', popular: false }
+    {
+      id: 'enterprise',
+      name: 'Enterprise',
+      price: '99 PLN/mies',
+      popular: false,
+    },
   ];
 
   return (
-    <>
-      <Navigation variant="auth" />
+    <ErrorBoundary>
+      <>
+        <Header />
       <div className="register">
         <div className="register__container">
           <div className="register__card">
@@ -84,7 +96,7 @@ const Register: React.FC = () => {
               <p className="register__subtitle">
                 Dołącz do tysięcy zadowolonych organizatorów
               </p>
-              
+
               <div className="register__steps">
                 <div className={`register__step ${step >= 1 ? 'active' : ''}`}>
                   <span>1</span>
@@ -160,7 +172,11 @@ const Register: React.FC = () => {
                     type="button"
                     onClick={nextStep}
                     className="register__next"
-                    disabled={!formData.firstName || !formData.lastName || !formData.email}
+                    disabled={
+                      !formData.firstName ||
+                      !formData.lastName ||
+                      !formData.email
+                    }
                   >
                     Dalej
                     <ArrowRight size={20} />
@@ -188,7 +204,11 @@ const Register: React.FC = () => {
                         className="register__password-toggle"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -209,9 +229,15 @@ const Register: React.FC = () => {
                       <button
                         type="button"
                         className="register__password-toggle"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
-                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showConfirmPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -219,7 +245,7 @@ const Register: React.FC = () => {
                   <div className="register__field">
                     <label className="register__label">Wybierz plan</label>
                     <div className="register__plans">
-                      {plans.map((plan) => (
+                      {plans.map(plan => (
                         <label key={plan.id} className="register__plan">
                           <input
                             type="radio"
@@ -229,9 +255,17 @@ const Register: React.FC = () => {
                             onChange={handleChange}
                           />
                           <div className="register__plan-content">
-                            {plan.popular && <span className="register__plan-badge">Popularne</span>}
-                            <div className="register__plan-name">{plan.name}</div>
-                            <div className="register__plan-price">{plan.price}</div>
+                            {plan.popular && (
+                              <span className="register__plan-badge">
+                                Popularne
+                              </span>
+                            )}
+                            <div className="register__plan-name">
+                              {plan.name}
+                            </div>
+                            <div className="register__plan-price">
+                              {plan.price}
+                            </div>
                           </div>
                         </label>
                       ))}
@@ -247,7 +281,8 @@ const Register: React.FC = () => {
                       required
                     />
                     <span className="register__checkbox-custom"></span>
-                    Akceptuję <Link to="/terms">regulamin</Link> i <Link to="/privacy">politykę prywatności</Link>
+                    Akceptuję <Link to="/terms">regulamin</Link> i{' '}
+                    <Link to="/privacy">politykę prywatności</Link>
                   </label>
 
                   <div className="register__actions">
@@ -258,7 +293,7 @@ const Register: React.FC = () => {
                     >
                       Wstecz
                     </button>
-                    
+
                     <button
                       type="submit"
                       className="register__submit"
@@ -280,7 +315,7 @@ const Register: React.FC = () => {
 
             <div className="register__footer">
               <p>
-                Masz już konto? {' '}
+                Masz już konto?{' '}
                 <Link to="/login" className="register__login-link">
                   Zaloguj się
                 </Link>
@@ -290,6 +325,7 @@ const Register: React.FC = () => {
         </div>
       </div>
     </>
+    </ErrorBoundary>
   );
 };
 

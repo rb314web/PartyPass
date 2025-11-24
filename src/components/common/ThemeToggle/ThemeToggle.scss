@@ -1,143 +1,81 @@
 // components/common/ThemeToggle/ThemeToggle.scss
-@import '../../../styles/globals/index.scss';
+@use '../../../styles/globals/index' as *;
 
 .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle__switch {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
 
-  &__button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: 0.5rem;
-    color: var(--gray-700);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 100px;
-    justify-content: space-between;
-
-    &:hover {
-      background: var(--gray-50);
-      border-color: var(--gray-300);
-      color: var(--gray-900);
-    }
-
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px var(--blue-100);
-      border-color: var(--blue-500);
-    }
-
-    &:active {
-      transform: translateY(1px);
-    }
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+    border-radius: var(--radius-md);
   }
 
-  &__label {
-    flex: 1;
-    text-align: left;
-  }
-
-  &__arrow {
-    transition: transform 0.2s ease;
-    color: var(--gray-500);
-
-    &--open {
-      transform: rotate(180deg);
-    }
-  }
-
-  &__dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 0.25rem;
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: 0.5rem;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    z-index: 1000;
-    min-width: 120px;
-    overflow: hidden;
-    animation: dropdownFadeIn 0.2s ease;
-  }
-
-  &__option {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: none;
-    border: none;
-    color: var(--gray-700);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: left;
-
-    &:hover {
-      background: var(--gray-50);
-      color: var(--gray-900);
-    }
-
-    &:focus {
-      outline: none;
-      background: var(--blue-50);
-      color: var(--blue-700);
-    }
-
-    &--active {
-      background: var(--blue-50);
-      color: var(--blue-700);
-      font-weight: 600;
-
-      &:hover {
-        background: var(--blue-100);
-      }
-    }
-
-    &:first-child {
-      border-radius: 0.5rem 0.5rem 0 0;
-    }
-
-    &:last-child {
-      border-radius: 0 0 0.5rem 0.5rem;
-    }
+  &:active {
+    transform: scale(0.95);
   }
 }
 
-// Animation
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+.theme-toggle__track {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 14px;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+
+  .theme-toggle__switch:hover & {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
   }
 }
 
-// Responsive
-@media (max-width: 768px) {
-  .theme-toggle {
-    &__button {
-      min-width: 80px;
-      padding: 0.5rem;
-    }
+.theme-toggle__thumb {
+  position: absolute;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
 
-    &__label {
-      display: none;
-    }
-
-    &__dropdown {
-      min-width: 100px;
-    }
+  &--dark {
+    transform: translateX(24px);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--text-inverse);
   }
+}
+
+.theme-toggle__icon {
+  flex-shrink: 0;
+  transition: transform var(--transition-normal);
+}
+
+.theme-toggle__switch:active .theme-toggle__icon {
+  transform: scale(0.9);
 }

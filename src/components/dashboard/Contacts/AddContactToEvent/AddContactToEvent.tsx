@@ -14,7 +14,7 @@ import {
   Checkbox,
   Box,
   Typography,
-  Alert
+  Alert,
 } from '@mui/material';
 import { useAuth } from '../../../../hooks/useAuth';
 import { EventService } from '../../../../services/firebase/eventService';
@@ -33,7 +33,7 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
   open,
   onClose,
   contact,
-  onSuccess
+  onSuccess,
 }) => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
@@ -41,7 +41,7 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
   const [loading, setLoading] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Form data
   const [formData, setFormData] = useState({
     eventSpecificNotes: '',
@@ -49,19 +49,23 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
     plusOneDetails: {
       firstName: '',
       lastName: '',
-      dietaryRestrictions: ''
-    }
+      dietaryRestrictions: '',
+    },
   });
 
   // Load user events
   useEffect(() => {
     const loadEvents = async () => {
       if (!user?.id || !open) return;
-      
+
       setLoadingEvents(true);
       try {
         const result = await EventService.getUserEvents(user.id);
-        setEvents(result.events.filter(event => event.status === 'draft' || event.status === 'active'));
+        setEvents(
+          result.events.filter(
+            event => event.status === 'draft' || event.status === 'active'
+          )
+        );
         setError(null);
       } catch (err: any) {
         setError('Błąd podczas ładowania wydarzeń');
@@ -76,7 +80,7 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedEventId) {
       setError('Wybierz wydarzenie');
       return;
@@ -90,12 +94,15 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
         contactId: contact.id,
         eventSpecificNotes: formData.eventSpecificNotes,
         plusOneType: formData.plusOneType,
-        plusOneDetails: formData.plusOneType === 'withDetails' ? formData.plusOneDetails : undefined
+        plusOneDetails:
+          formData.plusOneType === 'withDetails'
+            ? formData.plusOneDetails
+            : undefined,
       });
 
       onSuccess();
       onClose();
-      
+
       // Reset form
       setSelectedEventId('');
       setFormData({
@@ -104,8 +111,8 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
         plusOneDetails: {
           firstName: '',
           lastName: '',
-          dietaryRestrictions: ''
-        }
+          dietaryRestrictions: '',
+        },
       });
     } catch (err: any) {
       setError(err.message || 'Błąd podczas dodawania kontaktu do wydarzenia');
@@ -123,10 +130,8 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        Dodaj kontakt do wydarzenia
-      </DialogTitle>
-      
+      <DialogTitle>Dodaj kontakt do wydarzenia</DialogTitle>
+
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -155,7 +160,7 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
               <InputLabel>Wydarzenie</InputLabel>
               <Select
                 value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
+                onChange={e => setSelectedEventId(e.target.value)}
                 disabled={loading || loadingEvents}
                 label="Wydarzenie"
               >
@@ -164,12 +169,13 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
                 ) : events.length === 0 ? (
                   <MenuItem disabled>Brak dostępnych wydarzeń</MenuItem>
                 ) : (
-                  events.map((event) => (
+                  events.map(event => (
                     <MenuItem key={event.id} value={event.id}>
                       <Box>
                         <Typography variant="body1">{event.title}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {event.date.toLocaleDateString('pl-PL')} - {event.location}
+                          {event.date.toLocaleDateString('pl-PL')} -{' '}
+                          {event.location}
                         </Typography>
                       </Box>
                     </MenuItem>
@@ -185,7 +191,12 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
               rows={3}
               label="Notatki dotyczące wydarzenia"
               value={formData.eventSpecificNotes}
-              onChange={(e) => setFormData(prev => ({ ...prev, eventSpecificNotes: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  eventSpecificNotes: e.target.value,
+                }))
+              }
               disabled={loading}
               placeholder="Dodatkowe informacje dla tego gościa w kontekście wydarzenia..."
             />
@@ -195,36 +206,51 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
               <Typography variant="subtitle2" gutterBottom>
                 Opcje plus one
               </Typography>
-              
+
               <FormControl component="fieldset">
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formData.plusOneType === 'none'}
-                        onChange={() => setFormData(prev => ({ ...prev, plusOneType: 'none' }))}
+                        onChange={() =>
+                          setFormData(prev => ({
+                            ...prev,
+                            plusOneType: 'none',
+                          }))
+                        }
                         disabled={loading}
                       />
                     }
                     label="Bez plus one"
                   />
-                  
+
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formData.plusOneType === 'withoutDetails'}
-                        onChange={() => setFormData(prev => ({ ...prev, plusOneType: 'withoutDetails' }))}
+                        onChange={() =>
+                          setFormData(prev => ({
+                            ...prev,
+                            plusOneType: 'withoutDetails',
+                          }))
+                        }
                         disabled={loading}
                       />
                     }
                     label="Plus one bez szczegółów"
                   />
-                  
+
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formData.plusOneType === 'withDetails'}
-                        onChange={() => setFormData(prev => ({ ...prev, plusOneType: 'withDetails' }))}
+                        onChange={() =>
+                          setFormData(prev => ({
+                            ...prev,
+                            plusOneType: 'withDetails',
+                          }))
+                        }
                         disabled={loading}
                       />
                     }
@@ -239,37 +265,59 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
                   <Typography variant="subtitle2" gutterBottom>
                     Szczegóły plus one
                   </Typography>
-                  
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 2,
+                      mb: 2,
+                    }}
+                  >
                     <TextField
                       label="Imię"
                       value={formData.plusOneDetails.firstName}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        plusOneDetails: { ...prev.plusOneDetails, firstName: e.target.value }
-                      }))}
+                      onChange={e =>
+                        setFormData(prev => ({
+                          ...prev,
+                          plusOneDetails: {
+                            ...prev.plusOneDetails,
+                            firstName: e.target.value,
+                          },
+                        }))
+                      }
                       disabled={loading}
                     />
-                    
+
                     <TextField
                       label="Nazwisko"
                       value={formData.plusOneDetails.lastName}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        plusOneDetails: { ...prev.plusOneDetails, lastName: e.target.value }
-                      }))}
+                      onChange={e =>
+                        setFormData(prev => ({
+                          ...prev,
+                          plusOneDetails: {
+                            ...prev.plusOneDetails,
+                            lastName: e.target.value,
+                          },
+                        }))
+                      }
                       disabled={loading}
                     />
                   </Box>
-                  
+
                   <TextField
                     fullWidth
                     label="Ograniczenia dietetyczne"
                     value={formData.plusOneDetails.dietaryRestrictions}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      plusOneDetails: { ...prev.plusOneDetails, dietaryRestrictions: e.target.value }
-                    }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        plusOneDetails: {
+                          ...prev.plusOneDetails,
+                          dietaryRestrictions: e.target.value,
+                        },
+                      }))
+                    }
                     disabled={loading}
                   />
                 </Box>
@@ -282,9 +330,9 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
           <Button onClick={handleClose} disabled={loading}>
             Anuluj
           </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={loading || !selectedEventId}
           >
             {loading ? 'Dodawanie...' : 'Dodaj do wydarzenia'}

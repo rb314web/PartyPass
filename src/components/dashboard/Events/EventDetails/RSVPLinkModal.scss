@@ -1,0 +1,306 @@
+// components/dashboard/Events/EventDetails/RSVPLinkModal.scss
+@use '../../../../styles/globals/index' as *;
+
+.rsvp-link-modal {
+  &__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-overlay, 1000);
+    padding: 2rem;
+    animation: fadeIn 0.2s ease-out;
+    min-height: 100vh;
+
+    @media (max-width: 768px) {
+      padding: 1rem;
+    }
+  }
+
+  &__container {
+    background: var(--bg-primary, #ffffff);
+    border-radius: 1rem;
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.15),
+      0 4px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+    z-index: var(--z-modal, 1001);
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 768px) {
+      max-height: calc(100vh - 2rem);
+      border-radius: 0.75rem;
+    }
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary, #1f2937);
+    }
+
+    svg {
+      color: var(--color-primary, rgba(99, 102, 241, 0.9));
+    }
+  }
+
+  &__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--bg-secondary, #f3f4f6);
+    color: var(--text-secondary, #6b7280);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--bg-tertiary, #e5e7eb);
+      color: var(--text-primary, #1f2937);
+    }
+  }
+
+  &__content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 2rem;
+    text-align: center;
+
+    p {
+      margin: 0;
+      color: var(--text-secondary, #6b7280);
+      font-size: 0.9375rem;
+    }
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+    color: var(--color-primary, rgba(99, 102, 241, 0.9));
+  }
+
+  &__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+
+    p {
+      margin: 0;
+      color: #ef4444;
+      font-size: 0.9375rem;
+    }
+  }
+
+  &__retry-btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: var(--color-primary, rgba(99, 102, 241, 0.9));
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(79, 70, 229, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+  }
+
+  &__link-section,
+  &__qr-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+    margin: 0;
+  }
+
+  &__link-container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  &__link-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-family: 'Courier New', monospace;
+    background: var(--bg-secondary, #f9fafb);
+    color: var(--text-primary, #1f2937);
+    cursor: text;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary, rgba(99, 102, 241, 0.9));
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+  }
+
+  &__copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: var(--bg-secondary, #f3f4f6);
+    color: var(--text-primary, #374151);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    &:hover {
+      background: var(--bg-tertiary, #e5e7eb);
+      border-color: rgba(148, 163, 184, 0.5);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    span {
+      @media (max-width: 480px) {
+        display: none;
+      }
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--text-secondary, #6b7280);
+    line-height: 1.5;
+  }
+
+  &__qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary, #f9fafb);
+    border-radius: 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+  }
+
+  &__qr-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 0.5rem;
+    background: white;
+    padding: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &__download-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: var(--color-primary, rgba(99, 102, 241, 0.9));
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(79, 70, 229, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+

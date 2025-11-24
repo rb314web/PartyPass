@@ -4,29 +4,29 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-md);
-  
+
   &__circle {
     border-radius: 50%;
     border: 3px solid var(--gray-200);
     border-top: 3px solid var(--primary);
     animation: spin 1s linear infinite;
   }
-  
+
   &--sm &__circle {
     width: 20px;
     height: 20px;
   }
-  
+
   &--md &__circle {
     width: 32px;
     height: 32px;
   }
-  
+
   &--lg &__circle {
     width: 48px;
     height: 48px;
   }
-  
+
   &__text {
     color: var(--gray-600);
     font-size: 0.875rem;
@@ -35,6 +35,10 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

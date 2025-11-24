@@ -9,7 +9,10 @@ interface AuthGuardProps {
   requireAuth?: boolean;
 }
 
-const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAuth = true }) => {
+const AuthGuard: React.FC<AuthGuardProps> = ({
+  children,
+  requireAuth = true,
+}) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 

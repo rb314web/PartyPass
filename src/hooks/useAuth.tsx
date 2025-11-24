@@ -1,5 +1,11 @@
 // hooks/useAuth.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { User } from '../types';
 import { AuthService, AuthError } from '../services/firebase/authService';
 
@@ -12,7 +18,10 @@ interface AuthContextType {
   error: string | null;
   clearError: () => void;
   updateProfile: (data: UpdateProfileData) => Promise<void>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -35,14 +44,16 @@ interface UpdateProfileData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Initialize auth state with Firebase
   useEffect(() => {
-    const unsubscribe = AuthService.onAuthStateChanged((user) => {
+    const unsubscribe = AuthService.onAuthStateChanged(user => {
       setUser(user);
       setLoading(false);
     });
@@ -53,7 +64,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string): Promise<void> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const user = await AuthService.login(email, password);
       setUser(user);
@@ -69,7 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (userData: RegisterData): Promise<void> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const user = await AuthService.register(userData);
       setUser(user);
@@ -116,7 +127,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> => {
     setLoading(true);
     setError(null);
 
@@ -165,7 +179,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const loginWithGoogle = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const user = await AuthService.loginWithGoogle();
       setUser(user);
@@ -181,20 +195,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      register,
-      logout,
-      loading,
-      error,
-      clearError,
-      updateProfile,
-      changePassword,
-      resetPassword,
-      deleteAccount,
-      loginWithGoogle
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        loading,
+        error,
+        clearError,
+        updateProfile,
+        changePassword,
+        resetPassword,
+        deleteAccount,
+        loginWithGoogle,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

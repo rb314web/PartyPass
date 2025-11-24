@@ -14,11 +14,15 @@ import {
   limit,
   startAfter,
   Timestamp,
-  QueryConstraint
+  QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { Guest, CreateGuestData, UpdateGuestData } from '../../types';
-import { FirebaseGuest, FirebaseEvent, COLLECTIONS } from '../../types/firebase';
+import {
+  FirebaseGuest,
+  FirebaseEvent,
+  COLLECTIONS,
+} from '../../types/firebase';
 import { AnalyticsService } from './analyticsService';
 
 export interface GuestFilters {
@@ -28,7 +32,10 @@ export interface GuestFilters {
   userId?: string;
 }
 
-const convertFirebaseGuestToGuest = (guestDoc: FirebaseGuest & { id: string }, eventData?: FirebaseEvent): Guest => {
+const convertFirebaseGuestToGuest = (
+  guestDoc: FirebaseGuest & { id: string },
+  eventData?: FirebaseEvent
+): Guest => {
   return {
     id: guestDoc.id,
     userId: guestDoc.userId,
@@ -47,7 +54,7 @@ const convertFirebaseGuestToGuest = (guestDoc: FirebaseGuest & { id: string }, e
     plusOne: !!guestDoc.plusOne,
     eventName: eventData?.title || '',
     eventDate: eventData?.date.toDate() || new Date(),
-    rsvpToken: guestDoc.rsvpToken
+    rsvpToken: guestDoc.rsvpToken,
   };
 };
 
@@ -58,15 +65,15 @@ export class GuestService {
     filters: GuestFilters = {},
     pageSize: number = 10,
     lastDoc?: QueryDocumentSnapshot<DocumentData>
-  ): Promise<{ 
-    guests: Guest[]; 
-    lastDoc: QueryDocumentSnapshot<DocumentData> | null; 
-    hasMore: boolean 
+  ): Promise<{
+    guests: Guest[];
+    lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+    hasMore: boolean;
   }> {
     try {
       let constraints: Array<QueryConstraint> = [
         where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
       ];
 
       // Dodaj filtry tylko jeśli są zdefiniowane
@@ -77,7 +84,7 @@ export class GuestService {
       if (filters.status) {
         constraints.push(where('status', '==', filters.status));
       }
-      
+
       if (lastDoc) {
         constraints.push(startAfter(lastDoc));
       }
@@ -91,14 +98,16 @@ export class GuestService {
 
       for (const doc of querySnapshot.docs) {
         const guestData = doc.data() as FirebaseGuest;
-        
+
         // Pobierz dane wydarzenia dla każdego gościa
         const eventRef = firebaseDoc(db, COLLECTIONS.EVENTS, guestData.eventId);
         const eventDoc = await getDoc(eventRef);
         const eventData = eventDoc.data() as FirebaseEvent | undefined;
 
         if (eventData) {
-          guests.push(convertFirebaseGuestToGuest({ ...guestData, id: doc.id }, eventData));
+          guests.push(
+            convertFirebaseGuestToGuest({ ...guestData, id: doc.id }, eventData)
+          );
         }
       }
 
@@ -106,10 +115,11 @@ export class GuestService {
       let filteredGuests = guests;
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        filteredGuests = guests.filter(guest =>
-          guest.firstName.toLowerCase().includes(searchLower) ||
-          guest.lastName.toLowerCase().includes(searchLower) ||
-          guest.email.toLowerCase().includes(searchLower)
+        filteredGuests = guests.filter(
+          guest =>
+            guest.firstName.toLowerCase().includes(searchLower) ||
+            guest.lastName.toLowerCase().includes(searchLower) ||
+            guest.email.toLowerCase().includes(searchLower)
         );
       }
 
@@ -119,7 +129,7 @@ export class GuestService {
       return {
         guests: filteredGuests,
         lastDoc: lastVisible || null,
-        hasMore
+        hasMore,
       };
     } catch (error: any) {
       throw new Error(`Błąd podczas pobierania gości: ${error.message}`);
@@ -127,41 +137,48 @@ export class GuestService {
   }
 
   // Create guest
-  static async createGuest(userId: string, eventId: string, guestData: CreateGuestData): Promise<Guest> {
+  static async createGuest(
+    userId: string,
+    eventId: string,
+    guestData: CreateGuestData
+  ): Promise<Guest> {
     try {
       const newGuest: Omit<FirebaseGuest, 'id'> = {
         userId,
         eventId,
-        firstName: guestData.firstName,
-        lastName: guestData.lastName,
-        email: guestData.email,
+        firstName: guestData.firstName || '',
+        lastName: guestData.lastName || '',
+        email: guestData.email || '',
         phoneNumber: guestData.phone || '',
         status: 'pending',
         invitedAt: Timestamp.now(),
         createdAt: Timestamp.now(),
         dietaryRestrictions: guestData.dietaryRestrictions || '',
         notes: guestData.notes || '',
-        plusOne: guestData.plusOne || false
+        plusOne: guestData.plusOne || false,
       };
 
       const docRef = await addDoc(collection(db, COLLECTIONS.GUESTS), newGuest);
-        // Generate RSVP token after creating the guest
+      // Generate RSVP token after creating the guest
       try {
         const { RSVPService } = await import('./rsvpService');
-        const rsvpToken = await RSVPService.generateRSVPToken(docRef.id, eventId);
-        
+        const rsvpToken = await RSVPService.generateRSVPToken(
+          docRef.id,
+          eventId
+        );
+
         // Update guest with the RSVP token
         await updateDoc(docRef, {
-          rsvpToken: rsvpToken.token
+          rsvpToken: rsvpToken.token,
         });
-        
+
         newGuest.rsvpToken = rsvpToken.token;
       } catch (rsvpError) {
         console.warn('Failed to generate RSVP token for guest:', rsvpError);
         // Guest is still created, just without RSVP token
         newGuest.rsvpToken = undefined;
       }
-      
+
       // Track analytics for guest invitation
       try {
         await AnalyticsService.trackMetric(
@@ -173,15 +190,18 @@ export class GuestService {
             guestEmail: guestData.email,
             hasPlusOne: guestData.plusOne || false,
             hasDietaryRestrictions: !!guestData.dietaryRestrictions,
-            hasPhone: !!guestData.phone
+            hasPhone: !!guestData.phone,
           },
           eventId,
           docRef.id
         );
       } catch (analyticsError) {
-        console.warn('Failed to track guest invitation analytics:', analyticsError);
+        console.warn(
+          'Failed to track guest invitation analytics:',
+          analyticsError
+        );
       }
-      
+
       // Update event guest counts
       const eventRef = firebaseDoc(db, COLLECTIONS.EVENTS, eventId);
       const eventDoc = await getDoc(eventRef);
@@ -190,7 +210,7 @@ export class GuestService {
       if (eventData) {
         const updates = {
           guestCount: (eventData.guestCount || 0) + 1,
-          pendingCount: (eventData.pendingCount || 0) + 1
+          pendingCount: (eventData.pendingCount || 0) + 1,
         };
 
         await updateDoc(eventRef, updates);
@@ -206,7 +226,10 @@ export class GuestService {
   }
 
   // Update guest
-  static async updateGuest(guestId: string, updateData: UpdateGuestData): Promise<Guest> {
+  static async updateGuest(
+    guestId: string,
+    updateData: UpdateGuestData
+  ): Promise<Guest> {
     try {
       const guestRef = firebaseDoc(db, COLLECTIONS.GUESTS, guestId);
       const guestDoc = await getDoc(guestRef);
@@ -217,18 +240,22 @@ export class GuestService {
       }
 
       const updateFields: Partial<FirebaseGuest> = {
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
       };
 
       if (updateData.firstName) updateFields.firstName = updateData.firstName;
       if (updateData.lastName) updateFields.lastName = updateData.lastName;
       if (updateData.email) updateFields.email = updateData.email;
-      if (updateData.phone !== undefined) updateFields.phoneNumber = updateData.phone;
-      if (updateData.dietaryRestrictions !== undefined) updateFields.dietaryRestrictions = updateData.dietaryRestrictions;
+      if (updateData.phone !== undefined)
+        updateFields.phoneNumber = updateData.phone;
+      if (updateData.dietaryRestrictions !== undefined)
+        updateFields.dietaryRestrictions = updateData.dietaryRestrictions;
       if (updateData.notes !== undefined) updateFields.notes = updateData.notes;
-      if (typeof updateData.plusOne === 'boolean') updateFields.plusOne = updateData.plusOne;
-      if (updateData.plusOneDetails !== undefined) updateFields.plusOneDetails = updateData.plusOneDetails;
-      
+      if (typeof updateData.plusOne === 'boolean')
+        updateFields.plusOne = updateData.plusOne;
+      if (updateData.plusOneDetails !== undefined)
+        updateFields.plusOneDetails = updateData.plusOneDetails;
+
       // Jeśli zmienia się status, zaktualizuj liczniki wydarzenia
       if (updateData.status && updateData.status !== oldData.status) {
         const eventRef = firebaseDoc(db, COLLECTIONS.EVENTS, oldData.eventId);
@@ -240,11 +267,20 @@ export class GuestService {
 
           // Zmniejsz licznik starego statusu
           if (oldData.status === 'accepted') {
-            updates.acceptedCount = Math.max(0, (eventData.acceptedCount || 0) - 1);
+            updates.acceptedCount = Math.max(
+              0,
+              (eventData.acceptedCount || 0) - 1
+            );
           } else if (oldData.status === 'declined') {
-            updates.declinedCount = Math.max(0, (eventData.declinedCount || 0) - 1);
+            updates.declinedCount = Math.max(
+              0,
+              (eventData.declinedCount || 0) - 1
+            );
           } else if (oldData.status === 'pending') {
-            updates.pendingCount = Math.max(0, (eventData.pendingCount || 0) - 1);
+            updates.pendingCount = Math.max(
+              0,
+              (eventData.pendingCount || 0) - 1
+            );
           }
 
           // Zwiększ licznik nowego statusu
@@ -257,7 +293,8 @@ export class GuestService {
           }
 
           await updateDoc(eventRef, updates);
-        }        updateFields.status = updateData.status;
+        }
+        updateFields.status = updateData.status;
         updateFields.respondedAt = Timestamp.now();
 
         // Track analytics for guest response
@@ -271,13 +308,16 @@ export class GuestService {
               oldStatus: oldData.status,
               newStatus: updateData.status,
               guestEmail: oldData.email,
-              responseTime: Date.now() - oldData.invitedAt.toMillis()
+              responseTime: Date.now() - oldData.invitedAt.toMillis(),
             },
             oldData.eventId,
             guestId
           );
         } catch (analyticsError) {
-          console.warn('Failed to track guest response analytics:', analyticsError);
+          console.warn(
+            'Failed to track guest response analytics:',
+            analyticsError
+          );
         }
       }
 
@@ -286,7 +326,9 @@ export class GuestService {
       // Get updated guest with event data
       const updatedDoc = await getDoc(guestRef);
       const updatedData = updatedDoc.data() as FirebaseGuest;
-      const eventDoc = await getDoc(firebaseDoc(db, COLLECTIONS.EVENTS, oldData.eventId));
+      const eventDoc = await getDoc(
+        firebaseDoc(db, COLLECTIONS.EVENTS, oldData.eventId)
+      );
       const eventData = eventDoc.data() as FirebaseEvent | undefined;
 
       return convertFirebaseGuestToGuest(
@@ -316,13 +358,19 @@ export class GuestService {
 
       if (eventData) {
         const updates: Partial<FirebaseEvent> = {
-          guestCount: Math.max(0, (eventData.guestCount || 0) - 1)
+          guestCount: Math.max(0, (eventData.guestCount || 0) - 1),
         };
 
         if (guestData.status === 'accepted') {
-          updates.acceptedCount = Math.max(0, (eventData.acceptedCount || 0) - 1);
+          updates.acceptedCount = Math.max(
+            0,
+            (eventData.acceptedCount || 0) - 1
+          );
         } else if (guestData.status === 'declined') {
-          updates.declinedCount = Math.max(0, (eventData.declinedCount || 0) - 1);
+          updates.declinedCount = Math.max(
+            0,
+            (eventData.declinedCount || 0) - 1
+          );
         } else if (guestData.status === 'pending') {
           updates.pendingCount = Math.max(0, (eventData.pendingCount || 0) - 1);
         }

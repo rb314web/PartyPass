@@ -1,5 +1,6 @@
 // components/dashboard/Events/EditEvent/EditEvent.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -11,7 +12,7 @@ import {
   Save,
   X,
   Upload,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { EventService } from '../../../../services/firebase/eventService';
@@ -47,10 +48,137 @@ const EditEvent: React.FC = () => {
     location: '',
     maxGuests: 50,
     dresscode: '',
-    additionalInfo: ''
+    additionalInfo: '',
   });
+  const [initialFormData, setInitialFormData] = useState<EventFormData | null>(
+    null
+  );
   const [imagePreview, setImagePreview] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  // Blokuj scrollowanie SYNCHRONICZNIE z renderowaniem modala
+  useLayoutEffect(() => {
+    if (!showCancelModal) return;
+
+    // Wykonaj w następnej klatce aby uniknąć przeskakiwania
+    const frameId = requestAnimationFrame(() => {
+      // Oblicz szerokość scrollbara PRZED zmianami
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+
+      // Zapisz bieżącą pozycję scroll
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const scrollX = window.scrollX || document.documentElement.scrollLeft;
+
+      // Znajdź elementy
+      const dashboardContent = document.querySelector(
+        '.dashboard__content'
+      ) as HTMLElement;
+      const dashboardMain = document.querySelector(
+        '.dashboard__main'
+      ) as HTMLElement;
+      const rootElement = document.getElementById('root') as HTMLElement;
+      const htmlElement = document.documentElement;
+      const bodyElement = document.body;
+
+      // Zastosuj zmiany ATOMICZNIE - wszystko jednocześnie
+      const styles = {
+        html: htmlElement.style.cssText,
+        body: bodyElement.style.cssText,
+        root: rootElement ? rootElement.style.cssText : '',
+        content: dashboardContent ? dashboardContent.style.cssText : '',
+        main: dashboardMain ? dashboardMain.style.cssText : '',
+      };
+
+      // Zablokuj wszystko jednocześnie
+      htmlElement.style.overflow = 'hidden';
+      bodyElement.style.overflow = 'hidden';
+      bodyElement.style.position = 'fixed';
+      bodyElement.style.top = `-${scrollY}px`;
+      bodyElement.style.left = `-${scrollX}px`;
+      bodyElement.style.width = '100%';
+      bodyElement.style.paddingRight = `${scrollbarWidth}px`;
+
+      if (rootElement) {
+        rootElement.style.overflow = 'hidden';
+      }
+
+      if (dashboardContent) {
+        dashboardContent.style.overflow = 'hidden';
+      }
+
+      if (dashboardMain) {
+        dashboardMain.style.overflow = 'hidden';
+      }
+
+      // Zapisz style w closure dla cleanup
+      return () => {
+        cancelAnimationFrame(frameId);
+
+        // Przywróć scroll
+        const scrollY = parseInt(bodyElement.style.top || '0') * -1;
+        const scrollX = parseInt(bodyElement.style.left || '0') * -1;
+
+        // Przywróć oryginalne style
+        htmlElement.style.cssText = styles.html;
+        bodyElement.style.cssText = styles.body;
+
+        if (rootElement) {
+          rootElement.style.cssText = styles.root;
+        }
+
+        if (dashboardContent) {
+          dashboardContent.style.cssText = styles.content;
+        }
+
+        if (dashboardMain) {
+          dashboardMain.style.cssText = styles.main;
+        }
+
+        // Przywróć pozycję scroll
+        window.scrollTo(scrollX, scrollY);
+      };
+    });
+
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+
+      // Bezpieczny cleanup
+      const scrollY = parseInt(document.body.style.top || '0') * -1;
+      const scrollX = parseInt(document.body.style.left || '0') * -1;
+
+      const dashboardContent = document.querySelector(
+        '.dashboard__content'
+      ) as HTMLElement;
+      const dashboardMain = document.querySelector(
+        '.dashboard__main'
+      ) as HTMLElement;
+      const rootElement = document.getElementById('root') as HTMLElement;
+
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.width = '';
+      document.body.style.paddingRight = '';
+
+      if (rootElement) {
+        rootElement.style.overflow = '';
+      }
+
+      if (dashboardContent) {
+        dashboardContent.style.overflow = '';
+      }
+
+      if (dashboardMain) {
+        dashboardMain.style.overflow = '';
+      }
+
+      window.scrollTo(scrollX, scrollY);
+    };
+  }, [showCancelModal]);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -61,7 +189,7 @@ const EditEvent: React.FC = () => {
         if (eventData) {
           setEvent(eventData);
           const eventDate = new Date(eventData.date);
-          setFormData({
+          const initialData = {
             title: eventData.title,
             description: eventData.description,
             date: format(eventDate, 'yyyy-MM-dd'),
@@ -69,8 +197,10 @@ const EditEvent: React.FC = () => {
             location: eventData.location,
             maxGuests: eventData.maxGuests,
             dresscode: eventData.dresscode || '',
-            additionalInfo: eventData.additionalInfo || ''
-          });
+            additionalInfo: eventData.additionalInfo || '',
+          };
+          setFormData(initialData);
+          setInitialFormData(initialData);
         }
         setLoading(false);
       } catch (error: any) {
@@ -82,13 +212,15 @@ const EditEvent: React.FC = () => {
     loadEvent();
   }, [id, user]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'maxGuests' ? parseInt(value) || 0 : value
+      [name]: name === 'maxGuests' ? parseInt(value) || 0 : value,
     }));
-    
+
     // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -99,10 +231,10 @@ const EditEvent: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       setFormData(prev => ({ ...prev, image: file }));
-      
+
       // Create preview
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
@@ -142,14 +274,14 @@ const EditEvent: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !event) return;
 
     setSaving(true);
-    
+
     try {
       const eventDateTime = new Date(`${formData.date}T${formData.time}`);
-      
+
       const updateData = {
         title: formData.title,
         description: formData.description,
@@ -158,7 +290,7 @@ const EditEvent: React.FC = () => {
         maxGuests: formData.maxGuests,
         dresscode: formData.dresscode,
         additionalInfo: formData.additionalInfo,
-        image: formData.image
+        image: formData.image,
       };
 
       await EventService.updateEvent(event.id, updateData);
@@ -171,9 +303,29 @@ const EditEvent: React.FC = () => {
   };
 
   const handleCancel = () => {
-    if (window.confirm('Czy na pewno chcesz anulować edycję? Niezapisane zmiany zostaną utracone.')) {
+    // Sprawdź czy są niezapisane zmiany
+    const hasChanges =
+      initialFormData &&
+      (formData.title !== initialFormData.title ||
+        formData.description !== initialFormData.description ||
+        formData.date !== initialFormData.date ||
+        formData.time !== initialFormData.time ||
+        formData.location !== initialFormData.location ||
+        formData.maxGuests !== initialFormData.maxGuests ||
+        formData.dresscode !== initialFormData.dresscode ||
+        formData.additionalInfo !== initialFormData.additionalInfo ||
+        formData.image !== undefined);
+
+    if (hasChanges) {
+      setShowCancelModal(true);
+    } else {
       navigate(`/dashboard/events/${id}`);
     }
+  };
+
+  const confirmCancel = () => {
+    setShowCancelModal(false);
+    navigate(`/dashboard/events/${id}`);
   };
 
   if (loading) {
@@ -190,8 +342,13 @@ const EditEvent: React.FC = () => {
       <div className="edit-event__error">
         <AlertTriangle size={48} />
         <h2>Nie znaleziono wydarzenia</h2>
-        <p>Wydarzenie o podanym ID nie istnieje lub nie masz do niego dostępu.</p>
-        <button onClick={() => navigate('/dashboard/events')} className="button">
+        <p>
+          Wydarzenie o podanym ID nie istnieje lub nie masz do niego dostępu.
+        </p>
+        <button
+          onClick={() => navigate('/dashboard/events')}
+          className="button"
+        >
           <ArrowLeft size={20} />
           Wróć do listy wydarzeń
         </button>
@@ -213,7 +370,7 @@ const EditEvent: React.FC = () => {
         <div className="edit-event__main">
           <div className="edit-event__section">
             <h2>Podstawowe informacje</h2>
-            
+
             <div className="edit-event__field">
               <label htmlFor="title">
                 <FileText size={20} />
@@ -228,7 +385,9 @@ const EditEvent: React.FC = () => {
                 placeholder="Wprowadź tytuł wydarzenia"
                 className={errors.title ? 'error' : ''}
               />
-              {errors.title && <span className="edit-event__error">{errors.title}</span>}
+              {errors.title && (
+                <span className="edit-event__error">{errors.title}</span>
+              )}
             </div>
 
             <div className="edit-event__field">
@@ -245,7 +404,9 @@ const EditEvent: React.FC = () => {
                 rows={4}
                 className={errors.description ? 'error' : ''}
               />
-              {errors.description && <span className="edit-event__error">{errors.description}</span>}
+              {errors.description && (
+                <span className="edit-event__error">{errors.description}</span>
+              )}
             </div>
 
             <div className="edit-event__row">
@@ -262,7 +423,9 @@ const EditEvent: React.FC = () => {
                   onChange={handleInputChange}
                   className={errors.date ? 'error' : ''}
                 />
-                {errors.date && <span className="edit-event__error">{errors.date}</span>}
+                {errors.date && (
+                  <span className="edit-event__error">{errors.date}</span>
+                )}
               </div>
 
               <div className="edit-event__field">
@@ -278,7 +441,9 @@ const EditEvent: React.FC = () => {
                   onChange={handleInputChange}
                   className={errors.time ? 'error' : ''}
                 />
-                {errors.time && <span className="edit-event__error">{errors.time}</span>}
+                {errors.time && (
+                  <span className="edit-event__error">{errors.time}</span>
+                )}
               </div>
             </div>
 
@@ -289,7 +454,9 @@ const EditEvent: React.FC = () => {
               </label>
               <LocationPicker
                 value={formData.location}
-                onChange={(location: string) => setFormData(prev => ({ ...prev, location }))}
+                onChange={(location: string) =>
+                  setFormData(prev => ({ ...prev, location }))
+                }
                 error={errors.location}
                 placeholder="Gdzie odbędzie się wydarzenie?"
               />
@@ -309,17 +476,17 @@ const EditEvent: React.FC = () => {
                 min="1"
                 className={errors.maxGuests ? 'error' : ''}
               />
-              {errors.maxGuests && <span className="edit-event__error">{errors.maxGuests}</span>}
+              {errors.maxGuests && (
+                <span className="edit-event__error">{errors.maxGuests}</span>
+              )}
             </div>
           </div>
 
           <div className="edit-event__section">
             <h2>Dodatkowe ustawienia</h2>
-            
+
             <div className="edit-event__field">
-              <label htmlFor="dresscode">
-                Dress code
-              </label>
+              <label htmlFor="dresscode">Dress code</label>
               <input
                 type="text"
                 id="dresscode"
@@ -331,9 +498,7 @@ const EditEvent: React.FC = () => {
             </div>
 
             <div className="edit-event__field">
-              <label htmlFor="additionalInfo">
-                Dodatkowe informacje
-              </label>
+              <label htmlFor="additionalInfo">Dodatkowe informacje</label>
               <textarea
                 id="additionalInfo"
                 name="additionalInfo"
@@ -367,7 +532,11 @@ const EditEvent: React.FC = () => {
         </div>
 
         <div className="edit-event__actions">
-          <button type="button" onClick={handleCancel} className="edit-event__cancel">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="edit-event__cancel"
+          >
             <X size={20} />
             Anuluj
           </button>
@@ -377,6 +546,47 @@ const EditEvent: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {showCancelModal &&
+        createPortal(
+          <div
+            className="edit-event__modal-overlay"
+            onClick={() => setShowCancelModal(false)}
+          >
+            <div
+              className="edit-event__modal"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="edit-event__modal-header">
+                <h3>Anulować edycję?</h3>
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="edit-event__modal-close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <p className="edit-event__modal-text">
+                Masz niezapisane zmiany. Czy na pewno chcesz anulować edycję?
+              </p>
+              <div className="edit-event__modal-actions">
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="edit-event__modal-btn edit-event__modal-btn--secondary"
+                >
+                  Kontynuuj edycję
+                </button>
+                <button
+                  onClick={confirmCancel}
+                  className="edit-event__modal-btn edit-event__modal-btn--danger"
+                >
+                  Anuluj edycję
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

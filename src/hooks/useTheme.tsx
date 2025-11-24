@@ -1,7 +1,7 @@
 // hooks/useTheme.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-export type Theme = 'light';
+export type Theme = 'light' | 'dark' | 'system';
 
 interface UseThemeReturn {
   theme: Theme;
@@ -10,43 +10,91 @@ interface UseThemeReturn {
   setTheme: (theme: Theme) => void;
 }
 
+// Funkcja pomocnicza do wykrywania preferencji systemowych
+const getSystemPreference = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+};
+
+// Funkcja pomocnicza do określania czy tryb ciemny jest aktywny
+const resolveIsDark = (currentTheme: Theme): boolean => {
+  if (currentTheme === 'dark') return true;
+  if (currentTheme === 'light') return false;
+  return getSystemPreference();
+};
+
 export const useTheme = (): UseThemeReturn => {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [isDark, setIsDark] = useState(false);
+  // Inicjalizacja z localStorage lub preferencjami systemowymi
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system';
+    const saved = localStorage.getItem('partypass_theme') as Theme | null;
+    return saved || 'system';
+  });
 
-  // Function to apply theme to document (always light)
-  const applyTheme = (currentTheme: Theme) => {
-    setIsDark(false); // Always false for light theme
+  const [isDark, setIsDark] = useState(() => resolveIsDark(theme));
+
+  // Funkcja aplikująca motyw do dokumentu
+  const applyTheme = useCallback((currentTheme: Theme) => {
+    const root = document.documentElement;
+    const shouldBeDark = resolveIsDark(currentTheme);
     
-    // Always remove dark class to ensure light theme
-    document.documentElement.classList.remove('dark');
-    
-    // Force light theme class if needed
-    document.documentElement.classList.add('light');
-  };
+    setIsDark(shouldBeDark);
 
-  // Set theme (always light, but keeping interface for compatibility)
-  const setTheme = (newTheme: Theme) => {
-    setThemeState('light');
-    localStorage.setItem('partypass_theme', 'light');
-    applyTheme('light');
-  };
+    // Dodaj lub usuń klasę 'dark' z elementu html
+    root.classList.toggle('dark', shouldBeDark);
+    root.classList.toggle('light', !shouldBeDark);
+  }, []);
 
-  // Toggle theme (no-op since we only have light theme)
-  const toggleTheme = () => {
-    // No-op since we only support light theme
-    setTheme('light');
-  };
+  // Ustaw motyw (light/dark/system)
+  const setTheme = useCallback((newTheme: Theme) => {
+    setThemeState(newTheme);
+    localStorage.setItem('partypass_theme', newTheme);
+    applyTheme(newTheme);
+  }, [applyTheme]);
 
-  // Apply theme on mount
+  // Przełącz między light a dark (system pomija)
+  const toggleTheme = useCallback(() => {
+    const currentIsDark = resolveIsDark(theme);
+    const newTheme: Theme = currentIsDark ? 'light' : 'dark';
+    setTheme(newTheme);
+  }, [theme, setTheme]);
+
+  // Aplikuj motyw przy montowaniu
   useEffect(() => {
     applyTheme(theme);
-  }, [theme]);
+  }, [theme, applyTheme]);
+
+  // Nasłuchuj zmian preferencji systemowych dla 'system' mode
+  useEffect(() => {
+    if (theme !== 'system') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = () => {
+      applyTheme('system');
+    };
+
+    // Obsługa dla starszych przeglądarek
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      // Fallback dla starszych przeglądarek
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, [theme, applyTheme]);
 
   return {
     theme,
     isDark,
     toggleTheme,
-    setTheme
+    setTheme,
   };
 };

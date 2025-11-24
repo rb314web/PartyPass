@@ -1,0 +1,553 @@
+// components/common/UnifiedHeader/UnifiedHeader.scss
+@use '../../../styles/globals' as *;
+
+.unified-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-header);
+  transition: all 0.3s ease;
+  height: 64px;
+
+  // CSS Variables for scroll effects
+  --scroll-blur: 0px;
+  --scroll-opacity: 1;
+
+  &__container {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.875rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+
+    @include respond-below('tablet') {
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      height: 100%;
+    }
+  }
+
+  // Center Section - Navigation or Greeting
+  &__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__greeting-section {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    justify-self: start;
+    flex: 1;
+    min-width: 0;
+    gap: 0.75rem;
+  }
+
+  &__greeting-section--mobile-logo {
+    // Domyślnie ukryte (będzie nadpisane w &--dashboard)
+    display: none;
+  }
+
+  &__logo {
+    flex-shrink: 0;
+    height: 32px;
+    width: auto;
+  }
+
+  &__greeting-icon {
+    color: var(--gray-500, #6b7280);
+    flex-shrink: 0;
+  }
+
+  &__greeting {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+
+  // Right Section - Actions
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-self: end;
+    flex-shrink: 0;
+  }
+
+  &__theme-toggle {
+    @include respond-below('tablet') {
+      display: none;
+    }
+  }
+
+  &__search-field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 240px;
+    max-width: 320px;
+    padding: 0.5rem 0.875rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md, 8px);
+    cursor: pointer;
+    transition: all 0.2s ease,
+                background-color var(--transition-colors, 0.2s ease),
+                border-color var(--transition-colors, 0.2s ease),
+                color var(--transition-colors, 0.2s ease);
+    text-align: left;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+
+    &:hover {
+      background: var(--bg-primary);
+      border-color: var(--border-secondary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    &:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+      background: var(--bg-primary);
+      border-color: var(--color-primary);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  &__search-icon {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__search-placeholder {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  // Placeholders (temporary - will be replaced in Phase 4.3)
+  &__nav-placeholder,
+  &__greeting-placeholder,
+  &__actions-placeholder {
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(
+      135deg,
+      rgba(99, 102, 241, 0.08),
+      rgba(139, 92, 246, 0.08)
+    );
+    border: 2px dashed rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
+    font-size: 0.875rem;
+    color: var(--primary, #3b82f6);
+    font-weight: 600;
+    animation: pulse 2s ease-in-out infinite;
+
+    &-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &::before {
+        content: '⚙️';
+        font-size: 1rem;
+      }
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  // Mobile Menu Toggle
+  &__menu-toggle,
+  &__mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    border-radius: 8px;
+
+    &:hover {
+      background: var(--bg-secondary, #f9fafb);
+      color: var(--color-primary);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  // Mobile Toggle for Dashboard (positioned outside header)
+  &__mobile-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: calc(var(--z-header) + 1);
+    background: var(--bg-elevated, #ffffff);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    // Ukryj gdy bottom navigation jest widoczne (na urządzeniach mobilnych)
+    @media (max-width: 768px) {
+      display: none;
+    }
+
+    @include respond-to('tablet') {
+      display: none;
+    }
+  }
+
+  // Mobile Menu Overlay
+  &__mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-overlay);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.3s ease;
+
+      &-content {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 85%;
+        max-width: 400px;
+        background: var(--bg-primary, #ffffff);
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
+      animation: slideInRight 0.3s ease;
+      padding: 2rem;
+    }
+  }
+
+  // ============================================
+  // VARIANT MODIFIERS
+  // ============================================
+
+  // Landing Variant - Minimalist Design
+  &--landing {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+    // Dark mode support
+    @media (prefers-color-scheme: dark) {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    // Style overrides for landing
+    .unified-header__container {
+      padding: 1rem 2rem;
+      max-width: 1140px;
+      gap: 2rem;
+
+      @include respond-below('tablet') {
+        padding: 0.875rem 1.25rem;
+        gap: 1.25rem;
+      }
+    }
+
+    // Navigation links styling on landing - minimalist
+    .navigation-links {
+      &__button {
+        color: rgba(0, 0, 0, 0.7);
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+
+        @media (prefers-color-scheme: dark) {
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.04);
+          color: #000000;
+
+          @media (prefers-color-scheme: dark) {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+          }
+        }
+
+        &--active {
+          background: rgba(0, 0, 0, 0.08);
+          color: #000000;
+          font-weight: 600;
+
+          @media (prefers-color-scheme: dark) {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+          }
+        }
+      }
+
+      &__icon {
+        color: rgba(0, 0, 0, 0.6);
+
+        @media (prefers-color-scheme: dark) {
+          color: rgba(255, 255, 255, 0.6);
+        }
+      }
+
+      &__description {
+        color: rgba(0, 0, 0, 0.55);
+        font-size: 0.8125rem;
+
+        @media (prefers-color-scheme: dark) {
+          color: rgba(255, 255, 255, 0.55);
+        }
+      }
+    }
+
+    // Mobile toggle button on landing - minimalist
+    .unified-header__menu-toggle {
+      color: rgba(0, 0, 0, 0.7);
+      border-radius: 6px;
+
+      @media (prefers-color-scheme: dark) {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.04);
+        color: #000000;
+
+        @media (prefers-color-scheme: dark) {
+          background: rgba(255, 255, 255, 0.06);
+          color: #ffffff;
+        }
+      }
+    }
+
+    // Override scrolled state for landing - subtle shadow
+    &.unified-header--scrolled {
+      backdrop-filter: blur(24px) saturate(200%);
+      -webkit-backdrop-filter: blur(24px) saturate(200%);
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+      @media (prefers-color-scheme: dark) {
+        background: rgba(17, 24, 39, 0.85);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+    }
+  }
+
+  // Auth Variant (minimal)
+  &--auth {
+    background: var(--bg-elevated, #ffffff);
+    border-bottom: 2px solid var(--border-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  // Dashboard Variant
+  &--dashboard {
+    background: var(--bg-primary, #ffffff);
+    border-bottom: 1px solid var(--border-primary, #e5e7eb);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+    .unified-header__container {
+      grid-template-columns: 1fr auto;
+      padding: 0.875rem 2rem;
+      gap: 1.5rem;
+
+      @include respond-below('tablet') {
+        grid-template-columns: 1fr auto;
+        padding: 0.75rem 1rem;
+        padding-left: 4rem; // Space for mobile toggle button
+        gap: 1rem;
+      }
+    }
+
+    .unified-header__greeting-section {
+      @include respond-below('tablet') {
+        display: none;
+      }
+    }
+    
+    // Wyjątek: logo mobilne ma być widoczne na mobile (gdy bottom nav jest widoczne)
+    .unified-header__greeting-section--mobile-logo {
+      @include respond-below('tablet') {
+        display: flex !important; // Nadpisz regułę ukrywającą
+      }
+      
+      // Ukryj na większych ekranach (gdzie bottom nav jest ukryte)
+      @include respond-to('tablet') {
+        display: none;
+      }
+    }
+
+    .unified-header__search {
+      @include respond-below('tablet') {
+        display: none;
+      }
+    }
+  }
+
+  // Scrolled State (with blur effect)
+  &--scrolled {
+    backdrop-filter: blur(var(--scroll-blur, 10px));
+    background-color: rgba(255, 255, 255, var(--scroll-opacity, 0.95));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    // Dark mode support
+    @media (prefers-color-scheme: dark) {
+      background-color: rgba(18, 18, 18, var(--scroll-opacity, 0.95));
+    }
+  }
+
+  // Menu Open State
+  &--menu-open {
+    // Prevent scrolling
+    body {
+      overflow: hidden;
+    }
+  }
+
+  // ============================================
+  // RESPONSIVE BREAKPOINTS
+  // ============================================
+
+  @include respond-below('tablet') {
+    &__nav {
+      display: none;
+    }
+
+    &__greeting-section {
+      display: none;
+    }
+
+    &__container {
+      grid-template-columns: auto 1fr;
+    }
+  }
+
+  @include respond-below('mobile-lg') {
+    &__container {
+      padding: 0.5rem 0.75rem;
+    }
+
+    &__right {
+      gap: 0.5rem;
+    }
+  }
+}
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+// ============================================
+// DARK MODE SUPPORT
+// ============================================
+
+@media (prefers-color-scheme: dark) {
+  .unified-header {
+    &--landing {
+      border-bottom-color: var(--color-accent);
+    }
+
+    &--auth,
+    &--dashboard {
+      background: var(--bg-primary, #ffffff);
+      border-bottom-color: var(--border-primary);
+    }
+
+    &__mobile-menu {
+      background: rgba(0, 0, 0, 0.7);
+
+      &-content {
+        background: var(--bg-primary, #ffffff);
+      }
+    }
+  }
+}
+
+// ============================================
+// ACCESSIBILITY
+// ============================================
+
+.unified-header {
+  &__menu-toggle,
+  &__mobile-toggle {
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .unified-header {
+    transition: none;
+
+    &__mobile-menu,
+    &__mobile-menu-content {
+      animation: none;
+    }
+  }
+}

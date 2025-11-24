@@ -22,22 +22,45 @@ export interface SearchFilters {
   limit?: number;
 }
 
+interface CacheEntry {
+  results: SearchResult[];
+  timestamp: number;
+}
+
 class SearchService {
-  // Main search function
+  // Simple in-memory cache
+  private static searchCache = new Map<string, CacheEntry>();
+  private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private static readonly MAX_CACHE_SIZE = 50;
+
+  // Main search function with caching
   static async search(
-    userId: string, 
-    query: string, 
+    userId: string,
+    query: string,
     filters: SearchFilters = {}
   ): Promise<SearchResult[]> {
     if (!query.trim()) return [];
 
-    const { types = ['event', 'contact'], limit = 20 } = filters;
+    // Create cache key
+    const cacheKey = `${userId}:${query.toLowerCase()}:${JSON.stringify(filters)}`;
+
+    // Check cache
+    const cached = this.searchCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      console.log('Returning cached search results for:', query);
+      return cached.results;
+    }
+
+    console.log('Performing fresh search for:', query);
+
+    const { types = ['event', 'contact'], limit = 100 } = filters;
     const results: SearchResult[] = [];
 
     // Search events
     if (types.includes('event')) {
       try {
         const events = await this.searchEvents(userId, query, filters);
+        console.log(`Found ${events.length} events matching "${query}"`);
         results.push(...events);
       } catch (error) {
         console.error('Error searching events:', error);
@@ -48,38 +71,73 @@ class SearchService {
     if (types.includes('contact')) {
       try {
         const contacts = await this.searchContacts(userId, query, filters);
+        console.log(`Found ${contacts.length} contacts matching "${query}"`);
         results.push(...contacts);
       } catch (error) {
         console.error('Error searching contacts:', error);
       }
     }
 
+    console.log(`Total results before sorting: ${results.length}`);
+
     // Sort by relevance score and limit results
-    return results
+    const sortedResults = results
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
+
+    console.log(
+      `Returning ${sortedResults.length} results after sorting and limiting`
+    );
+
+    // Cache results
+    this.searchCache.set(cacheKey, {
+      results: sortedResults,
+      timestamp: Date.now(),
+    });
+
+    // Limit cache size (LRU-like behavior)
+    if (this.searchCache.size > this.MAX_CACHE_SIZE) {
+      const firstKey = this.searchCache.keys().next().value;
+      if (firstKey) {
+        this.searchCache.delete(firstKey);
+      }
+    }
+
+    return sortedResults;
+  }
+
+  // Clear cache (useful after data changes)
+  static clearCache(): void {
+    this.searchCache.clear();
   }
 
   // Search events
   private static async searchEvents(
-    userId: string, 
-    query: string, 
+    userId: string,
+    query: string,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
-    const result = await EventService.getUserEvents(userId, {
-      search: query,
-      status: filters.status as any,
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo
-    });
+    // Use larger limit for search to get all matching events
+    const result = await EventService.getUserEvents(
+      userId,
+      {
+        search: query,
+        status: filters.status as any,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+      },
+      100
+    ); // Increase limit to 100 to get more results
 
-    return result.events.map((event: Event) => this.eventToSearchResult(event, query));
+    return result.events.map((event: Event) =>
+      this.eventToSearchResult(event, query)
+    );
   }
 
   // Search contacts
   private static async searchContacts(
-    userId: string, 
-    query: string, 
+    userId: string,
+    query: string,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
     const contacts = await ContactService.searchContacts(userId, query);
@@ -88,7 +146,10 @@ class SearchService {
   }
 
   // Convert event to search result
-  private static eventToSearchResult(event: Event, query: string): SearchResult {
+  private static eventToSearchResult(
+    event: Event,
+    query: string
+  ): SearchResult {
     const queryLower = query.toLowerCase();
     let score = 0;
 
@@ -96,9 +157,10 @@ class SearchService {
     if (event.title.toLowerCase().includes(queryLower)) score += 10;
     if (event.description.toLowerCase().includes(queryLower)) score += 5;
     if (event.location.toLowerCase().includes(queryLower)) score += 3;
-    
+
     // Boost recent events
-    const daysSinceCreated = (Date.now() - event.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceCreated =
+      (Date.now() - event.createdAt.getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceCreated < 30) score += 2;
 
     // Boost active events
@@ -115,13 +177,16 @@ class SearchService {
       metadata: {
         status: event.status,
         guestCount: event.guestCount,
-        date: event.date.toISOString()
-      }
+        date: event.date.toISOString(),
+      },
     };
   }
 
   // Convert contact to search result
-  private static contactToSearchResult(contact: Contact, query: string): SearchResult {
+  private static contactToSearchResult(
+    contact: Contact,
+    query: string
+  ): SearchResult {
     const queryLower = query.toLowerCase();
     let score = 0;
 
@@ -132,7 +197,8 @@ class SearchService {
     if (contact.phone?.toLowerCase().includes(queryLower)) score += 6;
 
     // Boost recent contacts
-    const daysSinceCreated = (Date.now() - contact.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceCreated =
+      (Date.now() - contact.createdAt.getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceCreated < 30) score += 2;
 
     return {
@@ -146,35 +212,35 @@ class SearchService {
       metadata: {
         phone: contact.phone,
         tags: contact.tags,
-        createdAt: contact.createdAt.toISOString()
-      }
+        createdAt: contact.createdAt.toISOString(),
+      },
     };
   }
 
   // Get search suggestions based on partial query
   static async getSuggestions(
-    userId: string, 
-    query: string, 
+    userId: string,
+    query: string,
     limit = 5
   ): Promise<string[]> {
     if (!query.trim() || query.length < 2) return [];
 
     try {
       const results = await this.search(userId, query, { limit: limit * 2 });
-      
+
       // Extract unique titles and partial matches
       const suggestions = new Set<string>();
-      
+
       results.forEach(result => {
         const words = result.title.toLowerCase().split(' ');
         const queryLower = query.toLowerCase();
-        
+
         words.forEach(word => {
           if (word.startsWith(queryLower) && word !== queryLower) {
             suggestions.add(word);
           }
         });
-        
+
         // Add full titles that contain the query
         if (result.title.toLowerCase().includes(queryLower)) {
           suggestions.add(result.title);
@@ -188,24 +254,53 @@ class SearchService {
     }
   }
 
-  // Get recent searches for user (would be stored in localStorage)
+  // Get recent searches for user (stored in localStorage)
   static getRecentSearches(): string[] {
     try {
       const recent = localStorage.getItem('recentSearches');
       return recent ? JSON.parse(recent) : [];
-    } catch {
+    } catch (error) {
+      console.error('Error getting recent searches:', error);
       return [];
     }
   }
 
-  // Save search to recent searches
+  // Save search to recent searches with validation
   static saveRecentSearch(query: string): void {
     try {
+      // Validate query
+      const trimmedQuery = query.trim();
+      if (!trimmedQuery || trimmedQuery.length > 200) {
+        console.warn('Invalid query for recent searches:', query);
+        return;
+      }
+
       const recent = this.getRecentSearches();
-      const updated = [query, ...recent.filter(q => q !== query)].slice(0, 10);
+      const updated = [
+        trimmedQuery,
+        ...recent.filter(q => q !== trimmedQuery),
+      ].slice(0, 10);
+
+      // Check storage size (rough estimate)
+      const dataSize = JSON.stringify(updated).length;
+      if (dataSize > 5000) {
+        // Limit to ~5KB
+        console.warn('Recent searches storage limit reached');
+        return;
+      }
+
       localStorage.setItem('recentSearches', JSON.stringify(updated));
     } catch (error) {
-      console.error('Error saving recent search:', error);
+      // Handle quota exceeded or other localStorage errors
+      if (
+        error instanceof DOMException &&
+        error.name === 'QuotaExceededError'
+      ) {
+        console.error('localStorage quota exceeded. Clearing recent searches.');
+        this.clearRecentSearches();
+      } else {
+        console.error('Error saving recent search:', error);
+      }
     }
   }
 

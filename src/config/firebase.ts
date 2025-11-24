@@ -8,13 +8,13 @@ import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyA-8qwvOfQab02YrftdgqLNI9rPdo95Nk4",
-  authDomain: "partypass-app-9539e.firebaseapp.com",
-  projectId: "partypass-app-9539e",
-  storageBucket: "partypass-app-9539e.appspot.com",
-  messagingSenderId: "583171646923",
-  appId: "1:583171646923:web:b2d26b6966af7933b1c24e",
-  measurementId: "G-G28WF7GJ2W"
+  apiKey: 'AIzaSyA-8qwvOfQab02YrftdgqLNI9rPdo95Nk4',
+  authDomain: 'partypass-app-9539e.firebaseapp.com',
+  projectId: 'partypass-app-9539e',
+  storageBucket: 'partypass-app-9539e.appspot.com',
+  messagingSenderId: '583171646923',
+  appId: '1:583171646923:web:b2d26b6966af7933b1c24e',
+  measurementId: 'G-G28WF7GJ2W',
 };
 
 // Initialize Firebase
@@ -27,7 +27,9 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
 // Initialize Analytics conditionally
-export const analytics = isSupported().then((yes: boolean) => yes ? getAnalytics(app) : null);
+export const analytics = isSupported().then((yes: boolean) =>
+  yes ? getAnalytics(app) : null
+);
 
 // Connect to emulators in development
 if (process.env.NODE_ENV === 'development') {

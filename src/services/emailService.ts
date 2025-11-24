@@ -3,9 +3,12 @@ import emailjs from '@emailjs/browser';
 import { GuestInvitation, Event, InvitationDelivery } from '../types';
 
 export class EmailService {
-  private static readonly SERVICE_ID = process.env.REACT_APP_EMAILJS_SERVICE_ID || '';
-  private static readonly TEMPLATE_ID = process.env.REACT_APP_EMAILJS_TEMPLATE_ID || '';
-  private static readonly PUBLIC_KEY = process.env.REACT_APP_EMAILJS_PUBLIC_KEY || '';
+  private static readonly SERVICE_ID =
+    process.env.REACT_APP_EMAILJS_SERVICE_ID || '';
+  private static readonly TEMPLATE_ID =
+    process.env.REACT_APP_EMAILJS_TEMPLATE_ID || '';
+  private static readonly PUBLIC_KEY =
+    process.env.REACT_APP_EMAILJS_PUBLIC_KEY || '';
 
   /**
    * Inicjalizuje EmailJS
@@ -14,7 +17,9 @@ export class EmailService {
     if (this.PUBLIC_KEY) {
       emailjs.init(this.PUBLIC_KEY);
     } else {
-      console.warn('EmailJS nie został skonfigurowany. Sprawdź zmienne środowiskowe.');
+      console.warn(
+        'EmailJS nie został skonfigurowany. Sprawdź zmienne środowiskowe.'
+      );
     }
   }
 
@@ -43,15 +48,18 @@ export class EmailService {
           month: 'long',
           day: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
         }),
         event_location: event.location,
         event_description: event.description || '',
         rsvp_url: invitation.rsvpUrl,
-        custom_message: delivery.message || `Zostałeś zaproszony na wydarzenie "${event.title}".`,
-        subject: delivery.subject || `Zaproszenie na ${event.title}`,        dresscode: event.dresscode || '',
+        custom_message:
+          delivery.message ||
+          `Zostałeś zaproszony na wydarzenie "${event.title}".`,
+        subject: delivery.subject || `Zaproszenie na ${event.title}`,
+        dresscode: event.dresscode || '',
         additional_info: event.additionalInfo || '',
-        organizer_name: 'Organizator' // Default organizer name
+        organizer_name: 'Organizator', // Default organizer name
       };
 
       await emailjs.send(
@@ -63,7 +71,10 @@ export class EmailService {
 
       console.log(`✅ Email wysłany do ${invitation.email}`);
     } catch (error) {
-      console.error(`❌ Błąd podczas wysyłania e-maila do ${invitation.email}:`, error);
+      console.error(
+        `❌ Błąd podczas wysyłania e-maila do ${invitation.email}:`,
+        error
+      );
       // Fallback do konsoli
       this.logEmailToConsole(invitation, event, delivery);
       throw new Error(`Nie udało się wysłać e-maila do ${invitation.email}`);
@@ -82,22 +93,25 @@ export class EmailService {
     const results = {
       sent: 0,
       failed: 0,
-      errors: [] as string[]
+      errors: [] as string[],
     };
 
     for (let i = 0; i < invitations.length; i++) {
       const invitation = invitations[i];
-      
+
       try {
         await this.sendInvitationEmail(invitation, event, delivery);
         results.sent++;
-        
+
         // Dodaj opóźnienie między e-mailami (aby uniknąć rate limiting)
         if (i < invitations.length - 1) {
           await new Promise(resolve => setTimeout(resolve, delayMs));
-        }      } catch (error) {
+        }
+      } catch (error) {
         results.failed++;
-        results.errors.push(`${invitation.email}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        results.errors.push(
+          `${invitation.email}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 
@@ -113,11 +127,13 @@ export class EmailService {
     delivery: InvitationDelivery
   ): void {
     const emailContent = this.generateEmailContent(invitation, event, delivery);
-    
+
     console.log('📧 EMAIL CONTENT (Fallback - EmailJS not configured):');
     console.log('━'.repeat(50));
     console.log(`TO: ${invitation.email}`);
-    console.log(`SUBJECT: ${delivery.subject || `Zaproszenie na ${event.title}`}`);
+    console.log(
+      `SUBJECT: ${delivery.subject || `Zaproszenie na ${event.title}`}`
+    );
     console.log('━'.repeat(50));
     console.log(emailContent);
     console.log('━'.repeat(50));
@@ -144,7 +160,7 @@ ${delivery.message || `Zostałeś zaproszony na wydarzenie "${event.title}".`}
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })}
 📍 Miejsce: ${event.location}
 ${event.description ? `📝 Opis: ${event.description}` : ''}
@@ -154,9 +170,13 @@ ${event.additionalInfo ? `ℹ️ Dodatkowe informacje: ${event.additionalInfo}` 
 Aby potwierdzić swoją obecność, kliknij w link poniżej:
 ${invitation.rsvpUrl}
 
-${delivery.includeQR ? `
+${
+  delivery.includeQR
+    ? `
 🔗 Możesz też zeskanować kod QR dołączony do tej wiadomości.
-` : ''}
+`
+    : ''
+}
 
 Czekamy na Ciebie!
 
@@ -175,7 +195,9 @@ PartyPass - Zarządzanie wydarzeniami
   }): Promise<void> {
     try {
       if (!this.SERVICE_ID || !this.TEMPLATE_ID || !this.PUBLIC_KEY) {
-        console.warn('EmailJS nie został skonfigurowany. Wiadomość zostanie wyświetlona w konsoli.');
+        console.warn(
+          'EmailJS nie został skonfigurowany. Wiadomość zostanie wyświetlona w konsoli.'
+        );
         this.logContactFormToConsole(data);
         return;
       }
@@ -186,7 +208,7 @@ PartyPass - Zarządzanie wydarzeniami
         from_name: data.name,
         reply_to: data.email,
         subject: 'Nowa wiadomość z formularza kontaktowego',
-        message: data.message
+        message: data.message,
       };
 
       await emailjs.send(
@@ -237,19 +259,19 @@ PartyPass - Zarządzanie wydarzeniami
     message: string;
   } {
     const missing: string[] = [];
-    
+
     if (!this.SERVICE_ID) missing.push('REACT_APP_EMAILJS_SERVICE_ID');
     if (!this.TEMPLATE_ID) missing.push('REACT_APP_EMAILJS_TEMPLATE_ID');
     if (!this.PUBLIC_KEY) missing.push('REACT_APP_EMAILJS_PUBLIC_KEY');
 
     const configured = missing.length === 0;
-    
+
     return {
       configured,
       missing,
-      message: configured 
+      message: configured
         ? 'EmailJS jest poprawnie skonfigurowany'
-        : `Brakuje zmiennych środowiskowych: ${missing.join(', ')}`
+        : `Brakuje zmiennych środowiskowych: ${missing.join(', ')}`,
     };
   }
 }

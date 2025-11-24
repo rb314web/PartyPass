@@ -1,37 +1,42 @@
 // pages/RSVP/RSVP.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  Users, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Users,
+  CheckCircle,
+  XCircle,
   HelpCircle,
   ArrowLeft,
   User,
   MessageSquare,
   AlertCircle,
-  Loader
+  Loader,
 } from 'lucide-react';
 import AppLoader from '../../components/common/AppLoader/AppLoader';
 import RSVPService from '../../services/firebase/rsvpService';
-import { RSVPResponse, Guest, Event, RSVPToken, GuestStatus } from '../../types';
+import {
+  RSVPResponse,
+  Guest,
+  Event,
+  RSVPToken,
+  GuestStatus,
+} from '../../types';
 import './RSVP.scss';
 
 const RSVP: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [guest, setGuest] = useState<Guest | null>(null);
   const [event, setEvent] = useState<Event | null>(null);
-  const [rsvpToken, setRsvpToken] = useState<RSVPToken | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  
+
   // Form state
   const [selectedStatus, setSelectedStatus] = useState<GuestStatus>('pending');
   const [dietaryRestrictions, setDietaryRestrictions] = useState('');
@@ -40,16 +45,10 @@ const RSVP: React.FC = () => {
   const [plusOneDetails, setPlusOneDetails] = useState({
     firstName: '',
     lastName: '',
-    dietaryRestrictions: ''
+    dietaryRestrictions: '',
   });
 
-  useEffect(() => {
-    if (token) {
-      loadRSVPData();
-    }
-  }, [token]);
-
-  const loadRSVPData = async () => {
+  const loadRSVPData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -75,8 +74,7 @@ const RSVP: React.FC = () => {
 
       setGuest(rsvpData.guest);
       setEvent(rsvpData.event);
-      setRsvpToken(rsvpData.rsvpToken);
-      
+
       // Ustaw istniejące dane jeśli gość już odpowiedział
       if (rsvpData.guest.status !== 'pending') {
         setSelectedStatus(rsvpData.guest.status);
@@ -90,13 +88,19 @@ const RSVP: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      loadRSVPData();
+    }
+  }, [token, loadRSVPData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!token || !selectedStatus) return;
-    
+
     try {
       setSubmitting(true);
       setError(null);
@@ -106,7 +110,8 @@ const RSVP: React.FC = () => {
         dietaryRestrictions: dietaryRestrictions.trim(),
         notes: notes.trim(),
         plusOne: selectedStatus === 'accepted' ? plusOne : false,
-        plusOneDetails: (selectedStatus === 'accepted' && plusOne) ? plusOneDetails : undefined
+        plusOneDetails:
+          selectedStatus === 'accepted' && plusOne ? plusOneDetails : undefined,
       };
 
       await RSVPService.processRSVPResponse(token, response);
@@ -152,7 +157,7 @@ const RSVP: React.FC = () => {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     }).format(date);
   };
 
@@ -167,10 +172,7 @@ const RSVP: React.FC = () => {
           <AlertCircle size={60} className="rsvp-error__icon" />
           <h2>Ups! Coś poszło nie tak</h2>
           <p>{error}</p>
-          <button 
-            className="rsvp-error__btn"
-            onClick={() => navigate('/')}
-          >
+          <button className="rsvp-error__btn" onClick={() => navigate('/')}>
             <ArrowLeft size={20} />
             Powrót do strony głównej
           </button>
@@ -186,7 +188,7 @@ const RSVP: React.FC = () => {
           <CheckCircle size={60} className="rsvp-success__icon" />
           <h2>Dziękujemy za odpowiedź!</h2>
           <p>Twoja odpowiedź została zapisana.</p>
-          
+
           {selectedStatus === 'accepted' && (
             <div className="rsvp-success__details">
               <h3>Do zobaczenia na wydarzeniu!</h3>
@@ -198,10 +200,7 @@ const RSVP: React.FC = () => {
             </div>
           )}
 
-          <button 
-            className="rsvp-success__btn"
-            onClick={() => navigate('/')}
-          >
+          <button className="rsvp-success__btn" onClick={() => navigate('/')}>
             <ArrowLeft size={20} />
             Powrót do strony głównej
           </button>
@@ -288,9 +287,7 @@ const RSVP: React.FC = () => {
           <p className="rsvp-guest__name">
             {guest.firstName} {guest.lastName}
           </p>
-          {guest.email && (
-            <p className="rsvp-guest__email">{guest.email}</p>
-          )}
+          {guest.email && <p className="rsvp-guest__email">{guest.email}</p>}
         </div>
 
         {/* RSVP Form */}
@@ -298,24 +295,28 @@ const RSVP: React.FC = () => {
           <div className="rsvp-form__section">
             <h3>Czy będziesz uczestniczyć?</h3>
             <div className="rsvp-form__status-options">
-              {(['accepted', 'declined', 'maybe'] as GuestStatus[]).map(status => (
-                <label 
-                  key={status}
-                  className={`rsvp-form__status-option ${selectedStatus === status ? 'selected' : ''}`}
-                >
-                  <input
-                    type="radio"
-                    name="status"
-                    value={status}
-                    checked={selectedStatus === status}
-                    onChange={(e) => setSelectedStatus(e.target.value as GuestStatus)}
-                  />
-                  <div className="rsvp-form__status-content">
-                    {getStatusIcon(status)}
-                    <span>{getStatusLabel(status)}</span>
-                  </div>
-                </label>
-              ))}
+              {(['accepted', 'declined', 'maybe'] as GuestStatus[]).map(
+                status => (
+                  <label
+                    key={status}
+                    className={`rsvp-form__status-option ${selectedStatus === status ? 'selected' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="status"
+                      value={status}
+                      checked={selectedStatus === status}
+                      onChange={e =>
+                        setSelectedStatus(e.target.value as GuestStatus)
+                      }
+                    />
+                    <div className="rsvp-form__status-content">
+                      {getStatusIcon(status)}
+                      <span>{getStatusLabel(status)}</span>
+                    </div>
+                  </label>
+                )
+              )}
             </div>
           </div>
 
@@ -328,7 +329,7 @@ const RSVP: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={plusOne}
-                      onChange={(e) => setPlusOne(e.target.checked)}
+                      onChange={e => setPlusOne(e.target.checked)}
                     />
                     <span>Będę z osobą towarzyszącą (+1)</span>
                   </label>
@@ -341,28 +342,34 @@ const RSVP: React.FC = () => {
                           type="text"
                           placeholder="Imię"
                           value={plusOneDetails.firstName}
-                          onChange={(e) => setPlusOneDetails(prev => ({
-                            ...prev,
-                            firstName: e.target.value
-                          }))}
+                          onChange={e =>
+                            setPlusOneDetails(prev => ({
+                              ...prev,
+                              firstName: e.target.value,
+                            }))
+                          }
                         />
                         <input
                           type="text"
                           placeholder="Nazwisko"
                           value={plusOneDetails.lastName}
-                          onChange={(e) => setPlusOneDetails(prev => ({
-                            ...prev,
-                            lastName: e.target.value
-                          }))}
+                          onChange={e =>
+                            setPlusOneDetails(prev => ({
+                              ...prev,
+                              lastName: e.target.value,
+                            }))
+                          }
                         />
                         <input
                           type="text"
                           placeholder="Ograniczenia dietetyczne (opcjonalne)"
                           value={plusOneDetails.dietaryRestrictions}
-                          onChange={(e) => setPlusOneDetails(prev => ({
-                            ...prev,
-                            dietaryRestrictions: e.target.value
-                          }))}
+                          onChange={e =>
+                            setPlusOneDetails(prev => ({
+                              ...prev,
+                              dietaryRestrictions: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                     </div>
@@ -380,7 +387,7 @@ const RSVP: React.FC = () => {
                   className="rsvp-form__input"
                   placeholder="np. wegetariańska, bezglutenowa, alergic na orzechy..."
                   value={dietaryRestrictions}
-                  onChange={(e) => setDietaryRestrictions(e.target.value)}
+                  onChange={e => setDietaryRestrictions(e.target.value)}
                 />
               </div>
             </>
@@ -395,7 +402,7 @@ const RSVP: React.FC = () => {
               className="rsvp-form__textarea"
               placeholder="Możesz dodać dowolne uwagi lub pytania..."
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={e => setNotes(e.target.value)}
               rows={3}
             />
           </div>
@@ -408,7 +415,7 @@ const RSVP: React.FC = () => {
                 <span>{error}</span>
               </div>
             )}
-            
+
             <button
               type="submit"
               className="rsvp-form__submit"
