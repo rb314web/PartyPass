@@ -16,6 +16,10 @@ import {
   Timestamp,
   QueryDocumentSnapshot,
   DocumentData,
+  getCountFromServer,
+  getAggregateFromServer,
+  sum,
+  count,
 } from 'firebase/firestore';
 import {
   ref,
@@ -665,9 +669,12 @@ export class EventService {
     } catch (error: any) {
       throw new Error(`Błąd podczas pobierania wydarzeń: ${error.message}`);
     }
-  } // Get event statistics
+  }   // Get event statistics
   static async getEventStats(userId: string): Promise<EventStats> {
+    const start = Date.now();
     try {
+      fetch('http://127.0.0.1:7242/ingest/c60ddbb2-59a5-44b4-9e54-5ee241d8f0b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'eventService.ts:getEventStats',message:'Starting getEventStats',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'stats_inefficiency'})}).catch(()=>{});
+
       console.log('getEventStats: Pobieranie statystyk dla userId:', userId);
 
       const eventsQuery = query(
@@ -675,6 +682,9 @@ export class EventService {
         where('userId', '==', userId)
       );
       const eventsSnapshot = await getDocs(eventsQuery);
+
+      fetch('http://127.0.0.1:7242/ingest/c60ddbb2-59a5-44b4-9e54-5ee241d8f0b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'eventService.ts:getEventStats',message:'Fetched all events for stats',data:{userId, docCount: eventsSnapshot.size, duration: Date.now() - start},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'stats_inefficiency'})}).catch(()=>{});
+
 
       console.log('getEventStats: Znalezione wydarzenia:', eventsSnapshot.size);
 
@@ -797,7 +807,10 @@ export class EventService {
 
   // Get chart data for last 6 months
   static async getEventChartData(userId: string): Promise<EventChartData[]> {
+    const start = Date.now();
     try {
+      fetch('http://127.0.0.1:7242/ingest/c60ddbb2-59a5-44b4-9e54-5ee241d8f0b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'eventService.ts:getEventChartData',message:'Starting getEventChartData',data:{userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'chart_inefficiency'})}).catch(()=>{});
+
       const now = new Date();
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(now.getMonth() - 5); // Get last 6 months including current
@@ -814,6 +827,8 @@ export class EventService {
       );
 
       const eventsSnapshot = await getDocs(eventsQuery);
+      fetch('http://127.0.0.1:7242/ingest/c60ddbb2-59a5-44b4-9e54-5ee241d8f0b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'eventService.ts:getEventChartData',message:'Fetched all events for chart',data:{userId, docCount: eventsSnapshot.size, duration: Date.now() - start},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'chart_inefficiency'})}).catch(()=>{});
+
       console.log('Found events:', eventsSnapshot.size);
 
       // Initialize chart data for last 6 months

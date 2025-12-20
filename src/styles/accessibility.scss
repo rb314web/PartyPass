@@ -1,0 +1,164 @@
+// styles/accessibility.scss
+// Global accessibility improvements
+
+// Focus indicators for keyboard navigation
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+  transition: outline 0.2s ease;
+}
+
+// Remove focus for mouse users (but keep for keyboard)
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// Improved focus for interactive elements
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+// Skip to content link (for screen readers)
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  z-index: 100;
+  border-radius: 0 0 0.375rem 0;
+  font-weight: 600;
+
+  &:focus {
+    top: 0;
+  }
+}
+
+// Screen reader only content
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// Not screen reader only (for toggling visibility)
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+// Reduce motion for users who prefer it
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px !important;
+  }
+
+  button,
+  a {
+    text-decoration: underline;
+  }
+}
+
+// Improve text readability
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+// Ensure sufficient color contrast
+:root {
+  --focus-ring-color: #6366f1;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+// Dark mode focus indicators
+@media (prefers-color-scheme: dark) {
+  *:focus-visible {
+    outline-color: #818cf8; // Lighter shade for dark mode
+  }
+}
+
+// Touch target minimum size (44x44px for accessibility)
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Improve button accessibility
+button {
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &[aria-pressed="true"] {
+    background-color: var(--color-primary);
+    color: white;
+  }
+}
+
+// Improve link accessibility
+a {
+  &[aria-current="page"] {
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+}
+
+// Loading states (for screen readers)
+[aria-busy="true"] {
+  cursor: wait;
+}
+
+// Error states
+[aria-invalid="true"] {
+  border-color: rgb(239, 68, 68);
+}
+
+// Required fields
+[aria-required="true"]::after {
+  content: " *";
+  color: rgb(239, 68, 68);
+}
+
+
+
+
+

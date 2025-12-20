@@ -17,7 +17,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   const location = useLocation();
 
   if (loading) {
-    return <AppLoader message="Ładowanie aplikacji..." />;
+    return <AppLoader />;
   }
 
   if (requireAuth && !user) {

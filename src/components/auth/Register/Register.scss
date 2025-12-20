@@ -2,8 +2,8 @@
 
 .register {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  background-image: radial-gradient(circle, #e0e0e0 1px, transparent 1px);
+  background-color: var(--bg-secondary);
+  background-image: radial-gradient(circle, var(--border-primary) 1px, transparent 1px);
   background-size: 20px 20px;
   @include flex-center;
   padding: 2rem 1rem;
@@ -16,11 +16,11 @@
   }
 
   &__card {
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
     border-radius: 12px;
     padding: 2.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
     animation: slideUp 0.4s ease-out;
 
     @include mobile {
@@ -38,22 +38,22 @@
   &__title {
     font-size: 1.75rem;
     font-weight: 600;
-    color: #000000;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
     letter-spacing: -0.02em;
   }
 
   &__subtitle {
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--text-secondary);
     font-size: 0.9375rem;
   }
 
   &__error {
-    background: rgba(239, 68, 68, 0.08);
-    color: #dc2626;
+    background: var(--color-error-light);
+    color: var(--color-error);
     padding: 0.875rem 1rem;
     border-radius: 8px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--color-error);
     margin-bottom: 1.5rem;
     font-size: 0.875rem;
     text-align: center;
@@ -70,7 +70,7 @@
   &__label {
     display: block;
     font-weight: 500;
-    color: rgba(0, 0, 0, 0.8);
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
   }
@@ -84,26 +84,27 @@
   &__input-icon {
     position: absolute;
     left: 0.875rem;
-    color: rgba(0, 0, 0, 0.4);
+    color: var(--text-tertiary);
     z-index: 1;
   }
 
   &__input {
     width: 100%;
     padding: 0.75rem 0.875rem 0.75rem 2.75rem;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
     font-size: 0.9375rem;
-    background: white;
+    background: var(--bg-primary);
+    color: var(--text-primary);
 
     &:focus {
       outline: none;
-      border-color: rgba(0, 0, 0, 0.3);
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-focus);
     }
 
     &::placeholder {
-      color: rgba(0, 0, 0, 0.4);
+      color: var(--text-tertiary);
     }
   }
 
@@ -112,13 +113,13 @@
     right: 0.875rem;
     background: none;
     border: none;
-    color: rgba(0, 0, 0, 0.4);
+    color: var(--text-tertiary);
     cursor: pointer;
     @include flex-center;
     padding: 0.25rem;
 
     &:hover {
-      color: rgba(0, 0, 0, 0.7);
+      color: var(--text-primary);
     }
   }
 
@@ -136,24 +137,26 @@
     gap: var(--space-xs);
     opacity: 0.5;
     font-size: 0.875rem;
+    color: var(--text-secondary);
 
     &.active {
       opacity: 1;
-      color: var(--primary);
+      color: var(--color-primary);
     }
 
     span:first-child {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: var(--gray-300);
+      background: var(--bg-tertiary);
       @include flex-center;
       font-weight: 600;
-      color: white;
+      color: var(--text-primary);
     }
 
     &.active span:first-child {
-      background: var(--primary);
+      background: var(--color-primary);
+      color: var(--text-inverse);
     }
   }
 
@@ -181,29 +184,29 @@
     }
 
     &-content {
-      border: 1px solid rgba(0, 0, 0, 0.12);
+      border: 1px solid var(--border-primary);
       border-radius: 8px;
       padding: 1.25rem;
       transition: border-color 0.2s ease;
       position: relative;
-      background: white;
+      background: var(--bg-primary);
 
       &:hover {
-        border-color: rgba(0, 0, 0, 0.24);
+        border-color: var(--border-secondary);
       }
     }
 
     input:checked + &-content {
-      border-color: #000000;
-      background: rgba(0, 0, 0, 0.02);
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
     }
 
     &-badge {
       position: absolute;
       top: -8px;
       right: 1rem;
-      background: #000000;
-      color: white;
+      background: var(--color-primary);
+      color: var(--text-inverse);
       font-size: 0.75rem;
       padding: 4px 8px;
       border-radius: 4px;
@@ -212,13 +215,13 @@
 
     &-name {
       font-weight: 600;
-      color: #000000;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
       letter-spacing: -0.01em;
     }
 
     &-price {
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--text-secondary);
       font-size: 0.875rem;
     }
   }
@@ -228,7 +231,7 @@
     align-items: flex-start;
     gap: 0.75rem;
     font-size: 0.875rem;
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--text-secondary);
     line-height: 1.5;
     margin-bottom: 2rem;
     cursor: pointer;
@@ -238,12 +241,13 @@
     }
 
     a {
-      color: #000000;
+      color: var(--color-primary);
       text-decoration: none;
       font-weight: 500;
 
       &:hover {
         text-decoration: underline;
+        opacity: 0.8;
       }
     }
   }
@@ -251,14 +255,14 @@
   &__checkbox-custom {
     width: 18px;
     height: 18px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-primary);
     border-radius: 4px;
     margin-right: 0.75rem;
     position: relative;
     transition: all 0.2s ease;
     flex-shrink: 0;
     margin-top: 2px;
-    background: white;
+    background: var(--bg-primary);
 
     &::after {
       content: '✓';
@@ -266,7 +270,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: white;
+      color: var(--text-inverse);
       font-size: 12px;
       opacity: 0;
       transition: opacity 0.2s ease;
@@ -275,8 +279,8 @@
 
   &__terms {
     input:checked ~ &__checkbox-custom {
-      background: #000000;
-      border-color: #000000;
+      background: var(--color-primary);
+      border-color: var(--color-primary);
 
       &::after {
         opacity: 1;
@@ -293,6 +297,15 @@
     @include button-ghost;
     padding: 0.875rem 1.5rem;
     flex: 1;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+
+    &:hover:not(:disabled) {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border-secondary);
+    }
   }
 
   &__submit {
@@ -324,7 +337,7 @@
 
   &__footer {
     text-align: center;
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--text-secondary);
 
     p {
       margin: 0;
@@ -333,12 +346,13 @@
   }
 
   &__login-link {
-    color: #000000;
+    color: var(--color-primary);
     text-decoration: none;
     font-weight: 600;
 
     &:hover {
       text-decoration: underline;
+      opacity: 0.8;
     }
   }
 }

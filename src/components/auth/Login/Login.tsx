@@ -156,18 +156,6 @@ const Login: React.FC = () => {
                 </Link>
               </p>
             </div>
-
-            <div className="login__demo">
-              <div className="login__demo-header">
-                <span>🎉 Demo Account</span>
-              </div>
-              <p>
-                Email: <code>demo@partypass.pl</code>
-              </p>
-              <p>
-                Hasło: <code>demo123</code>
-              </p>
-            </div>
           </div>
         </div>
       </div>

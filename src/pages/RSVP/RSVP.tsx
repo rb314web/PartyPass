@@ -162,7 +162,7 @@ const RSVP: React.FC = () => {
   };
 
   if (loading) {
-    return <AppLoader message="Ładowanie zaproszenia..." />;
+    return <AppLoader />;
   }
 
   if (error) {

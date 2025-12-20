@@ -1,6 +1,7 @@
 // components/common/Logo/Logo.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logoImage from '../../../assets/logo/party-pass-logo.svg';
 import './Logo.scss';
 
 export interface LogoProps {
@@ -17,7 +18,8 @@ export interface LogoProps {
   href?: string;
 
   /**
-   * Whether to show the emoji icon
+   * Whether to render the graphic mark.
+   * Left in place for backwards compatibility with legacy layouts.
    * @default true
    */
   showIcon?: boolean;
@@ -37,7 +39,7 @@ export interface LogoProps {
 const Logo: React.FC<LogoProps> = ({
   size = 'medium',
   href = '/',
-  showIcon = true,
+  showIcon = false,
   className = '',
   collapsed = false,
 }) => {
@@ -50,19 +52,30 @@ const Logo: React.FC<LogoProps> = ({
     .filter(Boolean)
     .join(' ');
 
+  const graphic = showIcon ? (
+    <span className="logo__image-wrapper" aria-hidden="true">
+      <img
+        src={logoImage}
+        alt=""
+        className="logo__image"
+        loading="lazy"
+        decoding="async"
+      />
+    </span>
+  ) : null;
+
+  const textFallback = !collapsed ? (
+    <span className="logo__text">
+      <span className="logo__text-main">Party</span>
+      <span className="logo__text-accent">Pass</span>
+    </span>
+  ) : null;
+
   const content = (
     <>
-      {showIcon && (
-        <span className="logo__emoji" aria-hidden="true">
-          🎉
-        </span>
-      )}
-      {!collapsed && (
-        <span className="logo__text">
-          <span className="logo__text-main">Party</span>
-          <span className="logo__text-accent">Pass</span>
-        </span>
-      )}
+      {graphic}
+      {textFallback}
+      <span className="logo__sr-only">PartyPass</span>
     </>
   );
 

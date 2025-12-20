@@ -18,6 +18,9 @@ import EmailService from './services/emailService';
 import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner/LoadingSpinner';
 
+// Import accessibility styles
+import './styles/accessibility.scss';
+
 // Lazy load components
 const Landing = lazy(() => import('./pages/Landing/Landing'));
 const Login = lazy(() => import('./components/auth/Login/Login'));
@@ -45,7 +48,20 @@ function AppContent() {
               <div className="App">
                 <Suspense
                   fallback={
-                    <LoadingSpinner size="lg" text="Ładowanie strony..." />
+                    <div style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      width: '100vw',
+                      height: '100vh',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'var(--bg-primary)',
+                      zIndex: 9999
+                    }}>
+                      <LoadingSpinner size="lg" />
+                    </div>
                   }
                 >
                   <Routes>

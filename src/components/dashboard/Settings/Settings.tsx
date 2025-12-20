@@ -6,7 +6,6 @@ import {
   Bell,
   Shield,
   Palette,
-  Settings as SettingsIcon,
 } from 'lucide-react';
 import ProfileSettings from './ProfileSettings/ProfileSettings';
 import PlanSettings from './PlanSettings/PlanSettings';
@@ -29,26 +28,31 @@ const Settings: React.FC = () => {
     {
       id: 'profile' as const,
       label: 'Profil',
+      description: 'Dane osobowe i kontakt',
       icon: User,
     },
     {
       id: 'plan' as const,
-      label: 'Plan i płatności',
+      label: 'Plan',
+      description: 'Subskrypcja i płatności',
       icon: CreditCard,
     },
     {
       id: 'notifications' as const,
       label: 'Powiadomienia',
+      description: 'Email i komunikacja',
       icon: Bell,
     },
     {
       id: 'security' as const,
       label: 'Bezpieczeństwo',
+      description: 'Hasło i weryfikacja',
       icon: Shield,
     },
     {
       id: 'appearance' as const,
       label: 'Wygląd',
+      description: 'Motywy i kolory',
       icon: Palette,
     },
   ];
@@ -73,34 +77,54 @@ const Settings: React.FC = () => {
   return (
     <div className="settings">
       <div className="settings__header">
-        <div className="settings__title-wrapper">
-          <div className="settings__icon">
-            <SettingsIcon size={24} />
-          </div>
-          <div>
-            <h1 className="settings__title">Ustawienia</h1>
-            <p className="settings__subtitle">
-              Zarządzaj swoim kontem, preferencjami i ustawieniami aplikacji
-            </p>
-          </div>
-        </div>
+        <h1>Ustawienia</h1>
+        <p>Zarządzaj swoim kontem i preferencjami</p>
       </div>
 
       <div className="settings__layout">
-        <nav className="settings__tabs">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`settings__tab ${activeTab === tab.id ? 'settings__tab--active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <tab.icon size={20} />
-              <span>{tab.label}</span>
-            </button>
-          ))}
+        <nav
+          className="settings__sidebar"
+          role="tablist"
+          aria-label="Sekcje ustawień"
+        >
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                id={`settings-tab-${tab.id}`}
+                aria-controls="settings-panel"
+                aria-selected={isActive}
+                tabIndex={isActive ? 0 : -1}
+                className={`settings__tab ${isActive ? 'settings__tab--active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <div className="settings__tab-icon">
+                  <Icon size={20} />
+                </div>
+                <div className="settings__tab-content">
+                  <span className="settings__tab-label">{tab.label}</span>
+                  <span className="settings__tab-description">
+                    {tab.description}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </nav>
 
-        <main className="settings__content">{renderTabContent()}</main>
+        <main
+          className="settings__content"
+          id="settings-panel"
+          role="tabpanel"
+          aria-labelledby={`settings-tab-${activeTab}`}
+        >
+          {renderTabContent()}
+        </main>
       </div>
     </div>
   );

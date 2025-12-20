@@ -269,7 +269,10 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 24px;
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background-color var(--transition-colors, 0.2s ease),
+                color var(--transition-colors, 0.2s ease),
+                border-color var(--transition-colors, 0.2s ease);
 
     // Removed hover effect
 
@@ -326,7 +329,7 @@
   &__progress {
     width: 100%;
     height: 4px;
-    background: var(--gray-200);
+    background: var(--bg-tertiary);
     border-radius: 2px;
     margin-top: var(--space-sm);
     overflow: hidden;
@@ -334,7 +337,7 @@
     &-bar {
       transition: all 0.3s ease;
       height: 100%;
-      background: var(--primary);
+      background: var(--color-primary);
       border-radius: 2px;
       transition: width 0.3s ease;
     }
@@ -526,5 +529,131 @@
   }
   100% {
     transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .hero {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 50%, var(--bg-secondary) 100%);
+    color: var(--text-primary);
+
+    &::before {
+      display: none;
+    }
+
+    &__badge {
+      background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
+      border: 1px solid var(--border-primary);
+      color: var(--text-primary);
+      text-shadow: none;
+    }
+
+    &__title {
+      color: var(--text-primary);
+      text-shadow: none;
+
+      &--highlight {
+        color: var(--color-primary);
+        text-shadow: none;
+      }
+    }
+
+    &__subtitle {
+      color: var(--text-secondary);
+      text-shadow: none;
+    }
+
+    &__stat {
+      &-icon {
+        color: var(--text-primary);
+      }
+
+      &-number {
+        color: var(--text-primary);
+        text-shadow: none;
+      }
+
+      &-label {
+        color: var(--text-secondary);
+        text-shadow: none;
+      }
+    }
+
+    &__cta-primary {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-primary);
+      box-shadow: var(--shadow-md);
+
+      &:hover:not(:disabled) {
+        background: var(--bg-elevated);
+        border-color: var(--border-secondary);
+        box-shadow: var(--shadow-lg);
+      }
+    }
+
+    &__cta-secondary {
+      background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+      color: var(--text-primary);
+      border: 2px solid var(--border-primary);
+      text-shadow: none;
+
+      &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
+        border-color: var(--border-secondary);
+      }
+    }
+
+    &__card {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-primary);
+      box-shadow: var(--shadow-lg);
+
+      h3 {
+        color: var(--text-primary);
+      }
+
+      p {
+        color: var(--text-secondary);
+      }
+    }
+
+    &__card-guests {
+      color: var(--text-secondary);
+    }
+
+    &__progress {
+      background: var(--bg-tertiary);
+
+      &-bar {
+        background: var(--color-primary);
+      }
+    }
+
+    &__status {
+      &--confirmed {
+        background: var(--color-success);
+        color: var(--text-inverse);
+      }
+    }
+  }
+
+  // Override for hero cards text colors
+  .hero .hero__card {
+    color: var(--text-primary);
+
+    h3 {
+      color: var(--text-primary);
+    }
+
+    p {
+      color: var(--text-secondary);
+    }
+
+    .hero__card-guests {
+      color: var(--text-secondary);
+    }
   }
 }

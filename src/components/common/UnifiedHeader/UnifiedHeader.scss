@@ -270,10 +270,10 @@
 
     // Dark mode support
     @media (prefers-color-scheme: dark) {
-      background: rgba(17, 24, 39, 0.75);
+      background: color-mix(in srgb, var(--bg-primary) 75%, transparent);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid var(--border-primary);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
 
@@ -371,9 +371,9 @@
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
       @media (prefers-color-scheme: dark) {
-        background: rgba(17, 24, 39, 0.85);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
+        box-shadow: var(--shadow-md);
+        border-bottom: 1px solid var(--border-primary);
       }
     }
   }
@@ -395,6 +395,8 @@
       grid-template-columns: 1fr auto;
       padding: 0.875rem 2rem;
       gap: 1.5rem;
+      max-width: 100%;
+      margin: 0;
 
       @include respond-below('tablet') {
         grid-template-columns: 1fr auto;

@@ -36,13 +36,25 @@ export const useTheme = (): UseThemeReturn => {
   // Funkcja aplikująca motyw do dokumentu
   const applyTheme = useCallback((currentTheme: Theme) => {
     const root = document.documentElement;
+    const body = document.body;
     const shouldBeDark = resolveIsDark(currentTheme);
     
-    setIsDark(shouldBeDark);
+    // Dodaj klasę animacji podczas zmiany motywu
+    body.classList.add('theme-transitioning');
+    
+    // Krótkie opóźnienie dla płynniejszej animacji
+    requestAnimationFrame(() => {
+      setIsDark(shouldBeDark);
 
-    // Dodaj lub usuń klasę 'dark' z elementu html
-    root.classList.toggle('dark', shouldBeDark);
-    root.classList.toggle('light', !shouldBeDark);
+      // Dodaj lub usuń klasę 'dark' z elementu html
+      root.classList.toggle('dark', shouldBeDark);
+      root.classList.toggle('light', !shouldBeDark);
+      
+      // Usuń klasę animacji po zakończeniu przejścia
+      setTimeout(() => {
+        body.classList.remove('theme-transitioning');
+      }, 300); // Dopasuj do czasu transition
+    });
   }, []);
 
   // Ustaw motyw (light/dark/system)

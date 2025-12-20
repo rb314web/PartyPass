@@ -321,7 +321,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'landing' }) => {
     >
       <div className="header__container">
         {/* Logo Component */}
-        <Logo size="medium" href="/" showIcon />
+        <Logo size="medium" href="/" />
 
         {/* Enhanced Desktop Navigation */}
         <nav

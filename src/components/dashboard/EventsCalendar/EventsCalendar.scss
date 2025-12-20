@@ -3,225 +3,484 @@
 .events-calendar {
   width: 100%;
   max-width: 100%;
-  height: 100%;
-  min-height: 400px;
   display: flex;
   flex-direction: column;
   background: transparent;
   padding: 0;
   box-sizing: border-box;
-  overflow: hidden;
-  transition: background-color var(--transition-colors, 0.2s ease);
+  height: auto;
+  overflow-x: hidden;
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-lg);
-    padding: 0 var(--space-lg);
-    width: 100%;
-    max-width: 100%;
+  // Maksymalna szerokość dla kalendarza na bardzo dużych ekranach
+  @media (min-width: 1200px) {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  // Na mobile - wymuś pełną szerokość
+  @media (max-width: 768px) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  @media (max-width: 480px) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  &__mui-calendar {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: unset !important;
     box-sizing: border-box;
-    min-width: 0;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-  }
-
-  &__navigation {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  &__nav-btn {
-    @include flex-center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all var(--transition-colors, 0.2s ease);
-
-    &:hover {
-      background: var(--bg-secondary);
-      border-color: var(--border-secondary);
-      color: var(--color-primary);
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: hidden !important;
+    
+    // Override MUI styles - minimalne zmiany, aby nie blokować animacji
+    .MuiDateCalendar-root {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      min-width: unset !important;
+      min-height: auto !important;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
+    
+    // NIE nadpisuj MuiPickersSlideTransition-root - pozwól MUI używać domyślnych animacji
+    // MUI automatycznie obsługuje animacje slide transition między miesiącami
 
-    &:active {
-      transform: scale(0.95);
-    }
-  }
-
-  &__month-year {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    min-width: 200px;
-    text-align: center;
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  &__today-btn {
-    padding: var(--space-xs) var(--space-md);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-colors, 0.2s ease);
-
-    &:hover {
-      background: var(--bg-secondary);
-      border-color: var(--color-primary);
-      color: var(--color-primary);
-    }
-  }
-
-  &__weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: var(--space-xs);
-    margin-bottom: var(--space-sm);
-    padding: 0 var(--space-lg);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
-  }
-
-  &__weekday {
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    padding: var(--space-xs);
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  &__days {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: var(--space-xs);
-    flex: 1;
-    padding: 0 var(--space-lg);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  &__day {
-    aspect-ratio: 1 / 1;
-    min-width: 0;
-    width: 100%;
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
-    padding: var(--space-xs);
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-elevated);
-    cursor: pointer;
-    transition: all var(--transition-colors, 0.2s ease);
-    box-sizing: border-box;
-    overflow: hidden;
-
-    &:hover {
-      background: var(--bg-secondary);
-      border-color: var(--border-secondary);
-    }
-
-    &--other-month {
-      opacity: 0.4;
-      background: var(--bg-tertiary);
-      aspect-ratio: 1 / 1;
-    }
-
-    &--today {
-      border-color: var(--color-primary);
-      background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-elevated));
+    // Calendar header
+    .MuiPickersCalendarHeader-root {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      min-height: 48px;
       
-      .events-calendar__day-number {
-        color: var(--color-primary);
-        font-weight: 700;
+      .MuiPickersCalendarHeader-label {
+        font-size: 1.125rem;
+      }
+
+      @media (max-width: 768px) {
+        padding: 10px 12px;
+        
+        .MuiPickersCalendarHeader-label {
+          font-size: 1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        padding: 8px;
+        margin-bottom: 6px;
+        
+        .MuiPickersCalendarHeader-label {
+          font-size: 0.9375rem;
+        }
       }
     }
 
-    &--has-events {
+    .MuiPickersArrowSwitcher-root {
+      gap: 8px;
+    }
+
+    .MuiIconButton-root {
+      padding: 6px;
+      
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      @media (max-width: 768px) {
+        padding: 5px;
+        
+        svg {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        padding: 4px;
+        
+        svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      transition: 
+        background-color var(--transition-colors, 0.2s ease),
+        border-color var(--transition-colors, 0.2s ease),
+        color var(--transition-colors, 0.2s ease);
+
+      &:hover {
+        background: var(--bg-secondary);
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+      }
+
+      .dark & {
+        border-color: rgba(148, 163, 184, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    .MuiPickersCalendarHeader-labelContainer {
+      .MuiButtonBase-root {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-transform: capitalize;
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-md);
+        transition: background-color var(--transition-colors, 0.2s ease);
+        
+        &:hover {
+          background: var(--bg-secondary);
+        }
+      }
+    }
+
+    // Weekdays
+    .MuiDayCalendar-weekContainer {
+      margin-bottom: var(--space-xs);
+      flex-shrink: 0;
+    }
+
+    .MuiDayCalendar-weekDayLabel {
+      width: 100%;
+      max-width: calc((100% - 14px) / 7);
+      height: auto;
+      margin: 1px;
+      padding: 4px 0;
+      font-size: 0.75rem;
+      line-height: 1.2;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      border: none;
+      background: transparent;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      min-width: 0;
+
+      @media (max-width: 768px) {
+        font-size: 0.6875rem;
+        padding: 3px 0;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 0.625rem;
+        padding: 2px 0;
+        margin: 0.5px;
+      }
+    }
+
+    // Days - minimalne style, aby nie blokować animacji MUI
+    .MuiDayCalendar-monthContainer {
+      margin: 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .MuiDayCalendar-weekContainer {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    
+    // Pozwól MUI zarządzać animacjami slide transition - nie nadpisuj
+    // MUI automatycznie używa MuiPickersSlideTransition-root do animacji
+
+    .MuiPickersDay-root {
+      width: 100%;
+      max-width: calc((100% - 14px) / 7);
+      height: auto;
+      aspect-ratio: 1 / 1;
+      min-width: 32px;
+      min-height: 32px;
+      margin: 1px;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: 
+        background-color var(--transition-colors, 0.2s ease),
+        border-color var(--transition-colors, 0.2s ease),
+        color var(--transition-colors, 0.2s ease),
+        opacity var(--transition-colors, 0.2s ease);
+      box-sizing: border-box;
+      flex-shrink: 0;
+
+      @media (max-width: 768px) {
+        min-width: 28px;
+        min-height: 28px;
+        font-size: 0.8125rem;
+        padding: 2px;
+      }
+
+      @media (max-width: 480px) {
+        min-width: 24px;
+        min-height: 24px;
+        font-size: 0.75rem;
+        margin: 0.5px;
+      }
+
+      .dark & {
+        border-color: rgba(148, 163, 184, 0.15);
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      &:hover {
+        background: var(--bg-secondary);
+        border-color: var(--border-secondary);
+      }
+
+      &.Mui-selected {
+        background: var(--color-primary) !important;
+        color: white !important;
+        border-color: var(--color-primary) !important;
+        font-weight: 600;
+
+        &:hover {
+          background: var(--color-primary-dark) !important;
+        }
+      }
+
+      &.MuiPickersDay-today {
+        border-color: var(--color-primary);
+        background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-elevated));
+        font-weight: 600;
+
+        &:not(.Mui-selected) {
+          color: var(--color-primary);
+        }
+
+        .dark & {
+          border-color: var(--color-primary);
+          background: rgba(99, 102, 241, 0.15);
+        }
+      }
+
+      &.Mui-disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+    }
+
+    // Days outside current month
+    .MuiPickersDay-dayOutsideMonth {
+      opacity: 0.4;
+      
+      .dark & {
+        opacity: 0.3;
+      }
+    }
+
+    // Days with events
+    .events-calendar__day--has-events {
       border-color: var(--color-primary-light);
+      background: color-mix(in srgb, var(--color-primary) 8%, var(--bg-elevated));
+      position: relative;
+
+      .dark & {
+        border-color: rgba(99, 102, 241, 0.4);
+        background: rgba(99, 102, 241, 0.1);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #f97316;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+      }
+      
+      &:hover::after {
+        transform: translateX(-50%) scale(1.2);
+      }
     }
   }
 
-  &__day-number {
+  // Wrapper dla dnia z tooltipem
+  &__day-wrapper {
+    display: inline-flex;
+  }
+
+  // Tooltip dla dni z wydarzeniami
+  &__tooltip {
+    background: #ffffff;
+    color: #1f2937;
+    padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+    border-radius: var(--radius-md, 8px);
     font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: var(--space-xs);
-    transition: color var(--transition-colors, 0.2s ease);
-  }
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    max-width: 280px;
+    min-width: 200px;
+    border: 1px solid #e5e7eb;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1070;
 
-  &__day-events {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    margin-top: auto;
-  }
-
-  &__event-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    cursor: pointer;
-    transition: all var(--transition-colors, 0.2s ease);
-
-    &:hover {
-      transform: scale(1.3);
-      background: var(--color-primary-dark);
+    .dark & {
+      background: rgba(15, 23, 42, 0.95);
+      color: #f9fafb;
+      border-color: rgba(148, 163, 184, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
-  }
 
-  &__event-more {
-    font-size: 0.625rem;
-    color: var(--text-tertiary);
-    font-weight: 600;
-    margin-left: 2px;
-    transition: color var(--transition-colors, 0.2s ease);
+    &-arrow {
+      color: #ffffff;
+
+      .dark & {
+        color: rgba(15, 23, 42, 0.95);
+      }
+    }
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    &-event {
+      padding: var(--space-xs) 0;
+      border-bottom: 1px solid #d1d5db;
+
+      &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      &:first-child {
+        padding-top: 0;
+      }
+
+      .dark & {
+        border-bottom-color: rgba(148, 163, 184, 0.3);
+      }
+    }
+
+    &-event-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+      line-height: 1.3;
+      transition: color 0.2s ease;
+    }
+
+    &-event-time {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 2px;
+
+      .dark & {
+        color: #d1d5db;
+      }
+    }
+
+    &-event-location {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      .dark & {
+        color: #9ca3af;
+      }
+    }
   }
 
   &__legend {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-md);
-    margin-top: var(--space-lg);
-    padding: var(--space-lg);
-    padding-top: var(--space-md);
+    gap: 12px;
+    margin-top: auto;
+    padding: 12px 16px;
     border-top: 1px solid var(--border-primary);
     transition: border-color var(--transition-colors, 0.2s ease);
+
+    .dark & {
+      border-color: rgba(148, 163, 184, 0.15);
+    }
+
+    @media (max-width: 768px) {
+      padding: 10px 12px;
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      padding: 8px;
+      gap: 8px;
+    }
   }
 
   &__legend-item {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 6px;
     font-size: 0.75rem;
     color: var(--text-secondary);
     transition: color var(--transition-colors, 0.2s ease);
+
+    .dark & {
+      color: rgba(148, 163, 184, 0.8);
+    }
+
+    @media (max-width: 768px) {
+      font-size: 0.6875rem;
+      gap: 5px;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 0.625rem;
+      gap: 4px;
+    }
   }
 
   &__legend-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--color-primary);
+    background: #f97316;
+    flex-shrink: 0;
+
+    @media (max-width: 480px) {
+      width: 6px;
+      height: 6px;
+    }
   }
 
   &__empty {
@@ -247,50 +506,65 @@
     }
   }
 
+  // Responsive styles
   @media (max-width: 768px) {
-    padding: var(--space-md);
+    &__mui-calendar {
+      .MuiDateCalendar-root {
+        height: auto;
+        min-height: auto;
+      }
 
-    &__header {
-      padding: 0 var(--space-md);
+      .MuiPickersDay-root {
+        font-size: 0.75rem;
+        padding: 4px;
+        margin: 1px;
+      }
+    }
+
+    &__legend {
+      padding: var(--space-md);
+      margin-top: var(--space-md);
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    &__legend-item {
+      font-size: 0.7rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    &__mui-calendar {
+      .MuiDateCalendar-root {
+        height: auto;
+        min-height: auto;
+      }
+
+      .MuiPickersDay-root {
+        font-size: 0.7rem;
+        padding: 2px;
+        margin: 1px;
+      }
+
+      .MuiPickersCalendarHeader-root {
+        padding: var(--space-sm);
+      }
+    }
+
+    &__legend {
+      padding: var(--space-sm);
+      margin-top: var(--space-sm);
       gap: var(--space-xs);
     }
 
-    &__month-year {
-      font-size: 1rem;
-      min-width: 120px;
-      flex: 1;
+    &__legend-item {
+      font-size: 0.65rem;
+      gap: 4px;
     }
 
-    &__today-btn {
-      padding: var(--space-xs) var(--space-sm);
-      font-size: 0.75rem;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    &__navigation {
-      gap: var(--space-xs);
-    }
-
-    &__nav-btn {
-      width: 28px;
-      height: 28px;
-      flex-shrink: 0;
-    }
-
-    &__day {
-      padding: 4px;
-      aspect-ratio: 1 / 1;
-    }
-
-    &__day-number {
-      font-size: 0.75rem;
-    }
-
-    &__event-dot {
-      width: 4px;
-      height: 4px;
+    &__legend-dot {
+      width: 6px;
+      height: 6px;
     }
   }
 }
-

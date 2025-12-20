@@ -1,7 +1,7 @@
 // pages/Dashboard/Dashboard.scss
 .dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8f9fb 0%, #f0f4f8 100%);
+  background: var(--bg-secondary);
   display: flex;
 
   &__layout {
@@ -41,7 +41,10 @@
     flex: 1;
     padding: 0;
     overflow-y: auto;
-    background: linear-gradient(135deg, #f8f9fb 0%, #f0f4f8 100%);
+    background: var(--bg-secondary);
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
 
     @media (max-width: 768px) {
       padding: 0;

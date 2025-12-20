@@ -136,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <Logo
             size="small"
             href="/dashboard"
-            showIcon
+            showIcon={false}
             collapsed={isCollapsed}
             className="sidebar__logo"
           />

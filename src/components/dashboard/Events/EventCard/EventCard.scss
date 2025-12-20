@@ -35,20 +35,20 @@
 .event-card__date-badge {
   min-width: 3.2rem;
   min-height: 3.2rem;
-  border-radius: 0.9rem;
-  border: 1.5px solid var(--color-primary);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.1rem;
   margin-top: 0.1rem;
-  transition: background-color var(--transition-colors, 0.2s ease),
-              border-color var(--transition-colors, 0.2s ease),
-              color var(--transition-colors, 0.2s ease);
+  transition: background-color 0.2s ease,
+              border-color 0.2s ease,
+              color 0.2s ease;
 }
 
 .event-card__date-day {
@@ -60,7 +60,7 @@
 .event-card__date-month {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--text-secondary);
   letter-spacing: 0.08em;
   margin-top: 0.1rem;
 }
@@ -83,13 +83,13 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: var(--event-card-accent-soft);
-  color: var(--event-card-accent);
-  border-radius: 0.7rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: 0.5rem;
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.22rem 0.8rem;
-  border: none;
+  border: 1px solid var(--border-primary);
 }
 
 .event-card__menu {
@@ -238,10 +238,10 @@
 .event-card__date-badge {
   width: 2.6rem;
   height: 3rem;
-  border-radius: 0.7rem;
-  border: 1.5px solid var(--color-primary);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -249,23 +249,22 @@
   font-weight: 600;
   padding: 0.2rem 0;
   letter-spacing: 0.01em;
-  box-shadow: none;
-  transition: border-color 0.2s,
-              background-color var(--transition-colors, 0.2s ease),
-              color var(--transition-colors, 0.2s ease);
+  transition: border-color 0.2s ease,
+              background-color 0.2s ease,
+              color 0.2s ease;
 }
 
 .event-card__date-day {
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.1;
-  color: var(--color-primary);
+  color: var(--text-primary);
 }
 
 .event-card__date-month {
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--text-secondary);
   letter-spacing: 0.07em;
   margin-top: 0.08rem;
   font-weight: 600;
@@ -285,13 +284,13 @@
   gap: 0.35rem;
   padding: 0.25rem 0.6rem;
   border-radius: 0.5rem;
-  background: var(--event-card-accent-soft);
-  color: var(--event-card-accent);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.025em;
   text-transform: uppercase;
-  border: 1px solid transparent;
+  border: 1px solid var(--border-primary);
 }
 
 .event-card__status-icon {

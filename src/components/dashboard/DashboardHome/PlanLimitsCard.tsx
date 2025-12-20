@@ -1,7 +1,7 @@
 // components/dashboard/DashboardHome/PlanLimitsCard.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crown, ArrowUpRight, Check, Zap } from 'lucide-react';
+import { Crown, ArrowUpRight, Check, Zap, Calendar, Users } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import './PlanLimitsCard.scss';
 
@@ -100,84 +100,46 @@ const PlanLimitsCard: React.FC<PlanLimitsCardProps> = ({
         </div>
       </div>
 
-      <div className="plan-limits-card__content">
-        <div className="plan-limits-card__limit">
-          <div className="plan-limits-card__limit-header">
-            <div className="plan-limits-card__limit-label">
-              <span>Wydarzenia</span>
-              {limits.maxEvents !== -1 && (
-                <span className="plan-limits-card__limit-percent plan-limits-card__limit-percent--desktop">
-                  {eventsPercentage}%
-                </span>
-              )}
+      {/* Limity i wykorzystanie */}
+      <div className="plan-limits-card__limits">
+        <div className="plan-limits-card__limits-info">Limity miesięczne</div>
+        <div className="plan-limits-card__limit-item plan-limits-card__limit-item--events">
+          <div className="plan-limits-card__limit-item-header">
+            <div className="plan-limits-card__limit-item-icon plan-limits-card__limit-item-icon--blue">
+              <Calendar size={18} />
             </div>
-            <span className="plan-limits-card__limit-value">
-              {usedEvents} / {limits.maxEvents === -1 ? '∞' : limits.maxEvents}
-            </span>
+            <span className="plan-limits-card__limit-item-label">Wydarzenia</span>
           </div>
-          {limits.maxEvents !== -1 && (
-            <>
-              <div className="plan-limits-card__progress">
-                <div
-                  className="plan-limits-card__progress-bar"
-                  style={{ width: `${eventsPercentage}%` }}
-                />
-              </div>
-              <div className="plan-limits-card__limit-info plan-limits-card__limit-info--desktop">
-                <span className="plan-limits-card__limit-remaining">
-                  Pozostało: {remainingEvents} {remainingEvents === 1 ? 'wydarzenie' : remainingEvents > 1 && remainingEvents < 5 ? 'wydarzenia' : 'wydarzeń'}
-                </span>
-              </div>
-            </>
-          )}
+          <div className="plan-limits-card__limit-item-value">
+            <span className="plan-limits-card__limit-item-used">{usedEvents}</span>
+            <span className="plan-limits-card__limit-item-separator">/</span>
+            <span className="plan-limits-card__limit-item-max">{limits.maxEvents === -1 ? '∞' : limits.maxEvents}</span>
+          </div>
         </div>
-
-        <div className="plan-limits-card__limit">
-          <div className="plan-limits-card__limit-header">
-            <div className="plan-limits-card__limit-label">
-              <span>Goście</span>
-              {limits.maxGuests !== -1 && (
-                <span className="plan-limits-card__limit-percent plan-limits-card__limit-percent--desktop">
-                  {guestsPercentage}%
-                </span>
-              )}
+        <div className="plan-limits-card__limit-item plan-limits-card__limit-item--guests">
+          <div className="plan-limits-card__limit-item-header">
+            <div className="plan-limits-card__limit-item-icon plan-limits-card__limit-item-icon--green">
+              <Users size={18} />
             </div>
-            <span className="plan-limits-card__limit-value">
-              {usedGuests} / {limits.maxGuests === -1 ? '∞' : limits.maxGuests}
-            </span>
+            <span className="plan-limits-card__limit-item-label">Goście</span>
           </div>
-          {limits.maxGuests !== -1 && (
-            <>
-              <div className="plan-limits-card__progress">
-                <div
-                  className="plan-limits-card__progress-bar"
-                  style={{ width: `${guestsPercentage}%` }}
-                />
-              </div>
-              <div className="plan-limits-card__limit-info plan-limits-card__limit-info--desktop">
-                <span className="plan-limits-card__limit-remaining">
-                  Pozostało: {remainingGuests} {remainingGuests === 1 ? 'gość' : remainingGuests > 1 && remainingGuests < 5 ? 'gości' : 'gości'}
-                </span>
-              </div>
-            </>
-          )}
+          <div className="plan-limits-card__limit-item-value">
+            <span className="plan-limits-card__limit-item-used">{usedGuests}</span>
+            <span className="plan-limits-card__limit-item-separator">/</span>
+            <span className="plan-limits-card__limit-item-max">{limits.maxGuests === -1 ? '∞' : limits.maxGuests}</span>
+          </div>
         </div>
       </div>
 
       {/* Informacje o planie - tylko na większych ekranach */}
-      <div className="plan-limits-card__plan-info plan-limits-card__plan-info--desktop">
-        {planPrice.monthly > 0 && (
+      {planPrice.monthly > 0 && (
+        <div className="plan-limits-card__plan-info plan-limits-card__plan-info--desktop">
           <div className="plan-limits-card__plan-price">
             <span className="plan-limits-card__plan-price-amount">{planPrice.monthly} PLN</span>
             <span className="plan-limits-card__plan-price-period">/miesiąc</span>
           </div>
-        )}
-        {planPrice.monthly === 0 && (
-          <div className="plan-limits-card__plan-badge plan-limits-card__plan-badge--free">
-            Darmowy plan
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Kluczowe funkcje planu - tylko na większych ekranach */}
       {features.length > 0 && (
@@ -186,7 +148,7 @@ const PlanLimitsCard: React.FC<PlanLimitsCardProps> = ({
           <div className="plan-limits-card__features-list">
             {features.map((feature, idx) => (
               <div key={idx} className="plan-limits-card__feature">
-                <Check size={12} />
+                <Check size={16} />
                 <span>{feature}</span>
               </div>
             ))}
@@ -198,13 +160,13 @@ const PlanLimitsCard: React.FC<PlanLimitsCardProps> = ({
       {nextPlanBenefits.length > 0 && (
         <div className="plan-limits-card__upgrade-benefits plan-limits-card__upgrade-benefits--desktop">
           <div className="plan-limits-card__upgrade-benefits-title">
-            <Zap size={14} />
+            <Zap size={16} />
             <span>Po upgrade zyskasz:</span>
           </div>
           <div className="plan-limits-card__upgrade-benefits-list">
             {nextPlanBenefits.slice(0, 2).map((benefit, idx) => (
               <div key={idx} className="plan-limits-card__upgrade-benefit">
-                <ArrowUpRight size={10} />
+                <ArrowUpRight size={14} />
                 <span>{benefit}</span>
               </div>
             ))}

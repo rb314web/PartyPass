@@ -701,6 +701,22 @@
     gap: 0.5rem;
     padding: 0.625rem 1.25rem;
     font-size: 0.9375rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    transition: background-color var(--transition-colors, 0.2s ease),
+                color var(--transition-colors, 0.2s ease),
+                border-color var(--transition-colors, 0.2s ease);
+
+    &:hover:not(:disabled) {
+      background: var(--bg-secondary);
+      border-color: var(--border-secondary);
+      color: var(--text-primary);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
   }
 
   &__signup-btn {

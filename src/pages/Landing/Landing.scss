@@ -28,7 +28,8 @@
 
   // Smooth transitions between sections
   section + section {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-primary);
+    transition: border-color var(--transition-colors, 0.2s ease);
   }
 
   // Global landing page typography adjustments

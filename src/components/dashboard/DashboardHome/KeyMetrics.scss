@@ -1,0 +1,207 @@
+// components/dashboard/DashboardHome/KeyMetrics.scss
+
+.key-metrics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  &__card {
+    background: var(--bg-primary);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border: 1px solid var(--border-primary);
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: var(--border-secondary);
+    }
+
+    &--blue,
+    &--green,
+    &--purple {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-color: var(--border-primary);
+    }
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+
+    &--blue,
+    &--green,
+    &--purple {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__value {
+    font-size: 3.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.045em;
+    line-height: 1;
+    margin: 0.35rem 0;
+    transition: color var(--transition-colors, 0.2s ease);
+
+    @media (max-width: 480px) {
+      font-size: 2.7rem;
+    }
+  }
+
+  &__divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border-primary);
+    margin: 0.5rem 0;
+  }
+
+  &__change {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__change-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.55rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+
+    &--positive {
+      background: var(--color-success-light);
+      color: var(--color-success);
+    }
+
+    &--negative {
+      background: var(--color-error-light);
+      color: var(--color-error);
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.6;
+    }
+  }
+
+  &__change-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding-top: 0.65rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border-primary);
+  }
+
+  &__detail {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  &__detail-indicator {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--success {
+      background: var(--color-success);
+    }
+
+    &--warning {
+      background: var(--color-warning);
+    }
+
+    &--neutral {
+      background: var(--text-secondary);
+      opacity: 0.4;
+    }
+  }
+
+  &__detail-label {
+    color: var(--text-secondary);
+    flex: 1;
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__detail-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  // Dark mode
+  @media (prefers-color-scheme: dark) {
+    &__card {
+      background: var(--bg-primary);
+      border-color: var(--border-primary);
+      color: var(--text-primary);
+
+      &:hover {
+        border-color: var(--border-secondary);
+      }
+    }
+
+    &__icon {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+  }
+}
+
+
+
