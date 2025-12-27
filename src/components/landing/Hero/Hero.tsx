@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Calendar, Users, Sparkles, Play } from 'lucide-react';
+import { ArrowRight, Calendar, Users, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Demo from '../Demo/Demo';
 import './Hero.scss';
@@ -22,11 +22,6 @@ const Hero: React.FC = () => {
       <section className="hero">
         <div className="hero__container">
           <div className="hero__content">
-            <div className="hero__badge">
-              <Sparkles size={16} />
-              <span>Już ponad 25,000 zadowolonych organizatorów</span>
-            </div>
-
             <h1 className="hero__title">
               Twórz <span className="hero__title--highlight">magiczne</span>{' '}
               wydarzenia w kilka kliknięć
@@ -44,6 +39,7 @@ const Hero: React.FC = () => {
                   {Calendar && (
                     <Calendar
                       className="hero__stat-icon"
+                      size={24}
                       strokeWidth={2}
                     />
                   )}
@@ -60,6 +56,7 @@ const Hero: React.FC = () => {
                   {Users && (
                     <Users
                       className="hero__stat-icon"
+                      size={24}
                       strokeWidth={2}
                     />
                   )}
