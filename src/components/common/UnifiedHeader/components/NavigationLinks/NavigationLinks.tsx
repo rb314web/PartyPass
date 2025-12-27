@@ -7,8 +7,8 @@ import './NavigationLinks.scss';
 export interface NavigationItem {
   label: string;
   href: string;
-  icon: React.ReactNode;
-  description: string;
+  icon?: React.ReactNode;
+  description?: string;
 }
 
 export interface NavigationLinksProps {
@@ -25,15 +25,25 @@ export interface NavigationLinksProps {
 
   /**
    * Whether to show descriptions under labels
-   * @default true
+   * @default false - simplified navigation
    */
   showDescriptions?: boolean;
 
   /**
    * Whether to show icons
-   * @default true
+   * @default false - simplified navigation
    */
   showIcons?: boolean;
+
+  /**
+   * Render vertical (column) layout — used for mobile menu
+   */
+  vertical?: boolean;
+
+  /**
+   * Optional ref for the first item (useful for focus management on mobile)
+   */
+  firstItemRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 const NavigationLinks: React.FC<NavigationLinksProps> = ({
@@ -41,10 +51,12 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
   items,
   showDescriptions = true,
   showIcons = true,
+  vertical = false,
+  firstItemRef,
 }) => {
   const location = useLocation();
 
-  // Default navigation items for landing page
+  // Default navigation items for landing page - simplified navigation
   const defaultItems: NavigationItem[] = useMemo(
     () => [
       {
@@ -74,8 +86,8 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
   // Check if item is active based on current location
   const isActive = (href: string): boolean => {
     if (href.startsWith('#')) {
-      // For anchor links, check if we're on home page
-      return location.pathname === '/' || location.pathname === '';
+      // For anchor links, match the URL hash exactly (e.g. #features)
+      return location.hash === href;
     }
     return location.pathname === href;
   };
@@ -86,14 +98,12 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
       role="navigation"
       aria-label="Primary navigation"
     >
-      <ul className="navigation-links__list">
+      <ul className={`navigation-links__list ${vertical ? 'navigation-links__list--vertical' : ''}`}>
         {navigationItems.map((item, index) => (
           <li key={index} className="navigation-links__item">
             <button
-              className={`
-                navigation-links__button
-                ${isActive(item.href) ? 'navigation-links__button--active' : ''}
-              `}
+              ref={index === 0 && firstItemRef ? firstItemRef : undefined}
+              className={`navigation-links__button ${isActive(item.href) ? 'navigation-links__button--active' : ''}`}
               onClick={() => onItemClick(item)}
               aria-label={item.description}
             >

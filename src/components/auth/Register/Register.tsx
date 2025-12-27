@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import Header from '../../common/Header/Header';
+import UnifiedHeader from '../../common/UnifiedHeader/UnifiedHeader';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import './Register.scss';
 
@@ -87,7 +87,7 @@ const Register: React.FC = () => {
   return (
     <ErrorBoundary>
       <>
-        <Header />
+        <UnifiedHeader variant="auth" />
       <div className="register">
         <div className="register__container">
           <div className="register__card">

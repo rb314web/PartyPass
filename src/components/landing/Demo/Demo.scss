@@ -418,10 +418,10 @@
       --accent-color: var(--success);
     }
     &--purple {
-      --accent-color: #8b5cf6;
+      --accent-color: var(--color-primary);
     }
     &--orange {
-      --accent-color: #f59e0b;
+      --accent-color: var(--color-warning);
     }
   }
 
@@ -577,7 +577,7 @@
       color: var(--primary);
     }
     &--purple {
-      color: #8b5cf6;
+      color: var(--color-primary);
     }
   }
 

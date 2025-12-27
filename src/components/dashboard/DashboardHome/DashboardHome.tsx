@@ -139,7 +139,7 @@ const DashboardHome: React.FC = () => {
   const recentResponses = React.useMemo(() => {
     return activities
       .filter(
-        (activity) =>
+        (activity): activity is ActivityType & { type: 'guest_accepted' | 'guest_declined' } =>
           activity.type === 'guest_accepted' ||
           activity.type === 'guest_declined'
       )

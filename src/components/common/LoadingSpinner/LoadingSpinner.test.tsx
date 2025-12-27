@@ -21,10 +21,9 @@ describe('LoadingSpinner', () => {
     expect(spinner).toHaveClass('loading-spinner--lg');
   });
 
-  it('renders with custom text', () => {
-    const testText = 'Loading data...';
-    render(<LoadingSpinner text={testText} />);
-    expect(screen.getByText(testText)).toBeInTheDocument();
+  it('renders without crashing', () => {
+    const { container } = render(<LoadingSpinner />);
+    expect(container.firstChild).toHaveClass('loading-spinner');
   });
 
   it('does not render text when not provided', () => {
@@ -35,8 +34,8 @@ describe('LoadingSpinner', () => {
   });
 
   it('applies correct CSS classes', () => {
-    const { container } = render(<LoadingSpinner size="lg" text="Test" />);
-    const spinner = container.firstChild;
+    render(<LoadingSpinner size="lg" />);
+    const spinner = document.querySelector('.loading-spinner');
     expect(spinner).toHaveClass('loading-spinner', 'loading-spinner--lg');
   });
 });

@@ -1,7 +1,7 @@
 // pages/Landing/Landing.tsx
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import Header from '../../components/common/Header/Header';
+import UnifiedHeader from '../../components/common/UnifiedHeader/UnifiedHeader';
 import Hero from '../../components/landing/Hero/Hero';
 import Features from '../../components/landing/Features/Features';
 import PricingPlans from '../../components/landing/PricingPlans/PricingPlans';
@@ -33,7 +33,7 @@ const Landing: React.FC = () => {
 
   return (
     <div className="landing">
-      <Header />
+      <UnifiedHeader variant="landing" />
       <main>
         <section id="hero">
           <Hero />

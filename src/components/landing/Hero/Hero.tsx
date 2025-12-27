@@ -40,13 +40,14 @@ const Hero: React.FC = () => {
 
             <div className="hero__stats">
               <div className="hero__stat">
-                {Calendar && (
-                  <Calendar
-                    className="hero__stat-icon"
-                    size={24}
-                    strokeWidth={2}
-                  />
-                )}
+                <div className="hero__stat-icon-container">
+                  {Calendar && (
+                    <Calendar
+                      className="hero__stat-icon"
+                      strokeWidth={2}
+                    />
+                  )}
+                </div>
                 <div>
                   <div className="hero__stat-number">25,000+</div>
                   <div className="hero__stat-label">
@@ -55,13 +56,14 @@ const Hero: React.FC = () => {
                 </div>
               </div>
               <div className="hero__stat">
-                {Users && (
-                  <Users
-                    className="hero__stat-icon"
-                    size={24}
-                    strokeWidth={2}
-                  />
-                )}
+                <div className="hero__stat-icon-container">
+                  {Users && (
+                    <Users
+                      className="hero__stat-icon"
+                      strokeWidth={2}
+                    />
+                  )}
+                </div>
                 <div>
                   <div className="hero__stat-number">150,000+</div>
                   <div className="hero__stat-label">Zadowolonych gości</div>

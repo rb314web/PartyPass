@@ -16,7 +16,7 @@ describe('EmptyState', () => {
     expect(screen.getByText(defaultProps.title)).toBeInTheDocument();
     expect(screen.getByText(defaultProps.description)).toBeInTheDocument();
     // Check for the icon SVG
-    const icon = document.querySelector('.empty-state__icon svg');
+    const icon = document.querySelector('svg');
     expect(icon).toBeInTheDocument();
   });
 

@@ -28,7 +28,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Coś poszło nie tak')).toBeInTheDocument();
+    expect(screen.getByText(/coś poszło nie tak/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /odśwież stronę/i })
     ).toBeInTheDocument();

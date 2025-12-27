@@ -9,7 +9,7 @@
       transparent 50%
     ),
     linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #7c3aed 100%);
-  color: white;
+  color: var(--text-primary);
   position: relative;
   overflow: hidden;
   z-index: 0;
@@ -83,7 +83,7 @@
     line-height: 1.1;
     margin-bottom: var(--space-md);
     animation: fadeInUp 0.8s ease-out 0.2s both;
-    color: #ffffff;
+    color: var(--text-primary);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     &--highlight {
@@ -135,30 +135,30 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
-      color: white;
-
-      svg {
-        width: 24px;
-        height: 24px;
-      }
+      width: 64px;
+      height: 64px;
+      color: var(--text-primary);
 
       @media (max-width: 640px) {
-        width: 48px;
-        height: 48px;
+        width: 72px;
+        height: 72px;
+      }
+    }
 
-        svg {
-          width: 32px;
-          height: 32px;
-        }
+    &-icon svg {
+      width: 1px;
+      height: 1px;
+
+      @media (max-width: 640px) {
+        width: 2px;
+        height: 2px;
       }
     }
 
     &-number {
       font-size: 1.25rem;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-primary);
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
       @media (max-width: 640px) {
@@ -190,7 +190,7 @@
   &__cta-primary {
     @include button-base;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    color: #334155;
+    color: var(--text-inverse);
     padding: var(--space-sm) var(--space-lg);
     font-size: 1rem;
     font-weight: 600;
@@ -199,11 +199,24 @@
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     cursor: pointer;
+    transition: all 0.3s ease;
+
+    svg {
+      transition: transform 0.3s ease;
+    }
 
     &:hover:not(:disabled) {
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.2),
+        0 0 20px rgba(255, 255, 255, 0.3);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, #ffffff 100%);
+      border-color: rgba(255, 255, 255, 0.7);
+      transform: translateY(-2px) scale(1.02);
+
+      svg {
+        transform: translateX(4px);
+        transition: transform 0.3s ease;
+      }
     }
 
     &:disabled {
@@ -214,9 +227,9 @@
 
   &__cta-secondary {
     @include button-base;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.95);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: var(--color-primary);
+    color: white;
+    border: 2px solid var(--color-primary);
     padding: var(--space-sm) var(--space-lg);
     font-size: 1rem;
     font-weight: 500;
@@ -224,12 +237,12 @@
     backdrop-filter: blur(15px);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 
     &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
     }
 
     &:disabled {
@@ -262,7 +275,7 @@
   &__card {
     @include card;
     background: rgba(255, 255, 255, 0.98);
-    color: #1a1a1a;
+    color: var(--text-primary);
     backdrop-filter: blur(20px);
     transform-origin: center;
     opacity: 0;
@@ -352,18 +365,18 @@
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     &--confirmed {
-      background: var(--success);
-      color: white;
+      background: var(--color-success);
+      color: var(--text-inverse);
     }
   }
 }
 
 // Specific overrides for hero cards to ensure proper text colors
 .hero .hero__card {
-  color: #1a1a1a;
+  color: var(--text-primary);
 
   h3 {
-    color: #1a1a1a;
+    color: var(--text-primary);
     font-weight: 600;
     transition:
       transform 0.3s ease,
@@ -371,12 +384,12 @@
   }
 
   p {
-    color: #4a4a4a;
+    color: var(--text-secondary);
     transition: color 0.3s ease;
   }
 
   .hero__card-guests {
-    color: #4a4a4a;
+    color: var(--text-secondary);
     transition: color 0.3s ease;
   }
 
@@ -535,18 +548,43 @@
 // Dark mode support
 @media (prefers-color-scheme: dark) {
   .hero {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 50%, var(--bg-secondary) 100%);
+    background: var(--bg-primary);
     color: var(--text-primary);
 
     &::before {
-      display: none;
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(
+          circle at 20% 80%,
+          rgba(59, 130, 246, 0.08) 0%,
+          transparent 50%
+        ),
+        radial-gradient(
+          circle at 80% 20%,
+          rgba(168, 85, 247, 0.06) 0%,
+          transparent 50%
+        ),
+        radial-gradient(
+          circle at 40% 40%,
+          rgba(16, 185, 129, 0.05) 0%,
+          transparent 50%
+        );
     }
 
     &__badge {
-      background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
-      border: 1px solid var(--border-primary);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+      border: 1px solid var(--color-primary);
       color: var(--text-primary);
       text-shadow: none;
+
+      svg {
+        color: var(--color-primary);
+      }
     }
 
     &__title {
@@ -554,7 +592,10 @@
       text-shadow: none;
 
       &--highlight {
-        color: var(--color-primary);
+        background: linear-gradient(135deg, var(--color-primary) 0%, rgba(168, 85, 247, 0.9) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         text-shadow: none;
       }
     }
@@ -565,8 +606,21 @@
     }
 
     &__stat {
-      &-icon {
-        color: var(--text-primary);
+      &-icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        color: var(--color-primary);
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 50%;
+        padding: 12px;
+
+        @media (max-width: 640px) {
+          width: 72px;
+          height: 72px;
+        }
       }
 
       &-number {
@@ -581,35 +635,65 @@
     }
 
     &__cta-primary {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      border: 2px solid var(--border-primary);
+      background: linear-gradient(135deg, var(--color-primary) 0%, rgba(168, 85, 247, 0.9) 100%);
+      color: var(--text-inverse);
+      border: 2px solid var(--color-primary);
       box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+
+      svg {
+        transition: transform 0.3s ease;
+      }
 
       &:hover:not(:disabled) {
-        background: var(--bg-elevated);
-        border-color: var(--border-secondary);
-        box-shadow: var(--shadow-lg);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.98) 0%, var(--color-primary) 100%);
+        border-color: rgba(168, 85, 247, 0.8);
+        box-shadow:
+          0 8px 25px rgba(0, 0, 0, 0.3),
+          0 0 20px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px) scale(1.02);
+
+        svg {
+          transform: translateX(4px);
+          transition: transform 0.3s ease;
+        }
       }
     }
 
     &__cta-secondary {
-      background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+      background: transparent;
       color: var(--text-primary);
-      border: 2px solid var(--border-primary);
+      border: 2px solid var(--color-primary);
       text-shadow: none;
 
+      svg {
+        color: var(--color-primary);
+      }
+
       &:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
-        border-color: var(--border-secondary);
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--color-primary);
+        color: var(--color-primary);
       }
     }
 
     &__card {
-      background: var(--bg-primary);
+      background: var(--bg-secondary);
       color: var(--text-primary);
       border: 1px solid var(--border-primary);
       box-shadow: var(--shadow-lg);
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--color-primary) 0%, rgba(168, 85, 247, 0.8) 100%);
+        border-radius: 12px 12px 0 0;
+      }
 
       h3 {
         color: var(--text-primary);
@@ -617,6 +701,12 @@
 
       p {
         color: var(--text-secondary);
+      }
+
+      &:hover {
+        border-color: var(--color-primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-xl);
       }
     }
 
@@ -626,16 +716,21 @@
 
     &__progress {
       background: var(--bg-tertiary);
+      border-radius: 2px;
+      overflow: hidden;
 
       &-bar {
-        background: var(--color-primary);
+        background: linear-gradient(90deg, var(--color-success) 0%, rgba(34, 197, 94, 0.8) 100%);
+        border-radius: 2px;
+        transition: width 0.8s ease;
       }
     }
 
     &__status {
       &--confirmed {
-        background: var(--color-success);
+        background: linear-gradient(135deg, var(--color-success) 0%, rgba(34, 197, 94, 0.9) 100%);
         color: var(--text-inverse);
+        border: 1px solid rgba(34, 197, 94, 0.3);
       }
     }
   }

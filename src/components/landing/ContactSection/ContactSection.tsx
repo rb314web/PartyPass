@@ -106,15 +106,10 @@ const ContactSection: React.FC = () => {
                     placeholder="Wprowadź swoje imię"
                   />
                   {errors.name && (
-                    <>
-                      <div className="error-icon">
-                        <AlertCircle />
-                      </div>
-                      <span className="contact-section__error">
-                        <AlertCircle />
-                        {errors.name}
-                      </span>
-                    </>
+                    <span className="contact-section__error">
+                      <AlertCircle size={14} />
+                      {errors.name}
+                    </span>
                   )}
                 </div>
 
@@ -134,15 +129,10 @@ const ContactSection: React.FC = () => {
                     placeholder="twoj@email.com"
                   />
                   {errors.email && (
-                    <>
-                      <div className="error-icon">
-                        <AlertCircle />
-                      </div>
-                      <span className="contact-section__error">
-                        <AlertCircle />
-                        {errors.email}
-                      </span>
-                    </>
+                    <span className="contact-section__error">
+                      <AlertCircle size={14} />
+                      {errors.email}
+                    </span>
                   )}
                 </div>
 
@@ -165,15 +155,10 @@ const ContactSection: React.FC = () => {
                     rows={5}
                   />
                   {errors.message && (
-                    <>
-                      <div className="error-icon">
-                        <AlertCircle />
-                      </div>
-                      <span className="contact-section__error">
-                        <AlertCircle />
-                        {errors.message}
-                      </span>
-                    </>
+                    <span className="contact-section__error">
+                      <AlertCircle size={14} />
+                      {errors.message}
+                    </span>
                   )}
                 </div>
 

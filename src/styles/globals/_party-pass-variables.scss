@@ -166,6 +166,15 @@
   --header-height: 4rem; // 64px
   --header-height-mobile: 3.75rem; // 60px
 
+  // Kolory powierzchni dla obu motywów
+  --clr-surface-a0: #ffffff;
+  --clr-surface-a5: #fafafa;
+  --clr-surface-a10: #f9fafb;
+  --clr-surface-a20: #f3f4f6;
+  --clr-surface-a30: #e5e7eb;
+  --clr-surface-a40: #d1d5db;
+  --clr-surface-a50: #9ca3af;
+
   // Sidebar
   --sidebar-width: 16.25rem; // 260px
   --sidebar-width-collapsed: 5rem; // 80px
@@ -177,24 +186,24 @@
 
 .dark {
   // Kolory tekstu
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-tertiary: #9ca3af;
-  --text-inverse: #1f2937;
-  --text-muted: #6b7280;
+  --text-primary: #E0E0E0;
+  --text-secondary: #B0B0B0;
+  --text-tertiary: #888888;
+  --text-inverse: #121212;
+  --text-muted: #666666;
 
   // Kolory tła
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --bg-tertiary: #374151;
-  --bg-elevated: #1f2937;
-  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #2a2a2a;
+  --bg-elevated: #1a1a1a;
+  --bg-overlay: rgba(0, 0, 0, 0.8);
 
   // Kolory obramowań
-  --border-primary: #374151;
-  --border-secondary: #4b5563;
-  --border-tertiary: #6b7280;
-  --border-focus: #3b82f6;
+  --border-primary: #444444;
+  --border-secondary: #555555;
+  --border-tertiary: #666666;
+  --border-focus: #888888;
 
   // Kolory statusu (dostosowane dla dark mode)
   --color-primary-light: rgba(59, 130, 246, 0.1);
@@ -210,6 +219,15 @@
   --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.6);
   --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.2);
   --shadow-popover: 0 16px 36px rgba(0, 0, 0, 0.6);
+
+  // Kolory powierzchni dla dark mode
+  --clr-surface-a0: #111827;
+  --clr-surface-a5: #1a1a1a;
+  --clr-surface-a10: #1f2937;
+  --clr-surface-a20: #374151;
+  --clr-surface-a30: #4b5563;
+  --clr-surface-a40: #6b7280;
+  --clr-surface-a50: #9ca3af;
 }
 
 // ============================================

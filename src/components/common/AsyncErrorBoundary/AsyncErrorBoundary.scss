@@ -1,0 +1,146 @@
+// components/common/AsyncErrorBoundary/AsyncErrorBoundary.scss
+@use '../../../styles/globals' as *;
+
+.async-error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: var(--space-xl);
+
+  &__container {
+    max-width: 500px;
+    text-align: center;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-error-light);
+  }
+
+  &__icon {
+    color: var(--color-error);
+    margin-bottom: var(--space-lg);
+  }
+
+  &__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+  }
+
+  &__message {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+    line-height: 1.5;
+  }
+
+  &__details {
+    margin-bottom: var(--space-lg);
+    text-align: left;
+
+    summary {
+      cursor: pointer;
+      font-weight: var(--font-weight-medium);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-sm);
+
+      &:hover {
+        color: var(--text-primary);
+      }
+    }
+  }
+
+  &__error {
+    background: var(--bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--space-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-error);
+    white-space: pre-wrap;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+
+    &--primary {
+      background: var(--color-primary);
+      color: white;
+
+      &:hover {
+        background: var(--color-primary-dark);
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    &--secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--color-border);
+
+      &:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  // Mobile responsiveness
+  @include respond-below('tablet') {
+    padding: var(--space-md);
+
+    &__container {
+      padding: var(--space-lg);
+    }
+
+    &__actions {
+      flex-direction: column;
+
+      .async-error-boundary__button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+

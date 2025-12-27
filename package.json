@@ -22,7 +22,7 @@
     "@types/uuid": "^10.0.0",
     "date-fns": "^4.1.0",
     "firebase": "^10.7.1",
-    "firebase-tools": "^13.27.0",
+    "gtag": "^1.0.1",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "jspdf": "^3.0.2",
@@ -50,12 +50,33 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "eject": "react-scripts eject",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "clean-console": "npx replace-in-files --regex='console\\.(log|warn|error|info|debug)\\([^)]*\\);?' --replacement='' src/ --include='*.ts,*.tsx' --exclude='node_modules/**' && npm run lint:fix"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "src/**/*.ts",
+          "src/**/*.tsx"
+        ],
+        "rules": {
+          "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+              "argsIgnorePattern": "^_",
+              "varsIgnorePattern": "^_"
+            }
+          ],
+          "react-hooks/exhaustive-deps": "warn",
+          "no-console": "off"
+        }
+      }
     ]
   },
   "browserslist": {
@@ -74,6 +95,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/react-router-dom": "^5.3.3",
     "cross-env": "^10.0.0",
+    "firebase-tools": "^15.1.0",
     "prettier": "^3.6.2",
     "webpack-bundle-analyzer": "^4.10.2"
   },

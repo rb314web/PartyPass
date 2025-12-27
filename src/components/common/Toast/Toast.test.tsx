@@ -18,9 +18,9 @@ describe('Toast', () => {
     render(<Toast message={message} onClose={() => {}} />);
 
     expect(screen.getByText(message)).toBeInTheDocument();
-    // Check for the icon SVG
-    const icon = document.querySelector('.toast__icon');
-    expect(icon).toBeInTheDocument();
+    // Check for the icon (AlertCircle from lucide-react)
+    const iconElement = document.querySelector('.toast__icon');
+    expect(iconElement).not.toBeNull();
   });
 
   it('calls onClose after default duration', async () => {

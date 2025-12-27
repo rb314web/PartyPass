@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import Header from '../../common/Header/Header';
+import UnifiedHeader from '../../common/UnifiedHeader/UnifiedHeader';
 import GoogleIcon from './GoogleIcon';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import './Login.scss';
@@ -48,7 +48,7 @@ const Login: React.FC = () => {
   return (
     <ErrorBoundary>
       <>
-        <Header />
+        <UnifiedHeader variant="auth" />
       <div className="login">
         <div className="login__container">
           <div className="login__card">

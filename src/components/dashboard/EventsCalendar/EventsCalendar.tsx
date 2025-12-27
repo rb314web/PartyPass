@@ -16,7 +16,7 @@ interface EventsCalendarProps {
   className?: string;
 }
 
-const DayWithEvents = forwardRef<HTMLButtonElement, PickersDayProps<Date> & {
+const DayWithEvents = forwardRef<HTMLButtonElement, PickersDayProps & {
   eventsByDate?: Record<string, Event[]>;
 }>((props, ref) => {
   const { eventsByDate = {}, day, className, ...other } = props;
@@ -75,6 +75,7 @@ const DayWithEvents = forwardRef<HTMLButtonElement, PickersDayProps<Date> & {
       }
       arrow
       placement="top"
+      disableInteractive
       enterDelay={120}
       leaveDelay={80}
       TransitionComponent={Fade}
@@ -92,7 +93,6 @@ const DayWithEvents = forwardRef<HTMLButtonElement, PickersDayProps<Date> & {
         },
         tooltip: {
           className: 'events-calendar__tooltip',
-          disableInteractive: true,
         },
         arrow: {
           className: 'events-calendar__tooltip-arrow',

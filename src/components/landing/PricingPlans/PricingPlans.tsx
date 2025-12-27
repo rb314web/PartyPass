@@ -66,7 +66,7 @@ const PricingPlans: React.FC = () => {
   );
 
   return (
-    <section className="pricing-plans">
+    <section className="pricing-plans" id="pricing">
       <div className="pricing-plans__container">
         <div className="pricing-plans__header">
           <span className="pricing-plans__label">Plany i Ceny</span>
