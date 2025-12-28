@@ -430,3 +430,8 @@ Mamy nadzieję, że nowy minimalistyczny design sprawi Ci radość z używania! 
 
 
 
+
+
+
+
+

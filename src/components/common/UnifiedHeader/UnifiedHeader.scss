@@ -1,6 +1,20 @@
 // components/common/UnifiedHeader/UnifiedHeader.scss
 @use '../../../styles/globals' as *;
 
+$header-mobile-breakpoint: 830px;
+
+@mixin header-mobile {
+  @media (max-width: calc(#{$header-mobile-breakpoint} - 1px)) {
+    @content;
+  }
+}
+
+@mixin header-desktop {
+  @media (min-width: $header-mobile-breakpoint) {
+    @content;
+  }
+}
+
 .unified-header {
   position: sticky;
   top: 0;
@@ -22,7 +36,7 @@
     gap: 1.5rem;
     height: 100%;
 
-    @include respond-below('tablet') {
+    @include header-mobile {
       gap: 1rem;
       height: 100%;
     }
@@ -34,6 +48,7 @@
     align-items: center;
     justify-content: flex-start;
     flex-shrink: 0;
+    height: 100%;
     // Always show the logo; keep it pinned to the left on all viewports
   }
 
@@ -41,10 +56,23 @@
   &__nav {
     display: flex;
     align-items: center;
-    justify-content: center;
-    justify-self: center;
+    justify-content: flex-end;
+    justify-self: end;
     flex: 1;
     min-width: 0;
+    height: 100%;
+    gap: 1rem;
+  }
+
+  &__nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border-primary);
+    height: 100%;
+    align-self: stretch;
   }
 
   &__greeting-section {
@@ -55,6 +83,7 @@
     flex: 1;
     min-width: 0;
     gap: 0.75rem;
+    height: 100%;
   }
 
   &__greeting-section--mobile-logo {
@@ -64,11 +93,39 @@
 
   &__logo {
     flex-shrink: 0;
-    height: 32px;
+    height: 100%;
     width: auto;
+    display: flex;
+    align-items: center;
+    max-height: 32px;
 
-    @include respond-below('tablet') {
-      height: 28px;
+    @include header-mobile {
+      max-height: 28px;
+    }
+
+    // Ensure logo text aligns with navigation
+    .logo__text {
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+
+      &--primary {
+        color: var(--text-primary);
+      }
+
+      &--accent {
+        color: var(--color-primary, #a855f7);
+        margin-left: 0.15rem;
+      }
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
   }
 
@@ -96,20 +153,23 @@
     gap: 1rem;
     justify-self: end;
     flex-shrink: 0;
+    height: 100%;
   }
 
   &__auth-btn {
-    padding: 0.5rem 1rem;
+    padding: 0 1rem;
     border-radius: 6px;
     font-weight: 500;
     font-size: 0.9rem;
+    line-height: 1;
     transition: all 0.2s ease;
     border: 1px solid transparent;
     cursor: pointer;
-    min-height: 36px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    height: 100%;
 
     &--primary {
       background: var(--color-primary, #3b82f6);
@@ -118,6 +178,7 @@
       &:hover {
         background: var(--color-primary-hover, #2563eb);
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
       }
     }
 
@@ -127,14 +188,19 @@
       border-color: var(--border-primary);
 
       &:hover {
-        background: var(--bg-secondary);
-        border-color: var(--border-secondary);
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border-color: rgba(59, 130, 246, 0.3);
       }
     }
   }
 
   &__theme-toggle {
-    @include respond-below('tablet') {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    
+    @include header-mobile {
       display: none;
     }
   }
@@ -188,6 +254,35 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     transition: color var(--transition-colors, 0.2s ease);
+  }
+
+  &__search-shortcut {
+    display: none;
+    align-items: center;
+    gap: 0.125rem;
+    margin-left: auto;
+    padding: 0.125rem 0.375rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm, 4px);
+    font-size: 0.6875rem;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: var(--text-secondary);
+    pointer-events: none;
+
+    @media (min-width: 1024px) {
+      display: flex;
+    }
+  }
+
+  &__search-shortcut-key {
+    padding: 0.125rem 0.25rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-weight: 500;
+    line-height: 1;
   }
 
   // Placeholders (temporary - will be replaced in Phase 4.3)
@@ -265,17 +360,24 @@
     position: fixed;
     top: 1rem;
     left: 1rem;
-    z-index: calc(var(--z-header) + 1);
+    z-index: var(--z-sidebar-mobile, 1050);
     background: var(--bg-elevated, #ffffff);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-md, 8px);
 
     // Ukryj gdy bottom navigation jest widoczne (na urządzeniach mobilnych)
-    @media (max-width: 768px) {
+    @include header-mobile {
       display: none;
     }
 
-    @include respond-to('tablet') {
+    @include header-desktop {
       display: none;
+    }
+
+    // Zapewnij, że nie koliduje z innymi elementami
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
     }
   }
 
@@ -614,73 +716,66 @@
 
   // Landing Variant - Minimalist Design
   &--landing {
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
     // Dark mode support
     @media (prefers-color-scheme: dark) {
       background: color-mix(in srgb, var(--bg-primary) 75%, transparent);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-bottom: 1px solid var(--border-primary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
 
-    // Style overrides for landing
+    // Style overrides for landing - match container width
     .unified-header__container {
-      max-width: none;
-      width: 100%;
-      margin: 0;
-      padding: 1rem 2rem 1rem 0;
+      @include container;
+      max-width: 1200px;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
       gap: 2rem;
 
-      @include respond-below('tablet') {
-        padding: 0.875rem 1.25rem 0.875rem 0;
+      @include header-mobile {
+        padding-top: 0.875rem;
+        padding-bottom: 0.875rem;
         gap: 1rem;
       }
     }
 
-    // Align nav width with section containers while logo stays flush left
+    // Align nav to the right
     .unified-header__nav {
-      @include container;
-      width: 100%;
-      margin: 0 auto;
+      justify-content: flex-end;
+      justify-self: end;
     }
 
     // Navigation links styling on landing - minimalist
     .navigation-links {
       &__button {
-        color: rgba(0, 0, 0, 0.7);
+        color: #1f2937 !important;
         font-weight: 500;
         letter-spacing: -0.01em;
-        padding: 0.5rem 0.75rem;
+        padding: 0 1.25rem !important;
         border-radius: 6px;
-
-        @media (prefers-color-scheme: dark) {
-          color: rgba(255, 255, 255, 0.7);
-        }
+        background: transparent !important;
 
         &:hover {
-          background: rgba(0, 0, 0, 0.04);
-          color: #000000;
-
-          @media (prefers-color-scheme: dark) {
-            background: rgba(255, 255, 255, 0.06);
-            color: #ffffff;
-          }
+          background: rgba(59, 130, 246, 0.1) !important;
+          color: #3b82f6 !important;
+          border-color: rgba(59, 130, 246, 0.3) !important;
         }
 
         &--active {
-          background: rgba(0, 0, 0, 0.08);
-          color: #000000;
+          background: rgba(0, 0, 0, 0.08) !important;
+          color: #000000 !important;
           font-weight: 600;
 
           @media (prefers-color-scheme: dark) {
-            background: rgba(255, 255, 255, 0.12);
-            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: #ffffff !important;
           }
         }
       }
@@ -703,12 +798,39 @@
       }
     }
 
+    // Dark mode support for landing (using .dark class)
+    .dark & {
+      .navigation-links {
+        &__button {
+          color: rgba(255, 255, 255, 0.9) !important;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+          }
+
+          &--active {
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: #ffffff !important;
+          }
+        }
+
+        &__icon {
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        &__description {
+          color: rgba(255, 255, 255, 0.55);
+        }
+      }
+    }
+
     // Mobile toggle button on landing - more prominent on mobile
     .unified-header__menu-toggle {
       color: rgba(0, 0, 0, 0.7);
       border-radius: 6px;
 
-      @include respond-below('tablet') {
+      @include header-mobile {
         background: rgba(0, 0, 0, 0.05);
         border: 1px solid rgba(0, 0, 0, 0.1);
         color: rgba(0, 0, 0, 0.8);
@@ -737,13 +859,13 @@
 
     // Show logo on mobile for landing pages
     .unified-header__left {
-      @include respond-below('tablet') {
+      @include header-mobile {
         display: flex !important;
       }
     }
 
     // Mobile layout adjustments for landing
-    @include respond-below('tablet') {
+    @include header-mobile {
       .unified-header__container {
         grid-template-columns: auto 1fr;
         justify-content: space-between;
@@ -764,9 +886,9 @@
     &.unified-header--scrolled {
       backdrop-filter: blur(24px) saturate(200%);
       -webkit-backdrop-filter: blur(24px) saturate(200%);
-      background: rgba(255, 255, 255, 0.85);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
       @media (prefers-color-scheme: dark) {
         background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
@@ -796,7 +918,7 @@
       max-width: 100%;
       margin: 0;
 
-      @include respond-below('tablet') {
+      @include header-mobile {
         grid-template-columns: 1fr auto;
         padding: 0.75rem 1rem;
         padding-left: 4rem; // Space for mobile toggle button
@@ -805,25 +927,25 @@
     }
 
     .unified-header__greeting-section {
-      @include respond-below('tablet') {
+      @include header-mobile {
         display: none;
       }
     }
     
     // Wyjątek: logo mobilne ma być widoczne na mobile (gdy bottom nav jest widoczne)
     .unified-header__greeting-section--mobile-logo {
-      @include respond-below('tablet') {
+      @include header-mobile {
         display: flex !important; // Nadpisz regułę ukrywającą
       }
       
       // Ukryj na większych ekranach (gdzie bottom nav jest ukryte)
-      @include respond-to('tablet') {
+      @include header-desktop {
         display: none;
       }
     }
 
     .unified-header__search {
-      @include respond-below('tablet') {
+      @include header-mobile {
         display: none;
       }
     }
@@ -853,7 +975,7 @@
   // RESPONSIVE BREAKPOINTS
   // ============================================
 
-  @include respond-below('tablet') {
+  @include header-mobile {
     &__nav {
       display: none;
     }
@@ -915,10 +1037,6 @@
 
 @media (prefers-color-scheme: dark) {
   .unified-header {
-    &--landing {
-      border-bottom-color: var(--color-accent);
-    }
-
     &--auth,
     &--dashboard {
       background: var(--bg-primary, #ffffff);

@@ -37,7 +37,8 @@
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
   border-radius: 14px;
-  transition: all var(--transition-normal);
+  transition: background-color 0.3s ease,
+              border-color 0.3s ease;
   display: flex;
   align-items: center;
   padding: 2px;
@@ -59,7 +60,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-normal);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.3s ease,
+              border-color 0.3s ease,
+              color 0.3s ease,
+              box-shadow 0.3s ease;
   box-shadow: var(--shadow-sm);
   color: var(--text-primary);
 
@@ -73,9 +78,52 @@
 
 .theme-toggle__icon {
   flex-shrink: 0;
-  transition: transform var(--transition-normal);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease;
+  opacity: 1;
 }
 
 .theme-toggle__switch:active .theme-toggle__icon {
   transform: scale(0.9);
+}
+
+// Smooth icon rotation animation
+.theme-toggle__thumb:not(.theme-toggle__thumb--dark) .theme-toggle__icon {
+  animation: rotateIn 0.3s ease;
+}
+
+.theme-toggle__thumb--dark .theme-toggle__icon {
+  animation: rotateIn 0.3s ease;
+}
+
+@keyframes rotateIn {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle__thumb {
+    transition: transform 0.1s linear,
+                background-color 0.1s linear,
+                border-color 0.1s linear,
+                color 0.1s linear;
+  }
+
+  .theme-toggle__track {
+    transition: background-color 0.1s linear,
+                border-color 0.1s linear;
+  }
+
+  .theme-toggle__icon {
+    transition: transform 0.1s linear,
+                opacity 0.1s linear;
+    animation: none;
+  }
 }

@@ -1,6 +1,6 @@
 // components/landing/ContactSection/ContactSection.tsx
 import React, { useState } from 'react';
-import { Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle } from 'lucide-react';
 import { EmailService } from '../../../services/emailService';
 import Toast from '../../common/Toast/Toast';
 import './ContactSection.scss';
@@ -105,12 +105,6 @@ const ContactSection: React.FC = () => {
                     className={errors.name ? 'error' : ''}
                     placeholder="Wprowadź swoje imię"
                   />
-                  {errors.name && (
-                    <span className="contact-section__error">
-                      <AlertCircle size={14} />
-                      {errors.name}
-                    </span>
-                  )}
                 </div>
 
                 <div className="contact-section__form-group">
@@ -128,12 +122,6 @@ const ContactSection: React.FC = () => {
                     className={errors.email ? 'error' : ''}
                     placeholder="twoj@email.com"
                   />
-                  {errors.email && (
-                    <span className="contact-section__error">
-                      <AlertCircle size={14} />
-                      {errors.email}
-                    </span>
-                  )}
                 </div>
 
                 <div className="contact-section__form-group">
@@ -154,12 +142,6 @@ const ContactSection: React.FC = () => {
                     placeholder="W czym możemy Ci pomóc?"
                     rows={5}
                   />
-                  {errors.message && (
-                    <span className="contact-section__error">
-                      <AlertCircle size={14} />
-                      {errors.message}
-                    </span>
-                  )}
                 </div>
 
                 <button

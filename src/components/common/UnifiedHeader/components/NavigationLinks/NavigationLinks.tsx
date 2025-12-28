@@ -94,7 +94,7 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
 
   return (
     <nav
-      className="navigation-links"
+      className={`navigation-links ${vertical ? 'navigation-links--vertical' : ''}`}
       role="navigation"
       aria-label="Primary navigation"
     >

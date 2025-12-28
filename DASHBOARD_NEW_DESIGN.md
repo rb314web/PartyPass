@@ -399,3 +399,8 @@ Stworzenie **czystego, minimalistycznego dashboardu**, który:
 
 
 
+
+
+
+
+
