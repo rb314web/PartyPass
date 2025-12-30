@@ -7,6 +7,10 @@ export class EmailService {
     process.env.REACT_APP_EMAILJS_SERVICE_ID || '';
   private static readonly TEMPLATE_ID =
     process.env.REACT_APP_EMAILJS_TEMPLATE_ID || '';
+  private static readonly CONTACT_TEMPLATE_ID =
+    process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID ||
+    process.env.REACT_APP_EMAILJS_TEMPLATE_ID ||
+    '';
   private static readonly PUBLIC_KEY =
     process.env.REACT_APP_EMAILJS_PUBLIC_KEY || '';
 
@@ -187,6 +191,7 @@ PartyPass - Zarządzanie wydarzeniami
 
   /**
    * Wysyła wiadomość z formularza kontaktowego
+   * Używa EmailJS bezpośrednio z przeglądarki
    */
   static async sendContactForm(data: {
     email: string;
@@ -194,35 +199,49 @@ PartyPass - Zarządzanie wydarzeniami
     message: string;
   }): Promise<void> {
     try {
-      if (!this.SERVICE_ID || !this.TEMPLATE_ID || !this.PUBLIC_KEY) {
+      if (!this.SERVICE_ID || !this.CONTACT_TEMPLATE_ID || !this.PUBLIC_KEY) {
+        // Fallback do konsoli gdy EmailJS nie jest skonfigurowany
         console.warn(
-          'EmailJS nie został skonfigurowany. Wiadomość zostanie wyświetlona w konsoli.'
+          'EmailJS nie jest skonfigurowany dla formularza kontaktowego. Sprawdź zmienne środowiskowe.'
         );
         this.logContactFormToConsole(data);
         return;
       }
 
+      // Przygotuj parametry szablonu
       const templateParams = {
         to_name: 'Administrator PartyPass',
-        to_email: process.env.REACT_APP_ADMIN_EMAIL || 'kontakt@partypass.pl',
         from_name: data.name,
+        from_email: data.email,
         reply_to: data.email,
         subject: 'Nowa wiadomość z formularza kontaktowego',
         message: data.message,
       };
 
+      // Wyślij email przez EmailJS
       await emailjs.send(
         this.SERVICE_ID,
-        this.TEMPLATE_ID, // Używamy głównego template ID
+        this.CONTACT_TEMPLATE_ID,
         templateParams,
         this.PUBLIC_KEY
       );
 
       console.log('✅ Wiadomość kontaktowa wysłana pomyślnie');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Błąd podczas wysyłania wiadomości:', error);
-      this.logContactFormToConsole(data);
-      throw new Error('Nie udało się wysłać wiadomości');
+
+      // Fallback do konsoli w trybie deweloperskim
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Fallback: wyświetlanie wiadomości w konsoli');
+        this.logContactFormToConsole(data);
+      }
+
+      // Rzucaj bardziej opisowy błąd
+      const errorMessage =
+        error.text ||
+        error.message ||
+        'Nie udało się wysłać wiadomości. Spróbuj ponownie później.';
+      throw new Error(errorMessage);
     }
   }
 

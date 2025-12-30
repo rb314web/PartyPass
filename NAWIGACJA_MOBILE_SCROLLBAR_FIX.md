@@ -184,3 +184,8 @@ T=300ms:  Brak przeskoku - szerokość viewportu bez zmian
 *Dokument wygenerowany: ${new Date().toLocaleDateString('pl-PL')}*
 
 
+
+
+
+
+

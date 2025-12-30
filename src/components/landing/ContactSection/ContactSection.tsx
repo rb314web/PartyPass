@@ -170,13 +170,6 @@ const ContactSection: React.FC = () => {
       {error && (
         <Toast message={error} onClose={() => setError(null)} duration={5000} />
       )}
-
-      {/* Background decoration */}
-      <div className="contact-section__decoration">
-        <div className="contact-section__shape contact-section__shape--1" />
-        <div className="contact-section__shape contact-section__shape--2" />
-        <div className="contact-section__shape contact-section__shape--3" />
-      </div>
     </section>
   );
 };

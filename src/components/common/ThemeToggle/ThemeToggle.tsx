@@ -6,13 +6,21 @@ import './ThemeToggle.scss';
 
 interface ThemeToggleProps {
   className?: string;
+  showLabel?: boolean;
+  size?: 'default' | 'large';
 }
 
-export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
+export const ThemeToggle: React.FC<ThemeToggleProps> = ({ 
+  className, 
+  showLabel = false,
+  size = 'default' 
+}) => {
   const { isDark, toggleTheme } = useTheme();
 
+  const sizeClass = size === 'large' ? 'theme-toggle--large' : '';
+
   return (
-    <div className={`theme-toggle ${className || ''}`}>
+    <div className={`theme-toggle ${sizeClass} ${className || ''}`}>
       <button
         className="theme-toggle__switch"
         onClick={toggleTheme}
@@ -21,12 +29,19 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
         role="switch"
         aria-checked={isDark}
       >
+        {showLabel && (
+          <span className="theme-toggle__label">
+            <span className={`theme-toggle__label-text ${isDark ? 'theme-toggle__label-text--dark' : 'theme-toggle__label-text--light'}`}>
+              {isDark ? 'Ciemny' : 'Jasny'}
+            </span>
+          </span>
+        )}
         <div className="theme-toggle__track">
           <div className={`theme-toggle__thumb ${isDark ? 'theme-toggle__thumb--dark' : ''}`}>
             {isDark ? (
-              <Moon size={14} className="theme-toggle__icon" />
+              <Moon size={size === 'large' ? 18 : 14} className="theme-toggle__icon" />
             ) : (
-              <Sun size={14} className="theme-toggle__icon" />
+              <Sun size={size === 'large' ? 18 : 14} className="theme-toggle__icon" />
             )}
           </div>
         </div>

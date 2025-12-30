@@ -53,7 +53,7 @@ export const useTheme = (): UseThemeReturn => {
       // Usuń klasę animacji po zakończeniu przejścia
       setTimeout(() => {
         body.classList.remove('theme-transitioning');
-      }, 300); // Dopasuj do czasu transition
+      }, 500); // Dopasuj do czasu transition (0.5s)
     });
   }, []);
 

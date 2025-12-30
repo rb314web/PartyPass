@@ -103,18 +103,16 @@
   }
 
   &__form {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
     border-radius: var(--radius-xl);
     padding: 2.5rem;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    min-height: 520px;
 
     @media (max-width: 768px) {
       padding: 2rem;
+      min-height: 470px;
     }
   }
 
@@ -224,25 +222,25 @@
 
   &__success {
     text-align: center;
-    padding: 3rem 2rem;
-    min-height: 420px;
+    padding: 2.5rem;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px);
+    justify-content: center;
+    gap: 1.25rem;
     border-radius: var(--radius-xl);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    min-height: 520px;
     animation: successFadeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+    @media (max-width: 768px) {
+      padding: 2rem;
+      min-height: 470px;
+    }
 
     svg {
       color: #10b981;
       width: 64px;
       height: 64px;
-      margin-bottom: 1.5rem;
       animation: successIconPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
       filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3));
     }
@@ -250,7 +248,7 @@
     h3 {
       font-size: 1.75rem;
       font-weight: 700;
-      margin-bottom: 0.75rem;
+      margin: 0;
       color: #1f2937;
       letter-spacing: -0.02em;
       line-height: 1.2;
@@ -259,7 +257,7 @@
 
     p {
       font-size: 1rem;
-      margin-bottom: 2rem;
+      margin: 0;
       color: #4b5563;
       line-height: 1.6;
       animation: successTextSlide 0.5s ease-out 0.4s both;
@@ -294,45 +292,6 @@
     }
   }
 
-  // Background decorations
-  &__decoration {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-
-  &__shape {
-    position: absolute;
-    border-radius: 50%;
-    opacity: 0.1;
-
-    &--1 {
-      width: 400px;
-      height: 400px;
-      background: var(--primary);
-      top: -100px;
-      right: -100px;
-    }
-
-    &--2 {
-      width: 300px;
-      height: 300px;
-      background: var(--secondary);
-      bottom: -50px;
-      left: -50px;
-    }
-
-    &--3 {
-      width: 200px;
-      height: 200px;
-      background: var(--primary);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation: float 6s ease-in-out infinite;
-    }
-  }
 }
 
 // Animations
@@ -353,16 +312,6 @@
   100% {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translate(-50%, -50%);
-  }
-  50% {
-    transform: translate(-50%, -60%);
   }
 }
 
@@ -433,20 +382,14 @@
   100% {
     opacity: 1;
     transform: translateY(0);
-  }
+    }
 }
 
 // Dark mode (user-selected theme)
 .dark {
   .contact-section {
-    background: linear-gradient(180deg, #050f1f 0%, #0d1d3b 60%, #05090f 100%);
-    color: var(--text-inverse);
-
-    &__form {
-      background: rgba(8, 12, 31, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    }
+    background: var(--bg-primary);
+    color: var(--text-primary);
 
     &__form-group {
       label {
@@ -499,10 +442,6 @@
     }
 
     &__success {
-      background: rgba(5, 9, 15, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-
       svg {
         filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.4));
       }

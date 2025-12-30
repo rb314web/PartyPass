@@ -48,8 +48,8 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   const navigate = useNavigate();
 
   // Mobile menu state
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMenuClosing, setIsMenuClosing] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileMenuClosing, setIsMobileMenuClosing] = useState(false);
 
   // Scroll state
   const [isScrolled, setIsScrolled] = useState(false);
@@ -57,8 +57,8 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 
   // Refs
   const headerRef = useRef<HTMLElement>(null);
-  const scrollPositionRef = useRef<number>(0);
-  const firstItemRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const firstMenuItemRef = useRef<HTMLButtonElement>(null);
 
   // Detect mobile
   useEffect(() => {
@@ -93,25 +93,20 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   }, [enableScrollEffects]);
 
   // Handle mobile menu toggle
-  const handleMobileToggle = useCallback(() => {
-    if (isMenuOpen) {
-      // Start closing animation
-      setIsMenuClosing(true);
+  const handleMobileMenuToggle = useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
 
-      // Store scroll position before closing
-      scrollPositionRef.current = window.scrollY || window.pageYOffset || 0;
+  // Handle mobile menu close
+  const handleMobileMenuClose = useCallback(() => {
+    setIsMobileMenuClosing(true);
 
-      // Close menu after animation
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsMenuOpen(false);
-          setIsMenuClosing(false);
-        });
-      });
-    } else {
-      setIsMenuOpen(true);
-    }
-  }, [isMenuOpen]);
+    // Wait for animation to complete before removing from DOM
+    setTimeout(() => {
+      setIsMobileMenuOpen(false);
+      setIsMobileMenuClosing(false);
+    }, 300); // Match animation duration
+  }, []);
 
   // Handle navigation item click
   const handleNavigationClick = useCallback((item: NavigationItem) => {
@@ -130,9 +125,9 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       navigate(item.href);
     }
 
-    // Close mobile menu
-    if (isMenuOpen) {
-      handleMobileToggle();
+    // Close mobile menu if open
+    if (isMobileMenuOpen) {
+      handleMobileMenuClose();
     }
 
     // Analytics tracking
@@ -143,7 +138,69 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
         navigation_variant: variant,
       });
     }
-  }, [location.pathname, navigate, isMenuOpen, handleMobileToggle, trackingEnabled, variant]);
+  }, [location.pathname, navigate, isMobileMenuOpen, handleMobileMenuClose, trackingEnabled, variant]);
+
+  // Lock body scroll when mobile menu is open (or closing)
+  useEffect(() => {
+    if (isMobileMenuOpen || isMobileMenuClosing) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen, isMobileMenuClosing]);
+
+  // Focus trap and ESC key handler
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        handleMobileMenuClose();
+        return;
+      }
+
+      // Focus trap: Tab key
+      if (event.key === 'Tab') {
+        const menu = mobileMenuRef.current;
+        if (!menu) return;
+
+        const focusableElements = menu.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (event.shiftKey) {
+          // Shift + Tab
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          // Tab
+          if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement?.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Focus first item when menu opens
+    setTimeout(() => {
+      firstMenuItemRef.current?.focus();
+    }, 100);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileMenuOpen, handleMobileMenuClose]);
 
   // Handle search click
   const handleSearchClick = useCallback(() => {
@@ -154,18 +211,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       });
     }
   }, [navigate, trackingEnabled, variant]);
-
-  // Handle escape key
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isMenuOpen) {
-        handleMobileToggle();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isMenuOpen, handleMobileToggle]);
 
   // Get greeting message
   const getGreeting = useCallback(() => {
@@ -232,17 +277,18 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           )}
         </button>
       )}
-      <ThemeToggle />
+      {/* Hide theme toggle on mobile for landing/auth - it's in mobile menu */}
+      {!(isMobile && (variant === 'landing' || variant === 'auth')) && <ThemeToggle />}
       {variant === 'landing' && !user && renderAuthButtons()}
-      {(variant === 'landing' || variant === 'auth') && (
+      {(variant === 'landing' || variant === 'auth') && isMobile && (
         <button
-          className="unified-header__mobile-toggle"
-          onClick={handleMobileToggle}
-          aria-label={isMenuOpen ? 'Zamknij menu' : 'Otwórz menu'}
-          aria-expanded={isMenuOpen}
+          className="unified-header__mobile-menu-toggle"
+          onClick={handleMobileMenuToggle}
+          aria-label={isMobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu'}
+          aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-menu"
         >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <Menu size={24} />
         </button>
       )}
     </div>
@@ -287,14 +333,15 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       </header>
 
       {/* Mobile Menu Overlay */}
-      {(isMenuOpen || isMenuClosing) && (
+      {(isMobileMenuOpen || isMobileMenuClosing) && (variant === 'landing' || variant === 'auth') && (
         <div
-          className={`unified-header__mobile-overlay ${isMenuClosing ? 'unified-header__mobile-overlay--closing' : ''}`}
-          onClick={handleMobileToggle}
+          className={`unified-header__mobile-overlay ${isMobileMenuClosing ? 'unified-header__mobile-overlay--closing' : ''}`}
+          onClick={handleMobileMenuClose}
           aria-hidden="true"
         >
           <div
-            className={`unified-header__mobile-menu ${isMenuClosing ? 'unified-header__mobile-menu--closing' : ''}`}
+            ref={mobileMenuRef}
+            className={`unified-header__mobile-menu ${isMobileMenuClosing ? 'unified-header__mobile-menu--closing' : ''}`}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -302,80 +349,55 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
             id="mobile-menu"
           >
             {/* Mobile Menu Header */}
-            <div className="unified-header__mobile-header">
-              <div className="unified-header__logo">
-                <h1 className="logo">
-                  <LogoText />
-                </h1>
+            <div className="unified-header__mobile-menu-header">
+              <div className="unified-header__mobile-menu-logo">
+                <LogoText />
               </div>
               <button
-                className="unified-header__mobile-close"
-                onClick={handleMobileToggle}
+                className="unified-header__mobile-menu-close"
+                onClick={handleMobileMenuClose}
                 aria-label="Zamknij menu"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
             {/* Mobile Menu Content */}
-            <div className="unified-header__mobile-content">
-              {/* User Section (if authenticated) */}
-              {!!user && (
-                <div className="unified-header__mobile-user">
-                  <div className="unified-header__mobile-user-info">
-                    <div className="unified-header__mobile-user-name">
-                      {user.firstName} {user.lastName}
-                    </div>
-                    <div className="unified-header__mobile-user-email">
-                      {user.email}
-                    </div>
-                  </div>
-                </div>
-              )}
-
+            <div className="unified-header__mobile-menu-content">
               {/* Navigation Links */}
               <NavigationLinks
                 onItemClick={handleNavigationClick}
                 vertical={true}
                 showDescriptions={true}
                 showIcons={true}
-                firstItemRef={firstItemRef}
+                firstItemRef={firstMenuItemRef}
               />
 
-              {/* Auth Buttons (if not authenticated) */}
-              {!user && (
-                <div className="unified-header__mobile-auth">
+              {/* Auth Buttons */}
+              <div className="unified-header__mobile-menu-auth">
                   <button
-                    className="unified-header__auth-btn unified-header__auth-btn--secondary"
+                  className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--secondary"
                     onClick={() => {
                       navigate('/login');
-                      handleMobileToggle();
+                    handleMobileMenuClose();
                     }}
                   >
                     Zaloguj się
                   </button>
                   <button
-                    className="unified-header__auth-btn unified-header__auth-btn--primary"
+                  className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
                     onClick={() => {
                       navigate('/register');
-                      handleMobileToggle();
+                    handleMobileMenuClose();
                     }}
                   >
                     Dołącz do nas
                   </button>
                 </div>
-              )}
 
-              {/* Theme Toggle in Mobile Menu */}
-              <div className="unified-header__mobile-theme">
-                <ThemeToggle />
-              </div>
-            </div>
-
-            {/* Mobile Menu Footer */}
-            <div className="unified-header__mobile-footer">
-              <div className="unified-header__mobile-copyright">
-                © 2024 PartyPass. Wszelkie prawa zastrzeżone.
+              {/* Theme Toggle */}
+              <div className="unified-header__mobile-menu-theme">
+                <ThemeToggle showLabel size="large" />
               </div>
             </div>
           </div>

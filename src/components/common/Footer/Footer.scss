@@ -124,15 +124,15 @@ $footer-nav-offset-sm: 1rem;
 
     @include respond-below('tablet') {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: 1fr;
       gap: $footer-nav-offset;
       width: 100%;
-      padding-left: $footer-nav-offset;
+      place-items: center;
+      text-align: center;
     }
 
     @include respond-below('mobile-lg') {
       gap: $footer-nav-offset-sm;
-      padding-left: $footer-nav-offset-sm;
     }
 
     @include respond-to('tablet') {
@@ -150,14 +150,14 @@ $footer-nav-offset-sm: 1rem;
     &--brand {
       @include respond-to('tablet') {
         max-width: $footer-mission-max-width;
-      }
+    }
 
-      @include respond-below('tablet') {
+    @include respond-below('tablet') {
         padding-bottom: 2rem;
         margin-bottom: 0;
         border-bottom: 1px solid var(--border-primary);
-        align-items: center;
-        text-align: center;
+      align-items: center;
+      text-align: center;
       }
 
       @include respond-below('mobile-lg') {
@@ -167,8 +167,8 @@ $footer-nav-offset-sm: 1rem;
 
     &:not(&--brand) {
       @include respond-below('tablet') {
-        align-items: flex-start;
-        text-align: left;
+        align-items: center;
+        text-align: center;
       }
     }
 
@@ -321,6 +321,10 @@ $footer-nav-offset-sm: 1rem;
       display: flex;
       align-items: center;
       justify-content: flex-start;
+
+      @include respond-below('tablet') {
+        justify-content: center;
+      }
     }
 
     a {

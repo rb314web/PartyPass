@@ -53,11 +53,18 @@
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
       text-align: center;
-      padding-top: var(--space-md);
+      padding-top: var(--space-sm);
       padding-bottom: var(--space-md);
-      min-height: 55vh;
-      gap: var(--space-md);
+      min-height: auto;
+      gap: var(--space-lg);
+    }
+  }
+
+  &__content {
+    @media (max-width: 768px) {
+      order: 2;
     }
   }
 
@@ -295,7 +302,9 @@
     overflow: visible;
 
     @media (max-width: 768px) {
-      margin-top: var(--space-2xl);
+      order: 1;
+      margin-top: 0;
+      margin-bottom: var(--space-md);
       animation: fadeInUp 0.6s ease-out 0.2s both;
       padding: 0.5rem;
     }
@@ -309,7 +318,9 @@
     overflow: visible;
 
     @media (max-width: 768px) {
-      gap: var(--space-lg);
+      gap: var(--space-sm);
+      max-width: 400px;
+      margin: 0 auto;
     }
   }
 
@@ -331,6 +342,11 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     box-sizing: border-box;
+
+    @media (max-width: 768px) {
+      padding: var(--space-md);
+      border-radius: 16px;
+    }
 
     // Removed hover effect
 
@@ -374,6 +390,11 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       hyphens: auto;
+
+      @media (max-width: 768px) {
+        font-size: 1.05rem;
+        margin-bottom: var(--space-xs);
+      }
     }
 
     p {
@@ -381,6 +402,11 @@
       margin-bottom: var(--space-md);
       word-wrap: break-word;
       overflow-wrap: break-word;
+
+      @media (max-width: 768px) {
+        font-size: 0.875rem;
+        margin-bottom: var(--space-sm);
+      }
     }
   }
 
@@ -389,6 +415,10 @@
     color: var(--gray-600);
     word-wrap: break-word;
     overflow-wrap: break-word;
+
+    @media (max-width: 768px) {
+      font-size: 0.8rem;
+    }
   }
 
   &__progress {

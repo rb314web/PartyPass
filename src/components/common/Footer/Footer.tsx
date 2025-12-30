@@ -55,33 +55,33 @@ const Footer: React.FC = () => {
               <Logo size="medium" href="/" className="footer__logo" />
               <p className="footer__mission">
                 <span className="footer__mission--full">
-                  Wsparcie organizatorów w tworzeniu perfekcyjnych wydarzeń –
-                  od zarządzania gośćmi i zaproszeniami po kontrolę
-                  frekwencji i analizę wyników.
+                Wsparcie organizatorów w tworzeniu perfekcyjnych wydarzeń –
+                od zarządzania gośćmi i zaproszeniami po kontrolę
+                frekwencji i analizę wyników.
                 </span>
                 <span className="footer__mission--short">
                   Twórz perfekcyjne wydarzenia z PartyPass.
                 </span>
               </p>
               <div className="footer__actions">
-                <div className="footer__contact-links">
-                  <a
-                    href="mailto:kontakt@partypass.pl"
-                    className="footer__contact-pill"
-                  >
-                    kontakt@partypass.pl
-                  </a>
-                </div>
-                <button
-                  className="footer__back-to-top"
-                  onClick={scrollToTop}
-                  aria-label="Wróć na górę"
+              <div className="footer__contact-links">
+                <a
+                  href="mailto:kontakt@partypass.pl"
+                  className="footer__contact-pill"
                 >
-                  <ChevronUp size={16} />
-                  <span>Wróć na górę</span>
-                </button>
+                  kontakt@partypass.pl
+                </a>
               </div>
+              <button
+                className="footer__back-to-top"
+                onClick={scrollToTop}
+                aria-label="Wróć na górę"
+              >
+                <ChevronUp size={16} />
+                  <span>Wróć na górę</span>
+              </button>
             </div>
+          </div>
           </section>
 
           {/* Navigation Sections */}
@@ -90,12 +90,12 @@ const Footer: React.FC = () => {
             role="navigation"
             aria-label="Footer navigation"
           >
-            {/* Site Map Section */}
+          {/* Site Map Section */}
             <section className="footer__section">
-              <h4 className="footer__section-title">Mapa strony</h4>
-              <ul className="footer__links">
+            <h4 className="footer__section-title">Mapa strony</h4>
+            <ul className="footer__links">
                 {SITE_MAP_LINKS.map((link) => (
-                  <li key={link.to}>
+                <li key={link.to}>
                     {link.to.startsWith('/#') ? (
                       <a
                         href={link.to}
@@ -121,16 +121,16 @@ const Footer: React.FC = () => {
                         {link.label}
                       </Link>
                     )}
-                  </li>
-                ))}
-              </ul>
+                </li>
+              ))}
+            </ul>
             </section>
 
-            {/* Legal Section */}
+          {/* Legal Section */}
             {LEGAL_LINKS.length > 0 && (
               <section className="footer__section">
-                <h4 className="footer__section-title">Informacje prawne</h4>
-                <ul className="footer__links">
+            <h4 className="footer__section-title">Informacje prawne</h4>
+            <ul className="footer__links">
                   {LEGAL_LINKS.map((link) => (
                     <li key={link.label}>
                       <a
@@ -145,9 +145,9 @@ const Footer: React.FC = () => {
                       >
                         {link.label}
                       </a>
-                    </li>
-                  ))}
-                </ul>
+                </li>
+              ))}
+            </ul>
               </section>
             )}
           </nav>
