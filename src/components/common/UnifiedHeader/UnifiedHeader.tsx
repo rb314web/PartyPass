@@ -4,6 +4,7 @@ import { Menu, X, Search, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import NavigationLinks, { NavigationItem } from './components/NavigationLinks/NavigationLinks';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
+import UserMenu from '../UserMenu/UserMenu';
 import './UnifiedHeader.scss';
 
 // Extend Window interface for gtag
@@ -43,7 +44,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   enableScrollEffects = true,
   trackingEnabled = true,
 }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -259,6 +260,26 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     </div>
   );
 
+  // Render user menu for logged in users
+  const renderUserMenu = () => {
+    if (!user) return null;
+    
+    return (
+      <UserMenu
+        user={{
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          avatar: user.avatar,
+          planType: user.planType,
+        }}
+        onLogout={logout}
+        variant="header"
+      />
+    );
+  };
+
   // Render right section
   const renderRightSection = () => (
     <div className="unified-header__right">
@@ -279,7 +300,8 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       )}
       {/* Hide theme toggle on mobile for landing/auth - it's in mobile menu */}
       {!(isMobile && (variant === 'landing' || variant === 'auth')) && <ThemeToggle />}
-      {variant === 'landing' && !user && renderAuthButtons()}
+      {variant === 'landing' && !user && !isMobile && renderAuthButtons()}
+      {variant === 'landing' && user && !isMobile && renderUserMenu()}
       {(variant === 'landing' || variant === 'auth') && isMobile && (
         <button
           className="unified-header__mobile-menu-toggle"
@@ -303,17 +325,19 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       >
         <div className="unified-header__container">
           {/* Left Section - Logo */}
-          <div className="unified-header__left">
-            <div className="unified-header__logo">
-              <h1
-                className="logo"
-                onClick={() => navigate('/')}
-                style={{ cursor: 'pointer' }}
-              >
-                <LogoText />
-              </h1>
+          {variant !== 'dashboard' && (
+            <div className="unified-header__left">
+              <div className="unified-header__logo">
+                <h1
+                  className="logo"
+                  onClick={() => navigate('/')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <LogoText />
+                </h1>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Center Section - Navigation or Greeting */}
           <div className="unified-header__nav">
@@ -364,36 +388,78 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 
             {/* Mobile Menu Content */}
             <div className="unified-header__mobile-menu-content">
-              {/* Navigation Links */}
-              <NavigationLinks
-                onItemClick={handleNavigationClick}
-                vertical={true}
-                showDescriptions={true}
-                showIcons={true}
-                firstItemRef={firstMenuItemRef}
-              />
-
-              {/* Auth Buttons */}
-              <div className="unified-header__mobile-menu-auth">
+              {/* User Info or Auth Buttons - at the top */}
+              {!user ? (
+                <div className="unified-header__mobile-menu-auth">
                   <button
-                  className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--secondary"
+                    className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--secondary"
                     onClick={() => {
                       navigate('/login');
-                    handleMobileMenuClose();
+                      handleMobileMenuClose();
                     }}
                   >
                     Zaloguj się
                   </button>
                   <button
-                  className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
+                    className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
                     onClick={() => {
                       navigate('/register');
-                    handleMobileMenuClose();
+                      handleMobileMenuClose();
                     }}
                   >
                     Dołącz do nas
                   </button>
                 </div>
+              ) : (
+                <div className="unified-header__mobile-menu-user">
+                  <div className="unified-header__mobile-menu-user-info">
+                    <div className="unified-header__mobile-menu-user-avatar">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={`${user.firstName} ${user.lastName}`} />
+                      ) : (
+                        <span>{user.firstName[0]}{user.lastName[0]}</span>
+                      )}
+                    </div>
+                    <div className="unified-header__mobile-menu-user-details">
+                      <div className="unified-header__mobile-menu-user-name">
+                        {user.firstName} {user.lastName}
+                      </div>
+                      <div className="unified-header__mobile-menu-user-email">
+                        {user.email}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="unified-header__mobile-menu-user-actions">
+                    <button
+                      className="unified-header__mobile-menu-user-btn"
+                      onClick={() => {
+                        navigate('/dashboard');
+                        handleMobileMenuClose();
+                      }}
+                    >
+                      Dashboard
+                    </button>
+                    <button
+                      className="unified-header__mobile-menu-user-btn unified-header__mobile-menu-user-btn--danger"
+                      onClick={() => {
+                        logout();
+                        handleMobileMenuClose();
+                      }}
+                    >
+                      Wyloguj się
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Navigation Links */}
+              <NavigationLinks
+                onItemClick={handleNavigationClick}
+                vertical={true}
+                showDescriptions={true}
+                showIcons={false}
+                firstItemRef={firstMenuItemRef}
+              />
 
               {/* Theme Toggle */}
               <div className="unified-header__mobile-menu-theme">

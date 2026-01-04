@@ -49,9 +49,9 @@
     border-radius: 50%;
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -70,9 +70,9 @@
     border-radius: var(--radius-sm);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;

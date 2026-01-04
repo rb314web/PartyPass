@@ -1,5 +1,5 @@
 // components/dashboard/Settings/NotificationSettings/NotificationSettings.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bell,
   Mail,
@@ -8,31 +8,37 @@ import {
   Save,
   Check,
   AlertCircle,
+  CheckCircle,
 } from 'lucide-react';
+import { useAuth } from '../../../../hooks/useAuth';
+import { UserSettingsService, UserNotificationSettings } from '../../../../services/firebase/userSettingsService';
+import { NotificationTriggers } from '../../../../services/notificationTriggers';
 import './NotificationSettings.scss';
 
 const NotificationSettings: React.FC = () => {
-  const [settings, setSettings] = useState({
+  const { user } = useAuth();
+  
+  const [settings, setSettings] = useState<UserNotificationSettings>({
     email: {
+      enabled: true,
       eventReminders: true,
-      guestResponses: true,
+      rsvpUpdates: true,
+      eventUpdates: true,
       weeklyDigest: false,
-      marketing: false,
-      systemUpdates: true,
     },
     sms: {
+      enabled: false,
+      urgentOnly: true,
       eventReminders: false,
-      guestResponses: true,
-      emergencyOnly: true,
     },
     push: {
+      enabled: true,
       eventReminders: true,
-      guestResponses: true,
-      appUpdates: false,
-      marketing: false,
+      rsvpUpdates: true,
+      browserNotifications: true,
     },
     digest: {
-      frequency: 'weekly' as 'daily' | 'weekly' | 'monthly' | 'never',
+      frequency: 'never',
       time: '09:00',
       includeAnalytics: true,
       includeUpcoming: true,
@@ -40,9 +46,39 @@ const NotificationSettings: React.FC = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [saveStatus, setSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle');
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testingSMS, setTestingSMS] = useState(false);
+  const [testingPush, setTestingPush] = useState(false);
+  const [testStatus, setTestStatus] = useState<{
+    type: 'email' | 'sms' | 'push';
+    status: 'success' | 'error';
+    message: string;
+  } | null>(null);
+
+  // Załaduj ustawienia przy montowaniu komponentu
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!user?.id) return;
+
+      try {
+        setIsLoadingSettings(true);
+        const userSettings = await UserSettingsService.getUserSettings(user.id);
+        if (userSettings) {
+          setSettings(userSettings);
+        }
+      } catch (error) {
+        console.error('Error loading notification settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    loadSettings();
+  }, [user?.id]);
 
   const handleToggle = (category: keyof typeof settings, setting: string) => {
     setSettings(prev => ({
@@ -72,50 +108,150 @@ const NotificationSettings: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!user?.id) return;
+
     setIsLoading(true);
     setSaveStatus('saving');
 
     try {
-      // Symulacja API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await UserSettingsService.saveUserSettings(user.id, settings);
       setSaveStatus('saved');
 
       // Reset status po 3 sekundach
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
+      console.error('Error saving settings:', error);
       setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getNotificationCount = () => {
-    let count = 0;
-    Object.values(settings).forEach(category => {
-      if (typeof category === 'object' && category !== null) {
-        Object.values(category).forEach(value => {
-          if (typeof value === 'boolean' && value) count++;
-        });
-      }
-    });
-    return count;
+  const handleTestEmail = async () => {
+    if (!user?.email) {
+      setTestStatus({
+        type: 'email',
+        status: 'error',
+        message: 'Brak adresu email użytkownika',
+      });
+      setTimeout(() => setTestStatus(null), 5000);
+      return;
+    }
+
+    setTestingEmail(true);
+    setTestStatus(null);
+    
+    try {
+      await NotificationTriggers.sendTestEmail(
+        user.email,
+        user.displayName || 'Użytkownik'
+      );
+      setTestStatus({
+        type: 'email',
+        status: 'success',
+        message: `Test email wysłany na ${user.email}. Sprawdź swoją skrzynkę!`,
+      });
+      setTimeout(() => setTestStatus(null), 5000);
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      setTestStatus({
+        type: 'email',
+        status: 'error',
+        message: 'Nie udało się wysłać. Sprawdź konfigurację EmailJS.',
+      });
+      setTimeout(() => setTestStatus(null), 5000);
+    } finally {
+      setTestingEmail(false);
+    }
   };
+
+  const handleTestSMS = async () => {
+    setTestingSMS(true);
+    setTestStatus(null);
+    
+    try {
+      // SMS nie jest jeszcze zaimplementowany
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setTestStatus({
+        type: 'sms',
+        status: 'error',
+        message: 'Powiadomienia SMS nie są jeszcze dostępne.',
+      });
+      setTimeout(() => setTestStatus(null), 5000);
+    } finally {
+      setTestingSMS(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    setTestingPush(true);
+    setTestStatus(null);
+    
+    try {
+      // Push notifications - użyj browser notification API
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('PartyPass - Test', {
+            body: 'To jest testowe powiadomienie push! ✅',
+            icon: '/logo192.png',
+          });
+          setTestStatus({
+            type: 'push',
+            status: 'success',
+            message: 'Powiadomienie push wysłane! Sprawdź swoją przeglądarkę.',
+          });
+          setTimeout(() => setTestStatus(null), 5000);
+        } else if (Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            new Notification('PartyPass - Test', {
+              body: 'To jest testowe powiadomienie push! ✅',
+              icon: '/logo192.png',
+            });
+            setTestStatus({
+              type: 'push',
+              status: 'success',
+              message: 'Powiadomienie push wysłane!',
+            });
+            setTimeout(() => setTestStatus(null), 5000);
+          } else {
+            setTestStatus({
+              type: 'push',
+              status: 'error',
+              message: 'Musisz zezwolić na powiadomienia w przeglądarce.',
+            });
+            setTimeout(() => setTestStatus(null), 5000);
+          }
+        } else {
+          setTestStatus({
+            type: 'push',
+            status: 'error',
+            message: 'Powiadomienia są zablokowane w przeglądarce.',
+          });
+          setTimeout(() => setTestStatus(null), 5000);
+        }
+      } else {
+        setTestStatus({
+          type: 'push',
+          status: 'error',
+          message: 'Twoja przeglądarka nie obsługuje powiadomień push.',
+        });
+        setTimeout(() => setTestStatus(null), 5000);
+      }
+    } finally {
+      setTestingPush(false);
+    }
+  };
+
 
   return (
     <div className="notification-settings">
       <div className="notification-settings__header">
-        <div className="notification-settings__title-section">
-          <h1>Powiadomienia</h1>
-          <p>
-            Wybierz jak chcesz otrzymywać powiadomienia o swoich wydarzeniach
-          </p>
-        </div>
-        <div className="notification-settings__summary">
-          <div className="notification-settings__count">
-            <Bell size={16} />
-            <span>{getNotificationCount()} aktywnych</span>
-          </div>
-        </div>
+        <h1>Powiadomienia</h1>
+        <p>
+          Wybierz jak chcesz otrzymywać powiadomienia o swoich wydarzeniach
+        </p>
       </div>
 
       {/* Email Notifications */}
@@ -512,19 +648,42 @@ const NotificationSettings: React.FC = () => {
         </div>
 
         <div className="notification-settings__test-buttons">
-          <button className="notification-settings__test-btn">
+          <button 
+            className="notification-settings__test-btn"
+            onClick={handleTestEmail}
+            disabled={testingEmail || !user?.email}
+          >
             <Mail size={16} />
-            Wyślij test email
+            {testingEmail ? 'Wysyłanie...' : 'Wyślij test email'}
           </button>
-          <button className="notification-settings__test-btn">
+          <button 
+            className="notification-settings__test-btn"
+            onClick={handleTestSMS}
+            disabled={testingSMS}
+          >
             <Smartphone size={16} />
-            Wyślij test SMS
+            {testingSMS ? 'Wysyłanie...' : 'Wyślij test SMS'}
           </button>
-          <button className="notification-settings__test-btn">
+          <button 
+            className="notification-settings__test-btn"
+            onClick={handleTestPush}
+            disabled={testingPush}
+          >
             <Bell size={16} />
-            Wyślij test push
+            {testingPush ? 'Wysyłanie...' : 'Wyślij test push'}
           </button>
         </div>
+
+        {testStatus && (
+          <div className={`notification-settings__test-status notification-settings__test-status--${testStatus.status}`}>
+            {testStatus.status === 'success' ? (
+              <CheckCircle size={18} />
+            ) : (
+              <AlertCircle size={18} />
+            )}
+            <span>{testStatus.message}</span>
+          </div>
+        )}
       </div>
 
       {/* Save Button */}

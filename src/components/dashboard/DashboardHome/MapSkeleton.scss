@@ -6,9 +6,9 @@
   height: 400px;
   background: linear-gradient(
     90deg,
-    #f0f0f0 0%,
-    #f8f8f8 50%,
-    #f0f0f0 100%
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 100%
   );
   background-size: 200% 100%;
   border-radius: 0 0 1rem 1rem;
@@ -27,7 +27,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0.08) 50%,
       transparent 100%
     );
     background-size: 200% 100%;
@@ -56,28 +56,10 @@
   &__spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid rgba(99, 102, 241, 0.1);
+    border: 3px solid var(--border-primary);
     border-top-color: var(--color-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    background: linear-gradient(
-      90deg,
-      #1f2937 0%,
-      #374151 50%,
-      #1f2937 100%
-    );
-
-    &__shimmer {
-      background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.05) 50%,
-        transparent 100%
-      );
-    }
   }
 }
 
@@ -104,6 +86,9 @@
     opacity: 0.5;
   }
 }
+
+
+
 
 
 

@@ -249,6 +249,19 @@ export class RSVPService {
 
       // Śledź analytykę
       await this.trackRSVPAnalytics(rsvpToken.eventId, response.status);
+
+      // Wyślij powiadomienie email do organizatora
+      try {
+        const { NotificationTriggers } = await import('../notificationTriggers');
+        await NotificationTriggers.onGuestResponse(
+          rsvpToken.eventId,
+          guestId,
+          response
+        );
+      } catch (notificationError) {
+        console.warn('Failed to send RSVP notification email:', notificationError);
+        // Don't fail the whole operation if email fails
+      }
     } catch (error) {
       console.error('Błąd podczas przetwarzania odpowiedzi RSVP:', error);
       throw error;

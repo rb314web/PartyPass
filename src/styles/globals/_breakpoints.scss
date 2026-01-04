@@ -102,6 +102,8 @@ $breakpoints: (
 
 // Mixin: Dark mode
 // Usage: @include dark-mode { ... }
+// Supports both .dark class (from useTheme hook) and system preference (fallback)
+// Note: Components should use .dark class selector directly when possible
 @mixin dark-mode {
   @media (prefers-color-scheme: dark) {
     @content;

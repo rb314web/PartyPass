@@ -189,3 +189,7 @@ T=300ms:  Brak przeskoku - szerokość viewportu bez zmian
 
 
 
+
+
+
+

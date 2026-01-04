@@ -1,18 +1,11 @@
 import React from 'react';
+import { DemoEvent } from './demo.types';
 
 interface DemoEventsProps {
-  mockEvents: Array<{
-    id: string;
-    title: string;
-    date: string;
-    location: string;
-    guests: number;
-    maxGuests: number;
-    status: 'active' | 'completed';
-  }>;
+  mockEvents: DemoEvent[];
 }
 
-const DemoEvents: React.FC<DemoEventsProps> = ({ mockEvents }) => (
+const DemoEvents: React.FC<DemoEventsProps> = React.memo(({ mockEvents }) => (
   <div className="demo__events-content">
     <div className="demo__page-header">
       <h1>Wydarzenia</h1>
@@ -52,7 +45,9 @@ const DemoEvents: React.FC<DemoEventsProps> = ({ mockEvents }) => (
       ))}
     </div>
   </div>
-);
+));
+
+DemoEvents.displayName = 'DemoEvents';
 
 export default DemoEvents;
 

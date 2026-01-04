@@ -646,8 +646,8 @@
 
 // Event Card Skeleton Loading
 .event-card-skeleton {
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-primary, #e5e7eb);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: var(--radius-xl, 16px);
   padding: var(--space-lg, 1.5rem);
   display: flex;
@@ -668,9 +668,9 @@
     border-radius: var(--radius-md, 8px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -690,9 +690,9 @@
     border-radius: var(--radius-sm, 6px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -703,9 +703,9 @@
     border-radius: var(--radius-sm, 6px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -731,9 +731,9 @@
     border-radius: var(--radius-md, 8px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -745,9 +745,9 @@
     border-radius: var(--radius-sm, 6px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -764,9 +764,9 @@
     border-radius: var(--radius-sm, 6px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -778,9 +778,9 @@
     border-radius: var(--radius-sm, 6px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -791,7 +791,7 @@
     align-items: center;
     justify-content: space-between;
     padding-top: var(--space-md, 1rem);
-    border-top: 1px solid var(--border-primary, #e5e7eb);
+    border-top: 1px solid var(--border-primary);
   }
 
   &__footer-text {
@@ -800,9 +800,9 @@
     border-radius: var(--radius-sm, 6px);
     background: linear-gradient(
       90deg,
-      var(--gray-200, #e5e7eb) 25%,
-      var(--gray-100, #f3f4f6) 50%,
-      var(--gray-200, #e5e7eb) 75%
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;

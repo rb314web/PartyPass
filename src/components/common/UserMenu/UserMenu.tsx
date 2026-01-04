@@ -9,6 +9,7 @@ import {
   Crown,
   Mail,
   Shield,
+  LayoutDashboard,
 } from 'lucide-react';
 import './UserMenu.scss';
 
@@ -163,6 +164,15 @@ const UserMenu: React.FC<UserMenuProps> = ({
           </div>
 
           <div className="user-menu__dropdown-divider" />
+
+          <button
+            onClick={() => handleNavigate('/dashboard')}
+            className="user-menu__dropdown-item"
+            role="menuitem"
+          >
+            <LayoutDashboard size={18} />
+            <span>Dashboard</span>
+          </button>
 
           <button
             onClick={() => handleNavigate('/dashboard/settings')}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 
-const DemoAnalytics: React.FC = () => (
+const DemoAnalytics: React.FC = React.memo(() => (
   <div className="demo__analytics-content">
     <div className="demo__page-header">
       <h1>Analityka</h1>
@@ -43,7 +43,9 @@ const DemoAnalytics: React.FC = () => (
       </p>
     </div>
   </div>
-);
+));
+
+DemoAnalytics.displayName = 'DemoAnalytics';
 
 export default DemoAnalytics;
 

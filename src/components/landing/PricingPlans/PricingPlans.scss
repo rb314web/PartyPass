@@ -2,11 +2,15 @@
 
 .pricing-plans {
   padding: 4rem 0;
-  background: linear-gradient(135deg, var(--clr-surface-a10), var(--clr-surface-a20));
+  background: linear-gradient(135deg, #fafbfc 0%, #f3f4f6 100%);
   position: relative;
   overflow: hidden;
   margin-bottom: -2rem;
   transition: background-color var(--transition-colors, 0.2s ease);
+
+  @media (max-width: 768px) {
+    padding-top: 2rem;
+  }
 
   &::before {
     display: none;
@@ -134,19 +138,34 @@
     flex: 1;
     min-width: 280px;
     max-width: 340px;
-    background: linear-gradient(to bottom, var(--clr-surface-a10) 0%, var(--clr-surface-a0) 100%);
+    background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
     border-radius: var(--radius-lg);
     padding: var(--space-xl);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     position: relative;
-    border: 2px solid var(--clr-surface-a30);
-    transition: background-color var(--transition-colors, 0.2s ease),
-                border-color var(--transition-colors, 0.2s ease),
-                box-shadow var(--transition-normal, 0.2s ease);
+    border: 2px solid rgba(229, 231, 235, 0.8);
+    transition: all 0.3s ease;
 
-    // Wyraźny akcent na górze karty
+    // Jeden kolor dla wszystkich planów
+    &:nth-child(1) {
+      --plan-color-1: #6366f1;
+      --plan-color-2: #6366f1;
+      --plan-color-rgb: 99, 102, 241;
+    }
+    &:nth-child(2) {
+      --plan-color-1: #6366f1;
+      --plan-color-2: #6366f1;
+      --plan-color-rgb: 99, 102, 241;
+    }
+    &:nth-child(3) {
+      --plan-color-1: #6366f1;
+      --plan-color-2: #6366f1;
+      --plan-color-rgb: 99, 102, 241;
+    }
+
+    // Kolorowy akcent na górze karty
     &::before {
       content: '';
       position: absolute;
@@ -154,15 +173,27 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+      background: linear-gradient(90deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       z-index: 1;
+      transition: height 0.3s ease;
+    }
+
+    &:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(var(--plan-color-rgb, 59, 130, 246), 0.2);
+      border-color: var(--plan-color-1);
+
+      &::before {
+        height: 6px;
+      }
     }
 
     // Popular plan styling
     &--popular {
       border-width: 3px;
-      border-color: var(--color-primary);
+      border-color: var(--plan-color-1);
+      box-shadow: 0 8px 24px rgba(var(--plan-color-rgb, 139, 92, 246), 0.25);
 
       &::before {
         height: 5px;
@@ -198,14 +229,20 @@
   }
 
   &__plan-icon {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     @include flex-center;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    background: linear-gradient(135deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
     color: white;
     border-radius: var(--radius-lg);
-    margin: 0 auto var(--space-sm);
-    box-shadow: var(--shadow-md);
+    margin: 0 auto var(--space-md);
+    box-shadow: 0 4px 12px rgba(var(--plan-color-rgb, 59, 130, 246), 0.3);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    .pricing-plans__card:hover & {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 6px 20px rgba(var(--plan-color-rgb, 59, 130, 246), 0.4);
+    }
   }
 
   &__plan-name {
@@ -272,7 +309,7 @@
   }
 
   &__feature-icon {
-    color: var(--color-primary);
+    color: var(--plan-color-1, var(--color-primary));
     flex-shrink: 0;
     width: 20px;
     height: 20px;
@@ -287,34 +324,44 @@
     @include button-base;
     width: 100%;
     padding: var(--space-md) var(--space-lg);
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     font-weight: 600;
+    background: linear-gradient(135deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(var(--plan-color-rgb, 59, 130, 246), 0.25);
+    transition: all 0.3s ease;
     border-radius: var(--radius-lg);
 
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(var(--plan-color-rgb, 59, 130, 246), 0.35);
+    }
+
     &--primary {
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      background: linear-gradient(135deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
       color: white;
       border: none;
-      box-shadow: var(--shadow-md);
+      box-shadow: 0 4px 12px rgba(var(--plan-color-rgb, 59, 130, 246), 0.25);
 
       &:hover {
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 6px 20px rgba(var(--plan-color-rgb, 59, 130, 246), 0.35);
       }
     }
 
     &--secondary {
-      background: var(--clr-surface-a0);
-      color: var(--text-primary);
-      border: 2px solid var(--clr-surface-a30);
-      box-shadow: var(--shadow-sm);
-      transition: background-color var(--transition-colors, 0.2s ease),
-                  color var(--transition-colors, 0.2s ease),
-                  border-color var(--transition-colors, 0.2s ease);
+      background: white;
+      color: var(--plan-color-1, var(--text-primary));
+      border: 2px solid var(--plan-color-1, rgba(229, 231, 235, 0.8));
+      box-shadow: 0 2px 8px rgba(var(--plan-color-rgb, 59, 130, 246), 0.1);
 
       &:hover {
-        background: var(--clr-surface-a10);
-        border-color: var(--color-primary);
-        box-shadow: var(--shadow-md);
+        background: linear-gradient(135deg, 
+          rgba(var(--plan-color-rgb, 59, 130, 246), 0.05) 0%, 
+          rgba(var(--plan-color-rgb, 59, 130, 246), 0.02) 100%
+        );
+        border-color: var(--plan-color-1);
+        box-shadow: 0 4px 16px rgba(var(--plan-color-rgb, 59, 130, 246), 0.2);
       }
     }
   }

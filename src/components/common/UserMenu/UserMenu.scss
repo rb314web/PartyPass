@@ -7,7 +7,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.375rem 0.5rem;
+    padding: 0.5rem;
     background: transparent;
     border: 1px solid transparent;
     border-radius: var(--radius-md);
@@ -286,5 +286,133 @@
       border-radius: 16px 16px 0 0;
       animation: modalSlideUp 0.3s ease;
     }
+  }
+}
+
+// ============================================
+// DARK MODE SUPPORT
+// ============================================
+
+.dark .user-menu {
+  &__trigger {
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--border-primary);
+    }
+  }
+
+  &__avatar {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &__name {
+    color: var(--text-primary);
+  }
+
+  &__plan {
+    &--gray {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+    }
+
+    &--primary {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    &--gold {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 237, 78, 0.3));
+      color: #ffd700;
+    }
+  }
+
+  &__chevron {
+    color: var(--text-secondary);
+  }
+
+  &__dropdown {
+    background: var(--bg-elevated);
+    border-color: var(--border-primary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  &__dropdown-header {
+    background: var(--bg-secondary);
+  }
+
+  &__dropdown-name {
+    color: var(--text-primary);
+  }
+
+  &__dropdown-email {
+    color: var(--text-secondary);
+  }
+
+  &__dropdown-badge {
+    &--gray {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+    }
+
+    &--primary {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    &--gold {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 237, 78, 0.3));
+      color: #ffd700;
+    }
+  }
+
+  &__dropdown-divider {
+    background: var(--border-primary);
+  }
+
+  &__dropdown-item {
+    color: var(--text-primary);
+
+    svg {
+      color: var(--text-secondary);
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &--danger {
+      color: var(--color-error, #ef4444);
+
+      svg {
+        color: var(--color-error, #ef4444);
+      }
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.15);
+      }
+    }
+  }
+}
+
+// Animation
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

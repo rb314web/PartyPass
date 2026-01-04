@@ -80,22 +80,7 @@
   }
 }
 
-// Dark mode specific styles for skeleton
-.dark {
-  .stats-card-skeleton {
-    &__icon,
-    &__trend,
-    &__value,
-    &__title {
-      background: linear-gradient(
-        90deg,
-        var(--bg-tertiary) 25%,
-        rgba(255, 255, 255, 0.05) 50%,
-        var(--bg-tertiary) 75%
-      );
-    }
-  }
-}
+// Skeleton styles work automatically with CSS variables in both light and dark modes
 
 @keyframes skeleton-loading {
   0% {

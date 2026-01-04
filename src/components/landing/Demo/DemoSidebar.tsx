@@ -1,50 +1,59 @@
 import React from 'react';
-import { Home, Search, Calendar, Users, Activity, BarChart3, Settings } from 'lucide-react';
+import { DemoView } from './demo.types';
+import { sidebarItems } from './demoData';
 
 interface DemoSidebarProps {
-  currentView: 'dashboard' | 'events' | 'analytics';
-  onViewChange: (view: 'dashboard' | 'events' | 'analytics') => void;
+  currentView: DemoView;
+  onViewChange: (view: DemoView) => void;
   isCollapsed: boolean;
   isMobileOpen: boolean;
 }
 
-const DemoSidebar: React.FC<DemoSidebarProps> = ({
+const DemoSidebar: React.FC<DemoSidebarProps> = React.memo(({
   currentView,
   onViewChange,
   isCollapsed,
   isMobileOpen
 }) => {
-  const sidebarItems = [
-    { icon: Home, label: 'Dashboard', view: 'dashboard' },
-    { icon: Search, label: 'Wyszukaj', view: 'dashboard' },
-    { icon: Calendar, label: 'Wydarzenia', view: 'events' },
-    { icon: Users, label: 'Kontakty', view: 'dashboard' },
-    { icon: Activity, label: 'Aktywności', view: 'dashboard' },
-    { icon: BarChart3, label: 'Analityka', view: 'analytics' },
-    { icon: Settings, label: 'Ustawienia', view: 'dashboard' },
-  ];
 
   return (
     <div
+      id="demo-sidebar"
       className={`demo__sidebar ${isCollapsed ? 'demo__sidebar--collapsed' : ''} ${isMobileOpen ? 'demo__sidebar--mobile-open' : ''}`}
     >
-      <div className="demo__sidebar-header">
-        <div className="demo__logo">
-          {!isCollapsed && <span>PartyPass</span>}
-        </div>
-      </div>
-
       <nav className="demo__sidebar-nav">
-        {sidebarItems.map((item, index) => (
-          <button
-            key={index}
-            className={`demo__sidebar-item ${currentView === item.view ? 'demo__sidebar-item--active' : ''}`}
-            onClick={() => onViewChange(item.view as any)}
-          >
-            <item.icon size={20} />
-            {!isCollapsed && <span>{item.label}</span>}
-          </button>
-        ))}
+        {sidebarItems.map((item, index) => {
+          // Only the actual Dashboard item is active when currentView === 'dashboard'
+          // Other items with view: 'dashboard' are not active (they are just examples)
+          const isActive = currentView === item.view && 
+            (item.view !== 'dashboard' || item.label === 'Dashboard');
+
+          // Items with view: 'dashboard' (except Dashboard itself) are for display only
+          // They do not change the view - they remain on the dashboard
+          const isDemoOnly = item.label !== 'Dashboard' && item.view === 'dashboard';
+
+          const handleClick = () => {
+            if (isDemoOnly) {
+              // This is just an example item - it does not change the view
+              return;
+            }
+            onViewChange(item.view);
+          };
+
+          return (
+            <button
+              key={index}
+              className={`demo__sidebar-item ${isActive ? 'demo__sidebar-item--active' : ''} ${isDemoOnly ? 'demo__sidebar-item--demo-only' : ''}`}
+              onClick={handleClick}
+              disabled={isDemoOnly}
+              aria-label={isDemoOnly ? `${item.label} (tylko przykład)` : item.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <item.icon size={20} />
+              {!isCollapsed && <span>{item.label}</span>}
+            </button>
+          );
+        })}
       </nav>
 
       <div className="demo__sidebar-footer">
@@ -62,7 +71,9 @@ const DemoSidebar: React.FC<DemoSidebarProps> = ({
       </div>
     </div>
   );
-};
+});
+
+DemoSidebar.displayName = 'DemoSidebar';
 
 export default DemoSidebar;
 

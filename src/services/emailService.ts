@@ -11,6 +11,18 @@ export class EmailService {
     process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID ||
     process.env.REACT_APP_EMAILJS_TEMPLATE_ID ||
     '';
+  private static readonly RSVP_NOTIFICATION_TEMPLATE_ID =
+    process.env.REACT_APP_EMAILJS_RSVP_TEMPLATE_ID ||
+    process.env.REACT_APP_EMAILJS_TEMPLATE_ID ||
+    '';
+  private static readonly REMINDER_ORGANIZER_TEMPLATE_ID =
+    process.env.REACT_APP_EMAILJS_REMINDER_ORG_TEMPLATE_ID ||
+    process.env.REACT_APP_EMAILJS_TEMPLATE_ID ||
+    '';
+  private static readonly REMINDER_GUEST_TEMPLATE_ID =
+    process.env.REACT_APP_EMAILJS_REMINDER_GUEST_TEMPLATE_ID ||
+    process.env.REACT_APP_EMAILJS_TEMPLATE_ID ||
+    '';
   private static readonly PUBLIC_KEY =
     process.env.REACT_APP_EMAILJS_PUBLIC_KEY || '';
 
@@ -233,7 +245,7 @@ PartyPass - Zarządzanie wydarzeniami
       // Fallback do konsoli w trybie deweloperskim
       if (process.env.NODE_ENV === 'development') {
         console.warn('Fallback: wyświetlanie wiadomości w konsoli');
-        this.logContactFormToConsole(data);
+      this.logContactFormToConsole(data);
       }
 
       // Rzucaj bardziej opisowy błąd
@@ -259,6 +271,187 @@ PartyPass - Zarządzanie wydarzeniami
     console.log('Temat: Nowa wiadomość z formularza kontaktowego');
     console.log('━'.repeat(50));
     console.log(data.message);
+    console.log('━'.repeat(50));
+  }
+
+  /**
+   * Wysyła powiadomienie o odpowiedzi RSVP do organizatora
+   */
+  static async sendRSVPNotification(
+    organizerEmail: string,
+    organizerName: string,
+    guestData: {
+      name: string;
+      email: string;
+      response: 'accepted' | 'declined' | 'maybe';
+      plusOne?: string;
+      dietary?: string;
+      notes?: string;
+    },
+    event: Event,
+    stats: {
+      accepted: number;
+      pending: number;
+      declined: number;
+      total: number;
+    }
+  ): Promise<void> {
+    try {
+      if (!this.SERVICE_ID || !this.RSVP_NOTIFICATION_TEMPLATE_ID || !this.PUBLIC_KEY) {
+        console.warn('RSVP notification template not configured');
+        this.logRSVPNotificationToConsole(organizerEmail, organizerName, guestData, event, stats);
+        return;
+      }
+
+      const responseText = {
+        accepted: 'potwierdził',
+        declined: 'odrzucił',
+        maybe: 'jest niezdecydowany na'
+      }[guestData.response];
+
+      const statusBadge = {
+        accepted: '✅ Potwierdził',
+        declined: '❌ Odrzucił',
+        maybe: '❓ Niezdecydowany'
+      }[guestData.response];
+
+      const responseStatus = guestData.response;
+
+      const templateParams = {
+        to_email: organizerEmail,
+        organizer_name: organizerName,
+        guest_name: guestData.name,
+        guest_email: guestData.email,
+        event_title: event.title,
+        event_date: new Date(event.date).toLocaleDateString('pl-PL', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        event_url: `${window.location.origin}/dashboard/events/${event.id}`,
+        response_text: responseText,
+        status_badge: statusBadge,
+        response_status: responseStatus,
+        plusOne: guestData.plusOne || '',
+        dietary_restrictions: guestData.dietary || '',
+        notes: guestData.notes || '',
+        accepted_count: stats.accepted,
+        pending_count: stats.pending,
+        declined_count: stats.declined,
+        total_guests: stats.total,
+      };
+
+      await emailjs.send(
+        this.SERVICE_ID,
+        this.RSVP_NOTIFICATION_TEMPLATE_ID,
+        templateParams,
+        this.PUBLIC_KEY
+      );
+
+      console.log(`✅ RSVP notification sent to ${organizerEmail}`);
+    } catch (error) {
+      console.error(`❌ Error sending RSVP notification to ${organizerEmail}:`, error);
+      // Don't throw - notification failure shouldn't break RSVP processing
+    }
+  }
+
+  /**
+   * Wysyła przypomnienie o wydarzeniu
+   */
+  static async sendEventReminder(
+    recipient: {
+      email: string;
+      name: string;
+      isOrganizer: boolean;
+    },
+    event: Event,
+    daysUntil: number,
+    organizerStats?: {
+      accepted: number;
+      pending: number;
+      declined: number;
+      total: number;
+    }
+  ): Promise<void> {
+    try {
+      const templateId = recipient.isOrganizer
+        ? this.REMINDER_ORGANIZER_TEMPLATE_ID
+        : this.REMINDER_GUEST_TEMPLATE_ID;
+
+      if (!this.SERVICE_ID || !templateId || !this.PUBLIC_KEY) {
+        console.warn('Event reminder template not configured');
+        return;
+      }
+
+      const timeDescription = daysUntil === 0 
+        ? 'dzisiaj' 
+        : daysUntil === 1 
+          ? 'jutro' 
+          : `za ${daysUntil} dni`;
+
+      const templateParams: any = {
+        to_email: recipient.email,
+        recipient_name: recipient.name,
+        event_title: event.title,
+        event_date: new Date(event.date).toLocaleDateString('pl-PL', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        event_location: event.location || 'Brak lokalizacji',
+        event_description: event.description || '',
+        dresscode: event.dresscode || '',
+        additional_info: event.additionalInfo || '',
+        time_description: timeDescription,
+        days_until: daysUntil,
+        event_url: `${window.location.origin}/dashboard/events/${event.id}`,
+      };
+
+      // Dodaj statystyki tylko dla organizatora
+      if (recipient.isOrganizer && organizerStats) {
+        templateParams.accepted_count = organizerStats.accepted;
+        templateParams.pending_count = organizerStats.pending;
+        templateParams.declined_count = organizerStats.declined;
+        templateParams.total_guests = organizerStats.total;
+      }
+
+      await emailjs.send(
+        this.SERVICE_ID,
+        templateId,
+        templateParams,
+        this.PUBLIC_KEY
+      );
+
+      console.log(`✅ Event reminder sent to ${recipient.email}`);
+    } catch (error) {
+      console.error(`❌ Error sending event reminder to ${recipient.email}:`, error);
+    }
+  }
+
+  /**
+   * Loguje powiadomienie RSVP do konsoli (fallback)
+   */
+  private static logRSVPNotificationToConsole(
+    organizerEmail: string,
+    organizerName: string,
+    guestData: any,
+    event: Event,
+    stats: any
+  ): void {
+    console.log('📧 RSVP NOTIFICATION (Fallback):');
+    console.log('━'.repeat(50));
+    console.log(`TO: ${organizerEmail}`);
+    console.log(`ORGANIZER: ${organizerName}`);
+    console.log(`GUEST: ${guestData.name} (${guestData.email})`);
+    console.log(`RESPONSE: ${guestData.response}`);
+    console.log(`EVENT: ${event.title}`);
+    console.log(`STATS: ${stats.accepted}/${stats.total} confirmed`);
     console.log('━'.repeat(50));
   }
 

@@ -2,32 +2,18 @@ import React from 'react';
 import {
   Calendar,
   Users,
-  CheckCircle,
   Mail,
   Clock,
 } from 'lucide-react';
+import { DemoStat, DemoEvent, DemoActivity } from './demo.types';
 
 interface DemoDashboardProps {
-  mockStats: Array<{
-    title: string;
-    value: string | number;
-    change: string;
-    trend: 'up' | 'down';
-    icon: React.ComponentType<any>;
-    color: 'blue' | 'green' | 'purple' | 'orange';
-  }>;
-  mockEvents: Array<{
-    id: string;
-    title: string;
-    date: string;
-    location: string;
-    guests: number;
-    maxGuests: number;
-    status: 'active' | 'completed';
-  }>;
+  mockStats: DemoStat[];
+  mockEvents: DemoEvent[];
+  mockActivities: DemoActivity[];
 }
 
-const DemoDashboard: React.FC<DemoDashboardProps> = ({ mockStats, mockEvents }) => (
+const DemoDashboard: React.FC<DemoDashboardProps> = React.memo(({ mockStats, mockEvents, mockActivities }) => (
   <div className="demo__dashboard-content">
     <div className="demo__welcome">
       <h1>Witaj w PartyPass, Anna! 👋</h1>
@@ -86,36 +72,22 @@ const DemoDashboard: React.FC<DemoDashboardProps> = ({ mockStats, mockEvents }) 
     <div className="demo__section">
       <h2>Ostatnia aktywność</h2>
       <div className="demo__activity-list">
-        <div className="demo__activity-item">
-          <CheckCircle
-            size={16}
-            className="demo__activity-icon demo__activity-icon--success"
-          />
-          <span>
-            Anna Kowalska potwierdziła uczestnictwo w "Urodziny Marii"
-          </span>
-          <small>2 godziny temu</small>
-        </div>
-        <div className="demo__activity-item">
-          <Mail
-            size={16}
-            className="demo__activity-icon demo__activity-icon--blue"
-          />
-          <span>Wysłano 15 zaproszeń na "Spotkanie rodzinne"</span>
-          <small>1 dzień temu</small>
-        </div>
-        <div className="demo__activity-item">
-          <Calendar
-            size={16}
-            className="demo__activity-icon demo__activity-icon--purple"
-          />
-          <span>Utworzono nowe wydarzenie "Spotkanie rodzinne"</span>
-          <small>3 dni temu</small>
-        </div>
+        {mockActivities.slice(0, 3).map((activity) => (
+          <div key={activity.id} className="demo__activity-item">
+            <activity.icon
+              size={16}
+              className={`demo__activity-icon demo__activity-icon--${activity.color}`}
+            />
+            <span>{activity.message}</span>
+            <small>{activity.time}</small>
+          </div>
+        ))}
       </div>
     </div>
   </div>
-);
+));
+
+DemoDashboard.displayName = 'DemoDashboard';
 
 export default DemoDashboard;
 

@@ -434,3 +434,7 @@ Zapewnij, że oba elementy w stats-detail mają równą wysokość na desktop:
 
 
 
+
+
+
+
