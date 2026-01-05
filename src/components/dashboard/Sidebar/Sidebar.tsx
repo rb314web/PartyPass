@@ -34,14 +34,27 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+  const [isCompactScreen, setIsCompactScreen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  // Check if screen is in compact range (769px-1200px)
+  useEffect(() => {
+    const checkCompactScreen = () => {
+      const width = window.innerWidth;
+      setIsCompactScreen(width >= 769 && width <= 1200);
+    };
+
+    checkCompactScreen();
+    window.addEventListener('resize', checkCompactScreen);
+    return () => window.removeEventListener('resize', checkCompactScreen);
+  }, []);
 
   // Use external state if provided, otherwise use internal state
   const isMobileOpen =
     externalMobileOpen !== false ? externalMobileOpen : internalMobileOpen;
   const isCollapsed =
-    externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
+    externalCollapsed !== undefined ? externalCollapsed : (internalCollapsed || isCompactScreen);
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },

@@ -24,6 +24,8 @@ interface EventFormData {
   date: string;
   time: string;
   location: string;
+  latitude?: number;
+  longitude?: number;
   maxGuests: number | string;
   tags: string[];
   isPrivate: boolean;
@@ -46,6 +48,8 @@ const CreateEvent: React.FC = () => {
     date: '',
     time: '',
     location: '',
+    latitude: undefined,
+    longitude: undefined,
     maxGuests: 50,
     tags: [],
     isPrivate: false,
@@ -242,6 +246,8 @@ const CreateEvent: React.FC = () => {
               date: dateStr,
               time: timeStr,
               location: event.location,
+              latitude: event.latitude,
+              longitude: event.longitude,
               maxGuests: event.maxGuests,
               tags: event.tags || [],
               isPrivate: event.isPrivate || false,
@@ -491,6 +497,8 @@ const CreateEvent: React.FC = () => {
         description: formData.description,
         date: eventDate,
         location: formData.location,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         maxGuests: Number(formData.maxGuests),
         tags: formData.tags,
         isPrivate: formData.isPrivate,
@@ -510,7 +518,7 @@ const CreateEvent: React.FC = () => {
         await EventService.updateEvent(id, eventData);
       } else {
         // Create new event
-        const newEvent = await EventService.createEvent(user.id, eventData);
+        await EventService.createEvent(user.id, eventData);
       }
 
       navigate('/dashboard/events');
@@ -667,8 +675,13 @@ const CreateEvent: React.FC = () => {
               </label>
               <LocationPicker
                 value={formData.location}
-                onChange={(location: string) =>
-                  setFormData(prev => ({ ...prev, location }))
+                onChange={(location: string, lat?: number, lng?: number) =>
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    location,
+                    latitude: lat,
+                    longitude: lng
+                  }))
                 }
                 error={errors.location}
                 placeholder="np. Sala konferencyjna, Restauracja Roma, ul. Kwiatowa 15..."

@@ -32,11 +32,8 @@ export class EmailService {
   static init(): void {
     if (this.PUBLIC_KEY) {
       emailjs.init(this.PUBLIC_KEY);
-    } else {
-      console.warn(
-        'EmailJS nie został skonfigurowany. Sprawdź zmienne środowiskowe.'
-      );
     }
+    // EmailJS is optional - silent fail if not configured
   }
 
   /**

@@ -4,6 +4,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  displayName?: string;
   planType: 'starter' | 'pro' | 'enterprise';
   createdAt: Date;
   avatar?: string;
@@ -16,6 +17,8 @@ export interface Event {
   description: string;
   date: Date;
   location: string;
+  latitude?: number;
+  longitude?: number;
   maxGuests: number;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   createdAt: Date;

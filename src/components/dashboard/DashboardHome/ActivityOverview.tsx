@@ -140,76 +140,7 @@ const ActivityOverview: React.FC<ActivityOverviewProps> = ({
         </button>
       </div>
 
-      {/* Next Event */}
-      <div className="activity-overview__section activity-overview__section--next">
-        <div className="activity-overview__header">
-          <div className="activity-overview__icon-circle activity-overview__icon-circle--orange">
-            <CalendarDays size={18} strokeWidth={2} />
-          </div>
-          <h3 className="activity-overview__title">Następne wydarzenie</h3>
-        </div>
 
-        <div className="activity-overview__content">
-          {isLoadingNextEvent ? (
-            <div className="activity-overview__loading">
-              <div className="activity-overview__skeleton-title" />
-              <div className="activity-overview__skeleton-detail" />
-              <div className="activity-overview__skeleton-detail" />
-              <div className="activity-overview__skeleton-detail" />
-            </div>
-          ) : nextEvent ? (
-            <>
-              <div className="activity-overview__event-header">
-                <h4 className="activity-overview__event-title">{nextEvent.title}</h4>
-                <span className="activity-overview__event-badge">
-                  {formatEventDate(nextEvent.date)}
-                </span>
-              </div>
-              
-              <div className="activity-overview__event-meta">
-                <div className="activity-overview__event-meta-item">
-                  <Clock size={16} strokeWidth={2} />
-                  <span>{formatEventTime(nextEvent.date)}</span>
-                </div>
-                
-                <div className="activity-overview__event-meta-item">
-                  <Users size={16} strokeWidth={2} />
-                  <span>
-                    {nextEvent.guestCount}{' '}
-                    {nextEvent.guestCount === 1
-                      ? 'gość'
-                      : nextEvent.guestCount > 1 && nextEvent.guestCount < 5
-                        ? 'gości'
-                        : 'gości'}
-                  </span>
-                </div>
-              </div>
-
-              {nextEvent.location && (
-                <div className="activity-overview__event-location-badge">
-                  <MapPin size={12} strokeWidth={2} />
-                  <span>{nextEvent.location.split(',')[0]}</span>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="activity-overview__empty">
-              <CalendarDays size={32} opacity={0.2} />
-              <p>Brak nadchodzących wydarzeń</p>
-            </div>
-          )}
-        </div>
-
-        {nextEvent && (
-          <button
-            className="activity-overview__button"
-            onClick={() => navigate(`/dashboard/events/${nextEvent.id}`)}
-          >
-            Zobacz szczegóły
-            <ArrowRight size={14} strokeWidth={2} />
-          </button>
-        )}
-      </div>
     </div>
   );
 };

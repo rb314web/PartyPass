@@ -62,9 +62,20 @@
     }
   }
 
+  // Top Grid: Key Metrics
+  &__top-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+
+    @media (max-width: 768px) {
+      margin-bottom: 2rem;
+    }
+  }
+
   // Sections
   &__section {
-    background: var(--bg-primary);
     border-radius: 0.5rem;
     padding: 1.5rem;
     transition: background-color 0.2s ease;
@@ -119,11 +130,15 @@
     &--map {
       padding: 0;
       overflow: hidden;
+      background: var(--bg-primary);
+      border-radius: 1.25rem;
 
       .dashboard-home__section-header {
         padding: 1.5rem;
         margin-bottom: 0;
         border-bottom: 1px solid var(--border-primary);
+        background: var(--bg-primary);
+        border-radius: 1.25rem 1.25rem 0 0;
 
         @media (max-width: 768px) {
           padding: 1.25rem;
@@ -200,7 +215,7 @@
     gap: 1.5rem;
 
     @media (min-width: 1024px) {
-      grid-template-columns: 1fr 2fr;
+      grid-template-columns: 1fr;
       gap: 1.5rem;
     }
 

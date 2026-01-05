@@ -98,12 +98,7 @@ export class AnalyticsService {
   ): Promise<void> {
     // Wyłącz analityki w trybie deweloperskim
     if (process.env.NODE_ENV === 'development') {
-      console.log('Analytics disabled in development mode:', {
-        userId,
-        metricType,
-        value,
-        metadata,
-      });
+      // Analytics disabled in development mode
       return;
     }
 

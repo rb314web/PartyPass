@@ -25,7 +25,7 @@ Icon.Default.mergeOptions({
 
 export interface LocationPickerProps {
   value: string;
-  onChange: (location: string) => void;
+  onChange: (location: string, lat?: number, lng?: number) => void;
   error?: string;
   placeholder?: string;
 }
@@ -109,7 +109,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   // Handle search input change with debouncing
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
-    onChange(query); // Update parent value immediately
+    onChange(query); // Update parent value immediately (bez współrzędnych bo użytkownik pisze)
     setSearchQuery(query);
 
     // Clear previous timeout
@@ -130,7 +130,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   // Handle location selection from search results
   const selectLocation = (location: LocationData) => {
     setSelectedLocation(location);
-    onChange(location.address);
+    onChange(location.address, location.lat, location.lng);
     setSearchResults([]);
     setSearchQuery(location.address);
   };
@@ -153,7 +153,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
       };
 
       setSelectedLocation(locationData);
-      onChange(address);
+      onChange(address, lat, lng);
       setSearchQuery(address);
       setSearchResults([]); // Clear search results when map is clicked
     } catch (error) {
@@ -167,7 +167,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
       };
 
       setSelectedLocation(locationData);
-      onChange(address);
+      onChange(address, lat, lng);
       setSearchQuery(address);
       setSearchResults([]);
     }

@@ -1,5 +1,6 @@
 // components/dashboard/EventsMap/EventsMap.tsx
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import L from 'leaflet';
@@ -7,6 +8,7 @@ import { MapPin, Calendar, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../hooks/useTheme';
 import { Event } from '../../../types';
+import { getFromCache, saveToCache } from '../../../utils/geocodeCache';
 import 'leaflet/dist/leaflet.css';
 import './EventsMap.scss';
 
@@ -57,7 +59,6 @@ const DynamicTileLayer: React.FC<{ isDark: boolean; onMapReady?: (map: L.Map) =>
   const mapInitialized = useRef(false);
   
   // Logowanie przy każdym renderze komponentu
-  console.log('DynamicTileLayer: Component rendering, isDark:', isDark, 'map available:', !!map);
 
   // Zapisz referencję do mapy gdy jest gotowa
   useEffect(() => {
@@ -66,7 +67,6 @@ const DynamicTileLayer: React.FC<{ isDark: boolean; onMapReady?: (map: L.Map) =>
       if (onMapReady) {
         onMapReady(map);
       }
-      console.log('DynamicTileLayer: Map initialized');
     }
   }, [map, onMapReady]);
 
@@ -172,7 +172,6 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
   const [locations, setLocations] = useState<EventLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const styleAppliedRef = useRef(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const messageIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -184,7 +183,6 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
       // Aktualizuj stan tylko jeśli się zmienił
       setIsDark(prevIsDark => {
         if (prevIsDark !== isCurrentlyDark) {
-          console.log('EventsMap: Dark mode changed to', isCurrentlyDark);
           return isCurrentlyDark;
         }
         return prevIsDark;
@@ -254,8 +252,6 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
   }, [loading]);
 
   useEffect(() => {
-    console.log('EventsMap: events received:', events.length);
-    console.log('EventsMap: events with location:', eventsWithLocation.length);
     
     // Jeśli nie ma wydarzeń w ogóle, może jeszcze się ładują - pokaż spinner
     if (events.length === 0) {
@@ -267,7 +263,6 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
     
     // Jeśli są wydarzenia, ale bez lokalizacji - pokaż pusty stan
     if (eventsWithLocation.length === 0) {
-      console.log('EventsMap: No events with location, showing empty state');
       setLocations([]);
       setLoading(false);
       setError(false);
@@ -281,52 +276,87 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
     const fetchAllCoordinates = async () => {
       // Add delay between requests to avoid rate limiting
       const locationPromises = eventsWithLocation.map(async (event, index) => {
-        // Add delay to avoid rate limiting (1 request per second)
-        if (index > 0) {
-          await new Promise(resolve => setTimeout(resolve, index * 1000));
-        }
-
         try {
-          const locationQuery = event.location.trim();
-          console.log(`EventsMap: Fetching coordinates for: ${locationQuery}`);
-          
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-              locationQuery
-            )}&limit=1`
-          );
-
-          if (!response.ok) {
-            console.error(`EventsMap: Response not OK for ${locationQuery}:`, response.status);
-            return null;
-          }
-
-          const data = await response.json();
-          console.log(`EventsMap: Response for ${locationQuery}:`, data);
-
-          if (!Array.isArray(data) || data.length === 0) {
-            console.warn(`EventsMap: No results found for ${locationQuery}`);
-            return null;
-          }
-
-          const [result] = data;
-          const lat = parseFloat(result.lat);
-          const lng = parseFloat(result.lon);
-
-          if (Number.isFinite(lat) && Number.isFinite(lng)) {
-            console.log(`EventsMap: Found coordinates for ${locationQuery}:`, lat, lng);
+          // PRIORYTET 1: Użyj zapisanych współrzędnych
+          if (event.latitude && event.longitude) {
             return {
               event,
-              lat,
-              lng,
-              display_name: result.display_name,
+              lat: event.latitude,
+              lng: event.longitude,
+              display_name: event.location,
             };
           }
 
-          console.warn(`EventsMap: Invalid coordinates for ${locationQuery}`);
-          return null;
+          const locationQuery = event.location.trim();
+
+          // PRIORYTET 2: Sprawdź cache
+          const cached = getFromCache(locationQuery);
+          if (cached) {
+            return {
+              event,
+              lat: cached.lat,
+              lng: cached.lng,
+              display_name: locationQuery,
+            };
+          }
+
+          // PRIORYTET 3: Geokoduj przez Nominatim (wyłączone w dev mode)
+          // W trybie development nie wysyłamy żądań do Nominatim API (rate limiting/CORS)
+          // Użyj zapisanych współrzędnych lub cache
+          if (process.env.NODE_ENV === 'development') {
+            return null;
+          }
+          
+          // Add delay to avoid rate limiting (1.5s per request)
+          if (index > 0) {
+            await new Promise(resolve => setTimeout(resolve, index * 1500));
+          }
+          
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+                locationQuery
+              )}&limit=1`,
+              {
+                headers: {
+                  'User-Agent': 'PartyPass/1.0'
+                }
+              }
+            );
+
+            if (!response.ok) {
+              return null;
+            }
+
+            const data = await response.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+              return null;
+            }
+
+            const [result] = data;
+            const lat = parseFloat(result.lat);
+            const lng = parseFloat(result.lon);
+
+            if (Number.isFinite(lat) && Number.isFinite(lng)) {
+              // Zapisz do cache
+              saveToCache(locationQuery, lat, lng);
+
+              return {
+                event,
+                lat,
+                lng,
+                display_name: result.display_name,
+              };
+            }
+
+            return null;
+          } catch (err) {
+            // Geocoding failed (network error, rate limit, connection refused) - silent fail
+            return null;
+          }
         } catch (err) {
-          console.error(`EventsMap: Error fetching coordinates for ${event.location}:`, err);
+          // Unexpected error in geocoding logic
           return null;
         }
       });
@@ -337,8 +367,6 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
           (loc): loc is EventLocation => loc !== null
         );
 
-        console.log('EventsMap: Valid locations found:', validLocations.length);
-        console.log('EventsMap: Locations:', validLocations);
 
         if (isActive) {
           setLocations(validLocations);
@@ -388,6 +416,7 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
   // DynamicTileLayer obsługuje zmianę tile layer automatycznie
 
   // Dynamicznie aplikuj style do popup'ów Leaflet w zależności od motywu
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const applyPopupStyles = () => {
       const popups = document.querySelectorAll('.leaflet-popup-content-wrapper');

@@ -9,17 +9,25 @@ export interface UserNotificationSettings {
     rsvpUpdates: boolean;
     eventUpdates: boolean;
     weeklyDigest: boolean;
+    guestResponses?: boolean;
+    systemUpdates?: boolean;
+    marketing?: boolean;
   };
   sms: {
     enabled: boolean;
     urgentOnly: boolean;
     eventReminders: boolean;
+    guestResponses?: boolean;
+    emergencyOnly?: boolean;
   };
   push: {
     enabled: boolean;
     eventReminders: boolean;
     rsvpUpdates: boolean;
     browserNotifications: boolean;
+    guestResponses?: boolean;
+    appUpdates?: boolean;
+    marketing?: boolean;
   };
   digest: {
     frequency: 'never' | 'daily' | 'weekly';

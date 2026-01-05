@@ -100,12 +100,38 @@
   }
 
   &--collapsed {
-    gap: 0;
-
+    gap: 0.25rem;
     --logo-size: 44px;
 
     .logo__image-wrapper {
       border-radius: 0.5rem;
+    }
+    
+    // Ukryj pełny tekst (gdy nie ma klasy --initials)
+    .logo__text:not(.logo__text--initials) {
+      display: none;
+    }
+    
+    // Pokaż tylko inicjały
+    .logo__text--initials {
+      display: inline-flex;
+    }
+  }
+
+  // Wariant z inicjałami (PP)
+  &__text--initials {
+    display: inline-flex !important;
+    gap: 0.05em;
+    font-size: 1.125rem;
+    font-weight: 800;
+    visibility: visible !important;
+    opacity: 1 !important;
+    
+    .logo__text-main,
+    .logo__text-accent {
+      margin: 0;
+      display: inline !important;
+      visibility: visible !important;
     }
   }
 

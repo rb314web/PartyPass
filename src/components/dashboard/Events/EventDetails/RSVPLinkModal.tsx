@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Download, CheckCircle, Loader, QrCode, Link as LinkIcon } from 'lucide-react';
+import { X, Copy, Download, CheckCircle, Loader, Link as LinkIcon } from 'lucide-react';
 import { NewRSVPService } from '../../../../services/firebase/newRSVPService';
 import { EventGuest, Contact, Event } from '../../../../types';
 import './RSVPLinkModal.scss';
@@ -24,17 +24,6 @@ const RSVPLinkModal: React.FC<RSVPLinkModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open && eventGuest && event) {
-      loadRSVPLinkAndQR();
-    } else {
-      setRsvpUrl('');
-      setQrCode('');
-      setError(null);
-      setCopied(false);
-    }
-  }, [open, eventGuest, event]);
-
   const loadRSVPLinkAndQR = async () => {
     if (!eventGuest || !event) return;
 
@@ -48,13 +37,25 @@ const RSVPLinkModal: React.FC<RSVPLinkModalProps> = ({
       );
       setRsvpUrl(result.rsvpUrl);
       setQrCode(result.qrCode);
-    } catch (err: any) {
-      console.error('Błąd podczas generowania linku RSVP:', err);
-      setError(err.message || 'Nie udało się wygenerować linku RSVP');
+    } catch (err: unknown) {
+      console.error('Error loading RSVP link:', err);
+      setError('Nie udało się wygenerować linku RSVP');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (open && eventGuest && event) {
+      loadRSVPLinkAndQR();
+    } else {
+      setRsvpUrl('');
+      setQrCode('');
+      setError(null);
+      setCopied(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, eventGuest, event]);
 
   const handleCopyLink = async () => {
     if (!rsvpUrl) return;

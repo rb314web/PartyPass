@@ -21,7 +21,6 @@ import {
   ChevronDown,
   TrendingUp,
   UserPlus,
-  QrCode,
   Link as LinkIcon
 } from 'lucide-react';
 import { format } from 'date-fns';

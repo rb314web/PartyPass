@@ -1,6 +1,5 @@
 // components/dashboard/DashboardHome/DashboardHome.tsx
 import React, { Suspense } from 'react';
-import { Link } from 'react-router-dom';
 import {
   EventService,
   EventStats,
@@ -8,13 +7,13 @@ import {
 import { useAuth } from '../../../hooks/useAuth';
 import { Activity as ActivityType, Event } from '../../../types';
 import './DashboardHome.scss';
-import { ArrowRight } from 'lucide-react';
 import KeyMetrics from './KeyMetrics';
 import KeyMetricsSkeleton from './KeyMetricsSkeleton';
-import ActivityOverview from './ActivityOverview';
+import ActivityWeather from './ActivityWeather';
+import ActivityWeatherSkeleton from './ActivityWeatherSkeleton';
 import QuickActions from '../QuickActions/QuickActions';
-import RecentActivity from '../RecentActivity/RecentActivity';
 import CompactCalendar from '../EventsCalendar/CompactCalendar';
+import CalendarSkeleton from './CalendarSkeleton';
 import MapSkeleton from './MapSkeleton';
 
 // Lazy load EventsMap (saves ~150KB on initial bundle)
@@ -27,11 +26,10 @@ const DashboardHome: React.FC = () => {
   const [stats, setStats] = React.useState<EventStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = React.useState(true);
   const [activities, setActivities] = React.useState<ActivityType[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = React.useState(true);
   const [upcomingEvents, setUpcomingEvents] = React.useState<Event[]>([]);
   const [allEvents, setAllEvents] = React.useState<Event[]>([]);
-  const [isLoadingActivities, setIsLoadingActivities] = React.useState(true);
-  const [isLoadingUpcomingEvents, setIsLoadingUpcomingEvents] = React.useState(true);
-  const [isLoadingAllEvents, setIsLoadingAllEvents] = React.useState(true);
+  const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
 
   // Fetch stats
   React.useEffect(() => {
@@ -58,8 +56,7 @@ const DashboardHome: React.FC = () => {
         .finally(() => setIsLoadingActivities(false));
 
       // Fetch all events
-      setIsLoadingAllEvents(true);
-      setIsLoadingUpcomingEvents(true);
+      setIsLoadingEvents(true);
       EventService.getUserEvents(user.id)
         .then((result) => {
           if (result.events) {
@@ -93,10 +90,7 @@ const DashboardHome: React.FC = () => {
           setAllEvents([]);
           setUpcomingEvents([]);
         })
-        .finally(() => {
-          setIsLoadingAllEvents(false);
-          setIsLoadingUpcomingEvents(false);
-        });
+        .finally(() => setIsLoadingEvents(false));
     }
   }, [user]);
 
@@ -135,35 +129,6 @@ const DashboardHome: React.FC = () => {
     return 15;
   }, [stats?.responseRate]);
 
-  // Process recent responses
-  const recentResponses = React.useMemo(() => {
-    return activities
-      .filter(
-        (activity): activity is ActivityType & { type: 'guest_accepted' | 'guest_declined' } =>
-          activity.type === 'guest_accepted' ||
-          activity.type === 'guest_declined'
-      )
-      .sort((a, b) => {
-        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-        return timeB - timeA;
-      })
-      .slice(0, 3)
-      .map((activity) => {
-        const message = activity.message || '';
-        const nameMatch = message.match(
-          /([A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)\s+([A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]*)?/
-        );
-        return {
-          id: activity.id,
-          name: nameMatch ? nameMatch[0].trim() : 'Gość',
-          timestamp: activity.timestamp,
-          eventId: activity.eventId,
-          type: activity.type,
-        };
-      });
-  }, [activities]);
-
   // Get next event
   const nextEvent = React.useMemo(() => {
     if (!upcomingEvents || upcomingEvents.length === 0) return null;
@@ -201,66 +166,54 @@ const DashboardHome: React.FC = () => {
       {/* Quick Actions */}
       <QuickActions />
 
-      {/* Key Metrics */}
-      {isLoadingStats ? (
-        <KeyMetricsSkeleton />
+      {/* Top Grid: Key Metrics */}
+      <div className="dashboard-home__top-grid">
+        {/* Key Metrics */}
+        {isLoadingStats ? (
+          <KeyMetricsSkeleton />
+        ) : (
+          <KeyMetrics
+            totalEvents={stats?.totalEvents ?? 0}
+            eventsChange={eventsChange}
+            totalGuests={stats?.totalGuests ?? 0}
+            guestsChange={guestsChange}
+            responseRate={stats?.responseRate ?? 0}
+            responseRateChange={responseRateChange}
+            activeEvents={stats?.activeEvents ?? 0}
+            completedEvents={stats?.completedEvents ?? 0}
+            acceptedGuests={stats?.acceptedGuests ?? 0}
+            pendingGuests={stats?.pendingGuests ?? 0}
+          />
+        )}
+      </div>
+
+      {/* Activity & Weather */}
+      {isLoadingActivities || isLoadingEvents ? (
+        <ActivityWeatherSkeleton />
       ) : (
-        <KeyMetrics
-          totalEvents={stats?.totalEvents ?? 0}
-          eventsChange={eventsChange}
-          totalGuests={stats?.totalGuests ?? 0}
-          guestsChange={guestsChange}
-          responseRate={stats?.responseRate ?? 0}
-          responseRateChange={responseRateChange}
-          activeEvents={stats?.activeEvents ?? 0}
-          completedEvents={stats?.completedEvents ?? 0}
-          acceptedGuests={stats?.acceptedGuests ?? 0}
-          pendingGuests={stats?.pendingGuests ?? 0}
+        <ActivityWeather
+          lastActivity={filteredActivities[0]}
+          nextEvent={nextEvent}
         />
       )}
 
-      {/* Activity Overview */}
-      <ActivityOverview
-        recentResponses={recentResponses}
-        nextEvent={nextEvent}
-        isLoadingResponses={isLoadingActivities}
-        isLoadingNextEvent={isLoadingUpcomingEvents}
-      />
-
       {/* Calendar Section */}
       <div className="dashboard-home__section dashboard-home__section--calendar">
-        <CompactCalendar events={allEvents} />
+        {isLoadingEvents ? (
+          <CalendarSkeleton />
+        ) : (
+          <CompactCalendar events={allEvents} />
+        )}
       </div>
 
-      {/* Bottom Grid: Activity Timeline + Map */}
-      <div className="dashboard-home__bottom-grid">
-        {/* Activity Timeline */}
-        <div className="dashboard-home__section dashboard-home__section--activity">
-          <div className="dashboard-home__section-header">
-            <h2>Ostatnie aktywności</h2>
-            <Link
-              to="/dashboard/activities"
-              className="dashboard-home__see-all"
-            >
-              Zobacz wszystkie
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-          <RecentActivity
-            activities={filteredActivities}
-            isLoading={isLoadingActivities}
-          />
+      {/* Map Section */}
+      <div className="dashboard-home__section dashboard-home__section--map">
+        <div className="dashboard-home__section-header">
+          <h2>Mapa wydarzeń</h2>
         </div>
-
-        {/* Map */}
-        <div className="dashboard-home__section dashboard-home__section--map">
-          <div className="dashboard-home__section-header">
-            <h2>Mapa wydarzeń</h2>
-          </div>
-          <Suspense fallback={<MapSkeleton />}>
-            <EventsMap events={allEvents} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<MapSkeleton />}>
+          <EventsMap events={allEvents} />
+        </Suspense>
       </div>
     </div>
   );

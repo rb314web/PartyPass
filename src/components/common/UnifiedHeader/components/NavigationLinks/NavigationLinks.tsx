@@ -7,8 +7,8 @@ import './NavigationLinks.scss';
 export interface NavigationItem {
   label: string;
   href: string;
-  icon?: React.ReactNode;
-  description?: string;
+  icon: React.ReactNode;
+  description: string;
 }
 
 export interface NavigationLinksProps {
@@ -25,13 +25,13 @@ export interface NavigationLinksProps {
 
   /**
    * Whether to show descriptions under labels
-   * @default false - simplified navigation
+   * @default true
    */
   showDescriptions?: boolean;
 
   /**
    * Whether to show icons
-   * @default false - simplified navigation
+   * @default true
    */
   showIcons?: boolean;
 
@@ -56,7 +56,7 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
 }) => {
   const location = useLocation();
 
-  // Default navigation items for landing page - simplified navigation
+  // Default navigation items for landing page
   const defaultItems: NavigationItem[] = useMemo(
     () => [
       {
@@ -94,7 +94,7 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
 
   return (
     <nav
-      className={`navigation-links ${vertical ? 'navigation-links--vertical' : ''}`}
+      className="navigation-links"
       role="navigation"
       aria-label="Primary navigation"
     >

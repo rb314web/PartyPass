@@ -1,7 +1,8 @@
 // components/dashboard/EventsCalendar/CompactCalendar.tsx
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Users, CheckCircle, XCircle, HelpCircle, ArrowRight } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import ReactDOM from 'react-dom';
+import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Users, List } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './CompactCalendar.scss';
 
 interface Event {
@@ -23,6 +24,8 @@ interface CompactCalendarProps {
 const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -35,7 +38,7 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
     const firstDayOfWeek = firstDay.getDay();
     
     const monthName = firstDay.toLocaleDateString('pl-PL', { 
-      month: 'short',
+      month: 'long',
       year: 'numeric' 
     });
 
@@ -43,10 +46,9 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
     return { days, firstDayOfWeek, monthName };
   }, [year, month]);
 
-  // Get upcoming events (next 3)
-  const upcomingEvents = useMemo(() => {
+  // Get timeline events (next 4)
+  const timelineEvents = useMemo(() => {
     const now = new Date();
-    // Normalize to start of day for proper date comparison
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     return events
@@ -60,7 +62,24 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
         return eventDateNormalized >= today;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 3);
+      .slice(0, 4)
+      .map(event => {
+        const eventDate = new Date(event.date);
+        const diffTime = eventDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        let timeLabel = '';
+        if (diffDays === 0) timeLabel = 'Dzisiaj';
+        else if (diffDays === 1) timeLabel = 'Jutro';
+        else if (diffDays < 7) timeLabel = `Za ${diffDays} dni`;
+        else timeLabel = eventDate.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+
+        return {
+          ...event,
+          timeLabel,
+          diffDays
+        };
+      });
   }, [events]);
 
   const getEventsOnDay = (day: number) => {
@@ -78,6 +97,7 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
     return getEventsOnDay(day).length > 0;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getEventCountOnDay = (day: number) => {
     return getEventsOnDay(day).length;
   };
@@ -91,6 +111,15 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
     );
   };
 
+  const formatEventTime = (date: Date | string) => {
+    const eventDate = new Date(date);
+    return eventDate.toLocaleTimeString('pl-PL', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formatEventDate = (date: Date | string) => {
     const eventDate = new Date(date);
     const now = new Date();
@@ -115,13 +144,7 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
     });
   };
 
-  const formatEventTime = (date: Date | string) => {
-    return new Date(date).toLocaleTimeString('pl-PL', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getStatusInfo = (status?: string) => {
     switch (status) {
       case 'active':
@@ -149,10 +172,15 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
 
   return (
     <div className="compact-calendar">
-      {/* Left: Mini Calendar */}
-      <div className="compact-calendar__mini">
+      {/* Calendar Card */}
+      <div className="compact-calendar__card">
         <div className="compact-calendar__header">
-          <span className="compact-calendar__month">{monthName}</span>
+          <div className="compact-calendar__header-content">
+            <div className="compact-calendar__icon">
+              <Calendar size={18} />
+            </div>
+            <span className="compact-calendar__month">{monthName}</span>
+          </div>
           <div className="compact-calendar__nav">
             <button onClick={goToPreviousMonth} aria-label="Poprzedni">
               <ChevronLeft size={14} />
@@ -185,7 +213,6 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
           {days.map(day => {
             const dayEvents = getEventsOnDay(day);
             const eventCount = dayEvents.length;
-            const eventTitles = dayEvents.map(e => e.title).join(', ');
             
             return (
               <div
@@ -200,7 +227,17 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
                     navigate(`/dashboard/events/${dayEvents[0].id}`);
                   }
                 }}
-                title={eventCount > 0 ? `${eventCount} ${eventCount === 1 ? 'wydarzenie' : 'wydarzeń'}: ${eventTitles}` : undefined}
+                onMouseEnter={(e) => {
+                  if (eventCount > 0) {
+                    setHoveredDay(day);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltipPosition({
+                      x: rect.left + rect.width / 2,
+                      y: rect.top
+                    });
+                  }
+                }}
+                onMouseLeave={() => setHoveredDay(null)}
               >
                 {day}
                 {eventCount > 1 && (
@@ -212,102 +249,99 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
         </div>
       </div>
 
-      {/* Right: Upcoming Events */}
-      <div className="compact-calendar__events">
-        <div className="compact-calendar__events-header">
-          <h3 className="compact-calendar__events-title">Nadchodzące wydarzenia</h3>
-          <Link 
-            to="/dashboard/events" 
-            className="compact-calendar__see-all"
-            title="Zobacz wszystkie wydarzenia"
-          >
-            Wszystkie
-            <ArrowRight size={14} />
-          </Link>
+      {/* Timeline Card */}
+      <div className="compact-calendar__card compact-calendar__card--timeline">
+        <div className="compact-calendar__header">
+          <div className="compact-calendar__header-content">
+            <div className="compact-calendar__icon compact-calendar__icon--purple">
+              <List size={18} />
+            </div>
+            <span className="compact-calendar__month">Nadchodzące wydarzenia</span>
+          </div>
         </div>
-        {upcomingEvents.length > 0 ? (
-          <>
-            {upcomingEvents.map(event => {
-              const statusInfo = getStatusInfo(event.status);
-              const totalGuests = event.guestCount ?? 0;
-              const acceptedGuests = event.acceptedGuests ?? 0;
-              const pendingGuests = event.pendingGuests ?? 0;
-              const declinedGuests = event.declinedGuests ?? 0;
-
-              return (
-                <div
-                  key={event.id}
-                  className="compact-calendar__event"
+        <div className="compact-calendar__timeline">
+          {timelineEvents.length > 0 ? (
+            <>
+              {timelineEvents.map((event, index) => (
+                <div 
+                  key={event.id} 
+                  className="compact-calendar__timeline-item"
                   onClick={() => navigate(`/dashboard/events/${event.id}`)}
                 >
-                  <div className="compact-calendar__event-header">
-                    <div className="compact-calendar__event-date">
-                      <Calendar size={14} />
-                      <span>{formatEventDate(event.date)}</span>
+                  <div className="compact-calendar__timeline-marker">
+                    <div className={`compact-calendar__timeline-dot compact-calendar__timeline-dot--${event.status || 'active'}`}>
+                      <Calendar size={12} />
                     </div>
-                    <span className={`compact-calendar__status compact-calendar__status--${statusInfo.color}`}>
-                      {statusInfo.label}
-                    </span>
+                    {index < timelineEvents.length - 1 && (
+                      <div className="compact-calendar__timeline-line" />
+                    )}
                   </div>
-
-                  <h4 className="compact-calendar__event-title">{event.title}</h4>
-
-                  <div className="compact-calendar__event-details">
-                    <div className="compact-calendar__event-meta">
-                      <span>
-                        <Clock size={12} />
-                        {formatEventTime(event.date)}
-                      </span>
+                  <div className="compact-calendar__timeline-content">
+                    <div className="compact-calendar__timeline-date">
+                      {event.timeLabel}
+                    </div>
+                    <div className="compact-calendar__timeline-title">
+                      {event.title}
+                    </div>
+                    <div className="compact-calendar__timeline-meta">
                       {event.location && (
-                        <span title={event.location}>
+                        <span>
                           <MapPin size={12} />
-                          {event.location.length > 25 
-                            ? event.location.substring(0, 25) + '...' 
-                            : event.location}
+                          {event.location.length > 20 ? event.location.substring(0, 20) + '...' : event.location}
+                        </span>
+                      )}
+                      {(event.guestCount || 0) > 0 && (
+                        <span>
+                          <Users size={12} />
+                          {event.guestCount} {event.guestCount === 1 ? 'gość' : 'gości'}
                         </span>
                       )}
                     </div>
-
-                    {totalGuests > 0 && (
-                      <div className="compact-calendar__guests">
-                        <div className="compact-calendar__guests-total">
-                          <Users size={12} />
-                          <span>{totalGuests} {totalGuests === 1 ? 'gość' : 'gości'}</span>
-                        </div>
-                        <div className="compact-calendar__guests-breakdown">
-                          {acceptedGuests > 0 && (
-                            <span className="compact-calendar__guest-stat compact-calendar__guest-stat--accepted" title="Potwierdzeni">
-                              <CheckCircle size={10} />
-                              {acceptedGuests}
-                            </span>
-                          )}
-                          {pendingGuests > 0 && (
-                            <span className="compact-calendar__guest-stat compact-calendar__guest-stat--pending" title="Oczekujący">
-                              <HelpCircle size={10} />
-                              {pendingGuests}
-                            </span>
-                          )}
-                          {declinedGuests > 0 && (
-                            <span className="compact-calendar__guest-stat compact-calendar__guest-stat--declined" title="Odmówili">
-                              <XCircle size={10} />
-                              {declinedGuests}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
-              );
-            })}
-          </>
-        ) : (
-          <div className="compact-calendar__empty">
-            <Calendar size={32} />
-            <p>Brak nadchodzących wydarzeń</p>
-          </div>
-        )}
+              ))}
+            </>
+          ) : (
+            <div className="compact-calendar__timeline-empty">
+              <Calendar size={32} opacity={0.3} />
+              <p>Brak nadchodzących wydarzeń</p>
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* Tooltip for events - rendered via portal */}
+      {hoveredDay !== null && getEventsOnDay(hoveredDay).length > 0 && ReactDOM.createPortal(
+        <div 
+          className="compact-calendar__tooltip"
+          style={{
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`,
+          }}
+        >
+          <div className="compact-calendar__tooltip-content">
+            {getEventsOnDay(hoveredDay).map((event, index) => (
+              <div 
+                key={event.id} 
+                className="compact-calendar__tooltip-event"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/dashboard/events/${event.id}`);
+                }}
+              >
+                <div className="compact-calendar__tooltip-title">{event.title}</div>
+                <div className="compact-calendar__tooltip-details">
+                  <span><Clock size={12} /> {formatEventTime(event.date)}</span>
+                  {event.location && (
+                    <span><MapPin size={12} /> {event.location}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

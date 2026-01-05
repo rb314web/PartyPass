@@ -60,12 +60,42 @@
     }
 
     &--active {
-      color: var(--color-primary);
-      background: var(--color-primary-light);
+      color: #ffffff;
+      background: rgba(59, 130, 246, 0.2);
+      font-weight: 600;
 
       .bottom-nav__icon {
-        background: transparent;
-        color: var(--color-primary);
+        background: var(--color-primary);
+        color: #ffffff;
+
+        svg {
+          color: #ffffff;
+          stroke: #ffffff;
+        }
+      }
+
+      .bottom-nav__label {
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      // Dark mode - białe elementy na niebieskim tle
+      .dark & {
+        background: rgba(59, 130, 246, 0.2);
+
+        .bottom-nav__icon {
+          background: #3b82f6;
+          color: #ffffff;
+
+          svg {
+            color: #ffffff;
+            stroke: #ffffff;
+          }
+        }
+
+        .bottom-nav__label {
+          color: #ffffff;
+        }
       }
 
       &::after {
@@ -76,7 +106,7 @@
         transform: translateX(-50%);
         width: 0.25rem;
         height: 0.25rem;
-        background: var(--color-primary);
+        background: #ffffff;
         border-radius: 50%;
       }
     }
@@ -93,8 +123,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.85rem;
-    height: 1.85rem;
+    width: 2.2rem;
+    height: 2.2rem;
     border-radius: 0.45rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     background: var(--bg-tertiary);

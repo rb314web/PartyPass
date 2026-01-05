@@ -43,6 +43,9 @@ const Logo: React.FC<LogoProps> = ({
   className = '',
   collapsed = false,
 }) => {
+  // Debug: sprawdź czy collapsed przechodzi
+  console.log('Logo collapsed:', collapsed);
+  
   const logoClasses = [
     'logo',
     `logo--${size}`,
@@ -64,12 +67,17 @@ const Logo: React.FC<LogoProps> = ({
     </span>
   ) : null;
 
-  const textFallback = !collapsed ? (
+  const textFallback = collapsed ? (
+    <span className="logo__text logo__text--initials">
+      <span className="logo__text-main">P</span>
+      <span className="logo__text-accent">P</span>
+    </span>
+  ) : (
     <span className="logo__text">
       <span className="logo__text-main">Party</span>
       <span className="logo__text-accent">Pass</span>
     </span>
-  ) : null;
+  );
 
   const content = (
     <>
