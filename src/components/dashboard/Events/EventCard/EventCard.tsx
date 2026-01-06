@@ -118,13 +118,13 @@ const EventCard: React.FC<EventCardProps> = ({
   const formattedTime = format(event.date, 'HH:mm');
   const dateDay = format(event.date, 'd', { locale: pl });
   const dateMonth = format(event.date, 'LLL', { locale: pl }).toUpperCase();
-  const LOCATION_MAX = 42;
+  
+  // Skrócona lokalizacja - tylko pierwsze 2-3 elementy
   const trimmedLocation = event.location?.trim() || '';
+  const locationParts = trimmedLocation.split(',').map(part => part.trim());
+  const shortLocation = locationParts.slice(0, 2).join(', ');
   const locationLabel = trimmedLocation || 'Brak lokalizacji';
-  const displayedLocation =
-    trimmedLocation.length > LOCATION_MAX
-      ? `${trimmedLocation.slice(0, LOCATION_MAX - 1)}…`
-      : locationLabel;
+  const displayedLocation = shortLocation || locationLabel;
 
   const handleCardActivate = () => {
     setShowMenu(false);

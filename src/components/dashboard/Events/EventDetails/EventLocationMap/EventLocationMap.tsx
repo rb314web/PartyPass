@@ -44,7 +44,36 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Detect dark mode and listen for changes
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Listen for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Choose tile layer based on theme
+  const tileLayerUrl = isDarkMode
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+  const tileLayerAttribution = isDarkMode
+    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
   const addressLines = useMemo(() => {
     if (!location) {
@@ -248,10 +277,12 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
           zoom={DEFAULT_ZOOM}
           scrollWheelZoom={false}
           className="event-location-map__map"
+          key={`map-${isDarkMode ? 'dark' : 'light'}`}
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            key={isDarkMode ? 'dark' : 'light'}
+            url={tileLayerUrl}
+            attribution={tileLayerAttribution}
           />
           <Marker position={[coordinates.lat, coordinates.lng]} />
         </MapContainer>

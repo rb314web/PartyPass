@@ -617,10 +617,7 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
       <div className={`events-map ${className}`}>
         <div className="events-map__empty">
           <MapPin size={48} />
-          <p>Nie udało się załadować lokalizacji wydarzeń</p>
-          <p className="events-map__empty-details">
-            Sprawdź konsolę przeglądarki, aby zobaczyć szczegóły
-          </p>
+          <p>Nie można załadować mapy</p>
         </div>
       </div>
     );
@@ -632,7 +629,7 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
       <div className={`events-map ${className}`}>
         <div className="events-map__empty">
           <MapPin size={48} />
-          <p>Nie udało się znaleźć lokalizacji dla wydarzeń</p>
+          <p>Nie można załadować mapy</p>
         </div>
       </div>
     );

@@ -127,7 +127,6 @@
   &__hero,
   &__main {
     background: var(--bg-primary, #ffffff);
-    border: 1px solid var(--border-primary, #e5e7eb);
     border-radius: var(--radius-xl, 16px);
     padding: var(--space-xl, 1.25rem);
     margin-bottom: var(--space-xl, 1.25rem);
@@ -241,7 +240,6 @@
 
   &__info-card {
     background: var(--bg-primary, #ffffff);
-    border: 1px solid var(--border-primary, #e5e7eb);
     border-radius: var(--radius-xl, 16px);
     padding: var(--space-lg, 1rem);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -293,7 +291,6 @@
 
   &__guests-stats {
     background: var(--bg-primary, #ffffff);
-    border: 1px solid var(--border-primary, #e5e7eb);
     border-radius: var(--radius-xl, 16px);
     padding: var(--space-lg, 1rem);
     position: sticky;

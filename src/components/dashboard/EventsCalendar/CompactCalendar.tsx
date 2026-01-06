@@ -1,5 +1,5 @@
 // components/dashboard/EventsCalendar/CompactCalendar.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Users, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -26,6 +26,9 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipReady, setTooltipReady] = useState(false);
+  const [shouldRenderTooltip, setShouldRenderTooltip] = useState(false);
+  const hideTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -110,6 +113,25 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
       today.getDate() === day
     );
   };
+
+  // Ukryj tooltip podczas scrollowania
+  useEffect(() => {
+    const handleScroll = () => {
+      if (shouldRenderTooltip) {
+        if (hideTimeoutRef.current) {
+          clearTimeout(hideTimeoutRef.current);
+        }
+        setTooltipReady(false);
+        setHoveredDay(null);
+        setShouldRenderTooltip(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [shouldRenderTooltip]);
 
   const formatEventTime = (date: Date | string) => {
     const eventDate = new Date(date);
@@ -229,15 +251,46 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
                 }}
                 onMouseEnter={(e) => {
                   if (eventCount > 0) {
-                    setHoveredDay(day);
+                    // Anuluj timeout ukrywania
+                    if (hideTimeoutRef.current) {
+                      clearTimeout(hideTimeoutRef.current);
+                      hideTimeoutRef.current = null;
+                    }
+
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltipPosition({
-                      x: rect.left + rect.width / 2,
-                      y: rect.top
-                    });
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    
+                    // Oblicz pozycję X - na mobile zawsze wycentruj
+                    let x = rect.left + rect.width / 2;
+                    if (viewportWidth <= 768) {
+                      x = viewportWidth / 2; // Wycentruj na małych ekranach
+                    }
+                    
+                    // Oblicz pozycję Y - sprawdź czy jest miejsce na górze
+                    let y = rect.top;
+                    const tooltipHeight = 150; // Przybliżona wysokość tooltip
+                    
+                    // Jeśli tooltip wyszedłby poza górę ekranu, pokaż go poniżej
+                    if (y - tooltipHeight < 20) {
+                      y = rect.bottom; // Ustaw poniżej elementu
+                    }
+                    
+                    // Ustaw pozycję i pokaż w DOM
+                    setTooltipPosition({ x, y });
+                    setHoveredDay(day);
+                    setShouldRenderTooltip(true);
+                    setTooltipReady(true);
                   }
                 }}
-                onMouseLeave={() => setHoveredDay(null)}
+                onMouseLeave={() => {
+                  // Opóźnienie 150ms żeby dać czas na przejechanie na tooltip
+                  hideTimeoutRef.current = setTimeout(() => {
+                    setTooltipReady(false);
+                    setHoveredDay(null);
+                    setShouldRenderTooltip(false);
+                  }, 150);
+                }}
               >
                 {day}
                 {eventCount > 1 && (
@@ -311,12 +364,25 @@ const CompactCalendar: React.FC<CompactCalendarProps> = ({ events }) => {
       </div>
       
       {/* Tooltip for events - rendered via portal */}
-      {hoveredDay !== null && getEventsOnDay(hoveredDay).length > 0 && ReactDOM.createPortal(
+      {shouldRenderTooltip && hoveredDay !== null && getEventsOnDay(hoveredDay).length > 0 && ReactDOM.createPortal(
         <div 
-          className="compact-calendar__tooltip"
+          className={`compact-calendar__tooltip ${tooltipReady ? 'compact-calendar__tooltip--visible' : ''}`}
           style={{
             left: `${tooltipPosition.x}px`,
             top: `${tooltipPosition.y}px`,
+          }}
+          onMouseEnter={() => {
+            // Anuluj ukrywanie gdy kursor jest na tooltip
+            if (hideTimeoutRef.current) {
+              clearTimeout(hideTimeoutRef.current);
+              hideTimeoutRef.current = null;
+            }
+            setTooltipReady(true);
+          }}
+          onMouseLeave={() => {
+            setTooltipReady(false);
+            setHoveredDay(null);
+            setShouldRenderTooltip(false);
           }}
         >
           <div className="compact-calendar__tooltip-content">

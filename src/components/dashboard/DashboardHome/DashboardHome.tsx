@@ -12,6 +12,7 @@ import KeyMetricsSkeleton from './KeyMetricsSkeleton';
 import ActivityWeather from './ActivityWeather';
 import ActivityWeatherSkeleton from './ActivityWeatherSkeleton';
 import QuickActions from '../QuickActions/QuickActions';
+import QuickActionsSkeleton from '../QuickActions/QuickActionsSkeleton';
 import CompactCalendar from '../EventsCalendar/CompactCalendar';
 import CalendarSkeleton from './CalendarSkeleton';
 import MapSkeleton from './MapSkeleton';
@@ -164,47 +165,55 @@ const DashboardHome: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <QuickActions />
+      {isLoadingStats ? (
+        <div className="fade-out"><QuickActionsSkeleton /></div>
+      ) : (
+        <div className="fade-in"><QuickActions /></div>
+      )}
 
       {/* Top Grid: Key Metrics */}
       <div className="dashboard-home__top-grid">
         {/* Key Metrics */}
         {isLoadingStats ? (
-          <KeyMetricsSkeleton />
+          <div className="fade-out"><KeyMetricsSkeleton /></div>
         ) : (
-          <KeyMetrics
-            totalEvents={stats?.totalEvents ?? 0}
-            eventsChange={eventsChange}
-            totalGuests={stats?.totalGuests ?? 0}
-            guestsChange={guestsChange}
-            responseRate={stats?.responseRate ?? 0}
-            responseRateChange={responseRateChange}
-            activeEvents={stats?.activeEvents ?? 0}
-            completedEvents={stats?.completedEvents ?? 0}
-            acceptedGuests={stats?.acceptedGuests ?? 0}
-            pendingGuests={stats?.pendingGuests ?? 0}
-          />
+          <div className="fade-in">
+            <KeyMetrics
+              totalEvents={stats?.totalEvents ?? 0}
+              eventsChange={eventsChange}
+              totalGuests={stats?.totalGuests ?? 0}
+              guestsChange={guestsChange}
+              responseRate={stats?.responseRate ?? 0}
+              responseRateChange={responseRateChange}
+              activeEvents={stats?.activeEvents ?? 0}
+              completedEvents={stats?.completedEvents ?? 0}
+              acceptedGuests={stats?.acceptedGuests ?? 0}
+              pendingGuests={stats?.pendingGuests ?? 0}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Calendar Section */}
+      <div className="dashboard-home__section dashboard-home__section--calendar">
+        {isLoadingEvents ? (
+          <div className="fade-out"><CalendarSkeleton /></div>
+        ) : (
+          <div className="fade-in"><CompactCalendar events={allEvents} /></div>
         )}
       </div>
 
       {/* Activity & Weather */}
       {isLoadingActivities || isLoadingEvents ? (
-        <ActivityWeatherSkeleton />
+        <div className="fade-out"><ActivityWeatherSkeleton /></div>
       ) : (
-        <ActivityWeather
-          lastActivity={filteredActivities[0]}
-          nextEvent={nextEvent}
-        />
+        <div className="fade-in">
+          <ActivityWeather
+            lastActivity={filteredActivities[0]}
+            nextEvent={nextEvent}
+          />
+        </div>
       )}
-
-      {/* Calendar Section */}
-      <div className="dashboard-home__section dashboard-home__section--calendar">
-        {isLoadingEvents ? (
-          <CalendarSkeleton />
-        ) : (
-          <CompactCalendar events={allEvents} />
-        )}
-      </div>
 
       {/* Map Section */}
       <div className="dashboard-home__section dashboard-home__section--map">

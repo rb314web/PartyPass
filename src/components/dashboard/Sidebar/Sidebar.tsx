@@ -20,29 +20,24 @@ import Logo from '../../common/Logo/Logo';
 import './Sidebar.scss';
 
 interface SidebarProps {
-  isMobileOpen?: boolean;
-  onMobileToggle?: () => void;
   isCollapsed?: boolean;
   onCollapsedToggle?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  isMobileOpen: externalMobileOpen = false,
-  onMobileToggle,
   isCollapsed: externalCollapsed,
   onCollapsedToggle,
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
   const [isCompactScreen, setIsCompactScreen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  // Check if screen is in compact range (769px-1200px)
+  // Check if screen is in compact range (500px-1200px)
   useEffect(() => {
     const checkCompactScreen = () => {
       const width = window.innerWidth;
-      setIsCompactScreen(width >= 769 && width <= 1200);
+      setIsCompactScreen(width >= 500 && width <= 1200);
     };
 
     checkCompactScreen();
@@ -50,11 +45,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     return () => window.removeEventListener('resize', checkCompactScreen);
   }, []);
 
-  // Use external state if provided, otherwise use internal state
-  const isMobileOpen =
-    externalMobileOpen !== false ? externalMobileOpen : internalMobileOpen;
-  const isCollapsed =
-    externalCollapsed !== undefined ? externalCollapsed : (internalCollapsed || isCompactScreen);
+  // Auto collapse based on screen width only
+  const isCollapsed = isCompactScreen;
+
+  // Debug: sprawdź wartości
+  console.log('Sidebar - isCompactScreen:', isCompactScreen);
+  console.log('Sidebar - final isCollapsed:', isCollapsed);
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },
@@ -82,69 +78,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     return badges[user?.planType || 'starter'];
   };
 
-  // Handle escape key to close mobile menu
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobileOpen) {
-        if (onMobileToggle) {
-          onMobileToggle();
-        } else {
-          setInternalMobileOpen(false);
-        }
-      }
-    },
-    [isMobileOpen, onMobileToggle]
-  );
-
-  // Handle body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileOpen) {
-      document.body.style.overflow = 'hidden';
-      document.addEventListener('keydown', handleKeyDown);
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isMobileOpen, handleKeyDown]);
-
-  const handleMobileClose = () => {
-    if (onMobileToggle) {
-      onMobileToggle();
-    } else {
-      setInternalMobileOpen(false);
-    }
-  };
-
   return (
-    <>
-      {/* Mobile overlay */}
-      {isMobileOpen && (
-        <div
-          className="sidebar__overlay"
-          onClick={handleMobileClose}
-          onKeyDown={e => {
-            if (e.key === 'Escape') {
-              handleMobileClose();
-            }
-          }}
-          role="button"
-          tabIndex={-1}
-          aria-label="Zamknij menu"
-        />
-      )}
-
-      {/* Mobile toggle moved to Header */}
-
-      <aside
-        id="sidebar"
-        className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''} ${isMobileOpen ? 'sidebar--mobile-open' : ''}`}
-        role="navigation"
-        aria-label="Menu nawigacyjne"
-      >
+    <aside
+      id="sidebar"
+      className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''}`}
+      role="navigation"
+      aria-label="Menu nawigacyjne"
+    >
         <div className="sidebar__header">
           <Logo
             size="small"
@@ -153,32 +93,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             collapsed={isCollapsed}
             className="sidebar__logo"
           />
-
-          {/* Mobile close button - only visible on mobile when open */}
-          <button
-            className="sidebar__mobile-close"
-            onClick={handleMobileClose}
-            aria-label="Zamknij menu"
-            title="Zamknij menu"
-          >
-            <X size={20} />
-          </button>
-
-          {/* Desktop collapse button - hidden on mobile */}
-          <button
-            className="sidebar__collapse-btn"
-            onClick={() => {
-              if (onCollapsedToggle) {
-                onCollapsedToggle();
-              } else {
-                setInternalCollapsed(!internalCollapsed);
-              }
-            }}
-            aria-label={isCollapsed ? 'Rozwiń menu' : 'Zwiń menu'}
-            title={isCollapsed ? 'Rozwiń menu' : 'Zwiń menu'}
-          >
-            {isCollapsed ? <ChevronRight size={20} /> : <Menu size={20} />}
-          </button>
         </div>
 
         <nav className="sidebar__nav">
@@ -189,18 +103,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                   to={item.path}
                   className={`sidebar__link ${isActive(item.path, item.exact) ? 'sidebar__link--active' : ''}`}
                   title={item.label}
-                  onClick={() => {
-                    handleMobileClose();
-                    // Focus management - focus on main content after navigation
-                    setTimeout(() => {
-                      const mainContent = document.querySelector(
-                        '.dashboard__content'
-                      );
-                      if (mainContent) {
-                        (mainContent as HTMLElement).focus();
-                      }
-                    }, 100);
-                  }}
                 >
                   <item.icon size={20} />
                   {!isCollapsed && <span>{item.label}</span>}
@@ -212,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="sidebar__footer">
           {user && (
-            <div className="sidebar__user">
+            <Link to="/dashboard/settings" className="sidebar__user">
               <div className="sidebar__user-avatar">
                 {user.avatar ? (
                   <img src={user.avatar} alt={user.firstName} />
@@ -237,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
               )}
-            </div>
+            </Link>
           )}
 
           <button
@@ -250,7 +152,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
       </aside>
-    </>
   );
 };
 

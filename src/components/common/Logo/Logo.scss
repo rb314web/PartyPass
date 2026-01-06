@@ -16,8 +16,8 @@
     display: inline-flex;
     border-radius: 0.5rem;
     overflow: hidden;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
-    background: linear-gradient(135deg, #3ab0cf, #2789a6);
+    box-shadow: none;
+    background: transparent;
     width: var(--logo-size);
     height: var(--logo-size);
     aspect-ratio: 1 / 1;
@@ -62,6 +62,8 @@
     color: var(--text-primary);
     font-weight: 800;
     letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: center;
   }
 
   &__text-accent {
@@ -72,6 +74,35 @@
     font-weight: 800;
     margin-left: 0.1em;
     letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &__letter {
+    display: inline-block;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &--first {
+      // Pierwsza litera zawsze widoczna
+      opacity: 1;
+      max-width: 1em;
+      overflow: visible;
+    }
+    
+    &--middle {
+      // Środkowe litery
+      opacity: 1;
+      max-width: 10em;
+      overflow: hidden;
+      white-space: nowrap;
+      
+      // Auto-collapse na ekranach 500px-1200px (bez czekania na JS)
+      @media (min-width: 500px) and (max-width: 1200px) {
+        opacity: 0;
+        max-width: 0;
+        margin: 0;
+      }
+    }
   }
 
   // Size variants for text
@@ -107,33 +138,29 @@
       border-radius: 0.5rem;
     }
     
-    // Ukryj pełny tekst (gdy nie ma klasy --initials)
-    .logo__text:not(.logo__text--initials) {
-      display: none;
+    // Płynne ukrywanie środkowych liter
+    .logo__letter--middle {
+      opacity: 0;
+      max-width: 0;
+      margin: 0;
     }
     
-    // Pokaż tylko inicjały
-    .logo__text--initials {
-      display: inline-flex;
+    // Zmniejsz odstęp między PP
+    .logo__text-accent {
+      margin-left: 0.05em;
     }
   }
 
-  // Wariant z inicjałami (PP)
-  &__text--initials {
-    display: inline-flex !important;
-    gap: 0.05em;
-    font-size: 1.125rem;
-    font-weight: 800;
-    visibility: visible !important;
-    opacity: 1 !important;
+  // Auto-collapse całego logo na ekranach 769px-1200px
+  @media (min-width: 769px) and (max-width: 1200px) {
+    gap: 0.25rem;
     
-    .logo__text-main,
     .logo__text-accent {
-      margin: 0;
-      display: inline !important;
-      visibility: visible !important;
+      margin-left: 0.05em;
     }
   }
+
+  // Wariant z inicjałami - usunięty, nie jest już potrzebny
 
   &:focus-visible {
     outline: 3px solid rgba(255, 255, 255, 0.9);

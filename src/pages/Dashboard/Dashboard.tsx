@@ -1,5 +1,5 @@
 // pages/Dashboard/Dashboard.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar/Sidebar';
 import UnifiedHeader from '../../components/common/UnifiedHeader/UnifiedHeader';
@@ -17,41 +17,20 @@ import usePageAnalytics from '../../hooks/usePageAnalytics';
 import './Dashboard.scss';
 
 const Dashboard: React.FC = () => {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
 
   // Track page analytics
   usePageAnalytics();
 
-  const handleMobileToggle = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
-
-  const handleCollapsedToggle = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
   return (
-    <div className={`dashboard ${isCollapsed ? 'dashboard--collapsed' : ''}`}>
+    <div className="dashboard">
       {/* Modern Sidebar Navigation */}
-      <Sidebar
-        isMobileOpen={isMobileOpen}
-        onMobileToggle={handleMobileToggle}
-        isCollapsed={isCollapsed}
-        onCollapsedToggle={handleCollapsedToggle}
-      />
+      <Sidebar />
 
       {/* Main Content Area */}
-      <div
-        className={`dashboard__main ${isCollapsed ? 'dashboard__main--collapsed' : ''}`}
-      >
+      <div className="dashboard__main">
         {/* Modern Top Header */}
-        <UnifiedHeader
-          variant="dashboard"
-          onMobileToggle={handleMobileToggle}
-          isMobileOpen={isMobileOpen}
-        />
+        <UnifiedHeader variant="dashboard" />
 
         {/* Content Container */}
         <div className="dashboard__content" tabIndex={-1}>

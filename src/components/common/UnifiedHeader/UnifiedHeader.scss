@@ -37,10 +37,6 @@ $header-mobile-breakpoint: 830px;
     justify-content: space-between;
     gap: 1.5rem;
     width: 100%;
-
-    @include header-mobile {
-      gap: 1rem;
-    }
   }
 
   // Left Section - Logo
@@ -49,13 +45,26 @@ $header-mobile-breakpoint: 830px;
     align-items: center;
     justify-content: flex-start;
     flex-shrink: 0;
+    
+    // Dashboard mobile - logo po lewej
+    &--dashboard-mobile {
+      // Domyślnie ukryty
+      display: none;
+      
+      // Pokaż tylko na mobile (≤768px)
+      @media (max-width: 768px) {
+        display: flex !important;
+        padding-right: 0.75rem;
+        animation: slideInFromLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+    }
   }
 
   // Center Section - Navigation or Greeting
   &__nav {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     flex: 1;
     min-width: 0;
     gap: 1rem;
@@ -70,10 +79,6 @@ $header-mobile-breakpoint: 830px;
     border-left: 1px solid var(--border-primary);
     height: 100%;
     align-self: stretch;
-
-    @include header-mobile {
-      display: none;
-    }
   }
 
   &__greeting-section {
@@ -85,11 +90,14 @@ $header-mobile-breakpoint: 830px;
     min-width: 0;
     gap: 0.75rem;
     height: 100%;
-  }
-
-  &__greeting-section--mobile-logo {
-    // Domyślnie ukryte (będzie nadpisane w &--dashboard)
-    display: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    @media (min-width: 769px) {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 
   &__logo {
@@ -123,6 +131,13 @@ $header-mobile-breakpoint: 830px;
       margin: 0;
       padding: 0;
     }
+    
+    // Mniejszy rozmiar na mobile w dashboardzie
+    .unified-header__left--dashboard-mobile & {
+      .logo__text {
+        font-size: 1.25rem; // 20px na mobile
+      }
+    }
   }
 
   &__mobile-logo {
@@ -131,8 +146,15 @@ $header-mobile-breakpoint: 830px;
   }
 
   &__greeting-icon {
-    color: var(--gray-500, #6b7280);
+    color: var(--text-secondary);
     flex-shrink: 0;
+  }
+
+  &__greeting-text {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
   }
 
   &__greeting {
@@ -148,6 +170,13 @@ $header-mobile-breakpoint: 830px;
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
+    margin-left: auto; // Wypchnij na prawo na desktop
+    justify-content: flex-end;
+    transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    @media (max-width: 768px) {
+      order: 2; // Upewnij się, że jest po prawej na mobile
+    }
   }
 
   &__auth-btn {
@@ -204,71 +233,38 @@ $header-mobile-breakpoint: 830px;
     display: flex;
     align-items: center;
     height: 100%;
-    
-    @include header-mobile {
-      display: none;
-    }
   }
 
   &__search-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.875rem;
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
-    font-size: 0.8125rem;
-    color: #6b7280;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    white-space: nowrap;
+    transition: all 0.15s ease;
+    font-weight: 400;
 
     &:hover {
-      background: #ffffff;
-      border-color: #d1d5db;
-      color: #374151;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    &:active {
-      transform: scale(0.98);
+      border-color: var(--color-primary);
+      background: var(--bg-secondary);
     }
 
     &:focus-visible {
-      outline: 2px solid #6366f1;
+      outline: 2px solid var(--color-primary);
       outline-offset: 2px;
+      border-color: var(--color-primary);
     }
 
     svg {
       flex-shrink: 0;
-      color: #6b7280;
-    }
-
-    .unified-header__search-shortcut {
-      display: flex;
-      align-items: center;
-      gap: 0.125rem;
-      margin-left: 0.25rem;
-      padding: 0.125rem 0.375rem;
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 4px;
-      font-size: 0.6875rem;
-      font-family: system-ui, -apple-system, sans-serif;
-      color: #6b7280;
-
-      kbd {
-        padding: 0.125rem 0.25rem;
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 3px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        font-weight: 500;
-        line-height: 1;
-        font-size: 0.6875rem;
-      }
+      width: 16px;
+      height: 16px;
+      opacity: 0.6;
     }
   }
 
@@ -321,35 +317,6 @@ $header-mobile-breakpoint: 830px;
     text-overflow: ellipsis;
     white-space: nowrap;
     transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  &__search-shortcut {
-    display: none;
-    align-items: center;
-    gap: 0.125rem;
-    margin-left: auto;
-    padding: 0.125rem 0.375rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-sm, 4px);
-    font-size: 0.6875rem;
-    font-family: system-ui, -apple-system, sans-serif;
-    color: var(--text-secondary);
-    pointer-events: none;
-
-    @media (min-width: 1024px) {
-      display: flex;
-    }
-  }
-
-  &__search-shortcut-key {
-    padding: 0.125rem 0.25rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-secondary);
-    border-radius: 2px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    font-weight: 500;
-    line-height: 1;
   }
 
   // Placeholders (temporary - will be replaced in Phase 4.3)
@@ -465,6 +432,64 @@ $header-mobile-breakpoint: 830px;
 
     @include header-desktop {
       display: none;
+    }
+  }
+
+  &__logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--color-error, #ef4444);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                margin 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    flex-shrink: 0;
+    overflow: hidden;
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--color-error-dark, #dc2626);
+    }
+
+    &:active {
+      transform: scale(0.95) !important;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-error);
+      outline-offset: 2px;
+    }
+    
+    // Wyjedź poza ekran i zwolnij miejsce powyżej 768px
+    @media (min-width: 769px) {
+      width: 0;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+      transform: translateX(50px);
+      pointer-events: none;
+    }
+    
+    // Pokaż i zajmij miejsce poniżej 768px
+    @media (max-width: 768px) {
+      width: 40px;
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
     }
   }
 
@@ -792,14 +817,7 @@ $header-mobile-breakpoint: 830px;
     color: var(--text-primary);
     transition: all 0.2s ease;
 
-    // Ukryj gdy bottom navigation jest widoczne (na urządzeniach mobilnych)
-    @include header-mobile {
-      display: none;
-    }
-
-    @include header-desktop {
-      display: none;
-    }
+    display: none;
 
       &:hover {
       background: var(--bg-secondary, #f9fafb);
@@ -853,9 +871,6 @@ $header-mobile-breakpoint: 830px;
       padding-bottom: 0;
       gap: 2rem;
 
-      @include header-mobile {
-        gap: 1rem;
-      }
     }
 
     // Navigation links styling on landing - minimalist
@@ -934,23 +949,7 @@ $header-mobile-breakpoint: 830px;
 
     // Show logo on mobile for landing pages
     .unified-header__left {
-      @include header-mobile {
-        display: flex !important;
-      }
-    }
-
-    // Mobile layout adjustments for landing
-    @include header-mobile {
-      .unified-header__container {
-        grid-template-columns: auto 1fr;
-        justify-content: space-between;
-      }
-
-      .unified-header__right {
-        width: auto;
-        justify-content: flex-end;
-        gap: 0.5rem;
-      }
+      // Always visible
     }
 
     // Override scrolled state for landing - subtle shadow
@@ -982,44 +981,26 @@ $header-mobile-breakpoint: 830px;
     border-bottom: 1px solid var(--border-primary, #e5e7eb);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 
+    // Dark mode - takie samo tło jak sidebar
+    .dark &,
+    [data-theme='dark'] & {
+      background: var(--bg-elevated);
+      border-bottom-color: var(--border-primary);
+    }
+
     .unified-header__container {
       grid-template-columns: 1fr auto;
       padding: 0.875rem 2rem;
       gap: 1.5rem;
       max-width: 100%;
       margin: 0;
-
-      @include header-mobile {
-        grid-template-columns: 1fr auto;
-        padding: 0.75rem 1rem;
-        padding-left: 4rem; // Space for mobile toggle button
-        gap: 1rem;
-      }
     }
 
     .unified-header__greeting-section {
-      @include header-mobile {
-        display: none;
-      }
-    }
-    
-    // Wyjątek: logo mobilne ma być widoczne na mobile (gdy bottom nav jest widoczne)
-    .unified-header__greeting-section--mobile-logo {
-      @include header-mobile {
-        display: flex !important; // Nadpisz regułę ukrywającą
-      }
-      
-      // Ukryj na większych ekranach (gdzie bottom nav jest ukryte)
-      @include header-desktop {
-        display: none;
-      }
+      // Widoczna na mobile (≤768px) dzięki regule poniżej
     }
 
-    .unified-header__search {
-      @include header-mobile {
-        display: none;
-      }
-    }
+
   }
 
   // Scrolled State (with blur effect)
@@ -1045,18 +1026,13 @@ $header-mobile-breakpoint: 830px;
   // ============================================
   // RESPONSIVE BREAKPOINTS
   // ============================================
-
-  @include header-mobile {
-    &__nav {
-      display: none;
-    }
-
-    &__greeting-section {
-      display: none;
-    }
-
-    &__container {
-      grid-template-columns: 1fr;
+  
+  // Dashboard - nadpisz ukrycie greeting section na mobile
+  &--dashboard {
+    @media (min-width: 769px) {
+      .unified-header__greeting-section {
+        display: flex !important; // Pokaż na desktop (≥769px)
+      }
     }
   }
 
@@ -1074,6 +1050,32 @@ $header-mobile-breakpoint: 830px;
 // ============================================
 // ANIMATIONS
 // ============================================
+
+// Animacja wjazdu logo z lewej
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// Animacja fade-in i slide dla greeting section
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
 
 
 // ============================================
@@ -1098,17 +1100,6 @@ $header-mobile-breakpoint: 830px;
       svg {
         color: rgba(255, 255, 255, 0.8);
       }
-
-      .unified-header__search-shortcut {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-        color: rgba(255, 255, 255, 0.7);
-
-        kbd {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
-  }
-}
     }
 
     &__auth-btn {
@@ -1225,6 +1216,12 @@ $header-mobile-breakpoint: 830px;
 
     &__mobile-menu {
       animation: none;
+    }
+    
+    &__left--dashboard-mobile {
+      animation: none;
+      opacity: 1;
+      transform: none;
     }
   }
 }

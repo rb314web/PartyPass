@@ -11,7 +11,8 @@
   left: 0;
   top: 0;
   z-index: var(--z-sidebar);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               background-color var(--transition-colors, 0.2s ease),
               border-color var(--transition-colors, 0.2s ease);
   box-shadow: var(--shadow-md);
@@ -22,7 +23,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  @include respond-below('tablet') {
+  @media (max-width: 768px) {
     transform: translateX(-100%);
     width: 260px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -39,7 +40,7 @@
   }
 
   // Compact sidebar on medium screens
-  @media (min-width: 769px) and (max-width: 1200px) {
+  @media (min-width: 500px) and (max-width: 1200px) {
     width: 80px;
 
     .sidebar__logo {
@@ -133,7 +134,7 @@
     cursor: pointer;
     transition: opacity 0.3s ease;
 
-    @media (min-width: 769px) {
+    @media (min-width: 768px) {
       display: none;
     }
   }
@@ -195,17 +196,6 @@
       background-color var(--transition-colors, 0.2s ease),
       border-color var(--transition-colors, 0.2s ease),
       box-shadow 0.2s ease;
-  }
-
-  // Dark mode header
-  .dark &__header,
-  [data-theme='dark'] &__header {
-    background: linear-gradient(
-      135deg,
-      rgba(2, 6, 23, 0.95),
-      rgba(15, 23, 42, 0.9)
-    );
-    border-bottom-color: var(--border-primary, rgba(148, 163, 184, 0.31));
   }
 
   &__logo {
@@ -460,6 +450,11 @@
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 
     &-avatar {
       width: 40px;

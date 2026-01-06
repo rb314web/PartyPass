@@ -54,11 +54,13 @@
   }
 
   // Quick Actions
-  > .quick-actions {
-    margin-bottom: 2.5rem;
+  > .quick-actions,
+  > .fade-in > .quick-actions,
+  > .fade-out > .quick-actions-skeleton {
+    margin-bottom: 3rem;
 
     @media (max-width: 768px) {
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
   }
 
@@ -129,7 +131,7 @@
 
     &--map {
       padding: 0;
-      overflow: hidden;
+      overflow: visible;
       background: var(--bg-primary);
       border-radius: 1.25rem;
 
@@ -250,4 +252,35 @@
 
 .dashboard-home > *:nth-child(6) {
   animation-delay: 0.25s;
+}
+
+// ===== FADE ANIMATIONS FOR SKELETON TO CONTENT TRANSITIONS =====
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }

@@ -342,14 +342,8 @@
 
   &__card {
     background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
     border-radius: var(--radius-xl);
     padding: var(--space-xl);
-    transition: border-color 0.2s ease;
-
-    &:hover {
-      border-color: var(--border-secondary);
-    }
   }
 
   &__card-header {

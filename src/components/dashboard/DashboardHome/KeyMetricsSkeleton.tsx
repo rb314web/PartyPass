@@ -13,10 +13,19 @@ const KeyMetricsSkeleton: React.FC = () => {
           </div>
           <div className="key-metrics-skeleton__value" />
           <div className="key-metrics-skeleton__divider" />
-          <div className="key-metrics-skeleton__change" />
+          <div className="key-metrics-skeleton__change">
+            <div className="key-metrics-skeleton__change-badge" />
+            <div className="key-metrics-skeleton__change-label" />
+          </div>
           <div className="key-metrics-skeleton__details">
-            <div className="key-metrics-skeleton__detail" />
-            <div className="key-metrics-skeleton__detail" />
+            <div className="key-metrics-skeleton__detail">
+              <div className="key-metrics-skeleton__detail-indicator" />
+              <div className="key-metrics-skeleton__detail-text" />
+            </div>
+            <div className="key-metrics-skeleton__detail">
+              <div className="key-metrics-skeleton__detail-indicator" />
+              <div className="key-metrics-skeleton__detail-text" />
+            </div>
           </div>
         </div>
       ))}

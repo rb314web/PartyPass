@@ -32,6 +32,7 @@ import {
 import { Event, Activity, Guest } from '../../types';
 import { AnalyticsService } from './analyticsService';
 import { notificationService } from '../notificationService';
+import SearchService from '../searchService';
 
 export interface CreateEventData extends BaseCreateEventData {
   category?: string;
@@ -249,10 +250,15 @@ export class EventService {
         );
       }
 
-      return this.convertFirebaseEventToEvent(docRef.id, {
+      const newEvent = this.convertFirebaseEventToEvent(docRef.id, {
         ...eventDoc,
         id: docRef.id,
       });
+
+      // Clear search cache after creating event
+      SearchService.clearCache();
+
+      return newEvent;
     } catch (error: any) {
       throw new Error(`Błąd podczas tworzenia wydarzenia: ${error.message}`);
     }
@@ -341,7 +347,12 @@ export class EventService {
       const updatedDoc = await getDoc(eventRef);
       const eventData = updatedDoc.data() as FirebaseEvent;
 
-      return this.convertFirebaseEventToEvent(eventId, eventData);
+      const updatedEvent = this.convertFirebaseEventToEvent(eventId, eventData);
+
+      // Clear search cache after updating event
+      SearchService.clearCache();
+
+      return updatedEvent;
     } catch (error: any) {
       throw new Error(`Błąd podczas aktualizacji wydarzenia: ${error.message}`);
     }
@@ -464,6 +475,9 @@ export class EventService {
           notificationError
         );
       }
+
+      // Clear search cache after deleting event
+      SearchService.clearCache();
     } catch (error: any) {
       throw new Error(`Błąd podczas usuwania wydarzenia: ${error.message}`);
     }

@@ -5,6 +5,7 @@
   grid-template-columns: 1fr;
   gap: 1rem;
   margin-bottom: 2.5rem;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 
   @media (min-width: 640px) {
     grid-template-columns: repeat(2, 1fr);
@@ -26,6 +27,12 @@
     gap: 1rem;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+
+    @media (min-width: 640px) and (max-width: 1023px) {
+      &:last-child:nth-child(odd) {
+        grid-column: span 2;
+      }
+    }
 
     &::before {
       content: '';

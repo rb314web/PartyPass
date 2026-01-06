@@ -67,15 +67,16 @@ const Logo: React.FC<LogoProps> = ({
     </span>
   ) : null;
 
-  const textFallback = collapsed ? (
-    <span className="logo__text logo__text--initials">
-      <span className="logo__text-main">P</span>
-      <span className="logo__text-accent">P</span>
-    </span>
-  ) : (
+  const textFallback = (
     <span className="logo__text">
-      <span className="logo__text-main">Party</span>
-      <span className="logo__text-accent">Pass</span>
+      <span className="logo__text-main">
+        <span className="logo__letter logo__letter--first">P</span>
+        <span className="logo__letter logo__letter--middle">arty</span>
+      </span>
+      <span className="logo__text-accent">
+        <span className="logo__letter logo__letter--first">P</span>
+        <span className="logo__letter logo__letter--middle">ass</span>
+      </span>
     </span>
   );
 

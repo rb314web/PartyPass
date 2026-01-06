@@ -1,7 +1,7 @@
 // components/common/BottomNavigation/BottomNavigation.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Settings, Users } from 'lucide-react';
+import { Home, Calendar, Settings, Users, Search, Activity, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import './BottomNavigation.scss';
 
@@ -24,6 +24,11 @@ const BottomNavigation: React.FC = () => {
       exact: true,
     },
     {
+      path: '/dashboard/search',
+      label: 'Wyszukaj',
+      icon: <Search size={20} />,
+    },
+    {
       path: '/dashboard/events',
       label: 'Wydarzenia',
       icon: <Calendar size={20} />,
@@ -32,6 +37,16 @@ const BottomNavigation: React.FC = () => {
       path: '/dashboard/contacts',
       label: 'Kontakty',
       icon: <Users size={20} />,
+    },
+    {
+      path: '/dashboard/activities',
+      label: 'Aktywności',
+      icon: <Activity size={20} />,
+    },
+    {
+      path: '/dashboard/analytics',
+      label: 'Analityka',
+      icon: <BarChart3 size={20} />,
     },
     {
       path: '/dashboard/settings',

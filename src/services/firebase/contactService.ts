@@ -17,6 +17,7 @@ import {
 import { db } from '../../config/firebase';
 import { Contact, CreateContactData, UpdateContactData } from '../../types';
 import { COLLECTIONS } from '../../types/firebase';
+import SearchService from '../searchService';
 
 export interface ContactFilters {
   search?: string;
@@ -55,10 +56,15 @@ export class ContactService {
 
       const docRef = await addDoc(collection(db, this.COLLECTION), contactData);
 
-      return {
+      const newContact = {
         id: docRef.id,
         ...contactData,
       };
+
+      // Clear search cache after creating contact
+      SearchService.clearCache();
+
+      return newContact;
     } catch (error: any) {
       throw new Error('Błąd podczas tworzenia kontaktu: ' + error.message);
     }
@@ -149,6 +155,9 @@ export class ContactService {
         Object.entries(data).filter(([key, value]) => value !== undefined)
       );
 
+      // Clear search cache after updating contact
+      SearchService.clearCache();
+
       await updateDoc(docRef, {
         ...updateData,
         updatedAt: new Date(),
@@ -159,6 +168,9 @@ export class ContactService {
   }
 
   static async deleteContact(contactId: string): Promise<void> {
+
+      // Clear search cache after deleting contact
+      SearchService.clearCache();
     try {
       const docRef = doc(db, this.COLLECTION, contactId);
       await deleteDoc(docRef);

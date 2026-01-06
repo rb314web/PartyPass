@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, Sun, Moon } from 'lucide-react';
+import { Menu, X, Search, Sun, Moon, LogOut } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import NavigationLinks, { NavigationItem } from './components/NavigationLinks/NavigationLinks';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
@@ -283,19 +283,14 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   // Render right section
   const renderRightSection = () => (
     <div className="unified-header__right">
-      {variant === 'dashboard' && showSearch && !isMobile && (
+      {variant === 'dashboard' && showSearch && (
         <button
           className="unified-header__search-btn"
           onClick={handleSearchClick}
           aria-label="Szukaj wydarzeń, gości..."
-          title="Szukaj wydarzeń, gości... (Ctrl+K)"
+          title="Szukaj wydarzeń, gości..."
         >
           <Search size={20} />
-          {!isMobile && (
-            <span className="unified-header__search-shortcut">
-              <kbd>Ctrl</kbd> + <kbd>K</kbd>
-            </span>
-          )}
         </button>
       )}
       {/* Hide theme toggle on mobile for landing/auth - it's in mobile menu */}
@@ -335,6 +330,15 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 >
                   <LogoText />
                 </h1>
+              </div>
+            </div>
+          )}
+          
+          {/* Dashboard Logo - zawsze renderuj, CSS kontroluje widoczność */}
+          {variant === 'dashboard' && (
+            <div className="unified-header__left unified-header__left--dashboard-mobile">
+              <div className="unified-header__logo">
+                <LogoText />
               </div>
             </div>
           )}
@@ -468,18 +472,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Mobile Toggle Button for Dashboard */}
-      {variant === 'dashboard' && isMobile && (
-        <button
-          className="unified-header__mobile-dashboard-toggle"
-          onClick={onMobileToggle}
-          aria-label="Otwórz/Zamknij panel boczny"
-          aria-expanded={isMobileOpen}
-        >
-          <Menu size={24} />
-        </button>
       )}
     </>
   );

@@ -37,10 +37,12 @@ const Search: React.FC = () => {
   const isMounted = useRef(true);
   const searchCount = useRef(0);
   const lastSearchTime = useRef(0);
+  const previousQueryRef = useRef<string>('');
+  const previousFiltersRef = useRef<SearchFilters>(filters);
 
   // Constants for validation
   const MAX_QUERY_LENGTH = 200;
-  const MAX_REQUESTS_PER_MINUTE = 20;
+  const MAX_REQUESTS_PER_MINUTE = 100;
   const REQUEST_COOLDOWN = 60000; // 1 minute
 
   // Cleanup on unmount
@@ -56,7 +58,7 @@ const Search: React.FC = () => {
   }, []);
 
   // Perform search with race condition protection
-  const performSearch = useCallback(async (searchQuery: string) => {
+  const performSearch = useCallback(async (searchQuery: string, searchFilters: SearchFilters, saveToRecent: boolean = false) => {
     if (!user?.id || !searchQuery.trim()) {
       setResults([]);
       return;
@@ -87,18 +89,17 @@ const Search: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const searchResults = await SearchService.search(user.id, searchQuery, filters);
+      const searchResults = await SearchService.search(user.id, searchQuery, searchFilters);
       
       // Only update if this is still the latest request and component is mounted
       if (currentRequestId === searchRequestId.current && isMounted.current) {
         setResults(searchResults);
         
-        // Save to recent searches
-        SearchService.saveRecentSearch(searchQuery);
-        setRecentSearches(SearchService.getRecentSearches());
-        
-        // Update URL
-        setSearchParams({ q: searchQuery });
+        // Save to recent searches only when explicitly requested
+        if (saveToRecent) {
+          SearchService.saveRecentSearch(searchQuery);
+          setRecentSearches(SearchService.getRecentSearches());
+        }
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -111,7 +112,7 @@ const Search: React.FC = () => {
         setLoading(false);
       }
     }
-  }, [user?.id, filters, setSearchParams]);
+  }, [user?.id]);
 
   // Get suggestions with debounce
   const getSuggestions = useCallback(async (searchQuery: string) => {
@@ -183,16 +184,20 @@ const Search: React.FC = () => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      performSearch(query);
+      performSearch(query, filters, true); // Save to recent searches on submit
       setSuggestions([]);
+      // Update URL
+      setSearchParams({ q: query });
     }
   };
 
   // Handle suggestion click
   const handleSuggestionClick = (suggestion: string) => {
     setQuery(suggestion);
-    performSearch(suggestion);
+    performSearch(suggestion, filters, true); // Save to recent searches on suggestion click
     setSuggestions([]);
+    // Update URL
+    setSearchParams({ q: suggestion });
   };
 
   // Handle result click
@@ -214,7 +219,7 @@ const Search: React.FC = () => {
     setError(null);
     
     if (query.trim()) {
-      performSearch(query);
+      performSearch(query, updatedFilters);
     }
   };
 
@@ -224,22 +229,32 @@ const Search: React.FC = () => {
     setRecentSearches([]);
   };
 
-  // Perform search on mount if query exists (only once)
+  // Perform search when query or filters change (with deduplication)
   useEffect(() => {
-    const initialQuery = searchParams.get('q');
-    if (initialQuery && user?.id && !query) {
-      setQuery(initialQuery);
+    console.log('🔍 Search useEffect triggered:', { query, userId: user?.id, previousQuery: previousQueryRef.current });
+    
+    if (!query.trim() || !user?.id) {
+      console.log('❌ Early return - no query or user');
+      setResults([]);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
 
-  // Perform search when query changes (but not on initial mount if from URL)
-  useEffect(() => {
-    if (query.trim() && user?.id) {
-      performSearch(query);
+    // Check if query or filters actually changed
+    const queryChanged = query !== previousQueryRef.current;
+    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(previousFiltersRef.current);
+    
+    console.log('📊 Change detection:', { queryChanged, filtersChanged });
+
+    if (queryChanged || filtersChanged) {
+      console.log('✅ Performing search for:', query);
+      previousQueryRef.current = query;
+      previousFiltersRef.current = filters;
+      performSearch(query, filters, false);
+    } else {
+      console.log('⏭️ No changes detected, skipping search');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, filters]); // Removed performSearch from deps to avoid infinite loop
+  }, [query, filters, user?.id, performSearch]);
+
 
   const getResultIcon = (type: string) => {
     switch (type) {
@@ -342,56 +357,54 @@ const Search: React.FC = () => {
       </form>
 
       {/* Filters */}
-      {showFilters && (
-        <div className="search-page__filters">
-          <div className="search-page__filter-group">
-            <label className="search-page__filter-label">Typ wyników:</label>
-            <div className="search-page__filter-options">
-              <label className="search-page__filter-option">
-                <input
-                  type="checkbox"
-                  checked={filters.types?.includes('event')}
-                  onChange={(e) => {
-                    const types = filters.types || [];
-                    const newTypes: ('event' | 'contact' | 'activity')[] = e.target.checked
-                      ? [...types, 'event']
-                      : types.filter(t => t !== 'event');
-                    handleFilterChange({ types: newTypes });
-                  }}
-                />
-                <span>Wydarzenia</span>
-              </label>
-              <label className="search-page__filter-option">
-                <input
-                  type="checkbox"
-                  checked={filters.types?.includes('contact')}
-                  onChange={(e) => {
-                    const types = filters.types || [];
-                    const newTypes: ('event' | 'contact' | 'activity')[] = e.target.checked
-                      ? [...types, 'contact']
-                      : types.filter(t => t !== 'contact');
-                    handleFilterChange({ types: newTypes });
-                  }}
-                />
-                <span>Kontakty</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="search-page__filter-group">
-            <label className="search-page__filter-label">Limit wyników:</label>
-            <select
-              value={filters.limit}
-              onChange={(e) => handleFilterChange({ limit: parseInt(e.target.value) })}
-              className="search-page__filter-select"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
+      <div className={`search-page__filters ${showFilters ? 'search-page__filters--visible' : 'search-page__filters--hidden'}`}>
+        <div className="search-page__filter-group">
+          <label className="search-page__filter-label">Typ wyników:</label>
+          <div className="search-page__filter-options">
+            <label className="search-page__filter-option">
+              <input
+                type="checkbox"
+                checked={filters.types?.includes('event')}
+                onChange={(e) => {
+                  const types = filters.types || [];
+                  const newTypes: ('event' | 'contact' | 'activity')[] = e.target.checked
+                    ? [...types, 'event']
+                    : types.filter(t => t !== 'event');
+                  handleFilterChange({ types: newTypes });
+                }}
+              />
+              <span>Wydarzenia</span>
+            </label>
+            <label className="search-page__filter-option">
+              <input
+                type="checkbox"
+                checked={filters.types?.includes('contact')}
+                onChange={(e) => {
+                  const types = filters.types || [];
+                  const newTypes: ('event' | 'contact' | 'activity')[] = e.target.checked
+                    ? [...types, 'contact']
+                    : types.filter(t => t !== 'contact');
+                  handleFilterChange({ types: newTypes });
+                }}
+              />
+              <span>Kontakty</span>
+            </label>
           </div>
         </div>
-      )}
+
+        <div className="search-page__filter-group">
+          <label className="search-page__filter-label">Limit wyników:</label>
+          <select
+            value={filters.limit}
+            onChange={(e) => handleFilterChange({ limit: parseInt(e.target.value) })}
+            className="search-page__filter-select"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
+      </div>
 
       {/* Content */}
       <div className="search-page__content" aria-live="polite" aria-busy={loading}>
@@ -476,33 +489,6 @@ const Search: React.FC = () => {
           </div>
         ) : (
           <div className="search-page__empty">
-            {recentSearches.length > 0 && (
-              <div className="search-page__recent">
-                <div className="search-page__recent-header">
-                  <h3>Ostatnie wyszukiwania</h3>
-                  <button
-                    onClick={clearRecentSearches}
-                    className="search-page__clear-recent"
-                  >
-                    Wyczyść
-                  </button>
-                </div>
-                
-                <div className="search-page__recent-list">
-                  {recentSearches.map((recent, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestionClick(recent)}
-                      className="search-page__recent-item"
-                    >
-                      <Clock size={16} />
-                      <span>{recent}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
             <div className="search-page__help">
               <h3>Wskazówki wyszukiwania</h3>
               <ul>

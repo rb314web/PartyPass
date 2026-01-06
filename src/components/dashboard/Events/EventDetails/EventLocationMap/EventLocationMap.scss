@@ -8,7 +8,6 @@
   height: 100%;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.15);
   background: var(--bg-primary, #ffffff);
   margin-bottom: 0;
   display: flex;
@@ -96,6 +95,11 @@
     backdrop-filter: blur(8px);
     width: 100%;
     box-sizing: border-box;
+    
+    .dark & {
+      background: rgba(31, 41, 55, 0.95);
+      border-top: 1px solid rgba(75, 85, 99, 0.3);
+    }
   }
 
   &__info-header {
