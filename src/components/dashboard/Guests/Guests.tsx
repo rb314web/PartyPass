@@ -35,6 +35,7 @@ const Guests: React.FC = () => {
   const { user } = useAuth();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [lastDoc, setLastDoc] = useState<any>(null);
@@ -63,9 +64,16 @@ const Guests: React.FC = () => {
         setLastDoc(result.lastDoc);
         setHasMore(result.hasMore);
         setError(null);
+        
+        // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
+        if (!isLoadingMore) {
+          setTimeout(() => {
+            setIsLoading(false);
+            setTimeout(() => setFadeIn(true), 100);
+          }, 300);
+        }
       } catch (err: any) {
         setError(err.message);
-      } finally {
         setIsLoading(false);
       }
     },
@@ -189,7 +197,7 @@ const Guests: React.FC = () => {
   };
 
   const GuestsListPage = () => (
-    <div className="guests">
+    <div className={`guests ${fadeIn ? 'guests--fade-in' : ''}`}>
       <div className="guests__header">
         <div className="guests__title-wrapper">
           <div className="guests__icon">
@@ -261,31 +269,25 @@ const Guests: React.FC = () => {
 
       <div className="guests__content">
         {isLoading ? (
+          <div className="guests guests--loading">
+            <div className="guests__loader">
+              <div className="guests__spinner-wrapper">
+                <div className="guests__spinner-ring"></div>
+                <div className="guests__spinner-ring guests__spinner-ring--delay"></div>
+                <Users className="guests__spinner-icon" size={32} />
+              </div>
+              <h3>Ładowanie gości...</h3>
+              <p>Przygotowujemy listę Twoich gości</p>
+            </div>
+          </div>
+        ) : filteredGuests.length === 0 ? (
+          <div className="guests__empty">
+            <Users size={48} />
+            <h3>Brak gości</h3>
+            <p>Nie znaleziono gości spełniających wybrane kryteria</p>
+          </div>
+        ) : (
           <div className="guests__table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Gość</th>
-                  <th>Wydarzenie</th>
-                  <th>Data wydarzenia</th>
-                  <th>Kontakt</th>
-                  <th>Akcje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <tr key={index}>
-                    <td>
-                      <div className="guests__guest-info">
-                        <Skeleton
-                          variant="circular"
-                          width={40}
-                          height={40}
-                          animation="wave"
-                          sx={{
-                            backgroundColor: '#f0f0f0',
-                          }}
-                        />
                         <div>
                           <Skeleton
                             variant="text"

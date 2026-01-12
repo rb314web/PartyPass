@@ -47,11 +47,11 @@ class SearchService {
     // Check cache
     const cached = this.searchCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      console.log('Returning cached search results for:', query);
+      console.log('🔍 SearchService.search: Returning cached results for:', query, `(${cached.results.length} results)`);
       return cached.results;
     }
 
-    console.log('Performing fresh search for:', query);
+    console.log('🔍 SearchService.search: Performing fresh search:', { userId, query, filters, cacheSize: this.searchCache.size });
 
     const { types = ['event', 'contact'], limit = 100 } = filters;
     const results: SearchResult[] = [];
@@ -108,7 +108,16 @@ class SearchService {
 
   // Clear cache (useful after data changes)
   static clearCache(): void {
+    console.log('🗑️ SearchService: Clearing cache', { size: this.searchCache.size });
     this.searchCache.clear();
+  }
+
+  // Get cache info (for debugging)
+  static getCacheInfo(): { size: number; keys: string[] } {
+    return {
+      size: this.searchCache.size,
+      keys: Array.from(this.searchCache.keys())
+    };
   }
 
   // Search events
@@ -117,6 +126,8 @@ class SearchService {
     query: string,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
+    console.log('🔍 SearchService.searchEvents: Starting', { userId, query, filters });
+    
     // Use larger limit for search to get all matching events
     const result = await EventService.getUserEvents(
       userId,
@@ -129,6 +140,8 @@ class SearchService {
       100
     ); // Increase limit to 100 to get more results
 
+    console.log('🔍 SearchService.searchEvents: Got events', { count: result.events.length });
+
     return result.events.map((event: Event) =>
       this.eventToSearchResult(event, query)
     );
@@ -140,7 +153,11 @@ class SearchService {
     query: string,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
+    console.log('🔍 SearchService.searchContacts: Starting', { userId, query });
+    
     const contacts = await ContactService.searchContacts(userId, query);
+
+    console.log('🔍 SearchService.searchContacts: Got contacts', { count: contacts.length });
 
     return contacts.map(contact => this.contactToSearchResult(contact, query));
   }
@@ -207,12 +224,13 @@ class SearchService {
       title: `${contact.firstName} ${contact.lastName}`,
       subtitle: contact.email,
       description: contact.notes,
-      url: `/dashboard/contacts?contact=${contact.id}`,
+      url: `/dashboard/contacts`,
       score,
       metadata: {
         phone: contact.phone,
         tags: contact.tags,
         createdAt: contact.createdAt.toISOString(),
+        contactId: contact.id, // Store contact ID for opening modal
       },
     };
   }

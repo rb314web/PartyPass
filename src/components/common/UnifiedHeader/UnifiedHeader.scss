@@ -26,10 +26,6 @@ $header-mobile-breakpoint: 830px;
   display: flex;
   align-items: center;
 
-  // CSS Variables for scroll effects
-  --scroll-blur: 0px;
-  --scroll-opacity: 1;
-
   &__container {
     @include container;
     display: flex;
@@ -996,23 +992,15 @@ $header-mobile-breakpoint: 830px;
       margin: 0;
     }
 
+    .unified-header__nav {
+      justify-content: flex-start;
+    }
+
     .unified-header__greeting-section {
       // Widoczna na mobile (≤768px) dzięki regule poniżej
     }
 
 
-  }
-
-  // Scrolled State (with blur effect)
-  &--scrolled {
-    backdrop-filter: blur(var(--scroll-blur, 10px));
-    background-color: rgba(255, 255, 255, var(--scroll-opacity, 0.95));
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-
-    // Dark mode support
-    .dark & {
-      background-color: rgba(18, 18, 18, var(--scroll-opacity, 0.95));
-    }
   }
 
   // Menu Open State

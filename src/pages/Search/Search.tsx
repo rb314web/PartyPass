@@ -19,13 +19,15 @@ const Search: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const initialQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fadeIn, setFadeIn] = useState(false);
   
   const [filters, setFilters] = useState<SearchFilters>({
     types: ['event', 'contact'],
@@ -39,6 +41,7 @@ const Search: React.FC = () => {
   const lastSearchTime = useRef(0);
   const previousQueryRef = useRef<string>('');
   const previousFiltersRef = useRef<SearchFilters>(filters);
+  const hasPerformedInitialSearch = useRef(false);
 
   // Constants for validation
   const MAX_QUERY_LENGTH = 200;
@@ -52,14 +55,30 @@ const Search: React.FC = () => {
     };
   }, []);
 
-  // Load recent searches on mount
+  // Load recent searches on mount and expose debug methods
   useEffect(() => {
     setRecentSearches(SearchService.getRecentSearches());
+    
+    // Expose debug methods to window (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      (window as any).clearSearchCache = () => {
+        SearchService.clearCache();
+        console.log('✅ Search cache cleared!');
+      };
+      (window as any).getSearchCacheInfo = () => {
+        const info = SearchService.getCacheInfo();
+        console.log('📊 Cache info:', info);
+        return info;
+      };
+    }
   }, []);
 
   // Perform search with race condition protection
   const performSearch = useCallback(async (searchQuery: string, searchFilters: SearchFilters, saveToRecent: boolean = false) => {
+    console.log('🔍 performSearch called:', { searchQuery, userId: user?.id, filters: searchFilters, saveToRecent });
+    
     if (!user?.id || !searchQuery.trim()) {
+      console.log('❌ performSearch: Invalid params');
       setResults([]);
       return;
     }
@@ -86,31 +105,37 @@ const Search: React.FC = () => {
 
     const currentRequestId = ++searchRequestId.current;
 
+    console.log('🔢 Search request IDs:', { currentRequestId, globalRequestId: searchRequestId.current, query: searchQuery, isMounted: isMounted.current });
+
     setLoading(true);
+    setFadeIn(false);
     setError(null);
     try {
       const searchResults = await SearchService.search(user.id, searchQuery, searchFilters);
       
-      // Only update if this is still the latest request and component is mounted
-      if (currentRequestId === searchRequestId.current && isMounted.current) {
-        setResults(searchResults);
-        
-        // Save to recent searches only when explicitly requested
-        if (saveToRecent) {
-          SearchService.saveRecentSearch(searchQuery);
-          setRecentSearches(SearchService.getRecentSearches());
-        }
+      console.log('🎯 performSearch: Got results', { count: searchResults.length, currentRequestId, globalRequestId: searchRequestId.current, isMounted: isMounted.current });
+      
+      // Set results immediately - debounce handles race conditions
+      setResults(searchResults);
+      console.log('✅ performSearch: Results set to state', { count: searchResults.length, query: searchQuery });
+      
+      // Save to recent searches only when explicitly requested
+      if (saveToRecent) {
+        SearchService.saveRecentSearch(searchQuery);
+        setRecentSearches(SearchService.getRecentSearches());
       }
+      
+      // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
+      setTimeout(() => {
+        setLoading(false);
+        // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
+        setTimeout(() => setFadeIn(true), 300);
+      }, 300);
     } catch (error) {
       console.error('Search error:', error);
-      if (currentRequestId === searchRequestId.current && isMounted.current) {
-        setResults([]);
-        setError('Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.');
-      }
-    } finally {
-      if (currentRequestId === searchRequestId.current && isMounted.current) {
-        setLoading(false);
-      }
+      setResults([]);
+      setError('Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.');
+      setLoading(false);
     }
   }, [user?.id]);
 
@@ -174,9 +199,7 @@ const Search: React.FC = () => {
       debouncedGetSuggestions.fn(value);
     } else {
       setSuggestions([]);
-      if (!value.trim()) {
-        setResults([]);
-      }
+      // Don't clear results here - let useEffect handle it
     }
   };
 
@@ -184,6 +207,7 @@ const Search: React.FC = () => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      console.log('🔍 Search form submitted:', query);
       performSearch(query, filters, true); // Save to recent searches on submit
       setSuggestions([]);
       // Update URL
@@ -202,7 +226,16 @@ const Search: React.FC = () => {
 
   // Handle result click
   const handleResultClick = (result: SearchResult) => {
-    navigate(result.url);
+    // For contacts, navigate with state to highlight in list
+    if (result.type === 'contact' && result.metadata?.contactId) {
+      navigate(result.url, { 
+        state: { 
+          highlightContactId: result.metadata.contactId 
+        } 
+      });
+    } else {
+      navigate(result.url);
+    }
   };
 
   // Handle filter change
@@ -229,13 +262,25 @@ const Search: React.FC = () => {
     setRecentSearches([]);
   };
 
-  // Perform search when query or filters change (with deduplication)
+  // Perform search when query or filters change (with deduplication and debounce)
   useEffect(() => {
-    console.log('🔍 Search useEffect triggered:', { query, userId: user?.id, previousQuery: previousQueryRef.current });
+    console.log('🔍 Search useEffect triggered:', { 
+      query, 
+      userId: user?.id, 
+      previousQuery: previousQueryRef.current,
+      queryChanged: query !== previousQueryRef.current 
+    });
     
-    if (!query.trim() || !user?.id) {
-      console.log('❌ Early return - no query or user');
+    if (!user?.id) {
+      console.log('❌ User not loaded yet, waiting...');
+      return;
+    }
+
+    if (!query.trim()) {
+      console.log('❌ Empty query, clearing results');
       setResults([]);
+      previousQueryRef.current = '';
+      hasPerformedInitialSearch.current = false; // Reset flag when query is empty
       return;
     }
 
@@ -243,17 +288,40 @@ const Search: React.FC = () => {
     const queryChanged = query !== previousQueryRef.current;
     const filtersChanged = JSON.stringify(filters) !== JSON.stringify(previousFiltersRef.current);
     
-    console.log('📊 Change detection:', { queryChanged, filtersChanged });
+    console.log('📊 Change detection:', { 
+      queryChanged, 
+      filtersChanged, 
+      hasPerformedInitialSearch: hasPerformedInitialSearch.current,
+      currentQuery: query,
+      previousQuery: previousQueryRef.current
+    });
 
-    if (queryChanged || filtersChanged) {
-      console.log('✅ Performing search for:', query);
-      previousQueryRef.current = query;
-      previousFiltersRef.current = filters;
-      performSearch(query, filters, false);
+    // Perform search if:
+    // 1. Query or filters changed, OR
+    // 2. This is the first search with a valid query from URL (after user loads)
+    if (queryChanged || filtersChanged || (!hasPerformedInitialSearch.current && query.trim())) {
+      // Debounce search for typing (300ms) - immediate for filter changes or initial load
+      const delay = queryChanged && !filtersChanged && hasPerformedInitialSearch.current ? 300 : 0;
+      
+      console.log('✅ Scheduling search for:', query, { delay, hasPerformedInitialSearch: hasPerformedInitialSearch.current });
+      
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Executing debounced search for:', query);
+        previousQueryRef.current = query;
+        previousFiltersRef.current = filters;
+        hasPerformedInitialSearch.current = true;
+        performSearch(query, filters, false);
+      }, delay);
+      
+      return () => {
+        console.log('🧹 Cleaning up search timeout for:', query);
+        clearTimeout(timeoutId);
+      };
     } else {
       console.log('⏭️ No changes detected, skipping search');
     }
-  }, [query, filters, user?.id, performSearch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, filters, user?.id]); // performSearch removed from dependencies to prevent race condition
 
 
   const getResultIcon = (type: string) => {
@@ -271,6 +339,8 @@ const Search: React.FC = () => {
       default: return 'Wynik';
     }
   };
+
+  console.log('🎨 Search component render:', { query, resultsCount: results.length, loading, hasResults: results.length > 0 });
 
   return (
     <div className="search-page" role="search">
@@ -425,11 +495,16 @@ const Search: React.FC = () => {
 
         {loading ? (
           <div className="search-page__loading" role="status">
-            <div className="search-page__spinner" aria-hidden="true"></div>
-            <p>Wyszukiwanie...</p>
+            <div className="search-page__spinner-wrapper">
+              <div className="search-page__spinner-ring"></div>
+              <div className="search-page__spinner-ring search-page__spinner-ring--delay"></div>
+              <SearchIcon className="search-page__spinner-icon" size={32} />
+            </div>
+            <h3>Wyszukiwanie...</h3>
+            <p>Przeszukujemy bazę danych</p>
           </div>
         ) : results.length > 0 ? (
-          <div className="search-page__results">
+          <div className={`search-page__results ${fadeIn ? 'search-page__results--fade-in' : ''}`}>
             <div className="search-page__results-header">
               <h2>Wyniki wyszukiwania ({results.length})</h2>
             </div>

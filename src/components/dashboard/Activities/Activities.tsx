@@ -32,18 +32,26 @@ const Activities: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ActivityType>('all');
   const [showNotifications, setShowNotifications] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
 
   const loadActivities = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
+      setFadeIn(false);
       const data = await EventService.getRecentActivities(user.id, 50); // Load more activities
       setActivities(data);
+      
+      // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
+      setTimeout(() => {
+        setLoading(false);
+        // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
+        setTimeout(() => setFadeIn(true), 300);
+      }, 300);
     } catch (error) {
       console.error('Error loading activities:', error);
       setActivities([]);
-    } finally {
       setLoading(false);
     }
   }, [user?.id]);
@@ -227,12 +235,19 @@ const Activities: React.FC = () => {
       <div className="activities__content">
         {loading ? (
           <div className="activities__loading">
-            <div className="activities__spinner"></div>
-            <p>Ładowanie aktywności...</p>
+            <div className="activities__spinner-wrapper">
+              <div className="activities__spinner-ring"></div>
+              <div className="activities__spinner-ring activities__spinner-ring--delay"></div>
+              <ActivityIcon className="activities__spinner-icon" size={32} />
+            </div>
+            <h3>Ładowanie aktywności...</h3>
+            <p>Przygotowujemy historię wydarzeń</p>
           </div>
         ) : filteredActivities.length === 0 ? (
           <div className="activities__empty">
-            <Calendar size={64} />
+            <div className="activities__empty-icon">
+              <Calendar />
+            </div>
             <h3>
               {searchQuery || filterType !== 'all'
                 ? 'Brak aktywności pasujących do filtrów'
@@ -245,7 +260,7 @@ const Activities: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="activities__list">
+          <div className={`activities__list ${fadeIn ? 'activities__list--fade-in' : ''}`}>
             {filteredActivities.map(activity => (
               <div
                 key={activity.id}

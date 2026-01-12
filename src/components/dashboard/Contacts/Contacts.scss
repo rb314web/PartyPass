@@ -344,6 +344,13 @@
     background: var(--bg-primary);
     border-radius: var(--radius-xl);
     padding: var(--space-xl);
+    transition: all 0.3s ease;
+    
+    &--highlighted {
+      animation: highlightPulse 2s ease-in-out;
+      box-shadow: 0 0 0 3px var(--color-primary), 0 4px 12px rgba(99, 102, 241, 0.3);
+      background: var(--color-primary-soft, rgba(99, 102, 241, 0.08));
+    }
   }
 
   &__card-header {
@@ -499,5 +506,128 @@
     word-break: break-all;
     overflow-wrap: anywhere;
     line-height: 1.4;
+  }
+
+  // Empty state styles
+  &__empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(3rem, 8vh, 6rem) 2rem;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    min-height: 450px;
+    animation: fadeIn 0.4s ease-out;
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    &-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: var(--color-primary-soft, rgba(99, 102, 241, 0.08));
+      color: var(--color-primary);
+      margin-bottom: var(--space-xl);
+      animation: scaleIn 0.5s ease-out 0.1s backwards;
+      
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      
+      svg {
+        width: 56px;
+        height: 56px;
+        stroke-width: 1.5;
+      }
+    }
+
+    &-title {
+      color: var(--text-primary);
+      font-weight: 600;
+      margin-bottom: var(--space-md);
+      font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+      letter-spacing: -0.02em;
+      animation: fadeInUp 0.5s ease-out 0.2s backwards;
+    }
+
+    &-description {
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 0;
+      max-width: 450px;
+      font-size: 1rem;
+      line-height: 1.65;
+      animation: fadeInUp 0.5s ease-out 0.3s backwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      padding: 3rem 1.5rem;
+      min-height: 350px;
+
+      &-icon {
+        width: 96px;
+        height: 96px;
+
+        svg {
+          width: 44px;
+          height: 44px;
+        }
+      }
+
+      &-description {
+        font-size: 0.95rem;
+      }
+    }
+  }
+}
+
+// Keyframe animation for highlighting contact from search
+@keyframes highlightPulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--color-primary), 0 4px 12px rgba(99, 102, 241, 0);
+    background: var(--bg-primary);
+  }
+  10% {
+    box-shadow: 0 0 0 6px var(--color-primary), 0 8px 24px rgba(99, 102, 241, 0.4);
+    background: var(--color-primary-soft, rgba(99, 102, 241, 0.12));
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--color-primary), 0 4px 12px rgba(99, 102, 241, 0.3);
+    background: var(--color-primary-soft, rgba(99, 102, 241, 0.08));
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--color-primary), 0 4px 12px rgba(99, 102, 241, 0);
+    background: var(--bg-primary);
   }
 }

@@ -21,35 +21,66 @@
   }
 
   &__header {
-    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-xl);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-xl);
+  }
+
+  &__title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
 
     h1 {
-      font-size: 2rem;
+      font-size: clamp(1.9rem, 3vw, 2.5rem);
       font-weight: 600;
       color: var(--text-primary);
-      margin: 0 0 0.5rem 0;
-      letter-spacing: -0.02em;
+      margin: 0;
+      letter-spacing: -0.5px;
       line-height: 1.2;
 
       @media (max-width: 768px) {
-        font-size: 1.75rem;
+        font-size: 2rem;
       }
 
       @media (max-width: 480px) {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
       }
     }
 
     p {
-      font-size: 0.9375rem;
+      font-size: 0.95rem;
       color: var(--text-secondary);
       margin: 0;
       font-weight: 400;
-      opacity: 0.8;
+    }
+  }
 
-      @media (max-width: 480px) {
-        font-size: 0.875rem;
-      }
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-xl);
+    background: var(--color-primary-soft, rgba(99, 102, 241, 0.12));
+    color: var(--color-primary);
+    flex-shrink: 0;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2.5;
     }
   }
 
@@ -78,7 +109,6 @@
     border-radius: 1rem;
     padding: 0.75rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--border-primary);
     position: sticky;
     top: 2rem;
 
@@ -122,7 +152,6 @@
     &--active {
       background: var(--bg-tertiary);
       color: var(--text-primary);
-      border: 1px solid var(--border-secondary);
 
       .settings__tab-icon {
         background: var(--bg-secondary);
@@ -204,7 +233,6 @@
   &__content {
     background: var(--bg-primary);
     border-radius: 1rem;
-    border: 1px solid var(--border-primary);
     min-height: 600px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }

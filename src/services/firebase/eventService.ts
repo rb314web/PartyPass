@@ -394,16 +394,12 @@ export class EventService {
       // 3. Usuń powiązane aktywności
       const activitiesQuery = query(
         collection(db, COLLECTIONS.ACTIVITIES),
-        where('eventId', '==', eventId)
+        where('eventId', '==', eventId),
+        where('userId', '==', eventData.userId) // Filtruj tylko aktywności użytkownika
       );
       const activitiesSnapshot = await getDocs(activitiesQuery);
       activitiesSnapshot.forEach(activityDoc => {
-        const activityData = activityDoc.data();
-
-        // Usuń tylko aktywności, których właścicielem jest aktualny użytkownik
-        if (activityData?.userId === eventData.userId) {
-          batch.delete(activityDoc.ref);
-        }
+        batch.delete(activityDoc.ref);
       });
 
       // 4. Dodaj nową aktywność o usunięciu wydarzenia
@@ -424,16 +420,12 @@ export class EventService {
       // 5. Usuń powiadomienia związane z wydarzeniem
       const notificationsQuery = query(
         collection(db, COLLECTIONS.NOTIFICATIONS),
-        where('eventId', '==', eventId)
+        where('eventId', '==', eventId),
+        where('userId', '==', eventData.userId) // Filtruj tylko powiadomienia użytkownika
       );
       const notificationsSnapshot = await getDocs(notificationsQuery);
       notificationsSnapshot.forEach(notificationDoc => {
-        const notificationData = notificationDoc.data();
-
-        // Firestore rules pozwalają usuwać tylko powiadomienia należące do aktualnego użytkownika
-        if (notificationData?.userId === eventData.userId) {
-          batch.delete(notificationDoc.ref);
-        }
+        batch.delete(notificationDoc.ref);
       });
 
       // 6. Usuń samo wydarzenie
@@ -620,6 +612,8 @@ export class EventService {
     hasMore: boolean;
   }> {
     try {
+      console.log('🔍 EventService.getUserEvents called:', { userId, filters, pageSize });
+      
       let q = query(
         collection(db, COLLECTIONS.EVENTS),
         where('userId', '==', userId),
@@ -656,6 +650,8 @@ export class EventService {
         events.push(this.convertFirebaseEventToEvent(doc.id, eventData));
       });
 
+      console.log('🔍 EventService.getUserEvents: Fetched events from DB:', events.length);
+
       // Apply search filter in memory if needed
       let filteredEvents = events;
       if (filters.search) {
@@ -666,10 +662,13 @@ export class EventService {
             event.description.toLowerCase().includes(searchLower) ||
             event.location.toLowerCase().includes(searchLower)
         );
+        console.log('🔍 EventService.getUserEvents: Filtered events for search "' + filters.search + '":', filteredEvents.length);
       }
 
       const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
       const hasMore = querySnapshot.docs.length === pageSize;
+
+      console.log('🔍 EventService.getUserEvents: Returning:', { eventsCount: filteredEvents.length, hasMore });
 
       return {
         events: filteredEvents,
@@ -683,42 +682,29 @@ export class EventService {
   static async getEventStats(userId: string): Promise<EventStats> {
     const start = Date.now();
     try {
-
-
       const eventsQuery = query(
         collection(db, COLLECTIONS.EVENTS),
         where('userId', '==', userId)
       );
       const eventsSnapshot = await getDocs(eventsQuery);
 
-
-
-
-      // Jeśli brak wydarzeń w bazie, zwróć przykładowe dane do testowania
+      // If no events, return empty stats
       if (eventsSnapshot.size === 0) {
-        console.log(
-          'getEventStats: Brak wydarzeń w bazie, zwracam przykładowe dane'
-        );
-        const mockStats: EventStats = {
-          totalEvents: 5,
-          activeEvents: 2,
-          completedEvents: 2,
-          draftEvents: 1,
+        return {
+          totalEvents: 0,
+          activeEvents: 0,
+          completedEvents: 0,
+          draftEvents: 0,
           cancelledEvents: 0,
-          totalGuests: 47,
-          acceptedGuests: 35,
-          pendingGuests: 8,
-          declinedGuests: 4,
-          responseRate: 83, // (35 + 4) / 47 * 100
-          eventsThisMonth: 3,
-          guestsThisMonth: 28,
-          upcomingEvents: 2,
+          totalGuests: 0,
+          acceptedGuests: 0,
+          pendingGuests: 0,
+          declinedGuests: 0,
+          responseRate: 0,
+          eventsThisMonth: 0,
+          guestsThisMonth: 0,
+          upcomingEvents: 0,
         };
-        console.log(
-          'getEventStats: Zwracam przykładowe statystyki:',
-          mockStats
-        );
-        return mockStats;
       }
 
       const events: FirebaseEvent[] = [];

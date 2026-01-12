@@ -44,22 +44,14 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, isLoading = fal
 
   if (isLoading) {
     return (
-      <div className="upcoming-events">
-        <div className="upcoming-events__list">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="upcoming-events__skeleton">
-              <div className="upcoming-events__skeleton-header">
-                <div className="upcoming-events__skeleton-title"></div>
-                <div className="upcoming-events__skeleton-badge"></div>
-              </div>
-              <div className="upcoming-events__skeleton-details">
-                <div className="upcoming-events__skeleton-detail"></div>
-                <div className="upcoming-events__skeleton-detail"></div>
-                <div className="upcoming-events__skeleton-detail"></div>
-              </div>
-              <div className="upcoming-events__skeleton-progress"></div>
-            </div>
-          ))}
+      <div className="upcoming-events upcoming-events--loading">
+        <div className="upcoming-events__loader">
+          <div className="upcoming-events__spinner">
+            <div className="upcoming-events__spinner-ring"></div>
+            <div className="upcoming-events__spinner-ring upcoming-events__spinner-ring--delay"></div>
+            <Calendar className="upcoming-events__spinner-icon" size={24} />
+          </div>
+          <p>Ładowanie nadchodzących wydarzeń...</p>
         </div>
       </div>
     );

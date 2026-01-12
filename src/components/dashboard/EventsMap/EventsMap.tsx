@@ -253,9 +253,9 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
 
   useEffect(() => {
     
-    // Jeśli nie ma wydarzeń w ogóle, może jeszcze się ładują - pokaż spinner
+    // Jeśli nie ma wydarzeń w ogóle - pokaż pusty stan
     if (events.length === 0) {
-      setLoading(true);
+      setLoading(false);
       setLocations([]);
       setError(false);
       return;
@@ -300,13 +300,7 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
             };
           }
 
-          // PRIORYTET 3: Geokoduj przez Nominatim (wyłączone w dev mode)
-          // W trybie development nie wysyłamy żądań do Nominatim API (rate limiting/CORS)
-          // Użyj zapisanych współrzędnych lub cache
-          if (process.env.NODE_ENV === 'development') {
-            return null;
-          }
-          
+          // PRIORYTET 3: Geokoduj przez Nominatim
           // Add delay to avoid rate limiting (1.5s per request)
           if (index > 0) {
             await new Promise(resolve => setTimeout(resolve, index * 1500));

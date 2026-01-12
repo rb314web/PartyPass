@@ -15,7 +15,7 @@ import {
   Edit3,
   Trash2,
 } from 'lucide-react';
-import { Box, Typography, Skeleton } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import { Contact } from '../../../types';
 import {
@@ -53,6 +53,10 @@ const Contacts: React.FC = () => {
   const [deleteContactOpen, setDeleteContactOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Highlight state for search navigation
+  const [highlightedContactId, setHighlightedContactId] = useState<string | null>(null);
+  const contactRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // STABLE loadContacts - memoized with useCallback
   const loadContacts = useCallback(
@@ -284,57 +288,47 @@ const Contacts: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.state]);
 
-  // Render loading skeletons - memoized
-  const renderSkeletons = useCallback(
+  // Highlight contact when navigating from search
+  useEffect(() => {
+    if (
+      location.pathname === '/dashboard/contacts' &&
+      location.state?.highlightContactId
+    ) {
+      const contactId = location.state.highlightContactId;
+      setHighlightedContactId(contactId);
+      
+      // Scroll to contact after a short delay to ensure it's rendered
+      setTimeout(() => {
+        const contactElement = contactRefs.current[contactId];
+        if (contactElement) {
+          contactElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
+      // Remove highlight after 3 seconds
+      const timer = setTimeout(() => {
+        setHighlightedContactId(null);
+      }, 3000);
+      
+      // Clear state to prevent re-highlighting on navigation
+      navigate(location.pathname, { replace: true, state: {} });
+      
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.state]);
+
+  // Render loading state - memoized
+  const renderLoading = useCallback(
     () => (
-      <div className="contacts__list">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="contacts__card">
-            <div className="contacts__card-header">
-              <div className="contacts__card-info">
-                <Skeleton
-                  variant="circular"
-                  width={40}
-                  height={40}
-                  animation="wave"
-                />
-                <div>
-                  <Skeleton
-                    variant="text"
-                    width={120}
-                    height={20}
-                    sx={{ mb: 0.5 }}
-                  />
-                  <Skeleton variant="text" width={160} height={16} />
-                </div>
-              </div>
-              <div className="contacts__card-actions">
-                <Skeleton
-                  variant="rectangular"
-                  width={70}
-                  height={32}
-                  sx={{ borderRadius: 1 }}
-                />
-                <Skeleton
-                  variant="rectangular"
-                  width={60}
-                  height={32}
-                  sx={{ borderRadius: 1 }}
-                />
-              </div>
-            </div>
-            <div className="contacts__card-details">
-              <div className="contacts__card-field">
-                <Skeleton variant="text" width={60} height={16} />
-                <Skeleton variant="text" width={100} height={20} />
-              </div>
-              <div className="contacts__card-field">
-                <Skeleton variant="text" width={80} height={16} />
-                <Skeleton variant="text" width={120} height={20} />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="contacts__loading">
+        <div className="contacts__spinner-wrapper">
+          <div className="contacts__spinner-ring"></div>
+          <div className="contacts__spinner-ring contacts__spinner-ring--delay"></div>
+          <Users className="contacts__spinner-icon" size={28} />
+        </div>
+        <h3>Ładowanie kontaktów...</h3>
+        <p>Przygotowujemy Twoją listę kontaktów</p>
       </div>
     ),
     []
@@ -390,54 +384,24 @@ const Contacts: React.FC = () => {
   // Render empty state - memoized
   const renderEmptyState = useCallback(
     () => (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '4rem 2rem',
-          backgroundColor: '#ffffff',
-        }}
-      >
-        <Box sx={{ color: '#94a3b8', marginBottom: 2 }}>
-          <Users size={64} />
-        </Box>
-        <Typography
-          variant="h6"
-          sx={{
-            color: '#333333',
-            fontWeight: 600,
-            marginBottom: 1,
-          }}
-        >
+      <div className="contacts__empty-state">
+        <div className="contacts__empty-state-icon">
+          <Users />
+        </div>
+        <Typography variant="h6" className="contacts__empty-state-title">
           {activeSearchQuery ? 'Nie znaleziono kontaktów' : 'Brak kontaktów'}
         </Typography>
         <Typography
           variant="body1"
-          sx={{
-            color: '#666666',
-            textAlign: 'center',
-            marginBottom: 3,
-            maxWidth: '400px',
-          }}
+          className="contacts__empty-state-description"
         >
           {activeSearchQuery
             ? 'Spróbuj zmienić wyszukiwanie i kliknij przycisk szukaj'
             : 'Dodaj pierwszy kontakt do swojej bazy'}
         </Typography>
-        {!activeSearchQuery && (
-          <button
-            className="contacts__action-btn contacts__action-btn--primary"
-            onClick={handleAddContact}
-          >
-            <Plus size={20} />
-            Dodaj kontakt
-          </button>
-        )}
-      </Box>
+      </div>
     ),
-    [activeSearchQuery, handleAddContact]
+    [activeSearchQuery]
   );
 
   // Render cards list - memoized
@@ -445,7 +409,13 @@ const Contacts: React.FC = () => {
     () => (
       <div className="contacts__list">
         {filteredAndSortedContacts.map(contact => (
-          <div key={contact.id} className="contacts__card">
+          <div 
+            key={contact.id} 
+            ref={el => contactRefs.current[contact.id] = el}
+            className={`contacts__card ${
+              highlightedContactId === contact.id ? 'contacts__card--highlighted' : ''
+            }`}
+          >
             <div className="contacts__card-header">
               <div className="contacts__card-info">
                 <div className="contacts__contact-avatar">
@@ -499,7 +469,7 @@ const Contacts: React.FC = () => {
         ))}
       </div>
     ),
-    [filteredAndSortedContacts, handleContactAction]
+    [filteredAndSortedContacts, handleContactAction, highlightedContactId]
   );
 
   // Main contacts list page - memoized to prevent re-creation
@@ -592,7 +562,7 @@ const Contacts: React.FC = () => {
         </div>
 
         <div className="contacts__content">
-          {isLoading && renderSkeletons()}
+          {isLoading && renderLoading()}
           {!isLoading && error && renderError()}
           {!isLoading &&
             !error &&
@@ -618,7 +588,7 @@ const Contacts: React.FC = () => {
       handleSortChange,
       isLoading,
       error,
-      renderSkeletons,
+      renderLoading,
       renderError,
       renderEmptyState,
       renderContactsList,

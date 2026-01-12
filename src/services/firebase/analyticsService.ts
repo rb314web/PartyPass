@@ -125,8 +125,11 @@ export class AnalyticsService {
     filters: AnalyticsFilter = {}
   ): Promise<AnalyticsReport> {
     try {
+      console.log('[Analytics] Generowanie raportu dla userId:', userId);
+      
       // Pobierz wydarzenia użytkownika
       const eventsStats = await EventService.getEventStats(userId);
+      console.log('[Analytics] Event stats:', eventsStats);
 
       // Pobierz szczegółowe dane wydarzeń
       const eventsQuery = query(
@@ -140,18 +143,33 @@ export class AnalyticsService {
         id: doc.id,
         ...doc.data(),
       }));
+      console.log('[Analytics] Znaleziono wydarzeń:', events.length);
 
-      // Pobierz dane gości
-      const guestsQuery = query(
-        collection(db, COLLECTIONS.GUESTS),
-        where('userId', '==', userId)
-      );
-
-      const guestsSnapshot = await getDocs(guestsQuery);
-      const guests = guestsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      // Pobierz dane gości dla wszystkich wydarzeń użytkownika
+      const eventIds = events.map(e => e.id);
+      let guests: any[] = [];
+      
+      if (eventIds.length > 0) {
+        // Firestore 'in' operator ma limit 10 elementów, więc dzielimy na części
+        const chunks = [];
+        for (let i = 0; i < eventIds.length; i += 10) {
+          chunks.push(eventIds.slice(i, i + 10));
+        }
+        
+        for (const chunk of chunks) {
+          const guestsQuery = query(
+            collection(db, COLLECTIONS.GUESTS),
+            where('eventId', 'in', chunk)
+          );
+          const guestsSnapshot = await getDocs(guestsQuery);
+          guests.push(...guestsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          })));
+        }
+      }
+      
+      console.log('[Analytics] Znaleziono gości:', guests.length);
 
       // Oblicz metryki
       const report = await this.calculateMetrics(
@@ -160,6 +178,8 @@ export class AnalyticsService {
         eventsStats,
         filters
       );
+      
+      console.log('[Analytics] Wygenerowany raport:', report);
 
       return report;
     } catch (error) {
@@ -179,16 +199,24 @@ export class AnalyticsService {
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    // Filtruj wydarzenia według dat
+    // Filtruj wydarzenia według dat utworzenia (createdAt)
     let filteredEvents = events;
     if (filters.startDate || filters.endDate) {
       filteredEvents = events.filter(event => {
-        const eventDate = event.date.toDate();
-        if (filters.startDate && eventDate < filters.startDate) return false;
-        if (filters.endDate && eventDate > filters.endDate) return false;
+        const createdDate = event.createdAt?.toDate() || new Date();
+        if (filters.startDate && createdDate < filters.startDate) return false;
+        if (filters.endDate && createdDate > filters.endDate) return false;
         return true;
       });
     }
+    
+    console.log('[Analytics] Filtered events:', filteredEvents.length, 'z', events.length);
+    
+    // Filtruj gości aby pasowali tylko do przefiltrowanych wydarzeń
+    const filteredEventIds = new Set(filteredEvents.map(e => e.id));
+    const filteredGuests = guests.filter(guest => filteredEventIds.has(guest.eventId));
+    
+    console.log('[Analytics] Filtered guests:', filteredGuests.length, 'z', guests.length);
 
     // Wydarzenia w tym miesiącu
     const eventsThisMonth = events.filter(
@@ -202,10 +230,20 @@ export class AnalyticsService {
     }).length;
 
     // Wzrost
-    const growthRate =
-      eventsLastMonth > 0
-        ? ((eventsThisMonth - eventsLastMonth) / eventsLastMonth) * 100
-        : 0;
+    let growthRate = 0;
+    if (eventsLastMonth > 0) {
+      growthRate = ((eventsThisMonth - eventsLastMonth) / eventsLastMonth) * 100;
+    } else if (eventsThisMonth > 0) {
+      // Jeśli w poprzednim miesiącu było 0, a teraz jest coś, to wzrost 100%
+      growthRate = 100;
+    }
+    // Jeśli oba są 0, growthRate pozostaje 0
+    
+    console.log('[Analytics] Growth calculation:', {
+      eventsThisMonth,
+      eventsLastMonth,
+      growthRate: growthRate.toFixed(1)
+    });
 
     // Popularne typy wydarzeń (na podstawie kategorii)
     const eventTypeCount = new Map<string, number>();
@@ -256,10 +294,10 @@ export class AnalyticsService {
 
     // Zaangażowanie gości
     const guestEngagement = {
-      confirmed: guests.filter(g => g.status === 'accepted').length,
-      pending: guests.filter(g => g.status === 'pending').length,
-      declined: guests.filter(g => g.status === 'declined').length,
-      maybe: guests.filter(g => g.status === 'maybe').length,
+      confirmed: filteredGuests.filter(g => g.status === 'accepted').length,
+      pending: filteredGuests.filter(g => g.status === 'pending').length,
+      declined: filteredGuests.filter(g => g.status === 'declined').length,
+      maybe: filteredGuests.filter(g => g.status === 'maybe').length,
     };
 
     // Top lokalizacje
@@ -310,7 +348,7 @@ export class AnalyticsService {
     });
 
     // Analiza czasu odpowiedzi
-    const respondedGuests = guests.filter(
+    const respondedGuests = filteredGuests.filter(
       guest => guest.status !== 'pending' && guest.respondedAt
     );
 
@@ -343,16 +381,16 @@ export class AnalyticsService {
         : 0;
 
     // RSVP Rate
-    const totalInvited = guests.length;
+    const totalInvited = filteredGuests.length;
     const totalResponded = respondedGuests.length;
     const rsvpRate =
       totalInvited > 0 ? (totalResponded / totalInvited) * 100 : 0;
 
     return {
       totalEvents: filteredEvents.length,
-      totalGuests: guests.length,
+      totalGuests: filteredGuests.length,
       averageGuestsPerEvent:
-        filteredEvents.length > 0 ? guests.length / filteredEvents.length : 0,
+        filteredEvents.length > 0 ? filteredGuests.length / filteredEvents.length : 0,
       rsvpRate,
       eventsThisMonth,
       eventsLastMonth,

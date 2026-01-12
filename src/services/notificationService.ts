@@ -65,13 +65,23 @@ class NotificationService {
   // Create notification
   async create(data: CreateNotificationData): Promise<string> {
     try {
-      const docRef = await addDoc(collection(db, this.collection), {
+      // Remove undefined fields to avoid Firestore errors
+      const cleanData: any = {
         ...data,
         read: false,
         timestamp: serverTimestamp(),
         createdAt: serverTimestamp(),
         expiresAt: data.expiresAt ? Timestamp.fromDate(data.expiresAt) : null,
+      };
+
+      // Remove undefined fields
+      Object.keys(cleanData).forEach(key => {
+        if (cleanData[key] === undefined) {
+          delete cleanData[key];
+        }
       });
+
+      const docRef = await addDoc(collection(db, this.collection), cleanData);
 
       return docRef.id;
     } catch (error) {

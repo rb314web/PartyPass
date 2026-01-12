@@ -6,6 +6,7 @@ import {
   Bell,
   Shield,
   Palette,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import ProfileSettings from './ProfileSettings/ProfileSettings';
 import PlanSettings from './PlanSettings/PlanSettings';
@@ -76,10 +77,17 @@ const Settings: React.FC = () => {
 
   return (
     <div className="settings">
-      <div className="settings__header">
-        <h1>Ustawienia</h1>
-        <p>Zarządzaj swoim kontem i preferencjami</p>
-      </div>
+      <header className="settings__header">
+        <div className="settings__title-wrapper">
+          <div className="settings__icon" aria-hidden="true">
+            <SettingsIcon size={24} />
+          </div>
+          <div>
+            <h1>Ustawienia</h1>
+            <p>Zarządzaj swoim kontem i preferencjami</p>
+          </div>
+        </div>
+      </header>
 
       <div className="settings__layout">
         <nav

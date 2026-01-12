@@ -381,15 +381,11 @@
     }
 
     &--active {
-      background: linear-gradient(
-        120deg,
-        var(--color-primary, #6366f1),
-        var(--color-primary-dark, #4338ca)
-      );
-      color: var(--text-inverse);
+      background: var(--color-primary-soft, rgba(99, 102, 241, 0.12));
+      color: var(--text-primary);
       font-weight: 600;
       border: 1px solid transparent;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
       transition:
         background var(--transition-colors, 0.2s ease),
         color var(--transition-colors, 0.2s ease),
@@ -410,27 +406,23 @@
       }
 
       span {
-        color: inherit;
+        color: var(--text-primary);
         transition: color var(--transition-colors, 0.2s ease);
       }
 
       svg {
         transition: color var(--transition-colors, 0.2s ease);
-        color: var(--text-inverse);
+        color: var(--color-primary, #6366f1);
       }
 
       &:hover {
-        background: linear-gradient(
-          120deg,
-          var(--color-primary, #6366f1),
-          var(--color-primary-dark, #4338ca)
-        );
-        color: var(--text-inverse);
+        background: var(--color-primary-soft, rgba(99, 102, 241, 0.18));
+        color: var(--text-primary);
         transform: none;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
 
         svg {
-          color: var(--text-inverse);
+          color: var(--color-primary, #6366f1);
         }
       }
     }

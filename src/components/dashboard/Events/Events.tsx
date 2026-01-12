@@ -55,6 +55,7 @@ interface EventsListPageProps {
   filterStatus: FilterStatus;
   onFilterStatusChange: (status: FilterStatus) => void;
   isLoading: boolean;
+  fadeIn: boolean;
   onEventAction: (
     eventId: string,
     action: 'edit' | 'duplicate' | 'delete' | 'view'
@@ -80,11 +81,14 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
   filterStatus,
   onFilterStatusChange,
   isLoading,
+  fadeIn,
   onEventAction,
   getStatusColor,
   getStatusLabel,
   getStatusIcon,
 }) => {
+  console.log('[EventsListPage] Render - isLoading:', isLoading, 'events:', events.length, 'fadeIn:', fadeIn);
+  
   const { activeCount, plannedCount, completedCount } = useMemo(() => {
     const active = events.filter(event => event.status === 'active').length;
     const planned = events.filter(event => event.status === 'draft').length;
@@ -109,8 +113,24 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
           ? 'wydarzenia'
           : 'wydarzeń';
 
+  if (isLoading) {
+    return (
+      <div className="events events--loading">
+        <div className="events__loader">
+          <div className="events__spinner-wrapper">
+            <div className="events__spinner-ring"></div>
+            <div className="events__spinner-ring events__spinner-ring--delay"></div>
+            <Calendar className="events__spinner-icon" size={32} />
+          </div>
+          <h3>Ładowanie wydarzeń...</h3>
+          <p>Przygotowujemy listę Twoich wydarzeń</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="events">
+    <div className={`events ${fadeIn ? 'events--fade-in' : ''}`}>
       <header className="events__header">
         <div className="events__title-wrapper">
           <div className="events__icon" aria-hidden="true">
@@ -331,35 +351,7 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
       )}
 
       <div className="events__content">
-        {isLoading ? (
-          <div className="events__grid">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="event-card-skeleton">
-                <div className="event-card-skeleton__header">
-                  <div className="event-card-skeleton__badge"></div>
-                  <div className="event-card-skeleton__info">
-                    <div className="event-card-skeleton__chip"></div>
-                    <div className="event-card-skeleton__line event-card-skeleton__line--short"></div>
-                    <div className="event-card-skeleton__line event-card-skeleton__line--short"></div>
-                    <div className="event-card-skeleton__line event-card-skeleton__line--medium"></div>
-                  </div>
-                </div>
-                <div className="event-card-skeleton__content">
-                  <div className="event-card-skeleton__title"></div>
-                  <div className="event-card-skeleton__description"></div>
-                  <div className="event-card-skeleton__meta">
-                    <div className="event-card-skeleton__meta-item"></div>
-                    <div className="event-card-skeleton__meta-item"></div>
-                  </div>
-                  <div className="event-card-skeleton__progress"></div>
-                </div>
-                <div className="event-card-skeleton__footer">
-                  <div className="event-card-skeleton__footer-text"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : filteredEvents.length === 0 ? (
+        {filteredEvents.length === 0 ? (
           <div className="events__empty">
             <div className="events__empty-icon" aria-hidden="true">
               <Calendar size={36} />
@@ -374,16 +366,6 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
                 ? 'Dostosuj wyszukiwanie lub filtry, aby zobaczyć wydarzenia.'
                 : 'Dodaj swoje pierwsze wydarzenie i zacznij planowanie.'}
             </p>
-            {!searchQuery && filterStatus === 'all' && (
-              <button
-                type="button"
-                className="events__empty-btn"
-                onClick={onCreateEvent}
-              >
-                <Plus size={18} aria-hidden="true" />
-                Dodaj wydarzenie
-              </button>
-            )}
           </div>
         ) : (
           <>
@@ -436,6 +418,8 @@ const Events: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
+  const [mountTime] = useState(Date.now());
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [eventToDuplicate, setEventToDuplicate] = useState<Event | null>(null);
 
@@ -450,6 +434,8 @@ const Events: React.FC = () => {
       changeType?: 'added' | 'modified' | 'removed',
       changedEventId?: string
     ) => {
+      console.log('[Events] handleRealtimeUpdate called, hasInitiallyLoaded:', hasInitiallyLoaded, 'events count:', updatedEvents.length);
+      
       setEvents(prevEvents => {
         // Detect specific changes for notifications
         if (changeType && changedEventId) {
@@ -473,13 +459,26 @@ const Events: React.FC = () => {
         // Mark as initially loaded after first successful update
         if (!hasInitiallyLoaded) {
           setHasInitiallyLoaded(true);
-          setIsLoading(false);
+          
+          // Wymuszenie minimalnego czasu wyświetlania loadera (500ms)
+          const elapsed = Date.now() - mountTime;
+          const minDisplayTime = 500;
+          const remainingTime = Math.max(0, minDisplayTime - elapsed);
+          
+          console.log('[Events] Loader timing - elapsed:', elapsed, 'remaining:', remainingTime);
+          
+          // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
+          setTimeout(() => {
+            setIsLoading(false);
+            // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
+            setTimeout(() => setFadeIn(true), 100);
+          }, remainingTime + 300);
         }
 
         return updatedEvents;
       });
     },
-    [hasInitiallyLoaded]
+    [hasInitiallyLoaded, mountTime]
   );
 
   // Show change notifications
@@ -760,6 +759,7 @@ const Events: React.FC = () => {
                 filterStatus={filterStatus}
                 onFilterStatusChange={setFilterStatus}
                 isLoading={isLoading}
+                fadeIn={fadeIn}
                 onEventAction={handleEventAction}
                 getStatusColor={getStatusColor}
                 getStatusLabel={getStatusLabel}

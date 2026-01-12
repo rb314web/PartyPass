@@ -52,8 +52,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileMenuClosing, setIsMobileMenuClosing] = useState(false);
 
-  // Scroll state
-  const [isScrolled, setIsScrolled] = useState(false);
+  // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
 
   // Refs
@@ -71,27 +70,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  // Scroll effects
-  useEffect(() => {
-    if (!enableScrollEffects) return;
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const scrolled = scrollY > 10;
-
-      setIsScrolled(scrolled);
-
-      if (headerRef.current) {
-        const blurAmount = Math.min(scrollY / 100, 1);
-        headerRef.current.style.setProperty('--scroll-blur', `${blurAmount * 20}px`);
-        headerRef.current.style.setProperty('--scroll-opacity', `${0.85 + blurAmount * 0.15}`);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [enableScrollEffects]);
 
   // Handle mobile menu toggle
   const handleMobileMenuToggle = useCallback(() => {
@@ -315,7 +293,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     <>
       <header
         ref={headerRef}
-        className={`unified-header unified-header--${variant} ${isScrolled ? 'unified-header--scrolled' : ''}`}
+        className={`unified-header unified-header--${variant}`}
         role="banner"
       >
         <div className="unified-header__container">

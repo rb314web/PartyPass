@@ -39,6 +39,7 @@ interface WeatherData {
 const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEvent }) => {
   const navigate = useNavigate();
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherForecast, setWeatherForecast] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
 
   const formatEventDate = (date: Date | string) => {
@@ -86,15 +87,8 @@ const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEve
             lat = cached.lat;
             lon = cached.lng;
           }
-          // PRIORYTET 3: Geokoduj przez Nominatim (wyłączone w dev mode)
+          // PRIORYTET 3: Geokoduj przez Nominatim
           else {
-            // W trybie development nie wysyłamy żądań do Nominatim API (rate limiting)
-            // Użyj zapisanych współrzędnych lub cache, lub dodaj współrzędne ręcznie do eventów
-            if (process.env.NODE_ENV === 'development') {
-              setLoadingWeather(false);
-              return;
-            }
-            
             try {
               const geocodeUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(nextEvent.location)}&format=json&limit=1`;
               
@@ -129,23 +123,67 @@ const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEve
           }
         }
         
-        // Pobierz pogodę dla współrzędnych
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pl`;
+        // Oblicz ile dni do wydarzenia
+        const eventDate = new Date(nextEvent.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        eventDate.setHours(0, 0, 0, 0);
+        const daysUntilEvent = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
-        const response = await fetch(url);
+        // ZAWSZE pobierz aktualną pogodę
+        const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pl`;
+        const currentResponse = await fetch(currentUrl);
         
-        if (response.ok) {
-          const data = await response.json();
+        if (currentResponse.ok) {
+          const currentData = await currentResponse.json();
           setWeather({
-            temp: Math.round(data.main.temp),
-            description: data.weather[0].description,
-            icon: data.weather[0].icon,
-            humidity: data.main.humidity,
-            windSpeed: Math.round(data.wind.speed * 3.6), // m/s na km/h
+            temp: Math.round(currentData.main.temp),
+            description: currentData.weather[0].description,
+            icon: currentData.weather[0].icon,
+            humidity: currentData.main.humidity,
+            windSpeed: Math.round(currentData.wind.speed * 3.6),
           });
+        }
+        
+        // Jeśli wydarzenie jest 0-5 dni w przyszłości, pobierz też prognozę
+        if (daysUntilEvent >= 0 && daysUntilEvent <= 5) {
+          const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pl`;
+          
+          const forecastResponse = await fetch(forecastUrl);
+          
+          if (forecastResponse.ok) {
+            const forecastData = await forecastResponse.json();
+            
+            // Znajdź prognozę najbliższą dacie wydarzenia (preferuj południe 12:00)
+            const targetTimestamp = eventDate.getTime();
+            let closestForecast = forecastData.list[0];
+            let smallestDiff = Math.abs(new Date(closestForecast.dt * 1000).getTime() - targetTimestamp);
+            
+            for (const forecast of forecastData.list) {
+              const forecastDate = new Date(forecast.dt * 1000);
+              const diff = Math.abs(forecastDate.getTime() - targetTimestamp);
+              
+              // Preferuj prognozy z godzin 12:00-15:00 (środek dnia)
+              const hour = forecastDate.getHours();
+              const isMidday = hour >= 12 && hour <= 15;
+              
+              if (diff < smallestDiff || (diff === smallestDiff && isMidday)) {
+                smallestDiff = diff;
+                closestForecast = forecast;
+              }
+            }
+            
+            setWeatherForecast({
+              temp: Math.round(closestForecast.main.temp),
+              description: closestForecast.weather[0].description,
+              icon: closestForecast.weather[0].icon,
+              humidity: closestForecast.main.humidity,
+              windSpeed: Math.round(closestForecast.wind.speed * 3.6),
+            });
+          }
         } else {
-          const errorData = await response.json();
-          console.error('Błąd API pogody:', errorData);
+          // Wyczyść prognozę jeśli wydarzenie dzisiaj lub za daleko
+          setWeatherForecast(null);
         }
       } catch (error) {
         // Weather fetch failed, silent fail
@@ -192,6 +230,7 @@ const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEve
           </div>
         ) : (
           <div className="activity-weather__empty">
+            <ActivityIcon size={32} opacity={0.3} />
             <p>Brak ostatnich aktywności</p>
           </div>
         )}
@@ -241,23 +280,64 @@ const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEve
                   <p>Ładowanie pogody...</p>
                 </div>
               ) : weather ? (
-                <div className="activity-weather__weather-data">
-                  <div className="activity-weather__weather-main">
-                    <div className="activity-weather__weather-icon">
-                      {getWeatherIcon(weather.icon)}
+                <>
+                  {/* Nazwa miejscowości */}
+                  <div className="activity-weather__weather-location">
+                    <MapPin size={16} />
+                    <span>{nextEvent.location.split(',')[0]}</span>
+                  </div>
+                  
+                  <div className="activity-weather__weather-container">
+                    {/* Aktualna pogoda */}
+                    <div className="activity-weather__weather-data">
+                      <h5 className="activity-weather__weather-label">Aktualna</h5>
+                    <div className="activity-weather__weather-main">
+                      <div className="activity-weather__weather-icon">
+                        {getWeatherIcon(weather.icon)}
+                      </div>
+                      <div className="activity-weather__weather-temp">
+                        {weather.temp}°C
+                      </div>
                     </div>
-                    <div className="activity-weather__weather-temp">
-                      {weather.temp}°C
+                    <div className="activity-weather__weather-details">
+                      <p className="activity-weather__weather-desc">{weather.description}</p>
+                      <div className="activity-weather__weather-stats">
+                        <span>💧 {weather.humidity}%</span>
+                        <span>💨 {weather.windSpeed} km/h</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="activity-weather__weather-details">
-                    <p className="activity-weather__weather-desc">{weather.description}</p>
-                    <div className="activity-weather__weather-stats">
-                      <span>💧 {weather.humidity}%</span>
-                      <span>💨 {weather.windSpeed} km/h</span>
-                    </div>
+                  
+                  {/* Prognoza w trakcie wydarzenia (zawsze pokazuj box) */}
+                  <div className="activity-weather__weather-data">
+                    <h5 className="activity-weather__weather-label">W trakcie</h5>
+                    {weatherForecast ? (
+                      <>
+                        <div className="activity-weather__weather-main">
+                          <div className="activity-weather__weather-icon">
+                            {getWeatherIcon(weatherForecast.icon)}
+                          </div>
+                          <div className="activity-weather__weather-temp">
+                            {weatherForecast.temp}°C
+                          </div>
+                        </div>
+                        <div className="activity-weather__weather-details">
+                          <p className="activity-weather__weather-desc">{weatherForecast.description}</p>
+                          <div className="activity-weather__weather-stats">
+                            <span>💧 {weatherForecast.humidity}%</span>
+                            <span>💨 {weatherForecast.windSpeed} km/h</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="activity-weather__weather-unavailable-inline">
+                        <Cloud size={32} opacity={0.3} />
+                        <p>Prognoza będzie dostępna bliżej daty wydarzenia</p>
+                      </div>
+                    )}
                   </div>
                 </div>
+                </>
               ) : (
                 <div className="activity-weather__weather-placeholder">
                   <Cloud size={32} opacity={0.3} />
@@ -268,6 +348,7 @@ const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEve
           </div>
         ) : (
           <div className="activity-weather__empty">
+            <Cloud size={32} opacity={0.3} />
             <p>Brak nadchodzących wydarzeń z lokalizacją</p>
           </div>
         )}

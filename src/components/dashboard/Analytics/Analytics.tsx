@@ -17,14 +17,9 @@ import {
   AnalyticsService,
   AnalyticsReport,
 } from '../../../services/firebase/analyticsService';
-import AnalyticsExportService from '../../../services/firebase/analyticsExportService';
 import { useAuth } from '../../../hooks/useAuth';
-import RealTimeWidget from './RealTimeWidget/RealTimeWidget';
 import NotificationsWidget from './NotificationsWidget/NotificationsWidget';
 import LineChart from './LineChart/LineChart';
-import AnalyticsFilters, {
-  AnalyticsFiltersData,
-} from './AnalyticsFilters/AnalyticsFilters';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import './Analytics.scss';
 
@@ -52,17 +47,7 @@ const Analytics: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
-
-  // Filters state
-  const [filters, setFilters] = useState<AnalyticsFiltersData>({
-    dateRange: { start: null, end: null },
-    eventTypes: [],
-    locations: [],
-    guestCountRange: { min: 0, max: 1000 },
-    status: [],
-    searchQuery: '',
-  });
+  const [fadeIn, setFadeIn] = useState(false);
 
   // Oblicz daty na podstawie wybranego zakresu
   const dateRange = useMemo(() => {
@@ -89,79 +74,21 @@ const Analytics: React.FC = () => {
         });
 
         setAnalyticsData(report);
+        // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
+        setTimeout(() => {
+          setLoading(false);
+          // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
+          setTimeout(() => setFadeIn(true), 100);
+        }, 300);
       } catch (err: any) {
         console.error('Błąd podczas ładowania analityki:', err);
         setError('Nie udało się załadować danych analitycznych');
-      } finally {
         setLoading(false);
       }
     };
 
     loadAnalytics();
-  }, [user?.id, dateRange]); // Eksport danych
-  const [showExportMenu, setShowExportMenu] = useState(false);
-
-  // Click outside handler for export dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest('.analytics__export-dropdown')) {
-        setShowExportMenu(false);
-      }
-    };
-
-    if (showExportMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () =>
-        document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showExportMenu]);
-
-  const handleExport = async (type: 'csv' | 'pdf' | 'html' = 'csv') => {
-    if (!analyticsData || !user?.id) return;
-
-    try {
-      setIsExporting(true);
-
-      switch (type) {
-        case 'csv':
-          await AnalyticsExportService.exportToCSV(analyticsData, filters);
-          break;
-
-        case 'pdf':
-          await AnalyticsExportService.exportToPDF(
-            'analytics-dashboard',
-            `analytics-report-${timeRange}-${new Date().toISOString().split('T')[0]}.pdf`
-          );
-          break;
-
-        case 'html':
-          await AnalyticsExportService.exportToHTML(
-            analyticsData,
-            'analytics-dashboard'
-          );
-          break;
-
-        default:
-          await AnalyticsExportService.exportToCSV(analyticsData, filters);
-      }
-
-      setShowExportMenu(false);
-    } catch (err: any) {
-      console.error('Błąd podczas eksportu:', err);
-      alert(err.message || 'Nie udało się wyeksportować danych');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  // Odświeżenie danych
-  const handleRefresh = () => {
-    if (user?.id) {
-      const event = new CustomEvent('refreshAnalytics');
-      window.dispatchEvent(event);
-    }
-  };
+  }, [user?.id, dateRange]);
 
   const getGrowthColor = (rate: number) => {
     if (rate > 0) return 'success';
@@ -248,6 +175,18 @@ const Analytics: React.FC = () => {
     size?: number;
   }> = ({ data, size = 120 }) => {
     const total = data.reduce((sum, item) => sum + item.value, 0);
+    
+    if (total === 0) {
+      return (
+        <div className="analytics__donut-chart analytics__donut-chart--empty" style={{ width: size, height: size }}>
+          <div className="analytics__donut-center">
+            <div className="analytics__donut-total">0</div>
+            <div className="analytics__donut-label">Brak danych</div>
+          </div>
+        </div>
+      );
+    }
+    
     let currentAngle = 0;
 
     return (
@@ -304,8 +243,13 @@ const Analytics: React.FC = () => {
     return (
       <div className="analytics analytics--loading">
         <div className="analytics__loader">
-          <RefreshCw className="analytics__spinner" size={32} />
-          <p>Ładowanie analityki...</p>
+          <div className="analytics__spinner-wrapper">
+            <div className="analytics__spinner-ring"></div>
+            <div className="analytics__spinner-ring analytics__spinner-ring--delay"></div>
+            <BarChart3 className="analytics__spinner-icon" size={32} />
+          </div>
+          <h3>Ładowanie analityki...</h3>
+          <p>Przygotowujemy Twoje statystyki</p>
         </div>
       </div>
     );
@@ -318,10 +262,6 @@ const Analytics: React.FC = () => {
           <AlertCircle size={32} />
           <h3>Błąd podczas ładowania danych</h3>
           <p>{error}</p>
-          <button onClick={handleRefresh} className="analytics__retry-btn">
-            <RefreshCw size={20} />
-            Spróbuj ponownie
-          </button>
         </div>
       </div>
     );
@@ -340,7 +280,7 @@ const Analytics: React.FC = () => {
   }
   return (
     <ErrorBoundary>
-      <div className="analytics" id="analytics-dashboard">
+      <div className={`analytics ${fadeIn ? 'analytics--fade-in' : ''}`} id="analytics-dashboard">
       <div className="analytics__header">
         <div className="analytics__title-wrapper">
           <div className="analytics__icon">
@@ -366,88 +306,8 @@ const Analytics: React.FC = () => {
               ))}
             </select>
           </div>
-          <div className="analytics__export-dropdown">
-            <button
-              className="analytics__export-btn"
-              onClick={() => setShowExportMenu(!showExportMenu)}
-              disabled={isExporting}
-            >
-              {isExporting ? (
-                <RefreshCw className="analytics__spinner" size={20} />
-              ) : (
-                <Download size={20} />
-              )}
-              {isExporting ? 'Eksportowanie...' : 'Eksportuj'}
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                className="analytics__dropdown-arrow"
-              >
-                <path
-                  d="M2 4l4 4 4-4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                />
-              </svg>
-            </button>
-
-            {showExportMenu && (
-              <div className="analytics__export-menu">
-                <button
-                  onClick={() => handleExport('csv')}
-                  className="analytics__export-option"
-                >
-                  <span>📊</span>
-                  <div>
-                    <strong>CSV</strong>
-                    <small>Dane tabelaryczne</small>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleExport('pdf')}
-                  className="analytics__export-option"
-                >
-                  <span>📄</span>
-                  <div>
-                    <strong>PDF</strong>
-                    <small>Pełny raport</small>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleExport('html')}
-                  className="analytics__export-option"
-                >
-                  <span>🌐</span>
-                  <div>
-                    <strong>HTML</strong>
-                    <small>Interaktywny raport</small>
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
-          <button
-            className="analytics__refresh-btn"
-            onClick={handleRefresh}
-            title="Odśwież dane"
-          >
-            <RefreshCw size={20} />
-          </button>{' '}
         </div>
       </div>
-      {/* Analytics Filters */}
-      <AnalyticsFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        availableEventTypes={analyticsData.popularEventTypes.map(
-          (type: any) => type.type
-        )}
-        availableLocations={analyticsData.topLocations.map(
-          (location: any) => location.location
-        )}
-      />
       {/* Statystyki główne */}
       <div className="analytics__stats-grid">
         <StatCard
@@ -476,10 +336,6 @@ const Analytics: React.FC = () => {
           color="warning"
         />
       </div>
-      {/* Real-time Analytics */}
-      <div className="analytics__realtime-section">
-        <RealTimeWidget />
-      </div>
       {/* Wzrost */}
       <div className="analytics__growth-card">
         <div className="analytics__growth-header">
@@ -488,7 +344,10 @@ const Analytics: React.FC = () => {
             className={`analytics__growth-rate analytics__growth-rate--${getGrowthColor(analyticsData.growthRate)}`}
           >
             {getGrowthIcon(analyticsData.growthRate)}
-            <span>{analyticsData.growthRate}%</span>
+            <span>{analyticsData.growthRate > 0 ? '+' : ''}{Math.round(analyticsData.growthRate)}%</span>
+            <span className="analytics__growth-count">
+              ({analyticsData.growthRate >= 0 ? '+' : ''}{analyticsData.eventsThisMonth - analyticsData.eventsLastMonth})
+            </span>
           </div>
         </div>
         <div className="analytics__growth-details">
@@ -522,13 +381,19 @@ const Analytics: React.FC = () => {
             </select>
           }
         >
-          <SimpleBarChart
-            data={analyticsData.popularEventTypes.map((type: any) => ({
-              label: type.type,
-              value: type.count,
-              color: 'var(--primary-500)',
-            }))}
-          />
+          {analyticsData.popularEventTypes.length > 0 ? (
+            <SimpleBarChart
+              data={analyticsData.popularEventTypes.map((type: any) => ({
+                label: type.type,
+                value: type.count,
+                color: 'var(--primary-500)',
+              }))}
+            />
+          ) : (
+            <div className="analytics__empty-chart">
+              <p>Brak danych do wyświetlenia</p>
+            </div>
+          )}
         </ChartCard>
         <ChartCard title="Status odpowiedzi gości">
           <div className="analytics__engagement-chart">
@@ -617,10 +482,10 @@ const Analytics: React.FC = () => {
         <ChartCard title="Popularność gości w czasie">
           <LineChart
             data={analyticsData.monthlyTrends.map(
-              (stat: any, index: number) => ({
+              (stat: any) => ({
                 date: stat.month,
-                value: stat.guests || Math.floor(stat.events * 8.5), // Estimate guests if not available
-                label: `${stat.guests || Math.floor(stat.events * 8.5)} gości`,
+                value: stat.guests || 0,
+                label: `${stat.guests || 0} gości`,
               })
             )}
             title="Goście"
@@ -629,15 +494,21 @@ const Analytics: React.FC = () => {
           />
         </ChartCard>
         <ChartCard title="Popularne lokalizacje">
-          <SimpleBarChart
-            data={analyticsData.topLocations
-              .slice(0, 5)
-              .map((location: any) => ({
-                label: location.location,
-                value: location.count,
-                color: 'var(--success-500)',
-              }))}
-          />
+          {analyticsData.topLocations.length > 0 ? (
+            <SimpleBarChart
+              data={analyticsData.topLocations
+                .slice(0, 5)
+                .map((location: any) => ({
+                  label: location.location,
+                  value: location.count,
+                  color: 'var(--success-500)',
+                }))}
+            />
+          ) : (
+            <div className="analytics__empty-chart">
+              <p>Brak danych do wyświetlenia</p>
+            </div>
+          )}
         </ChartCard>
       </div>{' '}
       {/* Szczegółowe analizy */}

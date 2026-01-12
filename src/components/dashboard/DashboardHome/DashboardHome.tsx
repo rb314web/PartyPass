@@ -1,5 +1,6 @@
 // components/dashboard/DashboardHome/DashboardHome.tsx
 import React, { Suspense } from 'react';
+import { MapPin, LayoutDashboard } from 'lucide-react';
 import {
   EventService,
   EventStats,
@@ -8,14 +9,9 @@ import { useAuth } from '../../../hooks/useAuth';
 import { Activity as ActivityType, Event } from '../../../types';
 import './DashboardHome.scss';
 import KeyMetrics from './KeyMetrics';
-import KeyMetricsSkeleton from './KeyMetricsSkeleton';
 import ActivityWeather from './ActivityWeather';
-import ActivityWeatherSkeleton from './ActivityWeatherSkeleton';
 import QuickActions from '../QuickActions/QuickActions';
-import QuickActionsSkeleton from '../QuickActions/QuickActionsSkeleton';
 import CompactCalendar from '../EventsCalendar/CompactCalendar';
-import CalendarSkeleton from './CalendarSkeleton';
-import MapSkeleton from './MapSkeleton';
 
 // Lazy load EventsMap (saves ~150KB on initial bundle)
 const EventsMap = React.lazy(() => import('../EventsMap/EventsMap'));
@@ -31,6 +27,16 @@ const DashboardHome: React.FC = () => {
   const [upcomingEvents, setUpcomingEvents] = React.useState<Event[]>([]);
   const [allEvents, setAllEvents] = React.useState<Event[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
+  const [loading, setLoading] = React.useState(true);
+  const [fadeIn, setFadeIn] = React.useState(false);
+
+  // Reset loading state when user changes (consistent with Activities behavior)
+  React.useEffect(() => {
+    if (user?.id) {
+      setLoading(true);
+      setFadeIn(false);
+    }
+  }, [user?.id]);
 
   // Fetch stats
   React.useEffect(() => {
@@ -43,10 +49,22 @@ const DashboardHome: React.FC = () => {
     }
   }, [user]);
 
+  // Global loading state - wait until all data is loaded
+  React.useEffect(() => {
+    if (!isLoadingStats && !isLoadingActivities && !isLoadingEvents) {
+      const hideLoader = setTimeout(() => setLoading(false), 250);
+      const showContent = setTimeout(() => setFadeIn(true), 500);
+
+      return () => {
+        clearTimeout(hideLoader);
+        clearTimeout(showContent);
+      };
+    }
+  }, [isLoadingStats, isLoadingActivities, isLoadingEvents]);
+
   // Fetch activities and events
   React.useEffect(() => {
     if (user?.id) {
-      // Fetch recent activities
       setIsLoadingActivities(true);
       EventService.getRecentActivities(user.id, 10)
         .then(setActivities)
@@ -56,20 +74,17 @@ const DashboardHome: React.FC = () => {
         })
         .finally(() => setIsLoadingActivities(false));
 
-      // Fetch all events
       setIsLoadingEvents(true);
       EventService.getUserEvents(user.id)
         .then((result) => {
           if (result.events) {
             const now = new Date();
 
-            // All events with location for map
             const all = result.events.filter(
               (event) => event.location && event.location.trim()
             );
             setAllEvents(all);
 
-            // Only upcoming events
             const upcoming = result.events
               .filter((event) => {
                 const eventDate = new Date(event.date);
@@ -156,71 +171,91 @@ const DashboardHome: React.FC = () => {
     );
   }, [activities]);
 
-  return (
-    <div className="dashboard-home">
-      {/* Header */}
-      <div className="dashboard-home__header">
-        <h1>Przegląd</h1>
-        <p>Twoje wydarzenia w skrócie</p>
+  // Display loader during loading
+  if (loading) {
+    return (
+      <div className="dashboard-home dashboard-home--loading">
+        <div className="dashboard-home__loader">
+          <div className="dashboard-home__spinner-wrapper">
+            <div className="dashboard-home__spinner-ring"></div>
+            <div className="dashboard-home__spinner-ring dashboard-home__spinner-ring--delay"></div>
+            <LayoutDashboard className="dashboard-home__spinner-icon" size={32} />
+          </div>
+          <h3>Ładowanie dashboardu...</h3>
+          <p>Przygotowujemy Twój przegląd</p>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className={`dashboard-home ${fadeIn ? 'dashboard-home--fade-in' : ''}`}>
+      {/* Header */}
+      <header className="dashboard-home__header">
+        <div className="dashboard-home__title-wrapper">
+          <div className="dashboard-home__header-icon" aria-hidden="true">
+            <LayoutDashboard size={24} />
+          </div>
+          <div>
+            <h1>Przegląd</h1>
+            <p>Twoje wydarzenia w skrócie</p>
+          </div>
+        </div>
+      </header>
 
       {/* Quick Actions */}
-      {isLoadingStats ? (
-        <div className="fade-out"><QuickActionsSkeleton /></div>
-      ) : (
-        <div className="fade-in"><QuickActions /></div>
-      )}
+      <QuickActions />
 
       {/* Top Grid: Key Metrics */}
       <div className="dashboard-home__top-grid">
         {/* Key Metrics */}
-        {isLoadingStats ? (
-          <div className="fade-out"><KeyMetricsSkeleton /></div>
-        ) : (
-          <div className="fade-in">
-            <KeyMetrics
-              totalEvents={stats?.totalEvents ?? 0}
-              eventsChange={eventsChange}
-              totalGuests={stats?.totalGuests ?? 0}
-              guestsChange={guestsChange}
-              responseRate={stats?.responseRate ?? 0}
-              responseRateChange={responseRateChange}
-              activeEvents={stats?.activeEvents ?? 0}
-              completedEvents={stats?.completedEvents ?? 0}
-              acceptedGuests={stats?.acceptedGuests ?? 0}
-              pendingGuests={stats?.pendingGuests ?? 0}
-            />
-          </div>
-        )}
+        <KeyMetrics
+          totalEvents={stats?.totalEvents ?? 0}
+          eventsChange={eventsChange}
+          totalGuests={stats?.totalGuests ?? 0}
+          guestsChange={guestsChange}
+          responseRate={stats?.responseRate ?? 0}
+          responseRateChange={responseRateChange}
+          activeEvents={stats?.activeEvents ?? 0}
+          completedEvents={stats?.completedEvents ?? 0}
+          acceptedGuests={stats?.acceptedGuests ?? 0}
+          pendingGuests={stats?.pendingGuests ?? 0}
+        />
       </div>
 
       {/* Calendar Section */}
       <div className="dashboard-home__section dashboard-home__section--calendar">
-        {isLoadingEvents ? (
-          <div className="fade-out"><CalendarSkeleton /></div>
-        ) : (
-          <div className="fade-in"><CompactCalendar events={allEvents} /></div>
-        )}
+        <CompactCalendar events={allEvents} />
       </div>
 
       {/* Activity & Weather */}
-      {isLoadingActivities || isLoadingEvents ? (
-        <div className="fade-out"><ActivityWeatherSkeleton /></div>
-      ) : (
-        <div className="fade-in">
-          <ActivityWeather
-            lastActivity={filteredActivities[0]}
-            nextEvent={nextEvent}
-          />
-        </div>
-      )}
+      <ActivityWeather
+        lastActivity={filteredActivities[0]}
+        nextEvent={nextEvent}
+      />
 
       {/* Map Section */}
       <div className="dashboard-home__section dashboard-home__section--map">
         <div className="dashboard-home__section-header">
-          <h2>Mapa wydarzeń</h2>
+          <div className="dashboard-home__header-content">
+            <div className="dashboard-home__icon dashboard-home__icon--blue">
+              <MapPin size={18} />
+            </div>
+            <h2>Mapa wydarzeń</h2>
+          </div>
         </div>
-        <Suspense fallback={<MapSkeleton />}>
+        <Suspense
+          fallback={
+            <div className="dashboard-home__loader">
+              <div className="dashboard-home__spinner-wrapper">
+                <div className="dashboard-home__spinner-ring"></div>
+                <div className="dashboard-home__spinner-ring dashboard-home__spinner-ring--delay"></div>
+                <LayoutDashboard className="dashboard-home__spinner-icon" size={24} />
+              </div>
+              <p>Ładowanie mapy wydarzeń...</p>
+            </div>
+          }
+        >
           <EventsMap events={allEvents} />
         </Suspense>
       </div>

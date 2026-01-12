@@ -1,5 +1,5 @@
 // components/dashboard/Events/EventsList/EventsList.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import {
@@ -35,6 +35,33 @@ const EventsList: React.FC<EventsListProps> = ({
   getStatusLabel,
 }) => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+  const menuTriggerRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
+  useEffect(() => {
+    if (activeMenu && menuTriggerRefs.current[activeMenu]) {
+      const triggerButton = menuTriggerRefs.current[activeMenu];
+      const rect = triggerButton!.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (activeMenu) {
+        setActiveMenu(null);
+      }
+    };
+
+    if (activeMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [activeMenu]);
 
   const getDateLabel = (date: Date) => {
     if (isToday(date)) return 'Dzisiaj';
@@ -57,6 +84,12 @@ const EventsList: React.FC<EventsListProps> = ({
     const declined = event.declinedCount;
 
     return { total, accepted, pending, declined };
+  };
+
+  const getEventsLabel = (count: number) => {
+    if (count === 1) return 'wydarzenie';
+    if (count >= 2 && count <= 4) return 'wydarzenia';
+    return 'wydarzeń';
   };
 
   const getStatusIcon = (status: Event['status']) => {
@@ -231,6 +264,7 @@ const EventsList: React.FC<EventsListProps> = ({
 
                   <div className="events-list__menu">
                     <button
+                      ref={el => { menuTriggerRefs.current[event.id] = el; }}
                       className="events-list__menu-trigger"
                       onClick={e => {
                         e.stopPropagation();
@@ -242,8 +276,15 @@ const EventsList: React.FC<EventsListProps> = ({
                       <MoreVertical size={16} />
                     </button>
 
-                    {activeMenu === event.id && (
-                      <div className="events-list__menu-dropdown">
+                    {activeMenu === event.id && menuPosition && (
+                      <div 
+                        className="events-list__menu-dropdown"
+                        style={{
+                          position: 'fixed',
+                          top: `${menuPosition.top}px`,
+                          right: `${menuPosition.right}px`,
+                        }}
+                      >
                         <button
                           onClick={e => {
                             e.stopPropagation();
@@ -295,7 +336,7 @@ const EventsList: React.FC<EventsListProps> = ({
       {events.length > 0 && (
         <div className="events-list__footer">
           <div className="events-list__summary">
-            Wyświetlono {events.length} wydarzeń
+            Wyświetlono {events.length} {getEventsLabel(events.length)}
           </div>
         </div>
       )}

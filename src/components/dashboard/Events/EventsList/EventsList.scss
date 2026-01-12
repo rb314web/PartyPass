@@ -72,7 +72,7 @@
     }
 
     &--menu-open {
-      z-index: 10;
+      z-index: 100;
     }
 
     @media (max-width: 1200px) {
@@ -337,16 +337,15 @@
   }
 
   &__menu-dropdown {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-popover, 0 16px 36px rgba(15, 23, 42, 0.12));
     padding: 0.4rem;
     min-width: 180px;
-    z-index: 9999;
+    z-index: 10000;
+    max-height: 300px;
+    overflow-y: auto;
 
     button {
       display: flex;

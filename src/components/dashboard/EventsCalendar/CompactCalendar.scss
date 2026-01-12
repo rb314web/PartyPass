@@ -61,6 +61,8 @@
     flex-direction: column;
     gap: 0.5rem;
     padding: 0.5rem 0;
+    min-height: 300px; // Increased min-height for better centering
+    flex: 1; // Take full available height in the card
   }
 
   &__timeline-item {
@@ -175,6 +177,7 @@
     padding: 3rem 2rem;
     text-align: center;
     color: var(--text-secondary);
+    flex: 1; // Take up full height of parent timeline container
 
     svg {
       color: var(--color-primary);
