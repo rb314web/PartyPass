@@ -12,6 +12,7 @@ import KeyMetrics from './KeyMetrics';
 import ActivityWeather from './ActivityWeather';
 import QuickActions from '../QuickActions/QuickActions';
 import CompactCalendar from '../EventsCalendar/CompactCalendar';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 
 // Lazy load EventsMap (saves ~150KB on initial bundle)
 const EventsMap = React.lazy(() => import('../EventsMap/EventsMap'));
@@ -52,13 +53,12 @@ const DashboardHome: React.FC = () => {
   // Global loading state - wait until all data is loaded
   React.useEffect(() => {
     if (!isLoadingStats && !isLoadingActivities && !isLoadingEvents) {
-      const hideLoader = setTimeout(() => setLoading(false), 250);
-      const showContent = setTimeout(() => setFadeIn(true), 500);
-
-      return () => {
-        clearTimeout(hideLoader);
-        clearTimeout(showContent);
-      };
+      // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
+      setTimeout(() => {
+        setLoading(false);
+        // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
+        setTimeout(() => setFadeIn(true), 100);
+      }, 300);
     }
   }, [isLoadingStats, isLoadingActivities, isLoadingEvents]);
 
@@ -175,15 +175,12 @@ const DashboardHome: React.FC = () => {
   if (loading) {
     return (
       <div className="dashboard-home dashboard-home--loading">
-        <div className="dashboard-home__loader">
-          <div className="dashboard-home__spinner-wrapper">
-            <div className="dashboard-home__spinner-ring"></div>
-            <div className="dashboard-home__spinner-ring dashboard-home__spinner-ring--delay"></div>
-            <LayoutDashboard className="dashboard-home__spinner-icon" size={32} />
-          </div>
-          <h3>Ładowanie dashboardu...</h3>
-          <p>Przygotowujemy Twój przegląd</p>
-        </div>
+        <LoadingSpinner
+          variant="full"
+          icon={<LayoutDashboard size={32} />}
+          title="Ładowanie dashboardu..."
+          subtitle="Przygotowujemy Twój przegląd"
+        />
       </div>
     );
   }
@@ -246,13 +243,12 @@ const DashboardHome: React.FC = () => {
         </div>
         <Suspense
           fallback={
-            <div className="dashboard-home__loader">
-              <div className="dashboard-home__spinner-wrapper">
-                <div className="dashboard-home__spinner-ring"></div>
-                <div className="dashboard-home__spinner-ring dashboard-home__spinner-ring--delay"></div>
-                <LayoutDashboard className="dashboard-home__spinner-icon" size={24} />
-              </div>
-              <p>Ładowanie mapy wydarzeń...</p>
+            <div className="dashboard-home__map-loading">
+              <LoadingSpinner 
+                variant="simple" 
+                icon={MapPin}
+                title="Ładowanie mapy wydarzeń..." 
+              />
             </div>
           }
         >

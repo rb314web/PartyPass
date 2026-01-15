@@ -16,6 +16,7 @@ import {
 import RSVPService from '../../../../services/firebase/rsvpService';
 import { NewRSVPService } from '../../../../services/firebase/newRSVPService';
 import { Event, GuestInvitation, InvitationDelivery } from '../../../../types';
+import LoadingSpinner from '../../../common/LoadingSpinner/LoadingSpinner';
 import './InvitationManager.scss';
 
 interface InvitationManagerProps {
@@ -221,11 +222,13 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({
 
   if (loading) {
     return (
-      <div className="invitation-manager">
-        <div className="invitation-manager__loading">
-          <div className="spinner"></div>
-          <p>Generowanie zaproszeń...</p>
-        </div>
+      <div className="invitation-manager invitation-manager--loading">
+        <LoadingSpinner
+          variant="full"
+          icon={Mail}
+          title="Generowanie zaproszeń"
+          subtitle="Proszę czekać..."
+        />
       </div>
     );
   }

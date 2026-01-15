@@ -21,6 +21,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import NotificationsWidget from './NotificationsWidget/NotificationsWidget';
 import LineChart from './LineChart/LineChart';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './Analytics.scss';
 
 interface TimeRange {
@@ -242,15 +243,12 @@ const Analytics: React.FC = () => {
   if (loading) {
     return (
       <div className="analytics analytics--loading">
-        <div className="analytics__loader">
-          <div className="analytics__spinner-wrapper">
-            <div className="analytics__spinner-ring"></div>
-            <div className="analytics__spinner-ring analytics__spinner-ring--delay"></div>
-            <BarChart3 className="analytics__spinner-icon" size={32} />
-          </div>
-          <h3>Ładowanie analityki...</h3>
-          <p>Przygotowujemy Twoje statystyki</p>
-        </div>
+        <LoadingSpinner
+          variant="full"
+          icon={<BarChart3 size={32} />}
+          title="Ładowanie analityki..."
+          subtitle="Przygotowujemy Twoje statystyki"
+        />
       </div>
     );
   }

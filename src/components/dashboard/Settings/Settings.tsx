@@ -1,5 +1,5 @@
 // components/dashboard/Settings/Settings.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   CreditCard,
@@ -24,6 +24,13 @@ type SettingsTab =
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const [fadeIn, setFadeIn] = useState(false);
+
+  useEffect(() => {
+    // Uruchom animację fade-in
+    const timer = setTimeout(() => setFadeIn(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
 
   const tabs = [
     {
@@ -76,7 +83,7 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="settings">
+    <div className={`settings ${fadeIn ? 'settings--fade-in' : ''}`}>
       <header className="settings__header">
         <div className="settings__title-wrapper">
           <div className="settings__icon" aria-hidden="true">

@@ -14,12 +14,13 @@ import MenuItem from '@mui/material/MenuItem';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
-import { ArrowLeft, Save, Mail, Phone, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Save, Mail, Phone, Calendar, User, Users } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import { GuestService } from '../../../../services/firebase/guestService';
 import { EventService } from '../../../../services/firebase/eventService';
 import { useAuth } from '../../../../hooks/useAuth';
 import type { Guest } from '../../../../types';
+import LoadingSpinner from '../../../common/LoadingSpinner/LoadingSpinner';
 import './EditGuest.scss';
 
 export const EditGuest: React.FC = () => {
@@ -164,12 +165,12 @@ export const EditGuest: React.FC = () => {
   if (loading) {
     return (
       <div className="edit-guest edit-guest--loading">
-        <div className="edit-guest__loading">
-          <CircularProgress size={48} />
-          <Typography variant="h6" sx={{ mt: 2 }}>
-            Ładowanie danych gościa...
-          </Typography>
-        </div>
+        <LoadingSpinner
+          variant="full"
+          icon={Users}
+          title="Ładowanie danych"
+          subtitle="Proszę czekać..."
+        />
       </div>
     );
   }

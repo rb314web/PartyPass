@@ -8,22 +8,6 @@
               color var(--transition-colors, 0.2s ease);
 }
 
-/* Smooth page transitions */
-.App > div {
-  animation: pageTransitionIn 0.3s ease-out;
-}
-
-@keyframes pageTransitionIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .App-logo {
   height: 40vmin;
   pointer-events: none;

@@ -15,6 +15,7 @@ import {
   AnalyticsReport,
 } from '../../../services/firebase/analyticsService';
 import { useAuth } from '../../../hooks/useAuth';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './AnalyticsWidget.scss';
 
 const AnalyticsWidget: React.FC = () => {
@@ -68,9 +69,7 @@ const AnalyticsWidget: React.FC = () => {
       <div className="analytics-widget">
         <div className="analytics-widget__header">
           <h3>Analityka</h3>
-          <div className="analytics-widget__loader">
-            <div className="analytics-widget__spinner" />
-          </div>
+          <LoadingSpinner variant="simple" />
         </div>
       </div>
     );

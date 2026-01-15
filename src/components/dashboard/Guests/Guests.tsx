@@ -23,6 +23,7 @@ import { EventService } from '../../../services/firebase/eventService';
 import { AddGuest } from './AddGuest/AddGuest';
 import { EditGuestModal } from './EditGuestModal/EditGuestModal';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './Guests.scss';
 
 const Guests: React.FC = () => {
@@ -269,17 +270,12 @@ const Guests: React.FC = () => {
 
       <div className="guests__content">
         {isLoading ? (
-          <div className="guests guests--loading">
-            <div className="guests__loader">
-              <div className="guests__spinner-wrapper">
-                <div className="guests__spinner-ring"></div>
-                <div className="guests__spinner-ring guests__spinner-ring--delay"></div>
-                <Users className="guests__spinner-icon" size={32} />
-              </div>
-              <h3>Ładowanie gości...</h3>
-              <p>Przygotowujemy listę Twoich gości</p>
-            </div>
-          </div>
+          <LoadingSpinner 
+            variant="full"
+            icon={Users}
+            title="Ładowanie gości..."
+            subtitle="Przygotowujemy listę Twoich gości"
+          />
         ) : filteredGuests.length === 0 ? (
           <div className="guests__empty">
             <Users size={48} />

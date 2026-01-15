@@ -55,9 +55,9 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children, location: loc
           // After enter animation completes, set to idle
           setTimeout(() => {
             setTransitionStage('idle');
-          }, 200); // Match animation duration
+          }, 0); // Match animation duration
         });
-      }, 200); // Match exit animation duration
+      }, 0); // Match exit animation duration
 
       return () => {
         if (timeoutRef.current) {

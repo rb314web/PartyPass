@@ -5,6 +5,7 @@ import { pl } from 'date-fns/locale';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Event } from '../../../types';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './UpcomingEvents.scss';
 
 interface UpcomingEventsProps {
@@ -45,14 +46,11 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, isLoading = fal
   if (isLoading) {
     return (
       <div className="upcoming-events upcoming-events--loading">
-        <div className="upcoming-events__loader">
-          <div className="upcoming-events__spinner">
-            <div className="upcoming-events__spinner-ring"></div>
-            <div className="upcoming-events__spinner-ring upcoming-events__spinner-ring--delay"></div>
-            <Calendar className="upcoming-events__spinner-icon" size={24} />
-          </div>
-          <p>Ładowanie nadchodzących wydarzeń...</p>
-        </div>
+        <LoadingSpinner 
+          variant="full"
+          icon={Calendar}
+          title="Ładowanie nadchodzących wydarzeń..."
+        />
       </div>
     );
   }

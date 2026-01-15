@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import SearchService, { SearchResult, SearchFilters } from '../../services/searchService';
+import LoadingSpinner from '../../components/common/LoadingSpinner/LoadingSpinner';
 import './Search.scss';
 
 const Search: React.FC = () => {
@@ -27,7 +28,7 @@ const Search: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fadeIn, setFadeIn] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false); // Start hidden for fade-in animation
   
   const [filters, setFilters] = useState<SearchFilters>({
     types: ['event', 'contact'],
@@ -53,6 +54,12 @@ const Search: React.FC = () => {
     return () => {
       isMounted.current = false;
     };
+  }, []);
+
+  // Fade-in animation on mount
+  useEffect(() => {
+    const timer = setTimeout(() => setFadeIn(true), 10);
+    return () => clearTimeout(timer);
   }, []);
 
   // Load recent searches on mount and expose debug methods
@@ -129,7 +136,7 @@ const Search: React.FC = () => {
       setTimeout(() => {
         setLoading(false);
         // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
-        setTimeout(() => setFadeIn(true), 300);
+        setTimeout(() => setFadeIn(true), 100);
       }, 300);
     } catch (error) {
       console.error('Search error:', error);
@@ -342,8 +349,21 @@ const Search: React.FC = () => {
 
   console.log('🎨 Search component render:', { query, resultsCount: results.length, loading, hasResults: results.length > 0 });
 
+  if (loading) {
+    return (
+      <div className="search-page search-page--loading">
+        <LoadingSpinner
+          variant="full"
+          icon={<SearchIcon size={32} />}
+          title="Wyszukiwanie..."
+          subtitle="Przeszukujemy bazę danych"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="search-page" role="search">
+    <div className={`search-page ${fadeIn ? 'search-page--fade-in' : ''}`} role="search">
       <header className="search-page__header">
         <div className="search-page__title-wrapper">
           <div className="search-page__icon" aria-hidden="true">
@@ -493,18 +513,8 @@ const Search: React.FC = () => {
           </div>
         )}
 
-        {loading ? (
-          <div className="search-page__loading" role="status">
-            <div className="search-page__spinner-wrapper">
-              <div className="search-page__spinner-ring"></div>
-              <div className="search-page__spinner-ring search-page__spinner-ring--delay"></div>
-              <SearchIcon className="search-page__spinner-icon" size={32} />
-            </div>
-            <h3>Wyszukiwanie...</h3>
-            <p>Przeszukujemy bazę danych</p>
-          </div>
-        ) : results.length > 0 ? (
-          <div className={`search-page__results ${fadeIn ? 'search-page__results--fade-in' : ''}`}>
+        {results.length > 0 ? (
+          <div className="search-page__results">
             <div className="search-page__results-header">
               <h2>Wyniki wyszukiwania ({results.length})</h2>
             </div>

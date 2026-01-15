@@ -8,6 +8,14 @@
   margin: 0 auto;
   padding: 2.5rem 3rem;
 
+  // Płynna animacja pojawienia się
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+
+  &--fade-in {
+    opacity: 1;
+  }
+
   @media (max-width: 1024px) {
     padding: 2rem 2rem;
   }

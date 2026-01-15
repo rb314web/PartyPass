@@ -1,5 +1,5 @@
 // pages/Dashboard/Dashboard.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar/Sidebar';
 import UnifiedHeader from '../../components/common/UnifiedHeader/UnifiedHeader';
@@ -17,20 +17,32 @@ import usePageAnalytics from '../../hooks/usePageAnalytics';
 import './Dashboard.scss';
 
 const Dashboard: React.FC = () => {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
 
   // Track page analytics
   usePageAnalytics();
 
+  const handleMobileToggle = () => {
+    setIsMobileOpen(!isMobileOpen);
+  };
+
   return (
     <div className="dashboard">
       {/* Modern Sidebar Navigation */}
-      <Sidebar />
+      <Sidebar
+        isMobileOpen={isMobileOpen}
+        onMobileToggle={handleMobileToggle}
+      />
 
       {/* Main Content Area */}
       <div className="dashboard__main">
         {/* Modern Top Header */}
-        <UnifiedHeader variant="dashboard" />
+        <UnifiedHeader
+          variant="dashboard"
+          onMobileToggle={handleMobileToggle}
+          isMobileOpen={isMobileOpen}
+        />
 
         {/* Content Container */}
         <div className="dashboard__content" tabIndex={-1}>

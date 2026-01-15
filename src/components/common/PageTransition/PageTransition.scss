@@ -7,9 +7,9 @@
   -webkit-font-smoothing: antialiased;
   transform: translateZ(0); // Force hardware acceleration
 
-  // Default state - idle (visible)
+  // Default state - idle (visible, no transition to avoid initial fade)
   opacity: 1;
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: none;
 
   &--idle {
     opacity: 1;
@@ -21,18 +21,6 @@
   }
 
   &--entering {
-    opacity: 0;
-    
-    // Start from hidden state, then animate to visible
-    animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
     opacity: 1;
   }
 }

@@ -36,6 +36,7 @@ import AddContactsToEvent from '../AddContactsToEvent/AddContactsToEvent';
 import EventLocationMap from './EventLocationMap/EventLocationMap';
 import DeleteGuestModal from './DeleteGuestModal';
 import RSVPLinkModal from './RSVPLinkModal';
+import LoadingSpinner from '../../../common/LoadingSpinner/LoadingSpinner';
 import './EventDetails.scss';
 
 const EventDetails: React.FC = () => {
@@ -483,11 +484,13 @@ const EventDetails: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="event-details">
-        <div className="event-details__loading">
-          <div className="loading-spinner" />
-          <p>Ładowanie szczegółów wydarzenia...</p>
-        </div>
+      <div className="event-details event-details--loading">
+        <LoadingSpinner
+          variant="full"
+          icon={Calendar}
+          title="Ładowanie szczegółów"
+          subtitle="Proszę czekać..."
+        />
       </div>
     );
   }

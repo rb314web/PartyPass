@@ -28,6 +28,7 @@ import DuplicateEventModal, {
   DuplicateEventData,
 } from './DuplicateEventModal/DuplicateEventModal';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './Events.scss';
 
 type ViewMode = 'grid' | 'list';
@@ -116,15 +117,12 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
   if (isLoading) {
     return (
       <div className="events events--loading">
-        <div className="events__loader">
-          <div className="events__spinner-wrapper">
-            <div className="events__spinner-ring"></div>
-            <div className="events__spinner-ring events__spinner-ring--delay"></div>
-            <Calendar className="events__spinner-icon" size={32} />
-          </div>
-          <h3>Ładowanie wydarzeń...</h3>
-          <p>Przygotowujemy listę Twoich wydarzeń</p>
-        </div>
+        <LoadingSpinner
+          variant="full"
+          icon={<Calendar size={32} />}
+          title="Ładowanie wydarzeń..."
+          subtitle="Przygotowujemy Twoje wydarzenia"
+        />
       </div>
     );
   }

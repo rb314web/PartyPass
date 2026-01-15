@@ -26,6 +26,7 @@ import AddContact from './AddContact';
 import EditContactModal from './EditContactModal';
 import DeleteContactModal from './DeleteContactModal';
 import ImportContacts from './ImportContacts';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './Contacts.scss';
 
 const Contacts: React.FC = () => {
@@ -38,11 +39,12 @@ const Contacts: React.FC = () => {
 
   // Core state
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState(''); // Actually applied search
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [fadeIn, setFadeIn] = useState(false);
 
   // Pagination state
   const [lastDoc, setLastDoc] = useState<any>(null);
@@ -66,6 +68,7 @@ const Contacts: React.FC = () => {
       try {
         if (resetList) {
           setIsLoading(true);
+          setFadeIn(false);
           setLastDoc(null);
         }
 
@@ -84,15 +87,27 @@ const Contacts: React.FC = () => {
         );
         setLastDoc(result.lastDoc);
         setError(null);
+        
+        if (resetList) {
+          // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
+          setTimeout(() => {
+            setIsLoading(false);
+            // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
+            setTimeout(() => setFadeIn(true), 100);
+          }, 300);
+        }
       } catch (err: any) {
         console.error('Error loading contacts:', err);
         setError(err.message || 'Błąd podczas ładowania kontaktów');
         setContacts([]);
-      } finally {
         setIsLoading(false);
+      } finally {
+        if (!resetList) {
+          setIsLoading(false);
+        }
       }
     },
-    [user?.id, lastDoc]
+    [user?.id]
   );
 
   // STABLE filtered and sorted contacts - fully memoized
@@ -318,22 +333,6 @@ const Contacts: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.state]);
 
-  // Render loading state - memoized
-  const renderLoading = useCallback(
-    () => (
-      <div className="contacts__loading">
-        <div className="contacts__spinner-wrapper">
-          <div className="contacts__spinner-ring"></div>
-          <div className="contacts__spinner-ring contacts__spinner-ring--delay"></div>
-          <Users className="contacts__spinner-icon" size={28} />
-        </div>
-        <h3>Ładowanie kontaktów...</h3>
-        <p>Przygotowujemy Twoją listę kontaktów</p>
-      </div>
-    ),
-    []
-  );
-
   // Render error state - memoized
   const renderError = useCallback(
     () => (
@@ -474,15 +473,29 @@ const Contacts: React.FC = () => {
 
   // Main contacts list page - memoized to prevent re-creation
   const contactsListPageContent = useMemo(
-    () => (
-      <div className="contacts">
-        <header className="contacts__header">
-          <div className="contacts__title-wrapper">
-            <div className="contacts__icon" aria-hidden="true">
-              <Users size={24} />
-            </div>
-            <div>
-              <h1>Kontakty</h1>
+    () => {
+      if (isLoading) {
+        return (
+          <div className="contacts contacts--loading">
+            <LoadingSpinner
+              variant="full"
+              icon={<Users size={28} />}
+              title="Ładowanie kontaktów..."
+              subtitle="Przygotowujemy Twoją listę kontaktów"
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div className={`contacts ${fadeIn ? 'contacts--fade-in' : ''}`}>
+          <header className="contacts__header">
+            <div className="contacts__title-wrapper">
+              <div className="contacts__icon" aria-hidden="true">
+                <Users size={24} />
+              </div>
+              <div>
+                <h1>Kontakty</h1>
               <p>
                 Zarządzaj bazą kontaktów
                 {contacts.length > 0 && (
@@ -562,19 +575,17 @@ const Contacts: React.FC = () => {
         </div>
 
         <div className="contacts__content">
-          {isLoading && renderLoading()}
-          {!isLoading && error && renderError()}
-          {!isLoading &&
-            !error &&
+          {error && renderError()}
+          {!error &&
             filteredAndSortedContacts.length === 0 &&
             renderEmptyState()}
-          {!isLoading &&
-            !error &&
+          {!error &&
             filteredAndSortedContacts.length > 0 &&
             renderContactsList()}
         </div>
       </div>
-    ),
+      );
+    },
     [
       contacts.length,
       filteredAndSortedContacts,
@@ -588,7 +599,7 @@ const Contacts: React.FC = () => {
       handleSortChange,
       isLoading,
       error,
-      renderLoading,
+      fadeIn,
       renderError,
       renderEmptyState,
       renderContactsList,

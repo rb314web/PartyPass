@@ -19,6 +19,7 @@ import { EventService } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
 import { useNotifications } from '../../../hooks/useNotifications';
 import { Activity } from '../../../types';
+import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './Activities.scss';
 
 type ActivityType = Activity['type'] | 'all';
@@ -47,7 +48,7 @@ const Activities: React.FC = () => {
       setTimeout(() => {
         setLoading(false);
         // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
-        setTimeout(() => setFadeIn(true), 300);
+        setTimeout(() => setFadeIn(true), 100);
       }, 300);
     } catch (error) {
       console.error('Error loading activities:', error);
@@ -126,8 +127,21 @@ const Activities: React.FC = () => {
     contact_updated: 'Kontakty zaktualizowane',
   };
 
+  if (loading) {
+    return (
+      <div className="activities activities--loading">
+        <LoadingSpinner
+          variant="full"
+          icon={<ActivityIcon size={32} />}
+          title="Ładowanie aktywności..."
+          subtitle="Przygotowujemy historię wydarzeń"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="activities">
+    <div className={`activities ${fadeIn ? 'activities--fade-in' : ''}`}>
       <div className="activities__header">
         <div className="activities__title-wrapper">
           <div className="activities__icon" aria-hidden="true">
@@ -233,17 +247,7 @@ const Activities: React.FC = () => {
       )}
 
       <div className="activities__content">
-        {loading ? (
-          <div className="activities__loading">
-            <div className="activities__spinner-wrapper">
-              <div className="activities__spinner-ring"></div>
-              <div className="activities__spinner-ring activities__spinner-ring--delay"></div>
-              <ActivityIcon className="activities__spinner-icon" size={32} />
-            </div>
-            <h3>Ładowanie aktywności...</h3>
-            <p>Przygotowujemy historię wydarzeń</p>
-          </div>
-        ) : filteredActivities.length === 0 ? (
+        {filteredActivities.length === 0 ? (
           <div className="activities__empty">
             <div className="activities__empty-icon">
               <Calendar />
@@ -260,7 +264,7 @@ const Activities: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className={`activities__list ${fadeIn ? 'activities__list--fade-in' : ''}`}>
+          <div className="activities__list">
             {filteredActivities.map(activity => (
               <div
                 key={activity.id}
