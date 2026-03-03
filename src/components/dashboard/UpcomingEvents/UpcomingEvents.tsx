@@ -48,7 +48,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, isLoading = fal
       <div className="upcoming-events upcoming-events--loading">
         <LoadingSpinner 
           variant="full"
-          icon={Calendar}
+          icon={<Calendar />}
           title="Ładowanie nadchodzących wydarzeń..."
         />
       </div>

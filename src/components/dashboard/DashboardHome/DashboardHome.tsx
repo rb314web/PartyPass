@@ -246,7 +246,7 @@ const DashboardHome: React.FC = () => {
             <div className="dashboard-home__map-loading">
               <LoadingSpinner 
                 variant="simple" 
-                icon={MapPin}
+                icon={<MapPin />}
                 title="Ładowanie mapy wydarzeń..." 
               />
             </div>

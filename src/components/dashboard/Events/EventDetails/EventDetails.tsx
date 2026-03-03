@@ -487,7 +487,7 @@ const EventDetails: React.FC = () => {
       <div className="event-details event-details--loading">
         <LoadingSpinner
           variant="full"
-          icon={Calendar}
+          icon={<Calendar />}
           title="Ładowanie szczegółów"
           subtitle="Proszę czekać..."
         />

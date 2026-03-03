@@ -167,7 +167,7 @@ export const EditGuest: React.FC = () => {
       <div className="edit-guest edit-guest--loading">
         <LoadingSpinner
           variant="full"
-          icon={Users}
+          icon={<Users />}
           title="Ładowanie danych"
           subtitle="Proszę czekać..."
         />

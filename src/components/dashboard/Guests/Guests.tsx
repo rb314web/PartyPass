@@ -26,7 +26,7 @@ import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
 import './Guests.scss';
 
-const Guests: React.FC = () => {
+const Guests = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all'>('all');
@@ -272,122 +272,10 @@ const Guests: React.FC = () => {
         {isLoading ? (
           <LoadingSpinner 
             variant="full"
-            icon={Users}
+            icon={<Users />}
             title="Ładowanie gości..."
             subtitle="Przygotowujemy listę Twoich gości"
           />
-        ) : filteredGuests.length === 0 ? (
-          <div className="guests__empty">
-            <Users size={48} />
-            <h3>Brak gości</h3>
-            <p>Nie znaleziono gości spełniających wybrane kryteria</p>
-          </div>
-        ) : (
-          <div className="guests__table">
-                        <div>
-                          <Skeleton
-                            variant="text"
-                            width={120}
-                            height={20}
-                            animation="wave"
-                            sx={{
-                              marginBottom: '4px',
-                              backgroundColor: '#f0f0f0',
-                            }}
-                          />
-                          <Skeleton
-                            variant="text"
-                            width={160}
-                            height={16}
-                            animation="wave"
-                            sx={{ backgroundColor: '#f0f0f0' }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="guests__event-info">
-                        <Skeleton
-                          variant="text"
-                          width={140}
-                          height={18}
-                          animation="wave"
-                          sx={{
-                            marginBottom: '4px',
-                            backgroundColor: '#f0f0f0',
-                          }}
-                        />
-                        <Skeleton
-                          variant="text"
-                          width={100}
-                          height={14}
-                          animation="wave"
-                          sx={{ backgroundColor: '#f0f0f0' }}
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <Skeleton
-                        variant="text"
-                        width={100}
-                        height={16}
-                        animation="wave"
-                        sx={{ backgroundColor: '#f0f0f0' }}
-                      />
-                    </td>
-                    <td>
-                      <div className="guests__contact">
-                        <Skeleton
-                          variant="rectangular"
-                          width={32}
-                          height={32}
-                          animation="wave"
-                          sx={{
-                            borderRadius: '6px',
-                            backgroundColor: '#f0f0f0',
-                          }}
-                        />
-                        <Skeleton
-                          variant="rectangular"
-                          width={32}
-                          height={32}
-                          animation="wave"
-                          sx={{
-                            borderRadius: '6px',
-                            backgroundColor: '#f0f0f0',
-                          }}
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <div className="guests__actions-cell">
-                        <Skeleton
-                          variant="rectangular"
-                          width={60}
-                          height={32}
-                          animation="wave"
-                          sx={{
-                            borderRadius: '6px',
-                            backgroundColor: '#f0f0f0',
-                          }}
-                        />
-                        <Skeleton
-                          variant="rectangular"
-                          width={50}
-                          height={32}
-                          animation="wave"
-                          sx={{
-                            borderRadius: '6px',
-                            backgroundColor: '#f0f0f0',
-                          }}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         ) : error ? (
           <Box
             sx={{

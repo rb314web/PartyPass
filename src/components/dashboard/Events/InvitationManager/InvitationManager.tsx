@@ -225,7 +225,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({
       <div className="invitation-manager invitation-manager--loading">
         <LoadingSpinner
           variant="full"
-          icon={Mail}
+          icon={<Mail />}
           title="Generowanie zaproszeń"
           subtitle="Proszę czekać..."
         />

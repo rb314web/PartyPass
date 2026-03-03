@@ -22,11 +22,15 @@ import './Sidebar.scss';
 interface SidebarProps {
   isCollapsed?: boolean;
   onCollapsedToggle?: () => void;
+  isMobileOpen?: boolean;
+  onMobileToggle?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed: externalCollapsed,
   onCollapsedToggle,
+  isMobileOpen,
+  onMobileToggle,
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [isCompactScreen, setIsCompactScreen] = useState(false);

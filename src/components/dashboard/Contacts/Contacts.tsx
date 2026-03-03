@@ -410,7 +410,7 @@ const Contacts: React.FC = () => {
         {filteredAndSortedContacts.map(contact => (
           <div 
             key={contact.id} 
-            ref={el => contactRefs.current[contact.id] = el}
+            ref={el => { contactRefs.current[contact.id] = el; }}
             className={`contacts__card ${
               highlightedContactId === contact.id ? 'contacts__card--highlighted' : ''
             }`}

@@ -88,8 +88,6 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
   getStatusLabel,
   getStatusIcon,
 }) => {
-  console.log('[EventsListPage] Render - isLoading:', isLoading, 'events:', events.length, 'fadeIn:', fadeIn);
-  
   const { activeCount, plannedCount, completedCount } = useMemo(() => {
     const active = events.filter(event => event.status === 'active').length;
     const planned = events.filter(event => event.status === 'draft').length;
@@ -432,8 +430,6 @@ const Events: React.FC = () => {
       changeType?: 'added' | 'modified' | 'removed',
       changedEventId?: string
     ) => {
-      console.log('[Events] handleRealtimeUpdate called, hasInitiallyLoaded:', hasInitiallyLoaded, 'events count:', updatedEvents.length);
-      
       setEvents(prevEvents => {
         // Detect specific changes for notifications
         if (changeType && changedEventId) {
@@ -462,8 +458,6 @@ const Events: React.FC = () => {
           const elapsed = Date.now() - mountTime;
           const minDisplayTime = 500;
           const remainingTime = Math.max(0, minDisplayTime - elapsed);
-          
-          console.log('[Events] Loader timing - elapsed:', elapsed, 'remaining:', remainingTime);
           
           // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
           setTimeout(() => {
