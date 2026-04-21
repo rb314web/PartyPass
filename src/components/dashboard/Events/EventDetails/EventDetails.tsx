@@ -259,7 +259,7 @@ const EventDetails: React.FC = () => {
           contactId: contact.id,
           eventSpecificNotes: '',
           plusOneType: 'none'
-        });
+        }, user?.id);
         // Przeładuj listę gości
         await handleGuestAdded();
       } catch (error) {

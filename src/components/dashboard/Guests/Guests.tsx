@@ -11,19 +11,19 @@ import {
   Calendar,
   AlertCircle,
   Edit3,
+  Crown,
 } from 'lucide-react';
 import { Box, Typography, Skeleton } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import type { Guest } from '../../../types';
-import {
-  GuestService,
-  GuestFilters,
-} from '../../../services/firebase/guestService';
+import { GuestService, GuestFilters } from '../../../services/firebase/guestService';
 import { EventService } from '../../../services/firebase/eventService';
+import { canCreateGuest, getGuestLimitErrorMessage, PlanType } from '../../../services/firebase/planLimitsService';
 import { AddGuest } from './AddGuest/AddGuest';
 import { EditGuestModal } from './EditGuestModal/EditGuestModal';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import PlanLimitPopover from '../../common/PlanLimitPopover/PlanLimitPopover';
 import './Guests.scss';
 
 const Guests = () => {
@@ -128,6 +128,8 @@ const Guests = () => {
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [isEditGuestModalOpen, setIsEditGuestModalOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+  const [canAddGuest, setCanAddGuest] = useState(true);
+  const [limitMessage, setLimitMessage] = useState('');
   const [events, setEvents] = useState<Array<{ id: string; title: string }>>(
     []
   );
@@ -153,6 +155,21 @@ const Guests = () => {
     };
     loadEvents();
   }, [user]);
+
+  useEffect(() => {
+    const checkLimit = async () => {
+      if (!user?.id) return;
+      try {
+        const count = await GuestService.getGuestCount(user.id);
+        const allowed = canCreateGuest(count, user.planType as PlanType);
+        setCanAddGuest(allowed);
+        setLimitMessage(allowed ? '' : getGuestLimitErrorMessage(user.planType as PlanType));
+      } catch (error) {
+        console.error('Error checking guest limit:', error);
+      }
+    };
+    checkLimit();
+  }, [user?.id, user?.planType, guests]);
 
   const handleCreateGuest = () => {
     if (events.length === 0) {
@@ -218,13 +235,26 @@ const Guests = () => {
             <Download size={20} />
             Importuj
           </button>
-          <button
-            className="guests__action-btn guests__action-btn--primary"
-            onClick={handleCreateGuest}
-          >
-            <Plus size={20} />
-            Dodaj gościa
-          </button>
+          <PlanLimitPopover isLimitReached={!canAddGuest} limitMessage={limitMessage}>
+            {canAddGuest ? (
+              <button
+                className="guests__action-btn guests__action-btn--primary"
+                onClick={handleCreateGuest}
+              >
+                <Plus size={20} />
+                Dodaj gościa
+              </button>
+            ) : (
+              <button
+                className="guests__action-btn guests__action-btn--upgrade"
+                onClick={() => navigate('/dashboard/plan')}
+              >
+                <Crown size={16} />
+                <span>Ulepsz plan</span>
+                <span className="guests__action-btn-badge">Limit osiągnięty</span>
+              </button>
+            )}
+          </PlanLimitPopover>
         </div>
       </div>
 

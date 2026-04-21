@@ -98,7 +98,7 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
           formData.plusOneType === 'withDetails'
             ? formData.plusOneDetails
             : undefined,
-      });
+      }, user?.id);
 
       onSuccess();
       onClose();

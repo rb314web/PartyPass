@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -6,11 +6,14 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
+import Tooltip from '@mui/material/Tooltip';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { pl } from 'date-fns/locale';
 import { useSnackbar } from 'notistack';
 import { EventService } from '../../../../services/firebase/eventService';
+import { useAuth } from '../../../../hooks/useAuth';
+import { canCreateEvent, getEventLimitErrorMessage, PlanType } from '../../../../services/firebase/planLimitsService';
 import './AddEvent.scss';
 
 interface AddEventProps {
@@ -37,7 +40,10 @@ export const AddEvent: React.FC<AddEventProps> = ({
   onEventAdded,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [eventCount, setEventCount] = useState(0);
+  const [canAddEvent, setCanAddEvent] = useState(true);
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     description: '',
@@ -47,6 +53,25 @@ export const AddEvent: React.FC<AddEventProps> = ({
     dresscode: '',
     additionalInfo: '',
   });
+
+  // Sprawdź limit zdarzeń
+  useEffect(() => {
+    const checkEventLimit = async () => {
+      if (!user) return;
+      
+      try {
+        const count = await EventService.getEventCount(userId);
+        setEventCount(count);
+        setCanAddEvent(canCreateEvent(count, user.planType as PlanType));
+      } catch (error) {
+        console.error('Error checking event limit:', error);
+      }
+    };
+
+    if (open) {
+      checkEventLimit();
+    }
+  }, [open, userId, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -214,14 +239,21 @@ export const AddEvent: React.FC<AddEventProps> = ({
           <Button onClick={onClose} disabled={loading}>
             Anuluj
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={loading}
+          <Tooltip 
+            title={!canAddEvent ? getEventLimitErrorMessage(user?.planType as PlanType) : ''}
+            disableHoverListener={canAddEvent}
           >
-            {loading ? 'Tworzenie...' : 'Utwórz wydarzenie'}
-          </Button>
+            <span>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading || !canAddEvent}
+              >
+                {loading ? 'Tworzenie...' : 'Utwórz wydarzenie'}
+              </Button>
+            </span>
+          </Tooltip>
         </DialogActions>
       </form>
     </Dialog>

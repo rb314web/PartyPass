@@ -1,0 +1,98 @@
+// pages/Debug/Debug.scss
+.debug-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 40px 20px;
+
+  &__container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  &__header {
+    text-align: center;
+    margin-bottom: 40px;
+
+    h1 {
+      font-size: 32px;
+      margin: 0 0 8px 0;
+      color: #2d3748;
+    }
+
+    p {
+      color: #718096;
+      font-size: 16px;
+      margin: 0;
+    }
+  }
+
+  &__tools {
+    display: grid;
+    gap: 30px;
+  }
+
+  &__section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+
+    &--info {
+      h3 {
+        margin: 0 0 20px 0;
+        font-size: 20px;
+        color: #2d3748;
+      }
+    }
+  }
+
+  &__info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+
+  &__info-item {
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #718096;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    code {
+      display: block;
+      background: #f7fafc;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 13px;
+      color: #2d3748;
+      word-break: break-all;
+      border: 1px solid #e2e8f0;
+    }
+  }
+
+  &__error {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    h2 {
+      margin: 0 0 12px 0;
+      color: #2d3748;
+      font-size: 24px;
+    }
+
+    p {
+      margin: 0;
+      color: #718096;
+      font-size: 16px;
+    }
+  }
+}

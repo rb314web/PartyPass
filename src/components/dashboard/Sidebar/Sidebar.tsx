@@ -63,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: Users, label: 'Kontakty', path: '/dashboard/contacts' },
     { icon: Activity, label: 'Aktywności', path: '/dashboard/activities' },
     { icon: BarChart3, label: 'Analityka', path: '/dashboard/analytics' },
+    { icon: Crown, label: 'Plan', path: '/dashboard/plan' },
     { icon: Settings, label: 'Ustawienia', path: '/dashboard/settings' },
   ];
 

@@ -5,6 +5,7 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  getCountFromServer,
   updateDoc,
   query,
   where,
@@ -33,6 +34,7 @@ import { Event, Activity, Guest } from '../../types';
 import { AnalyticsService } from './analyticsService';
 import { notificationService } from '../notificationService';
 import SearchService from '../searchService';
+import { PlanLimitExceededError, canCreateEvent, getPlanLimits, PlanType } from './planLimitsService';
 
 export interface CreateEventData extends BaseCreateEventData {
   category?: string;
@@ -164,6 +166,26 @@ export class EventService {
     eventData: CreateEventData
   ): Promise<Event> {
     try {
+      // Sprawdź limity na podstawie planu użytkownika
+      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
+      const userPlanType = (userDoc.data()?.planType || 'starter') as PlanType;
+      
+      // Pobierz ilość istniejących zdarzeń użytkownika (wydajna metoda count)
+      const eventsQuery = query(
+        collection(db, COLLECTIONS.EVENTS),
+        where('userId', '==', userId)
+      );
+      const eventsSnapshot = await getCountFromServer(eventsQuery);
+      const eventCount = eventsSnapshot.data().count;
+      
+      // Sprawdź czy może tworzyć nowe wydarzenie
+      if (!canCreateEvent(eventCount, userPlanType)) {
+        throw new PlanLimitExceededError('events', userPlanType,
+          getPlanLimits(userPlanType).events,
+          eventCount
+        );
+      }
+
       let imageUrl: string | undefined;
 
       // Upload image if provided
@@ -598,6 +620,16 @@ export class EventService {
     } catch (error: any) {
       throw new Error(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
     }
+  }
+
+  // Get total event count for user (efficient Firestore count query)
+  static async getEventCount(userId: string): Promise<number> {
+    const q = query(
+      collection(db, COLLECTIONS.EVENTS),
+      where('userId', '==', userId)
+    );
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
   }
 
   // Get user events with pagination

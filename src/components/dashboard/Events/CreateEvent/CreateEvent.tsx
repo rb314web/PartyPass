@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { EventService } from '../../../../services/firebase/eventService';
+import { canCreateEvent, getEventLimitErrorMessage, PlanType } from '../../../../services/firebase/planLimitsService';
 import LocationPicker from './LocationPicker/LocationPicker';
 import './CreateEvent.scss';
 
@@ -64,6 +65,8 @@ const CreateEvent: React.FC = () => {
   const [errors, setErrors] = useState<Partial<EventFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [canAddEvent, setCanAddEvent] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const steps = [
     {
@@ -225,6 +228,24 @@ const CreateEvent: React.FC = () => {
       </>
     );
   };
+
+  // Sprawdź limit wydarzeń (tylko przy tworzeniu nowego, nie przy edycji)
+  useEffect(() => {
+    const checkEventLimit = async () => {
+      if (isEditing || !user?.id) return;
+      try {
+        const count = await EventService.getEventCount(user.id);
+        const allowed = canCreateEvent(count, user.planType as PlanType);
+        setCanAddEvent(allowed);
+        if (!allowed) {
+          setSubmitError(getEventLimitErrorMessage(user.planType as PlanType));
+        }
+      } catch (error) {
+        console.error('Error checking event limit:', error);
+      }
+    };
+    checkEventLimit();
+  }, [isEditing, user?.id, user?.planType]);
 
   // Load event data if editing
   useEffect(() => {
@@ -397,6 +418,7 @@ const CreateEvent: React.FC = () => {
 
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+      setSubmitError(null);
     } else {
       handleSubmit();
     }
@@ -524,7 +546,8 @@ const CreateEvent: React.FC = () => {
       navigate('/dashboard/events');
     } catch (error) {
       console.error('Error saving event:', error);
-      // TODO: Show error message to user
+      const errorMessage = error instanceof Error ? error.message : 'Nie udało się zapisać wydarzenia';
+      setSubmitError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -959,6 +982,12 @@ const CreateEvent: React.FC = () => {
 
         {/* Navigation */}
         <div className="create-event__navigation">
+          {submitError && (
+            <div className="create-event__submit-error">
+              <span>{submitError}</span>
+            </div>
+          )}
+          <div className="create-event__navigation-row">
           <div>
             {currentStep > 1 && (
               <button
@@ -981,7 +1010,7 @@ const CreateEvent: React.FC = () => {
           <button
             className="create-event__nav-btn create-event__nav-btn--primary"
             onClick={handleNext}
-            disabled={isLoading}
+            disabled={isLoading || (!isEditing && currentStep === totalSteps && !canAddEvent)}
           >
             {isLoading ? (
               <div className="create-event__spinner"></div>
@@ -998,6 +1027,7 @@ const CreateEvent: React.FC = () => {
               </>
             )}
           </button>
+          </div>
         </div>
       </div>
     </div>

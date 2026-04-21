@@ -29,6 +29,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const DemoPage = lazy(() => import('./pages/Demo/Demo'));
 const PaymentReturn = lazy(() => import('./pages/PaymentReturn/PaymentReturn'));
 const RSVP = lazy(() => import('./pages/RSVP/RSVP'));
+const Debug = lazy(() => import('./pages/Debug/Debug'));
 
 function AppContent() {
   // Załaduj zapisany kolor akcentu
@@ -101,6 +102,15 @@ function AppContent() {
                       element={
                         <AuthGuard requireAuth={true}>
                           <Dashboard />
+                        </AuthGuard>
+                      }
+                    />
+                    {/* Debug Tools */}
+                    <Route
+                      path="/debug"
+                      element={
+                        <AuthGuard requireAuth={true}>
+                          <Debug />
                         </AuthGuard>
                       }
                     />

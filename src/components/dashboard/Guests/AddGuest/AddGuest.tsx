@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -14,8 +14,11 @@ import FormLabel from '@mui/material/FormLabel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
 import { useSnackbar } from 'notistack';
 import { GuestService } from '../../../../services/firebase/guestService';
+import { useAuth } from '../../../../hooks/useAuth';
+import { canCreateGuest, getGuestLimitErrorMessage, PlanType } from '../../../../services/firebase/planLimitsService';
 import './AddGuest.scss';
 
 interface AddGuestProps {
@@ -41,7 +44,10 @@ export const AddGuest: React.FC<AddGuestProps> = ({
   onGuestAdded,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [guestCount, setGuestCount] = useState(0);
+  const [canAddGuest, setCanAddGuest] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -57,6 +63,25 @@ export const AddGuest: React.FC<AddGuestProps> = ({
       dietaryRestrictions: '',
     },
   });
+
+  // Sprawdź limit gości
+  useEffect(() => {
+    const checkGuestLimit = async () => {
+      if (!user) return;
+      
+      try {
+        const count = await GuestService.getGuestCount(userId);
+        setGuestCount(count);
+        setCanAddGuest(canCreateGuest(count, user.planType as PlanType));
+      } catch (error) {
+        console.error('Error checking guest limit:', error);
+      }
+    };
+
+    if (open) {
+      checkGuestLimit();
+    }
+  }, [open, userId, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -328,14 +353,21 @@ export const AddGuest: React.FC<AddGuestProps> = ({
           <Button onClick={onClose} disabled={loading}>
             Anuluj
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={loading}
+          <Tooltip 
+            title={!canAddGuest ? getGuestLimitErrorMessage(user?.planType as PlanType) : ''}
+            disableHoverListener={canAddGuest}
           >
-            {loading ? 'Dodawanie...' : 'Dodaj gościa'}
-          </Button>
+            <span>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading || !canAddGuest}
+              >
+                {loading ? 'Dodawanie...' : 'Dodaj gościa'}
+              </Button>
+            </span>
+          </Tooltip>
         </DialogActions>
       </form>
     </Dialog>

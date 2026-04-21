@@ -6,6 +6,7 @@ import {
   deleteDoc,
   getDocs,
   getDoc,
+  getCountFromServer,
   query,
   where,
   orderBy,
@@ -32,6 +33,16 @@ export interface ContactResult {
 
 export class ContactService {
   private static readonly COLLECTION = COLLECTIONS.CONTACTS;
+
+  // Get total contact count for user (efficient Firestore count query)
+  static async getContactCount(userId: string): Promise<number> {
+    const q = query(
+      collection(db, this.COLLECTION),
+      where('userId', '==', userId)
+    );
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+  }
 
   static async createContact(
     userId: string,

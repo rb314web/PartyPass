@@ -11,8 +11,7 @@
   left: 0;
   top: 0;
   z-index: var(--z-sidebar);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               background-color var(--transition-colors, 0.2s ease),
               border-color var(--transition-colors, 0.2s ease);
   box-shadow: var(--shadow-md);
@@ -23,7 +22,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  @media (max-width: 768px) {
+  @include respond-below('tablet') {
     transform: translateX(-100%);
     width: 260px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -40,20 +39,15 @@
   }
 
   // Compact sidebar on medium screens
-  @media (min-width: 500px) and (max-width: 1200px) {
+  @media (min-width: 769px) and (max-width: 1200px) {
     width: 80px;
 
     .sidebar__logo {
       padding: 0.75rem;
       gap: 0;
-      overflow: visible;
-      
-      .logo__text {
-        white-space: nowrap;
-      }
     }
 
-    .sidebar__nav span:not(.logo__text):not(.logo__text--initials):not(.logo__text-main):not(.logo__text-accent):not(.logo__sr-only),
+    .sidebar__nav span,
     .sidebar__user-info,
     .sidebar__logout span {
       display: none;
@@ -84,14 +78,9 @@
     .sidebar__logo {
       padding: 0.75rem;
       gap: 0;
-      overflow: visible;
-      
-      .logo__text {
-        white-space: nowrap;
-      }
     }
 
-    .sidebar__nav span:not(.logo__text):not(.logo__text--initials):not(.logo__text-main):not(.logo__text-accent):not(.logo__sr-only),
+    .sidebar__nav span,
     .sidebar__user-info,
     .sidebar__logout span {
       display: none;
@@ -134,7 +123,7 @@
     cursor: pointer;
     transition: opacity 0.3s ease;
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
       display: none;
     }
   }
@@ -196,6 +185,17 @@
       background-color var(--transition-colors, 0.2s ease),
       border-color var(--transition-colors, 0.2s ease),
       box-shadow 0.2s ease;
+  }
+
+  // Dark mode header
+  .dark &__header,
+  [data-theme='dark'] &__header {
+    background: linear-gradient(
+      135deg,
+      rgba(2, 6, 23, 0.95),
+      rgba(15, 23, 42, 0.9)
+    );
+    border-bottom-color: var(--border-primary, rgba(148, 163, 184, 0.31));
   }
 
   &__logo {
@@ -381,11 +381,15 @@
     }
 
     &--active {
-      background: var(--color-primary-soft, rgba(99, 102, 241, 0.12));
-      color: var(--text-primary);
+      background: linear-gradient(
+        120deg,
+        var(--color-primary, #6366f1),
+        var(--color-primary-dark, #4338ca)
+      );
+      color: var(--text-inverse);
       font-weight: 600;
       border: 1px solid transparent;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
       transition:
         background var(--transition-colors, 0.2s ease),
         color var(--transition-colors, 0.2s ease),
@@ -406,23 +410,27 @@
       }
 
       span {
-        color: var(--text-primary);
+        color: inherit;
         transition: color var(--transition-colors, 0.2s ease);
       }
 
       svg {
         transition: color var(--transition-colors, 0.2s ease);
-        color: var(--color-primary, #6366f1);
+        color: var(--text-inverse);
       }
 
       &:hover {
-        background: var(--color-primary-soft, rgba(99, 102, 241, 0.18));
-        color: var(--text-primary);
+        background: linear-gradient(
+          120deg,
+          var(--color-primary, #6366f1),
+          var(--color-primary-dark, #4338ca)
+        );
+        color: var(--text-inverse);
         transform: none;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
 
         svg {
-          color: var(--color-primary, #6366f1);
+          color: var(--text-inverse);
         }
       }
     }
@@ -442,11 +450,6 @@
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 1rem;
-    padding: 0.5rem;
-    border-radius: 0.75rem;
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
 
     &-avatar {
       width: 40px;

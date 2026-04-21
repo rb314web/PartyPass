@@ -28,7 +28,8 @@ export class EventGuestService {
   static async addContactToEvent(
     eventId: string,
     contactId: string,
-    data: CreateEventGuestData
+    data: CreateEventGuestData,
+    userId?: string
   ): Promise<EventGuest> {
     try {
       // Sprawdź czy kontakt już istnieje w wydarzeniu
@@ -51,6 +52,7 @@ export class EventGuestService {
       const mainGuest: any = {
         eventId,
         contactId,
+        ...(userId && { userId }),
         status: 'pending' as GuestStatus,
         invitedAt: now,
         plusOneType: 'none', // Główny gość nie ma plusOne
@@ -448,6 +450,42 @@ export class EventGuestService {
     } catch (error) {
       console.warn('Nie udało się zaktualizować liczników wydarzenia:', error);
     }
+  }
+
+  /**
+   * Pobiera liczbę wydarzeń dla wielu kontaktów jednocześnie (batch query)
+   */
+  static async getContactEventCounts(
+    contactIds: string[]
+  ): Promise<Map<string, number>> {
+    if (!contactIds.length) return new Map();
+
+    const eventCountMap = new Map<string, number>();
+
+    // Firestore 'in' obsługuje max 30 wartości – dzielemy na partie po 10
+    const batchSize = 10;
+    const batches: string[][] = [];
+    for (let i = 0; i < contactIds.length; i += batchSize) {
+      batches.push(contactIds.slice(i, i + batchSize));
+    }
+
+    await Promise.all(
+      batches.map(async batch => {
+        const q = query(
+          collection(db, COLLECTIONS.GUESTS),
+          where('contactId', 'in', batch)
+        );
+        const snapshot = await getDocs(q);
+        snapshot.docs.forEach(d => {
+          const cid = d.data().contactId;
+          if (cid) {
+            eventCountMap.set(cid, (eventCountMap.get(cid) || 0) + 1);
+          }
+        });
+      })
+    );
+
+    return eventCountMap;
   }
 
   /**

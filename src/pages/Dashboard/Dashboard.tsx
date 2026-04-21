@@ -10,6 +10,7 @@ import Events from '../../components/dashboard/Events/Events';
 import Contacts from '../../components/dashboard/Contacts/Contacts';
 import Analytics from '../../components/dashboard/Analytics/Analytics';
 import Settings from '../../components/dashboard/Settings/Settings';
+import PlanSettings from '../../components/dashboard/Settings/PlanSettings/PlanSettings';
 import Activities from '../../components/dashboard/Activities/Activities';
 import ContactUs from '../../components/dashboard/ContactUs/ContactUs';
 import Search from '../Search/Search';
@@ -60,6 +61,7 @@ const Dashboard: React.FC = () => {
                   <Route path="activities" element={<Activities />} />
                   <Route path="analytics" element={<Analytics />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="plan" element={<PlanSettings />} />
                   <Route path="contact-us" element={<ContactUs />} />
                   <Route path="search" element={<Search />} />
                 </Routes>

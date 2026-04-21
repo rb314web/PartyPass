@@ -3,13 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Crown, ArrowUpRight, Check, Zap, Calendar, Users } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import { getPlanLimits, PlanType } from '../../../services/firebase/planLimitsService';
 import './PlanLimitsCard.scss';
-
-const PLAN_LIMITS: Record<string, { maxEvents: number; maxGuests: number }> = {
-  starter: { maxEvents: 3, maxGuests: 50 },
-  pro: { maxEvents: 15, maxGuests: 200 },
-  enterprise: { maxEvents: -1, maxGuests: -1 }, // unlimited
-};
 
 const PLAN_FEATURES: Record<string, string[]> = {
   starter: ['Podstawowe zaproszenia', 'Email support', 'Podstawowe statystyki', 'RSVP system', 'Zarządzanie gośćmi'],
@@ -24,7 +19,7 @@ const PLAN_PRICES: Record<string, { monthly: number; yearly: number }> = {
 };
 
 const NEXT_PLAN_BENEFITS: Record<string, string[]> = {
-  starter: ['15 wydarzeń miesięcznie', '200 gości na wydarzenie', 'SMS powiadomienia', 'Zaawansowane analityki'],
+  starter: ['50 wydarzeń łącznie', '500 gości łącznie', 'SMS powiadomienia', 'Zaawansowane analityki'],
   pro: ['Nieograniczone wydarzenia', 'Nieograniczona liczba gości', 'Custom branding', 'API dostęp'],
   enterprise: [],
 };
@@ -48,30 +43,30 @@ const PlanLimitsCard: React.FC<PlanLimitsCardProps> = ({
   if (!user) return null;
 
   const planType = user.planType || 'starter';
-  const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.starter;
+  const limits = getPlanLimits(planType as PlanType);
 
   const eventsPercentage =
-    limits.maxEvents === -1
+    !isFinite(limits.events)
       ? 0
-      : Math.min(100, Math.round((usedEvents / limits.maxEvents) * 100));
+      : Math.min(100, Math.round((usedEvents / limits.events) * 100));
   const guestsPercentage =
-    limits.maxGuests === -1
+    !isFinite(limits.guests)
       ? 0
-      : Math.min(100, Math.round((usedGuests / limits.maxGuests) * 100));
+      : Math.min(100, Math.round((usedGuests / limits.guests) * 100));
 
   const isNearLimit =
-    (limits.maxEvents !== -1 && eventsPercentage >= 80) ||
-    (limits.maxGuests !== -1 && guestsPercentage >= 80);
+    (isFinite(limits.events) && eventsPercentage >= 80) ||
+    (isFinite(limits.guests) && guestsPercentage >= 80);
 
-  const remainingEvents = limits.maxEvents === -1 ? null : limits.maxEvents - usedEvents;
-  const remainingGuests = limits.maxGuests === -1 ? null : limits.maxGuests - usedGuests;
+  const remainingEvents = !isFinite(limits.events) ? null : limits.events - usedEvents;
+  const remainingGuests = !isFinite(limits.guests) ? null : limits.guests - usedGuests;
 
   const features = PLAN_FEATURES[planType] || [];
   const nextPlanBenefits = NEXT_PLAN_BENEFITS[planType] || [];
   const planPrice = PLAN_PRICES[planType] || PLAN_PRICES.starter;
 
   const handleUpgrade = () => {
-    navigate('/dashboard/settings?tab=plan');
+    navigate('/dashboard/plan');
   };
 
   const getPlanDescription = () => {
@@ -102,7 +97,7 @@ const PlanLimitsCard: React.FC<PlanLimitsCardProps> = ({
 
       {/* Limity i wykorzystanie */}
       <div className="plan-limits-card__limits">
-        <div className="plan-limits-card__limits-info">Limity miesięczne</div>
+        <div className="plan-limits-card__limits-info">Limity planu</div>
         <div className="plan-limits-card__limit-item plan-limits-card__limit-item--events">
           <div className="plan-limits-card__limit-item-header">
             <div className="plan-limits-card__limit-item-icon plan-limits-card__limit-item-icon--blue">
@@ -113,7 +108,7 @@ const PlanLimitsCard: React.FC<PlanLimitsCardProps> = ({
           <div className="plan-limits-card__limit-item-value">
             <span className="plan-limits-card__limit-item-used">{usedEvents}</span>
             <span className="plan-limits-card__limit-item-separator">/</span>
-            <span className="plan-limits-card__limit-item-max">{limits.maxEvents === -1 ? '∞' : limits.maxEvents}</span>
+            <span className="plan-limits-card__limit-item-max">{!isFinite(limits.events) ? '∞' : limits.events}</span>
           </div>
         </div>
         <div className="plan-limits-card__limit-item plan-limits-card__limit-item--guests">
@@ -126,7 +121,7 @@ const PlanLimitsCard: React.FC<PlanLimitsCardProps> = ({
           <div className="plan-limits-card__limit-item-value">
             <span className="plan-limits-card__limit-item-used">{usedGuests}</span>
             <span className="plan-limits-card__limit-item-separator">/</span>
-            <span className="plan-limits-card__limit-item-max">{limits.maxGuests === -1 ? '∞' : limits.maxGuests}</span>
+            <span className="plan-limits-card__limit-item-max">{!isFinite(limits.guests) ? '∞' : limits.guests}</span>
           </div>
         </div>
       </div>

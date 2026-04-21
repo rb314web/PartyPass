@@ -1,6 +1,7 @@
 // components/dashboard/DashboardHome/KeyMetrics.tsx
 import React from 'react';
 import { Calendar, Users, Crown, ArrowUp, ArrowDown } from 'lucide-react';
+import { getPlanLimits, PlanType } from '../../../services/firebase/planLimitsService';
 import './KeyMetrics.scss';
 
 interface MetricProps {
@@ -10,7 +11,9 @@ interface MetricProps {
   changeLabel: string;
   icon: React.ComponentType<{ size?: number }>;
   color: 'blue' | 'green' | 'purple';
-  details?: Array<{ label: string; value: number; color?: string; max?: number }>;  upgradeLink?: string;  upgradeLinkText?: string;
+  details?: Array<{ label: string; value: number; color?: string; max?: number | null }>;
+  upgradeLink?: string;
+  upgradeLinkText?: string;
 }
 
 interface KeyMetricsProps {
@@ -18,12 +21,14 @@ interface KeyMetricsProps {
   eventsChange: number;
   totalGuests: number;
   guestsChange: number;
+  totalContacts: number;
   responseRate: number;
   responseRateChange: number;
   activeEvents: number;
   completedEvents: number;
   acceptedGuests: number;
   pendingGuests: number;
+  planType?: 'starter' | 'pro' | 'enterprise';
 }
 
 const KeyMetrics: React.FC<KeyMetricsProps> = ({
@@ -31,13 +36,24 @@ const KeyMetrics: React.FC<KeyMetricsProps> = ({
   eventsChange,
   totalGuests,
   guestsChange,
+  totalContacts,
   responseRate,
   responseRateChange,
   activeEvents,
   completedEvents,
   acceptedGuests,
   pendingGuests,
+  planType = 'starter',
 }) => {
+  // Plan limits from single source of truth
+  const currentLimits = getPlanLimits(planType as PlanType);
+  const planLabel = `Plan ${planType.charAt(0).toUpperCase() + planType.slice(1)}`;
+
+  // Calculate contacts usage percentage
+  const contactUsagePercent = isFinite(currentLimits.contacts)
+    ? Math.round((totalContacts / currentLimits.contacts) * 100)
+    : 0;
+
   const metrics: MetricProps[] = [
     {
       value: totalEvents,
@@ -54,31 +70,31 @@ const KeyMetrics: React.FC<KeyMetricsProps> = ({
       upgradeLinkText: 'Zobacz wszystkie',
     },
     {
-      value: totalGuests,
-      label: 'Goście',
+      value: totalContacts,
+      label: 'Kontakty',
       change: guestsChange,
       changeLabel: 'vs poprzedni m-c',
       icon: Users,
       color: 'green',
       details: [
-        { label: 'Odpowiedzieli', value: totalGuests - pendingGuests, color: 'success' },
+        { label: 'Zaproszeni na events', value: totalGuests, color: 'success' },
         { label: 'Oczekujący', value: pendingGuests, color: 'warning' },
       ],
-      upgradeLink: '/dashboard/guests',
-      upgradeLinkText: 'Zarządzaj gośćmi',
+      upgradeLink: '/dashboard/contacts',
+      upgradeLinkText: 'Zarządzaj kontaktami',
     },
     {
-      value: Math.round((totalGuests / 50) * 100),
-      label: 'Plan Free',
+      value: contactUsagePercent,
+      label: planLabel,
       change: 0,
       changeLabel: 'wykorzystania limitu',
       icon: Crown,
       color: 'purple',
       details: [
-        { label: 'Wydarzenia', value: totalEvents, color: 'neutral', max: 10 },
-        { label: 'Goście', value: totalGuests, color: 'neutral', max: 50 },
+        { label: 'Wydarzenia', value: totalEvents, color: 'neutral', max: isFinite(currentLimits.events) ? currentLimits.events : null },
+        { label: 'Kontakty', value: totalContacts, color: 'neutral', max: isFinite(currentLimits.contacts) ? currentLimits.contacts : null },
       ],
-      upgradeLink: '/dashboard/settings?tab=plan',
+      upgradeLink: '/dashboard/plan',
       upgradeLinkText: 'Zmień plan',
     },
   ];
@@ -146,7 +162,7 @@ const MetricCard: React.FC<MetricProps> = ({
               />
               <span className="key-metrics__detail-label">{detail.label}</span>
               <span className="key-metrics__detail-value">
-                {detail.max ? `${detail.value} / ${detail.max}` : detail.value}
+                {detail.max === null ? `${detail.value} / ∞` : detail.max ? `${detail.value} / ${detail.max}` : detail.value}
               </span>
             </div>
           ))}

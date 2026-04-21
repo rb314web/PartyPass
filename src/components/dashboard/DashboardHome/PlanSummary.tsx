@@ -1,13 +1,7 @@
 // components/dashboard/DashboardHome/PlanSummary.tsx
 import React from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-
-// Możesz tu podać limity dla każdego planu
-const PLAN_LIMITS: Record<string, { maxEvents: number; maxGuests: number }> = {
-  starter: { maxEvents: 3, maxGuests: 50 },
-  pro: { maxEvents: 20, maxGuests: 500 },
-  enterprise: { maxEvents: 100, maxGuests: 5000 },
-};
+import { getPlanLimits, PlanType } from '../../../services/firebase/planLimitsService';
 
 interface PlanSummaryProps {
   totalEvents: number;
@@ -21,7 +15,7 @@ const PlanSummary: React.FC<PlanSummaryProps> = ({
   const { user } = useAuth();
   if (!user) return null;
   const plan = user.planType || 'starter';
-  const limits = PLAN_LIMITS[plan];
+  const limits = getPlanLimits(plan as PlanType);
 
   return (
     <div className="plan-summary">
@@ -49,13 +43,13 @@ const PlanSummary: React.FC<PlanSummaryProps> = ({
         <div className="plan-summary__row">
           <span>Wydarzenia:</span>
           <strong>
-            {totalEvents} / {limits.maxEvents}
+            {totalEvents} / {!isFinite(limits.events) ? '∞' : limits.events}
           </strong>
         </div>
         <div className="plan-summary__row">
           <span>Goście:</span>
           <strong>
-            {totalGuests} / {limits.maxGuests}
+            {totalGuests} / {!isFinite(limits.guests) ? '∞' : limits.guests}
           </strong>
         </div>
       </div>

@@ -177,7 +177,7 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
           eventSpecificNotes: globalSettings.eventSpecificNotes,
           plusOneType,
           plusOneDetails
-        });
+        }, user?.id);
       }
       onContactsAdded();
       handleClose();

@@ -9,6 +9,7 @@ import {
   Download,
   AlertCircle,
   Loader,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { usePayments } from '../../../../hooks/usePayments';
@@ -16,6 +17,7 @@ import {
   EventService,
   EventStats,
 } from '../../../../services/firebase/eventService';
+import { getPlanLimits, PlanType } from '../../../../services/firebase/planLimitsService';
 import ConfigurationStatus from '../ConfigurationStatus';
 import './PlanSettings.scss';
 
@@ -38,6 +40,9 @@ const PlanSettings: React.FC = () => {
     resetState,
   } = usePayments(user || undefined);
 
+  const planType = (user?.planType as PlanType) || 'starter';
+  const planLimits = getPlanLimits(planType);
+
   const plans = [
     {
       id: 'starter',
@@ -46,8 +51,9 @@ const PlanSettings: React.FC = () => {
       price: { monthly: 0, yearly: 0 },
       description: 'Idealny na początek',
       features: [
-        'Do 3 wydarzeń miesięcznie',
-        'Do 50 gości na wydarzenie',
+        'Do 10 wydarzeń łącznie',
+        'Do 50 gości łącznie',
+        'Do 50 kontaktów łącznie',
         'Podstawowe zaproszenia',
         'Email support',
         'Podstawowe statystyki',
@@ -66,8 +72,9 @@ const PlanSettings: React.FC = () => {
       description: 'Dla profesjonalistów',
       popular: true,
       features: [
-        'Do 15 wydarzeń miesięcznie',
-        'Do 200 gości na wydarzenie',
+        'Do 50 wydarzeń łącznie',
+        'Do 500 gości łącznie',
+        'Do 1000 kontaktów łącznie',
         'Spersonalizowane zaproszenia',
         'SMS powiadomienia',
         'Zaawansowane analityki',
@@ -85,6 +92,7 @@ const PlanSettings: React.FC = () => {
       features: [
         'Nieograniczone wydarzenia',
         'Nieograniczona liczba gości',
+        'Nieograniczona liczba kontaktów',
         'Custom branding',
         'API dostęp',
         'Dedykowany manager',
@@ -95,8 +103,9 @@ const PlanSettings: React.FC = () => {
       ],
     },
   ];
-  const currentPlan = plans.find(plan => plan.id === user?.planType);
-  const yearlyDiscount = 17; // 17% discount for yearly billing
+
+  const currentPlan = plans.find(p => p.id === user?.planType) ?? plans[0];
+  const yearlyDiscount = 17;
 
   const loadInvoices = useCallback(async () => {
     setLoadingInvoices(true);
@@ -109,82 +118,56 @@ const PlanSettings: React.FC = () => {
       setLoadingInvoices(false);
     }
   }, [getInvoices]);
-  const loadUsageStats = useCallback(async () => {
-    if (!user?.id) {
-      return;
-    }
 
+  const loadUsageStats = useCallback(async () => {
+    if (!user?.id) return;
     setLoadingStats(true);
     try {
       const stats = await EventService.getEventStats(user.id);
       setUsageStats(stats);
     } catch (error) {
-      console.error(
-        '❌ PlanSettings.loadUsageStats: Błąd podczas ładowania statystyk:',
-        error
-      );
-      console.error(
-        '📝 PlanSettings.loadUsageStats: Stack trace:',
-        (error as Error).stack
-      );
+      console.error('Błąd podczas ładowania statystyk:', error);
     } finally {
       setLoadingStats(false);
     }
-  }, [user?.id, user]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (user && isConfigured) {
-      loadInvoices();
+    if (user) {
       loadUsageStats();
+      if (isConfigured) loadInvoices();
     }
   }, [user, isConfigured, loadInvoices, loadUsageStats]);
 
   const getPrice = (plan: (typeof plans)[0]) => {
     if (plan.price.monthly === 0) return 'Darmowy';
-
     const price =
       billingCycle === 'yearly' ? plan.price.yearly : plan.price.monthly;
     const period = billingCycle === 'yearly' ? 'rok' : 'miesiąc';
-
     return `${price} PLN/${period}`;
   };
 
-  const getYearlyMonthlyEquivalent = (plan: (typeof plans)[0]) => {
+  const getYearlyEquivalent = (plan: (typeof plans)[0]) => {
     if (plan.price.monthly === 0 || billingCycle === 'monthly') return null;
-
-    const monthlyEquivalent = Math.round(plan.price.yearly / 12);
-    return `~${monthlyEquivalent} PLN/miesiąc`;
+    return `~${Math.round(plan.price.yearly / 12)} PLN/miesiąc`;
   };
+
   const handlePlanUpgrade = async (planId: string) => {
     if (!isConfigured) {
-      alert(
-        'Autopay nie jest skonfigurowane. Skontaktuj się z administratorem.'
-      );
+      alert('Autopay nie jest skonfigurowane. Skontaktuj się z administratorem.');
       return;
     }
-
-    // Reset poprzednich błędów
     resetState();
-
-    const selectedPlan = plans.find(plan => plan.id === planId);
-    if (!selectedPlan) {
-      alert('Wybrany plan nie został znaleziony.');
-      return;
-    }
-
+    const selectedPlan = plans.find(p => p.id === planId);
+    if (!selectedPlan) return;
     const price =
       billingCycle === 'yearly'
         ? selectedPlan.price.yearly
         : selectedPlan.price.monthly;
-
     if (price === 0) {
-      // Darmowy plan - nie wymaga płatności
-      alert(
-        `Przejście na plan ${selectedPlan.name} zostanie wkrótce zaimplementowane!`
-      );
+      alert(`Przejście na plan ${selectedPlan.name} zostanie wkrótce zaimplementowane!`);
       return;
     }
-
     try {
       await initiatePlanPayment(planId, selectedPlan.name, price, billingCycle);
     } catch (error) {
@@ -193,280 +176,235 @@ const PlanSettings: React.FC = () => {
   };
 
   const mockInvoices = [
-    {
-      id: '1',
-      date: '2024-07-01',
-      amount: 29,
-      status: 'paid' as const,
-      plan: 'Pro',
-      period: 'Lipiec 2024',
-    },
-    {
-      id: '2',
-      date: '2024-06-01',
-      amount: 29,
-      status: 'paid' as const,
-      plan: 'Pro',
-      period: 'Czerwiec 2024',
-    },
-    {
-      id: '3',
-      date: '2024-05-01',
-      amount: 29,
-      status: 'paid' as const,
-      plan: 'Pro',
-      period: 'Maj 2024',
-    },
+    { id: '1', date: '2024-07-01', amount: 29, status: 'paid' as const, plan: 'Pro', period: 'Lipiec 2024' },
+    { id: '2', date: '2024-06-01', amount: 29, status: 'paid' as const, plan: 'Pro', period: 'Czerwiec 2024' },
+    { id: '3', date: '2024-05-01', amount: 29, status: 'paid' as const, plan: 'Pro', period: 'Maj 2024' },
   ];
+
+  const eventsLimit = planLimits.events === Infinity ? '∞' : String(planLimits.events);
+  const guestsLimit = planLimits.guests === Infinity ? '∞' : String(planLimits.guests);
+  const eventsUsed = usageStats?.totalEvents ?? 0;
+  const guestsUsed = usageStats?.totalGuests ?? 0;
+  const eventsPercent =
+    planLimits.events === Infinity ? 0 : Math.min(Math.round((eventsUsed / planLimits.events) * 100), 100);
+  const guestsPercent =
+    planLimits.guests === Infinity ? 0 : Math.min(Math.round((guestsUsed / planLimits.guests) * 100), 100);
+
+  const getBarMod = (pct: number) =>
+    pct >= 90 ? 'danger' : pct >= 70 ? 'warning' : '';
+
+  const getStatusLabel = (status: string) => {
+    if (status === 'paid') return 'Opłacone';
+    if (status === 'pending') return 'Oczekuje';
+    if (status === 'failed') return 'Nieudane';
+    return 'Oczekuje';
+  };
+
   return (
     <div className="plan-settings">
-      {/* Configuration Status */}
+      {/* ── Page Header ── */}
+      <header className="plan-settings__page-header">
+        <div className="plan-settings__page-title">
+          <div className="plan-settings__page-icon">
+            <Crown size={24} />
+          </div>
+          <div>
+            <h1>Plan i subskrypcja</h1>
+            <p>Zarządzaj swoim planem, płatnościami i limitami</p>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Config Status ── */}
       <ConfigurationStatus />
 
-      {/* Payment Status Messages */}
+      {/* ── Alerts ── */}
       {paymentError && (
         <div className="plan-settings__alert plan-settings__alert--error">
-          <AlertCircle size={20} />
+          <AlertCircle size={18} />
           <span>Błąd płatności: {paymentError}</span>
-          <button onClick={resetState} className="plan-settings__alert-close">
-            ×
+          <button className="plan-settings__alert-close" onClick={resetState}>
+            <X size={16} />
           </button>
         </div>
       )}
-
       {paymentSuccess && (
         <div className="plan-settings__alert plan-settings__alert--success">
-          <Check size={20} />
-          <span>
-            Płatność została zainicjowana pomyślnie! Sprawdź swój email w celu
-            dalszych instrukcji.
-          </span>
-          <button onClick={resetState} className="plan-settings__alert-close">
-            ×
+          <Check size={18} />
+          <span>Płatność zainicjowana! Sprawdź swój email w celu dalszych instrukcji.</span>
+          <button className="plan-settings__alert-close" onClick={resetState}>
+            <X size={16} />
           </button>
         </div>
       )}
-
       {!isConfigured && (
         <div className="plan-settings__alert plan-settings__alert--warning">
-          <AlertCircle size={20} />
-          <span>
-            System płatności nie jest skonfigurowany. Skontaktuj się z
-            administratorem.
-          </span>
+          <AlertCircle size={18} />
+          <span>System płatności nie jest skonfigurowany. Skontaktuj się z administratorem.</span>
         </div>
       )}
-
       {paymentLoading && (
-        <div className="plan-settings__loading">
-          <Loader size={20} className="plan-settings__spinner" />
+        <div className="plan-settings__loading-bar">
+          <Loader size={18} className="plan-settings__spinner" />
           <span>Przetwarzanie płatności...</span>
         </div>
       )}
-      {/* Current Plan */}
+
+      {/* ── Current Plan ── */}
       <div className="plan-settings__current">
-        <div className="plan-settings__current-header">
+        <div className="plan-settings__current-top">
           <div className="plan-settings__current-info">
-            <h2>Twój aktualny plan</h2>
-            <div className="plan-settings__current-plan">
-              {currentPlan?.icon && <currentPlan.icon size={20} />}
-              <span>{currentPlan?.name}</span>
-              {currentPlan?.id === 'pro' && (
-                <span className="plan-settings__badge">Aktywny</span>
-              )}
+            <span className="plan-settings__current-label">Twój aktualny plan</span>
+            <div className="plan-settings__current-name">
+              {currentPlan.icon && <currentPlan.icon size={20} />}
+              <span>{currentPlan.name}</span>
+              <span className="plan-settings__status-badge">Aktywny</span>
             </div>
           </div>
-          <div className="plan-settings__current-price">
-            <span className="plan-settings__price-amount">
-              {currentPlan?.price.monthly === 0
-                ? 'Darmowy'
-                : `${currentPlan?.price.monthly} PLN`}
+          <div className="plan-settings__current-price-block">
+            <span className="plan-settings__price-main">
+              {currentPlan.price.monthly === 0 ? 'Darmowy' : `${currentPlan.price.monthly} PLN`}
             </span>
-            {currentPlan?.price.monthly !== 0 && (
+            {currentPlan.price.monthly !== 0 && (
               <span className="plan-settings__price-period">/miesiąc</span>
             )}
           </div>
-        </div>{' '}
-        <div className="plan-settings__usage">
-          <h3>Wykorzystanie w tym miesiącu</h3>
+        </div>
+
+        <div className="plan-settings__usage-section">
+          <h3 className="plan-settings__usage-title">Wykorzystanie zasobów</h3>
           {loadingStats ? (
             <div className="plan-settings__loading">
               <Loader size={16} className="plan-settings__spinner" />
               <span>Ładowanie statystyk...</span>
             </div>
           ) : (
-            <>
-              <div className="plan-settings__usage-stats">
-                <div className="plan-settings__usage-item">
-                  <span>Wydarzenia</span>
-                  <span>
-                    {usageStats?.eventsThisMonth || 0} /{' '}
-                    {currentPlan?.id === 'enterprise'
-                      ? '∞'
-                      : currentPlan?.id === 'pro'
-                        ? '15'
-                        : '3'}
+            <div className="plan-settings__usage-grid">
+              <div className="plan-settings__usage-item">
+                <div className="plan-settings__usage-item-header">
+                  <span className="plan-settings__usage-item-label">Wydarzenia</span>
+                  <span className="plan-settings__usage-item-count">
+                    {eventsUsed} / {eventsLimit}
                   </span>
                 </div>
-                <div className="plan-settings__usage-item">
-                  <span>Goście</span>
-                  <span>
-                    {usageStats?.guestsThisMonth || 0} /{' '}
-                    {currentPlan?.id === 'enterprise'
-                      ? '∞'
-                      : currentPlan?.id === 'pro'
-                        ? '200'
-                        : '50'}
-                  </span>
+                <div className="plan-settings__usage-bar">
+                  <div
+                    className={`plan-settings__usage-bar-fill ${getBarMod(eventsPercent) ? `plan-settings__usage-bar-fill--${getBarMod(eventsPercent)}` : ''}`}
+                    style={{ width: `${eventsPercent}%` }}
+                  />
                 </div>
               </div>
-
-              {usageStats && (
-                <div className="plan-settings__usage-summary">
-                  <div className="plan-settings__usage-total">
-                    <h4>Statystyki ogólne</h4>
-                    <div className="plan-settings__usage-grid">
-                      <div className="plan-settings__usage-metric">
-                        <span className="plan-settings__usage-metric-value">
-                          {usageStats.totalEvents}
-                        </span>
-                        <span className="plan-settings__usage-metric-label">
-                          Łącznie wydarzeń
-                        </span>
-                      </div>
-                      <div className="plan-settings__usage-metric">
-                        <span className="plan-settings__usage-metric-value">
-                          {usageStats.totalGuests}
-                        </span>
-                        <span className="plan-settings__usage-metric-label">
-                          Łącznie gości
-                        </span>
-                      </div>
-                      <div className="plan-settings__usage-metric">
-                        <span className="plan-settings__usage-metric-value">
-                          {usageStats.responseRate}%
-                        </span>
-                        <span className="plan-settings__usage-metric-label">
-                          Wskaźnik odpowiedzi
-                        </span>
-                      </div>
-                      <div className="plan-settings__usage-metric">
-                        <span className="plan-settings__usage-metric-value">
-                          {usageStats.upcomingEvents}
-                        </span>
-                        <span className="plan-settings__usage-metric-label">
-                          Nadchodzące
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+              <div className="plan-settings__usage-item">
+                <div className="plan-settings__usage-item-header">
+                  <span className="plan-settings__usage-item-label">Goście</span>
+                  <span className="plan-settings__usage-item-count">
+                    {guestsUsed} / {guestsLimit}
+                  </span>
                 </div>
-              )}
-            </>
+                <div className="plan-settings__usage-bar">
+                  <div
+                    className={`plan-settings__usage-bar-fill ${getBarMod(guestsPercent) ? `plan-settings__usage-bar-fill--${getBarMod(guestsPercent)}` : ''}`}
+                    style={{ width: `${guestsPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Plan Comparison */}
+      {/* ── Plan Comparison ── */}
       <div className="plan-settings__plans">
         <div className="plan-settings__plans-header">
           <h2>Porównaj plany</h2>
           <div className="plan-settings__billing-toggle">
             <button
-              className={billingCycle === 'monthly' ? 'active' : ''}
+              className={`plan-settings__billing-option ${billingCycle === 'monthly' ? 'plan-settings__billing-option--active' : ''}`}
               onClick={() => setBillingCycle('monthly')}
             >
               Miesięcznie
             </button>
             <button
-              className={billingCycle === 'yearly' ? 'active' : ''}
+              className={`plan-settings__billing-option ${billingCycle === 'yearly' ? 'plan-settings__billing-option--active' : ''}`}
               onClick={() => setBillingCycle('yearly')}
             >
               Rocznie
-              <span className="plan-settings__discount">
-                -{yearlyDiscount}%
-              </span>
+              <span className="plan-settings__discount">-{yearlyDiscount}%</span>
             </button>
           </div>
         </div>
 
         <div className="plan-settings__plans-grid">
-          {plans.map(plan => (
-            <div
-              key={plan.id}
-              className={`plan-settings__plan-card ${plan.popular ? 'plan-settings__plan-card--popular' : ''} ${plan.id === user?.planType ? 'plan-settings__plan-card--current' : ''}`}
-            >
-              {plan.popular && (
-                <div className="plan-settings__popular-badge">
-                  <Star size={16} />
-                  Najpopularniejszy
-                </div>
-              )}
-
-              <div className="plan-settings__plan-header">
-                <div className="plan-settings__plan-icon">
-                  <plan.icon size={24} />
-                </div>
-                <h3>{plan.name}</h3>
-                <p>{plan.description}</p>
-              </div>
-
-              <div className="plan-settings__plan-price">
-                <span className="plan-settings__price-main">
-                  {getPrice(plan)}
-                </span>
-                {getYearlyMonthlyEquivalent(plan) && (
-                  <span className="plan-settings__price-equivalent">
-                    {getYearlyMonthlyEquivalent(plan)}
-                  </span>
+          {plans.map(plan => {
+            const isCurrent = plan.id === user?.planType;
+            const isUpgrade = plan.price.monthly > currentPlan.price.monthly;
+            return (
+              <div
+                key={plan.id}
+                className={`plan-settings__plan-card ${plan.popular ? 'plan-settings__plan-card--popular' : ''} ${isCurrent ? 'plan-settings__plan-card--current' : ''}`}
+              >
+                {plan.popular && (
+                  <div className="plan-settings__popular-badge">
+                    <Star size={13} />
+                    Najpopularniejszy
+                  </div>
                 )}
-              </div>
 
-              <ul className="plan-settings__features">
-                {plan.features.map((feature, index) => (
-                  <li key={index}>
-                    <Check size={16} />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
+                <div className="plan-settings__plan-header">
+                  <div className="plan-settings__plan-icon">
+                    <plan.icon size={22} />
+                  </div>
+                  <h3>{plan.name}</h3>
+                  <p>{plan.description}</p>
+                </div>
 
-              {plan.limitations && (
-                <ul className="plan-settings__limitations">
-                  {plan.limitations.map((limitation, index) => (
-                    <li key={index}>
-                      <span>{limitation}</span>
+                <div className="plan-settings__plan-price">
+                  <span className="plan-settings__price-main">{getPrice(plan)}</span>
+                  {getYearlyEquivalent(plan) && (
+                    <span className="plan-settings__price-equivalent">
+                      {getYearlyEquivalent(plan)}
+                    </span>
+                  )}
+                </div>
+
+                <ul className="plan-settings__features">
+                  {plan.features.map((feature, i) => (
+                    <li key={i}>
+                      <Check size={15} />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-              )}
 
-              <button
-                className={`plan-settings__plan-btn ${plan.id === user?.planType ? 'plan-settings__plan-btn--current' : ''}`}
-                onClick={() => handlePlanUpgrade(plan.id)}
-                disabled={plan.id === user?.planType || paymentLoading}
-              >
-                {plan.id === user?.planType
-                  ? 'Aktualny plan'
-                  : plan.price.monthly === 0
-                    ? 'Downgrade'
-                    : 'Upgrade'}
-              </button>
-            </div>
-          ))}
+                {'limitations' in plan && plan.limitations && (
+                  <ul className="plan-settings__limitations">
+                    {plan.limitations.map((lim, i) => (
+                      <li key={i}>{lim}</li>
+                    ))}
+                  </ul>
+                )}
+
+                <button
+                  className={`plan-settings__plan-btn ${isCurrent ? 'plan-settings__plan-btn--current' : isUpgrade ? 'plan-settings__plan-btn--upgrade' : 'plan-settings__plan-btn--downgrade'}`}
+                  onClick={() => handlePlanUpgrade(plan.id)}
+                  disabled={isCurrent || paymentLoading}
+                >
+                  {isCurrent ? 'Aktualny plan' : isUpgrade ? 'Upgrade' : 'Downgrade'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Payment Method */}
+      {/* ── Payment Method ── */}
       <div className="plan-settings__payment">
         <h2>Metoda płatności</h2>
         <div className="plan-settings__payment-card">
           <div className="plan-settings__payment-info">
-            <CreditCard size={24} />
+            <CreditCard size={22} />
             <div>
-              <div className="plan-settings__card-number">
-                •••• •••• •••• 4242
-              </div>
+              <div className="plan-settings__card-number">•••• •••• •••• 4242</div>
               <div className="plan-settings__card-expiry">Wygasa 12/25</div>
             </div>
           </div>
@@ -474,19 +412,20 @@ const PlanSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Billing History */}
+      {/* ── Billing History ── */}
       <div className="plan-settings__billing">
         <div className="plan-settings__billing-header">
           <h2>Historia płatności</h2>
-          <button className="plan-settings__download-btn">
-            <Download size={16} />
+          <button className="plan-settings__download-all">
+            <Download size={15} />
             Pobierz wszystkie
           </button>
         </div>
+
         <div className="plan-settings__invoices">
           {loadingInvoices ? (
-            <div className="plan-settings__loading-invoices">
-              <Loader size={20} className="plan-settings__spinner" />
+            <div className="plan-settings__loading">
+              <Loader size={18} className="plan-settings__spinner" />
               <span>Ładowanie faktur...</span>
             </div>
           ) : (
@@ -498,40 +437,25 @@ const PlanSettings: React.FC = () => {
                       {new Date(invoice.date).toLocaleDateString('pl-PL')}
                     </div>
                     <div className="plan-settings__invoice-details">
-                      <span>
-                        {invoice.plan || invoice.description || 'Plan'}
-                      </span>
+                      <span>{invoice.plan || invoice.description || 'Plan'}</span>
                       <span>•</span>
                       <span>{invoice.period || `${invoice.amount} PLN`}</span>
                     </div>
                   </div>
-                  <div className="plan-settings__invoice-amount">
-                    {invoice.amount} PLN
+                  <div className="plan-settings__invoice-amount">{invoice.amount} PLN</div>
+                  <div className={`plan-settings__invoice-status plan-settings__invoice-status--${invoice.status}`}>
+                    {getStatusLabel(invoice.status)}
                   </div>
-                  <div
-                    className={`plan-settings__invoice-status plan-settings__invoice-status--${invoice.status}`}
-                  >
-                    {invoice.status === 'paid'
-                      ? 'Opłacone'
-                      : invoice.status === 'pending'
-                        ? 'Oczekuje'
-                        : invoice.status === 'failed'
-                          ? 'Nieudane'
-                          : 'Oczekuje'}
-                  </div>
-                  <button className="plan-settings__invoice-download">
-                    <Download size={16} />
+                  <button className="plan-settings__invoice-download" title="Pobierz fakturę">
+                    <Download size={15} />
                   </button>
                 </div>
               ))}
               {invoices.length === 0 && !loadingInvoices && (
                 <div className="plan-settings__no-invoices">
-                  <CreditCard size={48} />
+                  <CreditCard size={40} />
                   <h3>Brak faktur</h3>
-                  <p>
-                    Nie masz jeszcze żadnych faktur. Gdy dokonasz pierwszej
-                    płatności, pojawią się tutaj.
-                  </p>
+                  <p>Gdy dokonasz pierwszej płatności, faktury pojawią się tutaj.</p>
                 </div>
               )}
             </>

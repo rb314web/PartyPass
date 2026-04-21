@@ -5,6 +5,7 @@ import {
   EventService,
   EventStats,
 } from '../../../services/firebase/eventService';
+import { ContactService } from '../../../services/firebase/contactService';
 import { useAuth } from '../../../hooks/useAuth';
 import { Activity as ActivityType, Event } from '../../../types';
 import './DashboardHome.scss';
@@ -23,6 +24,7 @@ const DashboardHome: React.FC = () => {
   // State management
   const [stats, setStats] = React.useState<EventStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = React.useState(true);
+  const [totalContacts, setTotalContacts] = React.useState(0);
   const [activities, setActivities] = React.useState<ActivityType[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = React.useState(true);
   const [upcomingEvents, setUpcomingEvents] = React.useState<Event[]>([]);
@@ -43,8 +45,14 @@ const DashboardHome: React.FC = () => {
   React.useEffect(() => {
     if (user?.id) {
       setIsLoadingStats(true);
-      EventService.getEventStats(user.id)
-        .then(setStats)
+      Promise.all([
+        EventService.getEventStats(user.id),
+        ContactService.getContactCount(user.id),
+      ])
+        .then(([eventStats, contactCount]) => {
+          setStats(eventStats);
+          setTotalContacts(contactCount);
+        })
         .catch(() => setStats(null))
         .finally(() => setIsLoadingStats(false));
     }
@@ -211,12 +219,14 @@ const DashboardHome: React.FC = () => {
           eventsChange={eventsChange}
           totalGuests={stats?.totalGuests ?? 0}
           guestsChange={guestsChange}
+          totalContacts={totalContacts}
           responseRate={stats?.responseRate ?? 0}
           responseRateChange={responseRateChange}
           activeEvents={stats?.activeEvents ?? 0}
           completedEvents={stats?.completedEvents ?? 0}
           acceptedGuests={stats?.acceptedGuests ?? 0}
           pendingGuests={stats?.pendingGuests ?? 0}
+          planType={user?.planType as 'starter' | 'pro' | 'enterprise' | undefined}
         />
       </div>
 

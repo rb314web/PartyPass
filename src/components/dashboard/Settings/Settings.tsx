@@ -2,14 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   User,
-  CreditCard,
   Bell,
   Shield,
   Palette,
   Settings as SettingsIcon,
 } from 'lucide-react';
 import ProfileSettings from './ProfileSettings/ProfileSettings';
-import PlanSettings from './PlanSettings/PlanSettings';
 import NotificationSettings from './NotificationSettings/NotificationSettings';
 import SecuritySettings from './SecuritySettings/SecuritySettings';
 import AppearanceSettings from './AppearanceSettings/AppearanceSettings';
@@ -17,7 +15,6 @@ import './Settings.scss';
 
 type SettingsTab =
   | 'profile'
-  | 'plan'
   | 'notifications'
   | 'security'
   | 'appearance';
@@ -38,12 +35,6 @@ const Settings: React.FC = () => {
       label: 'Profil',
       description: 'Dane osobowe i kontakt',
       icon: User,
-    },
-    {
-      id: 'plan' as const,
-      label: 'Plan',
-      description: 'Subskrypcja i płatności',
-      icon: CreditCard,
     },
     {
       id: 'notifications' as const,
@@ -69,8 +60,6 @@ const Settings: React.FC = () => {
     switch (activeTab) {
       case 'profile':
         return <ProfileSettings />;
-      case 'plan':
-        return <PlanSettings />;
       case 'notifications':
         return <NotificationSettings />;
       case 'security':

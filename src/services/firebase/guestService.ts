@@ -6,6 +6,7 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  getCountFromServer,
   updateDoc,
   deleteDoc,
   query,
@@ -24,6 +25,7 @@ import {
   COLLECTIONS,
 } from '../../types/firebase';
 import { AnalyticsService } from './analyticsService';
+import { PlanLimitExceededError, canCreateGuest, getPlanLimits, PlanType } from './planLimitsService';
 
 export interface GuestFilters {
   eventId?: string;
@@ -59,6 +61,16 @@ const convertFirebaseGuestToGuest = (
 };
 
 export class GuestService {
+  // Get total guest count for user (efficient Firestore count query)
+  static async getGuestCount(userId: string): Promise<number> {
+    const q = query(
+      collection(db, COLLECTIONS.GUESTS),
+      where('userId', '==', userId)
+    );
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+  }
+
   // Get guests for user with pagination
   static async getUserGuests(
     userId: string,
@@ -143,6 +155,41 @@ export class GuestService {
     guestData: CreateGuestData
   ): Promise<Guest> {
     try {
+      // Sprawdź limity na podstawie planu użytkownika
+      const userDoc = await getDoc(firebaseDoc(db, COLLECTIONS.USERS, userId));
+      const userPlanType = (userDoc.data()?.planType || 'starter') as PlanType;
+      
+      // Pobierz ilość istniejących gości użytkownika (wydajna metoda count)
+      const guestsQuery = query(
+        collection(db, COLLECTIONS.GUESTS),
+        where('userId', '==', userId)
+      );
+      const guestsSnapshot = await getCountFromServer(guestsQuery);
+      const guestCount = guestsSnapshot.data().count;
+      
+      // Sprawdź czy może dodawać nowych gości
+      if (!canCreateGuest(guestCount, userPlanType)) {
+        throw new PlanLimitExceededError('guests', userPlanType,
+          getPlanLimits(userPlanType).guests,
+          guestCount
+        );
+      }
+
+      // Sprawdź limit gości dla konkretnego wydarzenia (maxGuests na evencie)
+      const eventRef = firebaseDoc(db, COLLECTIONS.EVENTS, eventId);
+      const eventDocForValidation = await getDoc(eventRef);
+      if (eventDocForValidation.exists()) {
+        const eventForValidation = eventDocForValidation.data() as FirebaseEvent;
+        if (
+          eventForValidation.maxGuests > 0 &&
+          (eventForValidation.guestCount || 0) >= eventForValidation.maxGuests
+        ) {
+          throw new Error(
+            `Osiągnięto maksymalną liczbę gości (${eventForValidation.maxGuests}) dla tego wydarzenia.`
+          );
+        }
+      }
+
       const newGuest: Omit<FirebaseGuest, 'id'> = {
         userId,
         eventId,
@@ -202,8 +249,27 @@ export class GuestService {
         );
       }
 
-      // Update event guest counts
-      const eventRef = firebaseDoc(db, COLLECTIONS.EVENTS, eventId);
+      // Auto-create contact if not exists – każdy gość = kontakt
+      if (guestData.email) {
+        try {
+          const { ContactService } = await import('./contactService');
+          const emailExists = await ContactService.checkEmailExists(userId, guestData.email);
+          if (!emailExists) {
+            await ContactService.createContact(userId, {
+              firstName: guestData.firstName || '',
+              lastName: guestData.lastName || '',
+              email: guestData.email,
+              phone: guestData.phone || undefined,
+              dietaryRestrictions: guestData.dietaryRestrictions || undefined,
+              notes: guestData.notes || undefined,
+            });
+          }
+        } catch (contactError) {
+          console.warn('Failed to auto-create contact for guest:', contactError);
+        }
+      }
+
+      // Update event guest counts (reuse eventRef from validation above)
       const eventDoc = await getDoc(eventRef);
       const eventData = eventDoc.data() as FirebaseEvent | undefined;
 

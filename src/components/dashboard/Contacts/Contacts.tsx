@@ -14,19 +14,22 @@ import {
   AlertCircle,
   Edit3,
   Trash2,
+  Crown,
+  CalendarPlus,
 } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import { Contact } from '../../../types';
-import {
-  ContactService,
-  ContactFilters,
-} from '../../../services/firebase/contactService';
+import { ContactService, ContactFilters } from '../../../services/firebase/contactService';
+import { EventGuestService } from '../../../services/firebase/eventGuestService';
+import { canCreateContact, getContactLimitErrorMessage, PlanType } from '../../../services/firebase/planLimitsService';
 import AddContact from './AddContact';
+import AddContactToEvent from './AddContactToEvent/AddContactToEvent';
 import EditContactModal from './EditContactModal';
 import DeleteContactModal from './DeleteContactModal';
 import ImportContacts from './ImportContacts';
 import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import PlanLimitPopover from '../../common/PlanLimitPopover/PlanLimitPopover';
 import './Contacts.scss';
 
 const Contacts: React.FC = () => {
@@ -55,6 +58,11 @@ const Contacts: React.FC = () => {
   const [deleteContactOpen, setDeleteContactOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [canAddContact, setCanAddContact] = useState(true);
+  const [limitMessage, setLimitMessage] = useState('');
+  const [contactEventCounts, setContactEventCounts] = useState<Map<string, number>>(new Map());
+  const [addToEventOpen, setAddToEventOpen] = useState(false);
+  const [selectedContactForEvent, setSelectedContactForEvent] = useState<Contact | null>(null);
   
   // Highlight state for search navigation
   const [highlightedContactId, setHighlightedContactId] = useState<string | null>(null);
@@ -143,6 +151,40 @@ const Contacts: React.FC = () => {
     return filtered;
   }, [contacts, activeSearchQuery, sortDirection]);
 
+  // Ładuj liczby wydarzeń per kontakt po załadowaniu listy kontaktów
+  useEffect(() => {
+    if (!contacts.length) {
+      setContactEventCounts(new Map());
+      return;
+    }
+    const loadCounts = async () => {
+      try {
+        const ids = contacts.map(c => c.id);
+        const counts = await EventGuestService.getContactEventCounts(ids);
+        setContactEventCounts(counts);
+      } catch (err) {
+        console.warn('Failed to load event counts for contacts:', err);
+      }
+    };
+    loadCounts();
+  }, [contacts]);
+
+  // Sprawdź limit kontaktów przy każdej zmianie listy
+  useEffect(() => {
+    const checkLimit = async () => {
+      if (!user?.id) return;
+      try {
+        const count = await ContactService.getContactCount(user.id);
+        const allowed = canCreateContact(count, user.planType as PlanType);
+        setCanAddContact(allowed);
+        setLimitMessage(allowed ? '' : getContactLimitErrorMessage(user.planType as PlanType));
+      } catch (error) {
+        console.error('Error checking contact limit:', error);
+      }
+    };
+    checkLimit();
+  }, [user?.id, user?.planType, contacts]);
+
   // STABLE contact handlers - prevent unnecessary rerenders
   const handleAddContact = useCallback(() => {
     setAddContactOpen(true);
@@ -210,6 +252,11 @@ const Contacts: React.FC = () => {
     }
   }, [isDeleting]);
 
+  const handleInviteToEvent = useCallback((contact: Contact) => {
+    setSelectedContactForEvent(contact);
+    setAddToEventOpen(true);
+  }, []);
+
   // STABLE contact actions handler
   const handleContactAction = useCallback(
     async (action: string, contactId: string) => {
@@ -224,6 +271,9 @@ const Contacts: React.FC = () => {
           case 'delete':
             handleOpenDeleteModal(contact);
             break;
+          case 'invite':
+            handleInviteToEvent(contact);
+            break;
           case 'email':
             window.open(`mailto:${contact.email}`);
             break;
@@ -237,7 +287,7 @@ const Contacts: React.FC = () => {
         console.error('Error handling contact action:', error);
       }
     },
-    [contacts, handleEditContact, handleOpenDeleteModal]
+    [contacts, handleEditContact, handleOpenDeleteModal, handleInviteToEvent]
   );
 
   // Simple search handler - just updates input value
@@ -407,7 +457,9 @@ const Contacts: React.FC = () => {
   const renderContactsList = useCallback(
     () => (
       <div className="contacts__list">
-        {filteredAndSortedContacts.map(contact => (
+        {filteredAndSortedContacts.map(contact => {
+          const eventCount = contactEventCounts.get(contact.id) || 0;
+          return (
           <div 
             key={contact.id} 
             ref={el => { contactRefs.current[contact.id] = el; }}
@@ -424,11 +476,25 @@ const Contacts: React.FC = () => {
                 <div>
                   <div className="contacts__contact-name">
                     {contact.firstName} {contact.lastName}
+                    {eventCount > 0 && (
+                      <span className="contacts__event-badge" title={`Gość ${eventCount} ${eventCount === 1 ? 'wydarzenia' : 'wydarzeń'}`}>
+                        <CalendarPlus size={10} />
+                        {eventCount}
+                      </span>
+                    )}
                   </div>
                   <div className="contacts__contact-email">{contact.email}</div>
                 </div>
               </div>
               <div className="contacts__card-actions">
+                <button
+                  onClick={() => handleContactAction('invite', contact.id)}
+                  className="contacts__action-btn contacts__action-btn--small contacts__action-btn--invite"
+                  title="Zaproś na wydarzenie"
+                >
+                  <CalendarPlus size={14} />
+                  <span>Zaproś</span>
+                </button>
                 <button
                   onClick={() => handleContactAction('edit', contact.id)}
                   className="contacts__action-btn contacts__action-btn--small"
@@ -465,10 +531,11 @@ const Contacts: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     ),
-    [filteredAndSortedContacts, handleContactAction, highlightedContactId]
+    [filteredAndSortedContacts, handleContactAction, highlightedContactId, contactEventCounts]
   );
 
   // Main contacts list page - memoized to prevent re-creation
@@ -521,14 +588,27 @@ const Contacts: React.FC = () => {
               <ArrowLeftRight size={20} />
               Importuj / eksportuj
             </button>
-            <button
-              className="contacts__action-btn contacts__action-btn--primary"
-              onClick={handleAddContact}
-              title="Dodaj nowy kontakt"
-            >
-              <Plus size={20} />
-              Dodaj kontakt
-            </button>
+            <PlanLimitPopover isLimitReached={!canAddContact} limitMessage={limitMessage}>
+              {canAddContact ? (
+                <button
+                  className="contacts__action-btn contacts__action-btn--primary"
+                  onClick={handleAddContact}
+                  title="Dodaj nowy kontakt"
+                >
+                  <Plus size={20} />
+                  Dodaj kontakt
+                </button>
+              ) : (
+                <button
+                  className="contacts__action-btn contacts__action-btn--upgrade"
+                  onClick={() => navigate('/dashboard/plan')}
+                >
+                  <Crown size={16} />
+                  <span>Ulepsz plan</span>
+                  <span className="contacts__action-btn-badge">Limit osiągnięty</span>
+                </button>
+              )}
+            </PlanLimitPopover>
           </div>
         </header>
 
@@ -603,6 +683,8 @@ const Contacts: React.FC = () => {
       renderError,
       renderEmptyState,
       renderContactsList,
+      canAddContact,
+      limitMessage,
     ]
   );
 
@@ -638,6 +720,24 @@ const Contacts: React.FC = () => {
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
       />
+
+      {selectedContactForEvent && (
+        <AddContactToEvent
+          open={addToEventOpen}
+          onClose={() => {
+            setAddToEventOpen(false);
+            setSelectedContactForEvent(null);
+          }}
+          contact={selectedContactForEvent}
+          onSuccess={() => {
+            setAddToEventOpen(false);
+            setSelectedContactForEvent(null);
+            // Odśwież liczniki wydarzeń
+            const ids = contacts.map(c => c.id);
+            EventGuestService.getContactEventCounts(ids).then(setContactEventCounts).catch(console.warn);
+          }}
+        />
+      )}
     </>
   );
 };

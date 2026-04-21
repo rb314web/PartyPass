@@ -13,8 +13,10 @@ import {
   Pause,
   Bell,
   Calendar,
+  Crown,
 } from 'lucide-react';
 import { EventService } from '../../../services/firebase/eventService';
+import { canCreateEvent, getEventLimitErrorMessage, PlanType } from '../../../services/firebase/planLimitsService';
 import { useAuth } from '../../../hooks/useAuth';
 import { Event } from '../../../types';
 // import { mockEvents } from '../../../services/mockData';
@@ -29,6 +31,7 @@ import DuplicateEventModal, {
 } from './DuplicateEventModal/DuplicateEventModal';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import PlanLimitPopover from '../../common/PlanLimitPopover/PlanLimitPopover';
 import './Events.scss';
 
 type ViewMode = 'grid' | 'list';
@@ -44,6 +47,9 @@ interface EventsListPageProps {
   events: Event[];
   recentChanges: RecentChange[];
   onCreateEvent: () => void;
+  onUpgrade: () => void;
+  canAddEvent: boolean;
+  limitMessage: string;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   showFilters: boolean;
@@ -70,6 +76,9 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
   events,
   recentChanges,
   onCreateEvent,
+  onUpgrade,
+  canAddEvent,
+  limitMessage,
   searchQuery,
   onSearchChange,
   showFilters,
@@ -181,14 +190,28 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
               <span>Ostatnie zmiany ({recentChanges.length})</span>
             </button>
           )}
-          <button
-            type="button"
-            className="events__action-btn events__action-btn--primary"
-            onClick={onCreateEvent}
-          >
-            <Plus size={18} aria-hidden="true" />
-            <span>Nowe wydarzenie</span>
-          </button>
+          <PlanLimitPopover isLimitReached={!canAddEvent} limitMessage={limitMessage}>
+            {canAddEvent ? (
+              <button
+                type="button"
+                className="events__action-btn events__action-btn--primary"
+                onClick={onCreateEvent}
+              >
+                <Plus size={18} aria-hidden="true" />
+                <span>Nowe wydarzenie</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="events__action-btn events__action-btn--upgrade"
+                onClick={onUpgrade}
+              >
+                <Crown size={16} aria-hidden="true" />
+                <span>Ulepsz plan</span>
+                <span className="events__action-btn-badge">Limit osiągnięty</span>
+              </button>
+            )}
+          </PlanLimitPopover>
         </div>
       </header>
 
@@ -418,6 +441,24 @@ const Events: React.FC = () => {
   const [mountTime] = useState(Date.now());
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [eventToDuplicate, setEventToDuplicate] = useState<Event | null>(null);
+  const [canAddEvent, setCanAddEvent] = useState(true);
+  const [limitMessage, setLimitMessage] = useState('');
+
+  // Sprawdź limit wydarzeń przy załadowaniu i po każdej zmianie listy
+  useEffect(() => {
+    const checkLimit = async () => {
+      if (!user?.id) return;
+      try {
+        const count = await EventService.getEventCount(user.id);
+        const allowed = canCreateEvent(count, user.planType as PlanType);
+        setCanAddEvent(allowed);
+        setLimitMessage(allowed ? '' : getEventLimitErrorMessage(user.planType as PlanType));
+      } catch (error) {
+        console.error('Error checking event limit:', error);
+      }
+    };
+    checkLimit();
+  }, [user?.id, user?.planType, events]);
 
   // Real-time synchronization state
   const [recentChanges, setRecentChanges] = useState<RecentChange[]>([]);
@@ -560,6 +601,10 @@ const Events: React.FC = () => {
 
   const handleCreateEvent = () => {
     navigate('create');
+  };
+
+  const handleUpgrade = () => {
+    navigate('/dashboard/plan');
   };
 
   const handleEventAdded = async () => {
@@ -739,6 +784,9 @@ const Events: React.FC = () => {
                 events={events}
                 recentChanges={recentChanges}
                 onCreateEvent={handleCreateEvent}
+                onUpgrade={handleUpgrade}
+                canAddEvent={canAddEvent}
+                limitMessage={limitMessage}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 showFilters={showFilters}
