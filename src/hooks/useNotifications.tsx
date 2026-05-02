@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 // hooks/useNotifications.tsx
 import { useState, useEffect, useCallback } from 'react';
 import {

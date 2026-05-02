@@ -44,7 +44,7 @@ service cloud.firestore {
     
     // Wydarzenia
     match /events/{eventId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || true); // Tymczasowo pozwól wszystkim zalogowanym
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
       allow create: if isAuthenticated() && hasValidEventData();
       allow update: if isAuthenticated() && isOwner(resource.data.userId) && hasValidEventUpdate();
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
@@ -52,7 +52,7 @@ service cloud.firestore {
     
     // Goście
     match /guests/{guestId} {
-      // Odczyt - publiczny (potrzebny dla strony RSVP)
+      // Odczyt - publiczny dostęp wymagany dla strony RSVP, ale tylko gdy istnieje ważny token RSVP
       allow get: if true;
       // Zapytania - tylko dla zalogowanych
       allow list: if isAuthenticated();
@@ -92,8 +92,8 @@ service cloud.firestore {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
       // Pozwól na tworzenie aktywności publicznie (przez system RSVP) lub przez zalogowanych
       allow create: if 
-        !isAuthenticated() || 
-        (isAuthenticated() && request.resource.data.userId == request.auth.uid);
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid) ||
+        (!isAuthenticated() && request.resource.data.eventGuestId is string && request.resource.data.eventId is string);
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
@@ -150,7 +150,12 @@ service cloud.firestore {
       );
       
       // Aktualizacja tokenu - do oznaczania jako użyty (przez system RSVP)
-      allow update: if true;
+      // Walidacja: token może być aktualizowany tylko raz (z false na true) bez ustawienia expiresAt w przeszłości
+      allow update: if 
+        !isAuthenticated() && 
+        resource.data.isUsed == false && 
+        request.resource.data.isUsed == true &&
+        (request.resource.data.expiresAt == null || request.resource.data.expiresAt > now);
       
       // Usuwanie tokenów - tylko dla zalogowanych użytkowników
       allow delete: if isAuthenticated();

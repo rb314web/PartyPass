@@ -115,7 +115,7 @@ const Contacts: React.FC = () => {
         }
       }
     },
-    [user?.id]
+    [user?.id, lastDoc]
   );
 
   // STABLE filtered and sorted contacts - fully memoized
@@ -685,6 +685,7 @@ const Contacts: React.FC = () => {
       renderContactsList,
       canAddContact,
       limitMessage,
+      navigate,
     ]
   );
 

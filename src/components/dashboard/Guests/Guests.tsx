@@ -1,3 +1,4 @@
+import logger from '../../../utils/logger';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import {

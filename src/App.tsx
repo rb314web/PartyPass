@@ -15,6 +15,7 @@ import AuthGuard from './components/auth/AuthGuard/AuthGuard';
 import FloatingActionButton from './components/common/FloatingActionButton/FloatingActionButton';
 import BottomNavigation from './components/common/BottomNavigation/BottomNavigation';
 import EmailService from './services/emailService';
+import { setupGlobalErrorHandlers } from './utils/errorUtils';
 import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner/LoadingSpinner';
 
@@ -36,6 +37,9 @@ function AppContent() {
   useAccentColor();
 
   useEffect(() => {
+    // Initialize global error handlers
+    setupGlobalErrorHandlers();
+    
     // Initialize EmailJS
     EmailService.init();
   }, []);

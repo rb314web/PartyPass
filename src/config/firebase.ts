@@ -6,16 +6,23 @@ import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
-// Firebase configuration
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: 'AIzaSyA-8qwvOfQab02YrftdgqLNI9rPdo95Nk4',
-  authDomain: 'partypass-app-9539e.firebaseapp.com',
-  projectId: 'partypass-app-9539e',
-  storageBucket: 'partypass-app-9539e.appspot.com',
-  messagingSenderId: '583171646923',
-  appId: '1:583171646923:web:b2d26b6966af7933b1c24e',
-  measurementId: 'G-G28WF7GJ2W',
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
+
+// Validate that required Firebase config is present
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error(
+    'Firebase configuration is incomplete. Please ensure all required environment variables are set in .env file.',
+    'Required variables: REACT_APP_FIREBASE_API_KEY, REACT_APP_FIREBASE_PROJECT_ID'
+  );
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

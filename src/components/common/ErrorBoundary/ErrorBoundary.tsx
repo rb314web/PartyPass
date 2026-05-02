@@ -1,7 +1,7 @@
 // components/common/ErrorBoundary/ErrorBoundary.tsx
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import logger from '../../../utils/logger';
 import './ErrorBoundary.scss';
 
 interface Props {
@@ -35,7 +35,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logger.error('ErrorBoundary caught an error:', error, errorInfo);
     
     this.setState({
       error,
@@ -86,7 +86,6 @@ interface FallbackProps {
 }
 
 const DefaultErrorFallback: React.FC<FallbackProps> = ({ error, onReset }) => {
-  const navigate = useNavigate;
 
   const handleGoHome = () => {
     onReset();
