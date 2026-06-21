@@ -8,8 +8,12 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
+  Calendar,
 } from 'lucide-react';
-import { AnalyticsService } from '../../../../services/firebase/analyticsService';
+import {
+  AnalyticsService,
+  aggregateRecentMetrics,
+} from '../../../../services/firebase/analyticsService';
 import { useAuth } from '../../../../hooks/useAuth';
 import './RealTimeWidget.scss';
 
@@ -22,95 +26,70 @@ interface RealTimeMetric {
   color: string;
 }
 
-const RealTimeWidget: React.FC = () => {
+const RealTimeWidget: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<RealTimeMetric[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const isDev = import.meta.env.DEV;
 
   useEffect(() => {
     if (!user?.id) return;
 
     let unsubscribe: (() => void) | null = null;
 
-    const subscribeToMetrics = async () => {
-      try {
-        setIsConnected(true);
-        unsubscribe = await AnalyticsService.subscribeToMetrics(
-          user.id,
-          newMetrics => {
-            // Transform array to object with mock data for now
-            const metricsData = {
-              pageViews: 0,
-              pageViewsChange: 0,
-              activeUsers: 0,
-              activeUsersChange: 0,
-              userActions: 0,
-              userActionsChange: 0,
-              engagementRate: 0,
-              engagementRateChange: 0,
-            };
+    try {
+      setIsConnected(true);
+      unsubscribe = AnalyticsService.subscribeToMetrics(user.id, rawMetrics => {
+        const aggregated = aggregateRecentMetrics(rawMetrics);
 
-            const realTimeMetrics: RealTimeMetric[] = [
-              {
-                id: 'page_views',
-                label: 'Wyświetlenia',
-                value: metricsData.pageViews || 0,
-                change: metricsData.pageViewsChange || 0,
-                icon: <Eye size={20} />,
-                color: 'blue',
-              },
-              {
-                id: 'active_users',
-                label: 'Aktywni użytkownicy',
-                value: metricsData.activeUsers || 0,
-                change: metricsData.activeUsersChange || 0,
-                icon: <Users size={20} />,
-                color: 'green',
-              },
-              {
-                id: 'user_actions',
-                label: 'Akcje użytkowników',
-                value: metricsData.userActions || 0,
-                change: metricsData.userActionsChange || 0,
-                icon: <Activity size={20} />,
-                color: 'purple',
-              },
-              {
-                id: 'engagement_rate',
-                label: 'Wskaźnik zaangażowania',
-                value: metricsData.engagementRate || 0,
-                change: metricsData.engagementRateChange || 0,
-                icon: <TrendingUp size={20} />,
-                color: 'orange',
-              },
-            ];
-
-            setMetrics(realTimeMetrics);
-            setLastUpdate(new Date());
-          }
-        );
-      } catch (error) {
-        console.error('Failed to subscribe to real-time metrics:', error);
-        setIsConnected(false);
-      }
-    };
-
-    subscribeToMetrics();
+        setMetrics([
+          {
+            id: 'page_views',
+            label: 'Wyświetlenia stron',
+            value: aggregated.pageViews.current,
+            change: aggregated.pageViews.change,
+            icon: <Eye size={20} />,
+            color: 'blue',
+          },
+          {
+            id: 'user_actions',
+            label: 'Akcje użytkownika',
+            value: aggregated.userActions.current,
+            change: aggregated.userActions.change,
+            icon: <Activity size={20} />,
+            color: 'purple',
+          },
+          {
+            id: 'events_created',
+            label: 'Nowe wydarzenia',
+            value: aggregated.eventsCreated.current,
+            change: aggregated.eventsCreated.change,
+            icon: <Calendar size={20} />,
+            color: 'green',
+          },
+          {
+            id: 'rsvp_responses',
+            label: 'Odpowiedzi RSVP',
+            value: aggregated.rsvpResponses.current,
+            change: aggregated.rsvpResponses.change,
+            icon: <Users size={20} />,
+            color: 'orange',
+          },
+        ]);
+        setLastUpdate(new Date());
+      });
+    } catch (error) {
+      console.error('Failed to subscribe to real-time metrics:', error);
+      setIsConnected(false);
+    }
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      unsubscribe?.();
     };
   }, [user?.id]);
 
-  const formatValue = (value: number, metricId: string): string => {
-    if (metricId === 'engagement_rate') {
-      return `${value.toFixed(1)}%`;
-    }
-    return value.toLocaleString();
-  };
+  const formatValue = (value: number): string => value.toLocaleString('pl-PL');
 
   const getChangeIcon = (change: number) => {
     if (change > 0) return <TrendingUp size={14} />;
@@ -125,8 +104,11 @@ const RealTimeWidget: React.FC = () => {
     return 'neutral';
   };
 
+  const hasActivity = metrics.some(metric => metric.value > 0);
+
   return (
-    <div className="realtime-widget">
+    <div className={`realtime-widget${embedded ? ' realtime-widget--embedded' : ''}`}>
+      {!embedded && (
       <div className="realtime-widget__header">
         <h3>Metryki w czasie rzeczywistym</h3>
         <div className="realtime-widget__status">
@@ -143,12 +125,44 @@ const RealTimeWidget: React.FC = () => {
           )}
         </div>
       </div>
+      )}
 
-      {lastUpdate && (
+      {embedded && (
+        <div className="realtime-widget__inline-header">
+          <div className="realtime-widget__status">
+            {isConnected ? (
+              <div className="realtime-widget__status-connected">
+                <Wifi size={14} />
+                <span>Połączono</span>
+              </div>
+            ) : (
+              <div className="realtime-widget__status-disconnected">
+                <WifiOff size={14} />
+                <span>Rozłączono</span>
+              </div>
+            )}
+          </div>
+          {lastUpdate && (
+            <span className="realtime-widget__inline-update">
+              {lastUpdate.toLocaleTimeString('pl-PL')}
+            </span>
+          )}
+        </div>
+      )}
+
+      {lastUpdate && !embedded && (
         <div className="realtime-widget__last-update">
           <RefreshCw size={14} />
-          <span>Ostatnia aktualizacja: {lastUpdate.toLocaleTimeString()}</span>
+          <span>Ostatnia aktualizacja: {lastUpdate.toLocaleTimeString('pl-PL')}</span>
         </div>
+      )}
+
+      {isDev && (
+        <p className="realtime-widget__dev-note">
+          {embedded
+            ? 'Śledzenie wyłączone lokalnie — dane po wdrożeniu.'
+            : 'Śledzenie aktywności jest wyłączone lokalnie — dane pojawią się po wdrożeniu produkcyjnym.'}
+        </p>
       )}
 
       <div className="realtime-widget__metrics">
@@ -161,7 +175,7 @@ const RealTimeWidget: React.FC = () => {
             </div>
             <div className="realtime-widget__metric-content">
               <div className="realtime-widget__metric-value">
-                {formatValue(metric.value, metric.id)}
+                {formatValue(metric.value)}
               </div>
               <div className="realtime-widget__metric-label">
                 {metric.label}
@@ -171,7 +185,7 @@ const RealTimeWidget: React.FC = () => {
                   className={`realtime-widget__metric-change realtime-widget__metric-change--${getChangeColor(metric.change)}`}
                 >
                   {getChangeIcon(metric.change)}
-                  <span>{Math.abs(metric.change).toFixed(1)}%</span>
+                  <span>vs poprzednie 24 h: {Math.abs(metric.change).toFixed(1)}%</span>
                 </div>
               )}
             </div>
@@ -179,10 +193,17 @@ const RealTimeWidget: React.FC = () => {
         ))}
       </div>
 
+      {!hasActivity && isConnected && !isDev && (
+        <div className="realtime-widget__empty">
+          <p>Brak zarejestrowanej aktywności w ostatnich 24 godzinach.</p>
+        </div>
+      )}
+
       {!isConnected && (
         <div className="realtime-widget__error">
           <p>Brak połączenia z danymi w czasie rzeczywistym</p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="realtime-widget__retry"
           >

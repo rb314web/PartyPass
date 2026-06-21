@@ -1,4 +1,8 @@
-import { AppError } from '../hooks/useErrorHandler';
+export interface AppError {
+  message: string;
+  code?: string | number;
+  details?: unknown;
+}
 
 // Global error handler for unhandled errors
 export const setupGlobalErrorHandlers = () => {

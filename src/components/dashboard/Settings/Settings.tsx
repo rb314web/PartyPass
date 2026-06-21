@@ -1,5 +1,5 @@
 // components/dashboard/Settings/Settings.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import {
   User,
   Bell,
@@ -7,11 +7,23 @@ import {
   Palette,
   Settings as SettingsIcon,
 } from 'lucide-react';
-import ProfileSettings from './ProfileSettings/ProfileSettings';
-import NotificationSettings from './NotificationSettings/NotificationSettings';
-import SecuritySettings from './SecuritySettings/SecuritySettings';
-import AppearanceSettings from './AppearanceSettings/AppearanceSettings';
+import PageHeader from '../../common/PageHeader/PageHeader';
+import DashboardViewSkeleton from '../DashboardViewSkeleton/DashboardViewSkeleton';
 import './Settings.scss';
+import { useDashboardViewMotion } from '../../../hooks/useDashboardViewMotion';
+
+const ProfileSettings = lazy(
+  () => import('./ProfileSettings/ProfileSettings')
+);
+const NotificationSettings = lazy(
+  () => import('./NotificationSettings/NotificationSettings')
+);
+const SecuritySettings = lazy(
+  () => import('./SecuritySettings/SecuritySettings')
+);
+const AppearanceSettings = lazy(
+  () => import('./AppearanceSettings/AppearanceSettings')
+);
 
 type SettingsTab =
   | 'profile'
@@ -19,15 +31,16 @@ type SettingsTab =
   | 'security'
   | 'appearance';
 
+const SettingsTabFallback = () => (
+  <DashboardViewSkeleton variant="list" count={4} />
+);
+
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
-  const [fadeIn, setFadeIn] = useState(false);
-
-  useEffect(() => {
-    // Uruchom animację fade-in
-    const timer = setTimeout(() => setFadeIn(true), 10);
-    return () => clearTimeout(timer);
-  }, []);
+  const { className: viewClassName } = useDashboardViewMotion({
+    variant: 'shell',
+    pageClass: 'settings',
+  });
 
   const tabs = [
     {
@@ -72,18 +85,13 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className={`settings ${fadeIn ? 'settings--fade-in' : ''}`}>
-      <header className="settings__header">
-        <div className="settings__title-wrapper">
-          <div className="settings__icon" aria-hidden="true">
-            <SettingsIcon size={24} />
-          </div>
-          <div>
-            <h1>Ustawienia</h1>
-            <p>Zarządzaj swoim kontem i preferencjami</p>
-          </div>
-        </div>
-      </header>
+    <div className={viewClassName}>
+      <PageHeader
+        title="Ustawienia"
+        subtitle="Zarządzaj swoim kontem i preferencjami"
+        icon={SettingsIcon}
+        className="settings__header"
+      />
 
       <div className="settings__layout">
         <nav
@@ -127,7 +135,9 @@ const Settings: React.FC = () => {
           role="tabpanel"
           aria-labelledby={`settings-tab-${activeTab}`}
         >
-          {renderTabContent()}
+          <Suspense fallback={<SettingsTabFallback />}>
+            {renderTabContent()}
+          </Suspense>
         </main>
       </div>
     </div>

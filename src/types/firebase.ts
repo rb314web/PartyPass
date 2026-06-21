@@ -12,6 +12,9 @@ export interface FirebaseUser {
   updatedAt: Timestamp;
   avatar?: string;
   phoneNumber?: string;
+  company?: string;
+  website?: string;
+  bio?: string;
   isEmailVerified: boolean;
   lastLoginAt: Timestamp;
   preferences: {
@@ -21,7 +24,8 @@ export interface FirebaseUser {
       sms: boolean;
     };
     theme: 'light' | 'dark' | 'auto';
-    language: 'pl' | 'en';
+    language: 'pl' | 'en' | 'de' | 'fr';
+    timezone?: string;
   };
   subscription?: {
     planId: string;
@@ -39,9 +43,10 @@ export interface FirebaseEvent {
   title: string;
   description: string;
   date: Timestamp;
+  rsvpDeadline?: Timestamp;
   location: string;
   maxGuests: number;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  status: 'draft' | 'active' | 'completed' | 'cancelled'; // draft — legacy w Firestore
   createdAt: Timestamp;
   updatedAt: Timestamp;
   imageUrl?: string;
@@ -61,12 +66,17 @@ export interface FirebaseEvent {
   maybeCount: number;
   dresscode?: string;
   additionalInfo?: string;
+  /** E-mail organizatora — używany m.in. do powiadomień RSVP bez Cloud Functions */
+  organizerEmail?: string;
+  /** Telefon organizatora — widoczny dla gości na stronie RSVP */
+  organizerPhone?: string;
 }
 
 export interface CreateEventData {
   title: string;
   description: string;
   date: Date;
+  rsvpDeadline?: Date | null;
   location: string;
   maxGuests: number;
   guestCount: number;
@@ -201,6 +211,7 @@ export const COLLECTIONS = {
   SUBSCRIPTIONS: 'subscriptions',
   TEMPLATES: 'templates',
   CONTACTS: 'contacts',
+  INVITATION_LOGS: 'invitationLogs',
 } as const;
 
 // Firestore query types

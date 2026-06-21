@@ -2,15 +2,17 @@
 @use '../../../../styles/globals/index' as *;
 
 .line-chart {
-  background: var(--card-background);
-  border-radius: 12px;
+  background: var(--card-bg, var(--bg-primary));
+  border-radius: var(--radius-xl, 12px);
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  border: 1px solid var(--border-primary);
+  transition: border-color 0.2s ease;
 
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  &--embedded {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
   }
 
   &__title {
@@ -46,7 +48,7 @@
   }
 
   &__label {
-    font-family: var(--font-family);
+    font-family: var(--font-sans);
     user-select: none;
   }
 

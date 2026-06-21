@@ -17,6 +17,7 @@ html {
   max-width: 100vw;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  font-family: var(--font-sans);
   transition: background-color var(--transition-colors, 0.2s ease),
               color var(--transition-colors, 0.2s ease),
               box-shadow var(--transition-colors, 0.2s ease);
@@ -253,9 +254,9 @@ code {
               stroke var(--transition-colors, 0.2s ease);
 }
 
-/* Enhanced button styles for light theme */
-button,
-.btn {
+/* Enhanced button styles — bazowe style tylko dla nieostylowanych */
+button:not([class]),
+.btn:not([class]) {
   font-family: var(--font-sans);
   font-weight: var(--font-medium);
   border-radius: var(--radius-md);
@@ -264,9 +265,11 @@ button,
   border: 1px solid var(--border-primary);
 }
 
-button:focus,
-.btn:focus {
-  outline: 2px solid var(--primary);
+button:focus-visible,
+.btn:focus-visible,
+.pp-btn:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -288,7 +291,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 /* Card styles for light theme */
@@ -411,8 +414,8 @@ html:not(.dark) .leaflet-popup-content-wrapper .events-map__popup-location {
 }
 
 html:not(.dark) .leaflet-popup-content-wrapper svg {
-  color: var(--color-primary, #3b82f6) !important;
-  stroke: var(--color-primary, #3b82f6) !important;
+  color: var(--color-primary, #6366f1) !important;
+  stroke: var(--color-primary, #6366f1) !important;
 }
 
 html:not(.dark) .leaflet-popup-content {
@@ -534,7 +537,7 @@ html:not(.dark) .leaflet-bar a {
 
 html:not(.dark) .leaflet-bar a:hover {
   background-color: var(--bg-secondary, #f9fafb) !important;
-  color: var(--color-primary, #3b82f6) !important;
+  color: var(--color-primary, #6366f1) !important;
 }
 
 html:not(.dark) .leaflet-bar a:active {
@@ -564,7 +567,7 @@ html:not(.dark) .leaflet-control-zoom-out {
 html:not(.dark) .leaflet-control-zoom-in:hover,
 html:not(.dark) .leaflet-control-zoom-out:hover {
   background-color: var(--bg-secondary, #f9fafb) !important;
-  color: var(--color-primary, #3b82f6) !important;
+  color: var(--color-primary, #6366f1) !important;
 }
 
 html:not(.dark) .leaflet-control-attribution {
@@ -576,7 +579,7 @@ html:not(.dark) .leaflet-control-attribution {
 }
 
 html:not(.dark) .leaflet-control-attribution a {
-  color: var(--color-primary, #3b82f6) !important;
+  color: var(--color-primary, #6366f1) !important;
 }
 
 html:not(.dark) .leaflet-control-attribution a:hover {

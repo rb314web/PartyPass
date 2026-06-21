@@ -6,14 +6,19 @@ import {
   Calendar, 
   Users, 
   Filter,
-  Clock,
   X,
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import SearchService, { SearchResult, SearchFilters } from '../../services/searchService';
-import LoadingSpinner from '../../components/common/LoadingSpinner/LoadingSpinner';
+import type { SearchResult, SearchFilters } from '../../services/searchService';
+import { useDashboardViewMotion } from '../../hooks/useDashboardViewMotion';
+import DashboardViewSkeleton from '../../components/dashboard/DashboardViewSkeleton/DashboardViewSkeleton';
+import DashboardViewBody from '../../components/dashboard/DashboardViewBody/DashboardViewBody';
+import PageHeader from '../../components/common/PageHeader/PageHeader';
 import './Search.scss';
+
+const loadSearchService = () =>
+  import('../../services/searchService').then(module => module.default);
 
 const Search: React.FC = () => {
   const { user } = useAuth();
@@ -24,11 +29,20 @@ const Search: React.FC = () => {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    isLoading: loading,
+    showLoader,
+    showContent,
+    className: pageClassName,
+    startLoading,
+    finishLoading,
+  } = useDashboardViewMotion({
+    variant: 'async',
+    pageClass: 'search-page',
+    initialLoading: false,
+  });
   const [showFilters, setShowFilters] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fadeIn, setFadeIn] = useState(false); // Start hidden for fade-in animation
   
   const [filters, setFilters] = useState<SearchFilters>({
     types: ['event', 'contact'],
@@ -36,7 +50,6 @@ const Search: React.FC = () => {
   });
 
   // Refs for race condition prevention and cleanup
-  const searchRequestId = useRef(0);
   const isMounted = useRef(true);
   const searchCount = useRef(0);
   const lastSearchTime = useRef(0);
@@ -56,23 +69,17 @@ const Search: React.FC = () => {
     };
   }, []);
 
-  // Fade-in animation on mount
+  // Expose debug methods to window (only in development)
   useEffect(() => {
-    const timer = setTimeout(() => setFadeIn(true), 10);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Load recent searches on mount and expose debug methods
-  useEffect(() => {
-    setRecentSearches(SearchService.getRecentSearches());
-    
     // Expose debug methods to window (only in development)
     if (process.env.NODE_ENV === 'development') {
-      (window as any).clearSearchCache = () => {
+      (window as any).clearSearchCache = async () => {
+        const SearchService = await loadSearchService();
         SearchService.clearCache();
         console.log('✅ Search cache cleared!');
       };
-      (window as any).getSearchCacheInfo = () => {
+      (window as any).getSearchCacheInfo = async () => {
+        const SearchService = await loadSearchService();
         const info = SearchService.getCacheInfo();
         console.log('📊 Cache info:', info);
         return info;
@@ -82,10 +89,7 @@ const Search: React.FC = () => {
 
   // Perform search with race condition protection
   const performSearch = useCallback(async (searchQuery: string, searchFilters: SearchFilters, saveToRecent: boolean = false) => {
-    console.log('🔍 performSearch called:', { searchQuery, userId: user?.id, filters: searchFilters, saveToRecent });
-    
     if (!user?.id || !searchQuery.trim()) {
-      console.log('❌ performSearch: Invalid params');
       setResults([]);
       return;
     }
@@ -110,41 +114,25 @@ const Search: React.FC = () => {
     searchCount.current++;
     lastSearchTime.current = now;
 
-    const currentRequestId = ++searchRequestId.current;
-
-    console.log('🔢 Search request IDs:', { currentRequestId, globalRequestId: searchRequestId.current, query: searchQuery, isMounted: isMounted.current });
-
-    setLoading(true);
-    setFadeIn(false);
+    startLoading();
     setError(null);
     try {
+      const SearchService = await loadSearchService();
       const searchResults = await SearchService.search(user.id, searchQuery, searchFilters);
-      
-      console.log('🎯 performSearch: Got results', { count: searchResults.length, currentRequestId, globalRequestId: searchRequestId.current, isMounted: isMounted.current });
-      
-      // Set results immediately - debounce handles race conditions
       setResults(searchResults);
-      console.log('✅ performSearch: Results set to state', { count: searchResults.length, query: searchQuery });
-      
       // Save to recent searches only when explicitly requested
       if (saveToRecent) {
         SearchService.saveRecentSearch(searchQuery);
-        setRecentSearches(SearchService.getRecentSearches());
       }
       
-      // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
-      setTimeout(() => {
-        setLoading(false);
-        // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
-        setTimeout(() => setFadeIn(true), 100);
-      }, 300);
+      finishLoading();
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
       setError('Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.');
-      setLoading(false);
+      finishLoading();
     }
-  }, [user?.id]);
+  }, [user?.id, startLoading, finishLoading]);
 
   // Get suggestions with debounce
   const getSuggestions = useCallback(async (searchQuery: string) => {
@@ -154,6 +142,7 @@ const Search: React.FC = () => {
     }
 
     try {
+      const SearchService = await loadSearchService();
       const searchSuggestions = await SearchService.getSuggestions(user.id, searchQuery);
       if (isMounted.current) {
         setSuggestions(searchSuggestions);
@@ -214,8 +203,7 @@ const Search: React.FC = () => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      console.log('🔍 Search form submitted:', query);
-      performSearch(query, filters, true); // Save to recent searches on submit
+      performSearch(query, filters, true);
       setSuggestions([]);
       // Update URL
       setSearchParams({ q: query });
@@ -263,72 +251,38 @@ const Search: React.FC = () => {
     }
   };
 
-  // Clear recent searches
-  const clearRecentSearches = () => {
-    SearchService.clearRecentSearches();
-    setRecentSearches([]);
-  };
-
   // Perform search when query or filters change (with deduplication and debounce)
   useEffect(() => {
-    console.log('🔍 Search useEffect triggered:', { 
-      query, 
-      userId: user?.id, 
-      previousQuery: previousQueryRef.current,
-      queryChanged: query !== previousQueryRef.current 
-    });
-    
     if (!user?.id) {
-      console.log('❌ User not loaded yet, waiting...');
       return;
     }
 
     if (!query.trim()) {
-      console.log('❌ Empty query, clearing results');
       setResults([]);
       previousQueryRef.current = '';
-      hasPerformedInitialSearch.current = false; // Reset flag when query is empty
+      hasPerformedInitialSearch.current = false;
       return;
     }
 
-    // Check if query or filters actually changed
     const queryChanged = query !== previousQueryRef.current;
     const filtersChanged = JSON.stringify(filters) !== JSON.stringify(previousFiltersRef.current);
-    
-    console.log('📊 Change detection:', { 
-      queryChanged, 
-      filtersChanged, 
-      hasPerformedInitialSearch: hasPerformedInitialSearch.current,
-      currentQuery: query,
-      previousQuery: previousQueryRef.current
-    });
 
-    // Perform search if:
-    // 1. Query or filters changed, OR
-    // 2. This is the first search with a valid query from URL (after user loads)
     if (queryChanged || filtersChanged || (!hasPerformedInitialSearch.current && query.trim())) {
-      // Debounce search for typing (300ms) - immediate for filter changes or initial load
       const delay = queryChanged && !filtersChanged && hasPerformedInitialSearch.current ? 300 : 0;
-      
-      console.log('✅ Scheduling search for:', query, { delay, hasPerformedInitialSearch: hasPerformedInitialSearch.current });
-      
+
       const timeoutId = setTimeout(() => {
-        console.log('⏰ Executing debounced search for:', query);
         previousQueryRef.current = query;
         previousFiltersRef.current = filters;
         hasPerformedInitialSearch.current = true;
         performSearch(query, filters, false);
       }, delay);
-      
+
       return () => {
-        console.log('🧹 Cleaning up search timeout for:', query);
         clearTimeout(timeoutId);
       };
-    } else {
-      console.log('⏭️ No changes detected, skipping search');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, filters, user?.id]); // performSearch removed from dependencies to prevent race condition
+  }, [query, filters, user?.id]);
 
 
   const getResultIcon = (type: string) => {
@@ -347,38 +301,17 @@ const Search: React.FC = () => {
     }
   };
 
-  console.log('🎨 Search component render:', { query, resultsCount: results.length, loading, hasResults: results.length > 0 });
-
-  if (loading) {
-    return (
-      <div className="search-page search-page--loading">
-        <LoadingSpinner
-          variant="full"
-          icon={<SearchIcon size={32} />}
-          title="Wyszukiwanie..."
-          subtitle="Przeszukujemy bazę danych"
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={`search-page ${fadeIn ? 'search-page--fade-in' : ''}`} role="search">
-      <header className="search-page__header">
-        <div className="search-page__title-wrapper">
-          <div className="search-page__icon" aria-hidden="true">
-            <SearchIcon size={24} />
-          </div>
-          <div>
-            <h1>Wyszukiwanie</h1>
-            <p>Przeszukaj wydarzenia, kontakty i więcej</p>
-          </div>
-        </div>
-
-        <div className="search-page__header-actions">
+    <div className={pageClassName} role="search">
+      <PageHeader
+        title="Wyszukiwanie"
+        subtitle="Przeszukaj wydarzenia, kontakty i więcej"
+        icon={SearchIcon}
+        className="search-page__header"
+        actions={
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`search-page__action-btn ${showFilters ? 'search-page__action-btn--active' : ''}`}
+            className={`pp-btn pp-btn--outline search-page__action-btn ${showFilters ? 'search-page__action-btn--active' : ''}`}
             aria-label={showFilters ? 'Ukryj filtry' : 'Pokaż filtry'}
             aria-expanded={showFilters}
             type="button"
@@ -386,19 +319,19 @@ const Search: React.FC = () => {
             <Filter size={18} aria-hidden="true" />
             Filtry
           </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* Search Form */}
       <form onSubmit={handleSearchSubmit} className="search-page__form" role="search">
-        <div className="search-page__input-container">
-          <SearchIcon size={20} className="search-page__search-icon" aria-hidden="true" />
+        <div className="pp-search search-page__input-container">
+          <SearchIcon size={20} className="pp-search__icon" aria-hidden="true" />
           <input
             type="search"
             value={query}
             onChange={(e) => handleSearchInput(e.target.value)}
             placeholder="Szukaj wydarzeń, kontaktów..."
-            className="search-page__input"
+            className="pp-input"
             aria-label="Pole wyszukiwania"
             aria-describedby="search-help"
             maxLength={MAX_QUERY_LENGTH}
@@ -414,7 +347,7 @@ const Search: React.FC = () => {
                 setSuggestions([]);
                 setError(null);
               }}
-              className="search-page__clear-btn"
+              className="pp-search__clear pp-search__clear--visible"
               aria-label="Wyczyść pole wyszukiwania"
             >
               <X size={16} />
@@ -498,6 +431,11 @@ const Search: React.FC = () => {
 
       {/* Content */}
       <div className="search-page__content" aria-live="polite" aria-busy={loading}>
+        <DashboardViewBody
+          showLoader={showLoader}
+          showContent={showContent}
+          loader={<DashboardViewSkeleton variant="list" />}
+        >
         {/* Error State */}
         {error && (
           <div className="search-page__error" role="alert">
@@ -584,6 +522,7 @@ const Search: React.FC = () => {
             </div>
           </div>
         )}
+        </DashboardViewBody>
       </div>
     </div>
   );

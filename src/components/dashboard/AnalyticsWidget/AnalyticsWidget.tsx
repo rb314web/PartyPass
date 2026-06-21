@@ -13,6 +13,7 @@ import {
 import {
   AnalyticsService,
   AnalyticsReport,
+  buildAnalyticsDateRange,
 } from '../../../services/firebase/analyticsService';
 import { useAuth } from '../../../hooks/useAuth';
 import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
@@ -31,9 +32,7 @@ const AnalyticsWidget: React.FC = () => {
     const loadAnalytics = async () => {
       try {
         setLoading(true);
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 30); // Last 30 days
+        const { startDate, endDate } = buildAnalyticsDateRange(30);
 
         const report = await AnalyticsService.generateReport(user.id, {
           startDate,
@@ -91,12 +90,18 @@ const AnalyticsWidget: React.FC = () => {
     );
   }
 
+  const guestDenominator = analyticsData.totalGuests || 1;
+  const avgGuestsPerEvent =
+    analyticsData.totalEvents > 0
+      ? Math.round(analyticsData.totalGuests / analyticsData.totalEvents)
+      : 0;
+
   return (
     <div className="analytics-widget">
       <div className="analytics-widget__header">
         <div className="analytics-widget__title">
           <BarChart3 size={20} />
-          <h3>Podsumowanie miesiąca</h3>
+          <h3>Podsumowanie (30 dni)</h3>
         </div>
         <Link to="/dashboard/analytics" className="analytics-widget__link">
           <ArrowRight size={16} />
@@ -117,9 +122,10 @@ const AnalyticsWidget: React.FC = () => {
                 {getGrowthIcon(analyticsData.growthRate)}
                 <span
                   className={`analytics-widget__trend analytics-widget__trend--${getGrowthColor(analyticsData.growthRate)}`}
+                  title="Wzrost nowo utworzonych wydarzeń m/m"
                 >
                   {analyticsData.growthRate > 0 ? '+' : ''}
-                  {analyticsData.growthRate}%
+                  {Math.round(analyticsData.growthRate)}% m/m
                 </span>
               </div>
             </div>
@@ -129,12 +135,7 @@ const AnalyticsWidget: React.FC = () => {
                 <h5>Średnia frekwencja</h5>
               </div>
               <div className="analytics-widget__metric-value">
-                <strong>
-                  {Math.round(
-                    analyticsData.totalGuests / analyticsData.totalEvents
-                  )}{' '}
-                  os.
-                </strong>
+                <strong>{avgGuestsPerEvent} os.</strong>
                 <span className="analytics-widget__metric-label">
                   na wydarzenie
                 </span>
@@ -149,7 +150,7 @@ const AnalyticsWidget: React.FC = () => {
                 <h5>Wskaźnik odpowiedzi</h5>
               </div>
               <div className="analytics-widget__metric-value">
-                <strong>{analyticsData.rsvpRate}%</strong>
+                <strong>{Math.round(analyticsData.rsvpRate)}%</strong>
                 <span
                   className={`analytics-widget__trend analytics-widget__trend--success`}
                 >
@@ -183,19 +184,19 @@ const AnalyticsWidget: React.FC = () => {
               <div
                 className="analytics-widget__response-fill analytics-widget__response-fill--confirmed"
                 style={{
-                  width: `${(analyticsData.guestEngagement.confirmed / analyticsData.totalGuests) * 100}%`,
+                  width: `${(analyticsData.guestEngagement.confirmed / guestDenominator) * 100}%`,
                 }}
               />
               <div
                 className="analytics-widget__response-fill analytics-widget__response-fill--pending"
                 style={{
-                  width: `${(analyticsData.guestEngagement.pending / analyticsData.totalGuests) * 100}%`,
+                  width: `${(analyticsData.guestEngagement.pending / guestDenominator) * 100}%`,
                 }}
               />
               <div
                 className="analytics-widget__response-fill analytics-widget__response-fill--declined"
                 style={{
-                  width: `${(analyticsData.guestEngagement.declined / analyticsData.totalGuests) * 100}%`,
+                  width: `${(analyticsData.guestEngagement.declined / guestDenominator) * 100}%`,
                 }}
               />
             </div>
@@ -203,33 +204,39 @@ const AnalyticsWidget: React.FC = () => {
               <div className="analytics-widget__legend-item">
                 <div className="analytics-widget__legend-dot analytics-widget__legend-dot--confirmed" />
                 <span>
-                  {Math.round(
-                    (analyticsData.guestEngagement.confirmed /
-                      analyticsData.totalGuests) *
-                      100
-                  )}
+                  {analyticsData.totalGuests > 0
+                    ? Math.round(
+                        (analyticsData.guestEngagement.confirmed /
+                          analyticsData.totalGuests) *
+                          100
+                      )
+                    : 0}
                   % Potwierdzone
                 </span>
               </div>
               <div className="analytics-widget__legend-item">
                 <div className="analytics-widget__legend-dot analytics-widget__legend-dot--pending" />
                 <span>
-                  {Math.round(
-                    (analyticsData.guestEngagement.pending /
-                      analyticsData.totalGuests) *
-                      100
-                  )}
+                  {analyticsData.totalGuests > 0
+                    ? Math.round(
+                        (analyticsData.guestEngagement.pending /
+                          analyticsData.totalGuests) *
+                          100
+                      )
+                    : 0}
                   % Oczekujące
                 </span>
               </div>
               <div className="analytics-widget__legend-item">
                 <div className="analytics-widget__legend-dot analytics-widget__legend-dot--declined" />
                 <span>
-                  {Math.round(
-                    (analyticsData.guestEngagement.declined /
-                      analyticsData.totalGuests) *
-                      100
-                  )}
+                  {analyticsData.totalGuests > 0
+                    ? Math.round(
+                        (analyticsData.guestEngagement.declined /
+                          analyticsData.totalGuests) *
+                          100
+                      )
+                    : 0}
                   % Odrzucone
                 </span>
               </div>

@@ -96,8 +96,6 @@ const EventsList: React.FC<EventsListProps> = ({
     switch (status) {
       case 'active':
         return <CheckCircle2 size={16} />;
-      case 'draft':
-        return <Edit size={16} />;
       case 'completed':
         return <CheckCircle2 size={16} />;
       case 'cancelled':

@@ -1,19 +1,16 @@
 import { renderHook } from '@testing-library/react';
 import { ThemeProvider } from '../components/common/ThemeProvider/ThemeProvider';
+import { useTheme } from './useTheme';
 
-// Mock the useTheme hook to avoid window.matchMedia issues
-jest.mock('./useTheme', () => ({
+vi.mock('./useTheme', () => ({
   useTheme: () => ({
     isDark: false,
-    toggleTheme: jest.fn(),
-    setTheme: jest.fn(),
+    toggleTheme: vi.fn(),
+    setTheme: vi.fn(),
   }),
 }));
 
-import { useTheme } from './useTheme';
-
-describe('useTheme', () => {
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
+describe('useTheme', () => {  const wrapper = ({ children }: { children: React.ReactNode }) => (
     <ThemeProvider>{children}</ThemeProvider>
   );
 

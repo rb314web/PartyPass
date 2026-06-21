@@ -1,0 +1,36 @@
+.rsvp-countdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  white-space: nowrap;
+
+  svg {
+    flex-shrink: 0;
+    opacity: 0.92;
+  }
+
+  &--compact {
+    margin-top: 0;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  &--live {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: rgba(74, 222, 128, 0.4);
+  }
+
+  &--past {
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0.88;
+  }
+}

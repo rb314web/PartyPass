@@ -11,10 +11,25 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
+import Toast from '../../../common/Toast/Toast';
+import Modal from '../../../common/Modal/Modal';
+import PageHeader from '../../../common/PageHeader/PageHeader';
+import { useToast } from '../../../../hooks/useToast';
 import './SecuritySettings.scss';
+
+const DELETE_CONFIRM_PHRASE = 'USUŃ KONTO';
+
+type ConfirmDialogState = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  variant: 'danger' | 'default';
+  onConfirm: () => void;
+} | null;
 
 const SecuritySettings: React.FC = () => {
   const { changePassword, deleteAccount, error, clearError } = useAuth();
+  const { toast, dismiss, showError, showSuccess } = useToast();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,17 +43,27 @@ const SecuritySettings: React.FC = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>(null);
+
+  const closeDeleteModal = () => {
+    if (isLoading) return;
+    setShowDeleteModal(false);
+    setDeletePassword('');
+    setDeleteConfirmText('');
+    clearError();
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      alert('Nowe hasła nie są identyczne');
+      showError('Nowe hasła nie są identyczne');
       return;
     }
 
     if (newPassword.length < 8) {
-      alert('Hasło musi mieć co najmniej 8 znaków');
+      showError('Hasło musi mieć co najmniej 8 znaków');
       return;
     }
 
@@ -47,7 +72,7 @@ const SecuritySettings: React.FC = () => {
 
     try {
       await changePassword(currentPassword, newPassword);
-      alert('Hasło zostało zmienione!');
+      showSuccess('Hasło zostało zmienione');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -69,17 +94,14 @@ const SecuritySettings: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     if (!deletePassword) {
-      alert('Wprowadź hasło aby usunąć konto');
+      showError('Wprowadź hasło aby usunąć konto');
       return;
     }
 
-    const confirmText = 'USUŃ KONTO';
-    const userConfirmation = prompt(
-      `⚠️ UWAGA! Ta operacja jest nieodwracalna!\n\nWszystkie Twoje dane, wydarzenia i goście zostaną trwale usunięte.\n\nAby potwierdzić, wpisz: ${confirmText}`
-    );
-
-    if (userConfirmation !== confirmText) {
-      alert('Nieprawidłowe potwierdzenie. Usuwanie konta zostało anulowane.');
+    if (deleteConfirmText !== DELETE_CONFIRM_PHRASE) {
+      showError(
+        `Aby potwierdzić, wpisz dokładnie: ${DELETE_CONFIRM_PHRASE}`
+      );
       return;
     }
 
@@ -88,8 +110,8 @@ const SecuritySettings: React.FC = () => {
 
     try {
       await deleteAccount(deletePassword);
-      alert('Konto zostało pomyślnie usunięte. Żegnamy!');
-      setShowDeleteModal(false);
+      showSuccess('Konto zostało pomyślnie usunięte. Żegnamy!');
+      closeDeleteModal();
     } catch (error) {
       console.error('Błąd podczas usuwania konta:', error);
     } finally {
@@ -99,18 +121,20 @@ const SecuritySettings: React.FC = () => {
 
   const handle2FAToggle = async () => {
     if (!twoFactorEnabled) {
-      // Enable 2FA
-      alert('Funkcja włączania 2FA zostanie wkrótce dodana!');
+      showError('Funkcja włączania 2FA zostanie wkrótce dodana!');
     } else {
-      // Disable 2FA
-      if (
-        window.confirm(
-          'Czy na pewno chcesz wyłączyć dwuskładnikowe uwierzytelnianie?'
-        )
-      ) {
-        setTwoFactorEnabled(false);
-        alert('Dwuskładnikowe uwierzytelnianie zostało wyłączone.');
-      }
+      setConfirmDialog({
+        title: 'Wyłącz 2FA',
+        message:
+          'Czy na pewno chcesz wyłączyć dwuskładnikowe uwierzytelnianie?',
+        confirmLabel: 'Wyłącz',
+        variant: 'danger',
+        onConfirm: () => {
+          setTwoFactorEnabled(false);
+          showSuccess('Dwuskładnikowe uwierzytelnianie zostało wyłączone.');
+          setConfirmDialog(null);
+        },
+      });
     }
   };
 
@@ -142,9 +166,16 @@ const SecuritySettings: React.FC = () => {
   ];
 
   const handleLogoutSession = (sessionId: string) => {
-    if (window.confirm('Czy na pewno chcesz wylogować to urządzenie?')) {
-      alert(`Sesja ${sessionId} została zakończona.`);
-    }
+    setConfirmDialog({
+      title: 'Wyloguj urządzenie',
+      message: 'Czy na pewno chcesz wylogować to urządzenie?',
+      confirmLabel: 'Wyloguj',
+      variant: 'danger',
+      onConfirm: () => {
+        showSuccess(`Sesja ${sessionId} została zakończona.`);
+        setConfirmDialog(null);
+      },
+    });
   };
 
   const getPasswordStrength = (password: string) => {
@@ -162,10 +193,12 @@ const SecuritySettings: React.FC = () => {
 
   return (
     <div className="security-settings">
-      <div className="security-settings__header">
-        <h1>Bezpieczeństwo</h1>
-        <p>Zarządzaj hasłem, dwuskładnikowym uwierzytelnianiem i sesjami</p>
-      </div>
+      <PageHeader
+        title="Bezpieczeństwo"
+        subtitle="Zarządzaj hasłem, dwuskładnikowym uwierzytelnianiem i sesjami"
+        icon={Shield}
+        className="security-settings__page-header"
+      />
 
       {/* Password Change */}
       <div className="security-settings__section">
@@ -183,13 +216,17 @@ const SecuritySettings: React.FC = () => {
           onSubmit={handlePasswordChange}
           className="security-settings__form"
         >
-          <div className="security-settings__field">
-            <label>Obecne hasło</label>
-            <div className="security-settings__input-wrapper">
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="security-current-password">
+              Obecne hasło
+            </label>
+            <div className="pp-input-wrap">
               <input
+                id="security-current-password"
                 type={showPasswords.current ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={e => setCurrentPassword(e.target.value)}
+                className="pp-input pp-input--icon-right"
                 required
               />
               <button
@@ -206,13 +243,17 @@ const SecuritySettings: React.FC = () => {
             </div>
           </div>
 
-          <div className="security-settings__field">
-            <label>Nowe hasło</label>
-            <div className="security-settings__input-wrapper">
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="security-new-password">
+              Nowe hasło
+            </label>
+            <div className="pp-input-wrap">
               <input
+                id="security-new-password"
                 type={showPasswords.new ? 'text' : 'password'}
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
+                className="pp-input pp-input--icon-right"
                 required
               />
               <button
@@ -245,13 +286,17 @@ const SecuritySettings: React.FC = () => {
             )}
           </div>
 
-          <div className="security-settings__field">
-            <label>Potwierdź nowe hasło</label>
-            <div className="security-settings__input-wrapper">
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="security-confirm-password">
+              Potwierdź nowe hasło
+            </label>
+            <div className="pp-input-wrap">
               <input
+                id="security-confirm-password"
                 type={showPasswords.confirm ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
+                className="pp-input pp-input--icon-right"
                 required
               />
               <button
@@ -268,7 +313,7 @@ const SecuritySettings: React.FC = () => {
             </div>
 
             {confirmPassword && newPassword !== confirmPassword && (
-              <span className="security-settings__error">
+              <span className="pp-field-error">
                 Hasła nie są identyczne
               </span>
             )}
@@ -276,7 +321,7 @@ const SecuritySettings: React.FC = () => {
 
           <button
             type="submit"
-            className="security-settings__save-btn"
+            className="pp-btn pp-btn--primary security-settings__save-btn"
             disabled={
               isLoading ||
               !currentPassword ||
@@ -455,88 +500,125 @@ const SecuritySettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Delete Account Modal */}
-      {showDeleteModal && (
-        <div className="security-settings__modal-overlay">
-          <div className="security-settings__modal">
-            <div className="security-settings__modal-header">
-              <h3>Potwierdź usunięcie konta</h3>
-              <button
-                className="security-settings__modal-close"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                ×
-              </button>
-            </div>
+      <Modal
+        open={showDeleteModal}
+        onClose={closeDeleteModal}
+        title="Potwierdź usunięcie konta"
+        size="sm"
+        icon={<AlertTriangle size={24} />}
+        iconVariant="danger"
+        closeDisabled={isLoading}
+        footer={
+          <>
+            <button
+              type="button"
+              className="pp-btn pp-btn--outline"
+              onClick={closeDeleteModal}
+              disabled={isLoading}
+            >
+              Anuluj
+            </button>
+            <button
+              type="button"
+              className="pp-btn pp-btn--danger"
+              onClick={handleDeleteAccount}
+              disabled={
+                isLoading ||
+                !deletePassword ||
+                deleteConfirmText !== DELETE_CONFIRM_PHRASE
+              }
+            >
+              {isLoading ? 'Usuwanie...' : 'Usuń konto'}
+            </button>
+          </>
+        }
+      >
+        <div className="security-settings__final-warning">
+          <AlertTriangle size={24} />
+          <p>
+            <strong>Ostatnie ostrzeżenie!</strong>
+            <br />
+            Ta operacja usunie trwale Twoje konto i wszystkie dane.
+          </p>
+        </div>
 
-            <div className="security-settings__modal-content">
-              <div className="security-settings__final-warning">
-                <AlertTriangle size={24} />
-                <p>
-                  <strong>Ostatnie ostrzeżenie!</strong>
-                  <br />
-                  Ta operacja usunie trwale Twoje konto i wszystkie dane.
-                </p>
-              </div>
+        {error && (
+          <div className="pp-form-alert pp-form-alert--error">{error}</div>
+        )}
 
-              {error && (
-                <div className="security-settings__error-message">{error}</div>
+        <div className="pp-field">
+          <label className="pp-label">Wprowadź swoje hasło:</label>
+          <div className="pp-input-wrap">
+            <input
+              type={showPasswords.delete ? 'text' : 'password'}
+              value={deletePassword}
+              onChange={e => setDeletePassword(e.target.value)}
+              className="pp-input pp-input--icon-right"
+              placeholder="Twoje hasło"
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              className="security-settings__password-toggle"
+              onClick={() => handleTogglePassword('delete')}
+            >
+              {showPasswords.delete ? (
+                <EyeOff size={20} />
+              ) : (
+                <Eye size={20} />
               )}
-
-              <div className="security-settings__field">
-                <label>Wprowadź swoje hasło aby potwierdzić:</label>
-                <div className="security-settings__input-wrapper">
-                  <input
-                    type={showPasswords.delete ? 'text' : 'password'}
-                    value={deletePassword}
-                    onChange={e => setDeletePassword(e.target.value)}
-                    placeholder="Twoje hasło"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    className="security-settings__password-toggle"
-                    onClick={() => handleTogglePassword('delete')}
-                  >
-                    {showPasswords.delete ? (
-                      <EyeOff size={20} />
-                    ) : (
-                      <Eye size={20} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="security-settings__modal-actions">
-                <button
-                  className="security-settings__modal-cancel"
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setDeletePassword('');
-                    clearError();
-                  }}
-                  disabled={isLoading}
-                >
-                  Anuluj
-                </button>
-                <button
-                  className="security-settings__modal-delete"
-                  onClick={handleDeleteAccount}
-                  disabled={isLoading || !deletePassword}
-                >
-                  {isLoading ? (
-                    <div className="security-settings__spinner"></div>
-                  ) : (
-                    <>
-                      <Trash2 size={16} />
-                      Usuń konto
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
+
+        <div className="pp-field">
+          <label className="pp-label">
+            Wpisz <strong>{DELETE_CONFIRM_PHRASE}</strong>, aby potwierdzić:
+          </label>
+          <input
+            type="text"
+            value={deleteConfirmText}
+            onChange={e => setDeleteConfirmText(e.target.value)}
+            className="pp-input"
+            placeholder={DELETE_CONFIRM_PHRASE}
+            disabled={isLoading}
+            autoComplete="off"
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        open={confirmDialog !== null}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title}
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              className="pp-btn pp-btn--outline"
+              onClick={() => setConfirmDialog(null)}
+            >
+              Anuluj
+            </button>
+            <button
+              type="button"
+              className={`pp-btn ${
+                confirmDialog?.variant === 'danger'
+                  ? 'pp-btn--danger'
+                  : 'pp-btn--primary'
+              }`}
+              onClick={() => confirmDialog?.onConfirm()}
+            >
+              {confirmDialog?.confirmLabel}
+            </button>
+          </>
+        }
+      >
+        <p>{confirmDialog?.message}</p>
+      </Modal>
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={dismiss} />
       )}
     </div>
   );

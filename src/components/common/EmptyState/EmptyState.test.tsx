@@ -23,7 +23,7 @@ describe('EmptyState', () => {
   it('renders action button when provided', () => {
     const action = {
       label: 'Create Event',
-      onClick: jest.fn(),
+      onClick: vi.fn(),
     };
 
     render(<EmptyState {...defaultProps} action={action} />);
@@ -35,7 +35,7 @@ describe('EmptyState', () => {
   it('calls action onClick when button is clicked', () => {
     const action = {
       label: 'Create Event',
-      onClick: jest.fn(),
+      onClick: vi.fn(),
     };
 
     render(<EmptyState {...defaultProps} action={action} />);

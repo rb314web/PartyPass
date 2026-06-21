@@ -1,43 +1,28 @@
 // components/common/EmptyState/EmptyState.scss
 .empty-state {
   text-align: center;
-  padding: var(--space-2xl);
-  color: var(--gray-500);
+  padding: var(--space-3xl) var(--space-xl);
+  color: var(--text-secondary);
 
   &__icon {
     margin-bottom: var(--space-lg);
-    opacity: 0.6;
+    opacity: 0.75;
 
     svg {
-      color: var(--gray-400);
+      color: var(--color-primary);
     }
   }
 
   &__title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--gray-700);
-    margin: 0 0 var(--space-sm) 0;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-sm);
   }
 
   &__description {
-    margin: 0 0 var(--space-xl) 0;
-    max-width: 300px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.5;
-  }
-
-  &__action {
-    @include button-base;
-    background: var(--primary);
-    color: white;
-    padding: var(--space-sm) var(--space-xl);
-
-    &:hover {
-      background: var(--primary-dark);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
-    }
+    margin: 0 auto var(--space-xl);
+    max-width: 28rem;
+    line-height: 1.55;
   }
 }

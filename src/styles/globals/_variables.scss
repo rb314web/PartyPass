@@ -1,5 +1,5 @@
 // PartyPass - Global Variables
-// This file imports the main PartyPass design system variables
-// For detailed documentation, see STYLE_GUIDE.md
+// Legacy entry point for @use '.../globals/variables'.
+// Design tokens live in party-pass-variables.scss.
 
-@import 'party-pass-variables';
+@forward 'party-pass-variables';

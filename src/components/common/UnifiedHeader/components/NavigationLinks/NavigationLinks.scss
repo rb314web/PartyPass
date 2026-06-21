@@ -111,16 +111,16 @@
 
     &:hover {
       // Light mode explicit - same as secondary button
-      background: rgba(59, 130, 246, 0.1);
-      color: #3b82f6;
-      border-color: rgba(59, 130, 246, 0.3);
+      background: rgba(99, 102, 241, 0.1);
+      color: #6366f1;
+      border-color: rgba(99, 102, 241, 0.3);
 
       &::before {
         opacity: 0;
       }
 
       .navigation-links__icon {
-        color: #3b82f6;
+        color: #6366f1;
       }
 
       .navigation-links__description {
@@ -133,18 +133,18 @@
     }
 
     &:focus-visible {
-      outline: 2px solid var(--primary, #3b82f6);
+      outline: 2px solid var(--primary, #6366f1);
       outline-offset: 2px;
     }
 
     // Active state
     &--active {
       background: rgba(99, 102, 241, 0.12);
-      color: var(--primary, #3b82f6);
+      color: var(--primary, #6366f1);
       box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 
       .navigation-links__icon {
-        color: var(--primary, #3b82f6);
+        color: var(--primary, #6366f1);
       }
     }
   }
@@ -213,17 +213,17 @@
 
     .navigation-links__button {
       &--active {
-        background: rgba(59, 130, 246, 0.08);
-        border-color: rgba(59, 130, 246, 0.4);
-        color: #3b82f6;
+        background: rgba(99, 102, 241, 0.08);
+        border-color: rgba(99, 102, 241, 0.4);
+        color: #6366f1;
 
         .navigation-links__label {
-          color: #3b82f6;
+          color: #6366f1;
           font-weight: 600;
         }
 
         .navigation-links__description {
-          color: rgba(59, 130, 246, 0.8);
+          color: rgba(99, 102, 241, 0.8);
         }
       }
     }
@@ -269,7 +269,7 @@
 
     &--active {
       background: rgba(99, 102, 241, 0.15);
-      color: var(--primary, #3b82f6);
+      color: var(--primary, #6366f1);
     }
   }
 
@@ -284,9 +284,9 @@
     color: #1f2937;
 
     &:hover {
-      background: rgba(59, 130, 246, 0.1);
-      color: #3b82f6;
-      border-color: rgba(59, 130, 246, 0.3);
+      background: rgba(99, 102, 241, 0.1);
+      color: #6366f1;
+      border-color: rgba(99, 102, 241, 0.3);
     }
   }
 }
@@ -304,7 +304,7 @@
 
       &--active {
         background: rgba(99, 102, 241, 0.15);
-        color: var(--primary, #3b82f6);
+        color: var(--primary, #6366f1);
       }
     }
 

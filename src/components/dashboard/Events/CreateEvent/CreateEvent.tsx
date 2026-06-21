@@ -15,7 +15,9 @@ import {
 import { useAuth } from '../../../../hooks/useAuth';
 import { EventService } from '../../../../services/firebase/eventService';
 import { canCreateEvent, getEventLimitErrorMessage, PlanType } from '../../../../services/firebase/planLimitsService';
-import LocationPicker from './LocationPicker/LocationPicker';
+import LazyLocationPicker from '../shared/LazyLocationPicker';
+import Modal from '../../../common/Modal/Modal';
+import PageHeader from '../../../common/PageHeader/PageHeader';
 import './CreateEvent.scss';
 
 interface EventFormData {
@@ -24,6 +26,8 @@ interface EventFormData {
   description: string;
   date: string;
   time: string;
+  rsvpDeadlineDate: string;
+  rsvpDeadlineTime: string;
   location: string;
   latitude?: number;
   longitude?: number;
@@ -48,6 +52,8 @@ const CreateEvent: React.FC = () => {
     description: '',
     date: '',
     time: '',
+    rsvpDeadlineDate: '',
+    rsvpDeadlineTime: '',
     location: '',
     latitude: undefined,
     longitude: undefined,
@@ -67,6 +73,10 @@ const CreateEvent: React.FC = () => {
   const [newTag, setNewTag] = useState('');
   const [canAddEvent, setCanAddEvent] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [discardTarget, setDiscardTarget] = useState<'back' | 'prev' | null>(
+    null
+  );
 
   const steps = [
     {
@@ -261,11 +271,23 @@ const CreateEvent: React.FC = () => {
             const dateStr = eventDate.toISOString().split('T')[0];
             const timeStr = eventDate.toTimeString().split(' ')[0].slice(0, 5);
 
+            const deadline = event.rsvpDeadline
+              ? new Date(event.rsvpDeadline)
+              : null;
+            const deadlineDateStr = deadline
+              ? deadline.toISOString().split('T')[0]
+              : '';
+            const deadlineTimeStr = deadline
+              ? deadline.toTimeString().split(' ')[0].slice(0, 5)
+              : '';
+
             setFormData({
               title: event.title,
               description: event.description,
               date: dateStr,
               time: timeStr,
+              rsvpDeadlineDate: deadlineDateStr,
+              rsvpDeadlineTime: deadlineTimeStr,
               location: event.location,
               latitude: event.latitude,
               longitude: event.longitude,
@@ -348,6 +370,36 @@ const CreateEvent: React.FC = () => {
         if (Number(formData.maxGuests) > maxAllowed) {
           newErrors.maxGuests = `Twój plan pozwala na maksymalnie ${maxAllowed} gości`;
         }
+
+        // Walidacja terminu RSVP (opcjonalny)
+        if (formData.rsvpDeadlineDate || formData.rsvpDeadlineTime) {
+          if (!formData.rsvpDeadlineDate) {
+            newErrors.rsvpDeadlineDate = 'Uzupełnij datę terminu RSVP';
+          } else if (!formData.rsvpDeadlineTime) {
+            newErrors.rsvpDeadlineTime = 'Uzupełnij godzinę terminu RSVP';
+          } else {
+            const deadline = new Date(
+              `${formData.rsvpDeadlineDate}T${formData.rsvpDeadlineTime}`
+            );
+            if (Number.isNaN(deadline.getTime())) {
+              newErrors.rsvpDeadlineDate = 'Nieprawidłowy termin RSVP';
+            } else if (deadline.getTime() < Date.now()) {
+              newErrors.rsvpDeadlineDate =
+                'Termin RSVP nie może być w przeszłości';
+            } else if (formData.date && formData.time) {
+              const eventDateTime = new Date(
+                `${formData.date}T${formData.time}`
+              );
+              if (
+                !Number.isNaN(eventDateTime.getTime()) &&
+                deadline.getTime() > eventDateTime.getTime()
+              ) {
+                newErrors.rsvpDeadlineDate =
+                  'Termin RSVP nie może być po dacie wydarzenia';
+              }
+            }
+          }
+        }
         break;
     }
 
@@ -424,24 +476,47 @@ const CreateEvent: React.FC = () => {
     }
   };
 
-  const handlePrev = () => {
-    // Check if form has unsaved changes
-    const hasChanges = Object.values(formData).some(v => {
+  const hasFormChanges = () =>
+    Object.values(formData).some(v => {
       if (Array.isArray(v)) return v.length > 0;
       if (typeof v === 'string') return v.trim().length > 0;
-      return v;
+      if (typeof v === 'number') return v !== 50;
+      return !!v;
     });
 
-    if (hasChanges && currentStep > 1) {
-      const confirmed = window.confirm(
-        'Masz niezapisane zmiany. Czy chcesz je porzucić i wrócić?'
-      );
-      if (!confirmed) return;
+  const executeDiscard = (target: 'back' | 'prev') => {
+    if (target === 'back') {
+      navigate('/dashboard/events');
+      return;
     }
-
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const requestDiscard = (target: 'back' | 'prev') => {
+    const shouldConfirm =
+      target === 'back' ? hasFormChanges() : hasFormChanges() && currentStep > 1;
+
+    if (shouldConfirm) {
+      setDiscardTarget(target);
+      setShowDiscardModal(true);
+      return;
+    }
+
+    executeDiscard(target);
+  };
+
+  const confirmDiscard = () => {
+    if (discardTarget) {
+      executeDiscard(discardTarget);
+    }
+    setShowDiscardModal(false);
+    setDiscardTarget(null);
+  };
+
+  const handlePrev = () => {
+    requestDiscard('prev');
   };
 
   const handleSubmit = async () => {
@@ -514,10 +589,18 @@ const CreateEvent: React.FC = () => {
           : new Error('Nieprawidłowy format daty lub godziny');
       }
 
+      const rsvpDeadline =
+        formData.rsvpDeadlineDate && formData.rsvpDeadlineTime
+          ? new Date(
+              `${formData.rsvpDeadlineDate}T${formData.rsvpDeadlineTime}`
+            )
+          : null;
+
       const eventData = {
         title: formData.title,
         description: formData.description,
         date: eventDate,
+        rsvpDeadline,
         location: formData.location,
         latitude: formData.latitude,
         longitude: formData.longitude,
@@ -558,38 +641,38 @@ const CreateEvent: React.FC = () => {
       case 1:
         return (
           <div className="create-event__step-content">
-            <div className="create-event__field">
-              <label className="create-event__label">Tytuł wydarzenia *</label>
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">Tytuł wydarzenia *</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className={`create-event__input ${errors.title ? 'create-event__input--error' : ''}`}
+                className={`pp-input ${errors.title ? 'pp-input--error' : ''}`}
                 placeholder="np. Urodziny Ani, Spotkanie zespołu..."
                 maxLength={100}
               />
               {errors.title && (
-                <span className="create-event__error">{errors.title}</span>
+                <span className="pp-field-error create-event__error">{errors.title}</span>
               )}
               <div className="create-event__char-count">
                 {formData.title.length}/100
               </div>
             </div>
 
-            <div className="create-event__field">
-              <label className="create-event__label">Opis wydarzenia *</label>
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">Opis wydarzenia *</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className={`create-event__textarea ${errors.description ? 'create-event__input--error' : ''}`}
+                className={`pp-textarea ${errors.description ? 'pp-input--error' : ''}`}
                 placeholder="Opisz swoje wydarzenie, podaj szczegóły, program, dress code..."
                 rows={4}
                 maxLength={500}
               />
               {errors.description && (
-                <span className="create-event__error">
+                <span className="pp-field-error create-event__error">
                   {errors.description}
                 </span>
               )}
@@ -598,8 +681,8 @@ const CreateEvent: React.FC = () => {
               </div>
             </div>
 
-            <div className="create-event__field">
-              <label className="create-event__label">Tagi (opcjonalne)</label>
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">Tagi (opcjonalne)</label>
               <div className="create-event__tags-input">
                 <div className="create-event__tags">
                   {formData.tags.map((tag, index) => (
@@ -650,8 +733,8 @@ const CreateEvent: React.FC = () => {
         return (
           <div className="create-event__step-content">
             <div className="create-event__field-group">
-              <div className="create-event__field">
-                <label className="create-event__label">
+              <div className="pp-field create-event__field">
+                <label className="pp-label create-event__label">
                   <Calendar size={16} />
                   Data wydarzenia *
                 </label>
@@ -660,7 +743,7 @@ const CreateEvent: React.FC = () => {
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  className={`create-event__input ${errors.date ? 'create-event__input--error' : ''}`}
+                  className={`pp-input ${errors.date ? 'pp-input--error' : ''}`}
                   min={new Date().toISOString().split('T')[0]}
                   max={
                     new Date(new Date().getFullYear() + 10, 11, 31)
@@ -669,12 +752,12 @@ const CreateEvent: React.FC = () => {
                   }
                 />
                 {errors.date && (
-                  <span className="create-event__error">{errors.date}</span>
+                  <span className="pp-field-error create-event__error">{errors.date}</span>
                 )}
               </div>
 
-              <div className="create-event__field">
-                <label className="create-event__label">
+              <div className="pp-field create-event__field">
+                <label className="pp-label create-event__label">
                   <Clock size={16} />
                   Godzina *
                 </label>
@@ -683,20 +766,20 @@ const CreateEvent: React.FC = () => {
                   name="time"
                   value={formData.time}
                   onChange={handleInputChange}
-                  className={`create-event__input ${errors.time ? 'create-event__input--error' : ''}`}
+                  className={`pp-input ${errors.time ? 'pp-input--error' : ''}`}
                 />
                 {errors.time && (
-                  <span className="create-event__error">{errors.time}</span>
+                  <span className="pp-field-error create-event__error">{errors.time}</span>
                 )}
               </div>
             </div>
 
-            <div className="create-event__field">
-              <label className="create-event__label">
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">
                 <MapPin size={16} />
                 Lokalizacja *
               </label>
-              <LocationPicker
+              <LazyLocationPicker
                 value={formData.location}
                 onChange={(location: string, lat?: number, lng?: number) =>
                   setFormData(prev => ({ 
@@ -749,8 +832,8 @@ const CreateEvent: React.FC = () => {
       case 3:
         return (
           <div className="create-event__step-content">
-            <div className="create-event__field">
-              <label className="create-event__label">
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">
                 <Users size={16} />
                 Maksymalna liczba gości *
               </label>
@@ -759,12 +842,12 @@ const CreateEvent: React.FC = () => {
                 name="maxGuests"
                 value={formData.maxGuests}
                 onChange={handleNumberChange}
-                className={`create-event__input ${errors.maxGuests ? 'create-event__input--error' : ''}`}
+                className={`pp-input ${errors.maxGuests ? 'pp-input--error' : ''}`}
                 min="1"
                 max={maxAllowed}
               />
               {errors.maxGuests && (
-                <span className="create-event__error">{errors.maxGuests}</span>
+                <span className="pp-field-error create-event__error">{errors.maxGuests}</span>
               )}
               <div className="create-event__field-help">
                 Twój plan {planDisplayName} pozwala na maksymalnie {maxAllowed}{' '}
@@ -772,8 +855,51 @@ const CreateEvent: React.FC = () => {
               </div>
             </div>
 
-            <div className="create-event__field">
-              <label className="create-event__label">
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">
+                <Clock size={16} />
+                Termin potwierdzeń (RSVP)
+              </label>
+              <div className="create-event__field-group">
+                <div className="pp-field create-event__field">
+                  <input
+                    type="date"
+                    name="rsvpDeadlineDate"
+                    value={formData.rsvpDeadlineDate}
+                    onChange={handleInputChange}
+                    className={`pp-input ${errors.rsvpDeadlineDate ? 'pp-input--error' : ''}`}
+                    min={new Date().toISOString().split('T')[0]}
+                    max={formData.date || undefined}
+                  />
+                  {errors.rsvpDeadlineDate && (
+                    <span className="pp-field-error create-event__error">
+                      {errors.rsvpDeadlineDate}
+                    </span>
+                  )}
+                </div>
+                <div className="pp-field create-event__field">
+                  <input
+                    type="time"
+                    name="rsvpDeadlineTime"
+                    value={formData.rsvpDeadlineTime}
+                    onChange={handleInputChange}
+                    className={`pp-input ${errors.rsvpDeadlineTime ? 'pp-input--error' : ''}`}
+                  />
+                  {errors.rsvpDeadlineTime && (
+                    <span className="pp-field-error create-event__error">
+                      {errors.rsvpDeadlineTime}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="create-event__field-help">
+                Do kiedy goście mogą potwierdzać i zmieniać odpowiedź.
+                Pozostaw puste, aby zezwolić na zmiany do dnia wydarzenia.
+              </div>
+            </div>
+
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">
                 Ustawienia wydarzenia
               </label>
               <div className="create-event__options">
@@ -851,14 +977,14 @@ const CreateEvent: React.FC = () => {
               </div>
             </div>
 
-            <div className="create-event__field">
-              <label className="create-event__label">Dress code</label>
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">Dress code</label>
               <input
                 type="text"
                 name="dresscode"
                 value={formData.dresscode}
                 onChange={handleInputChange}
-                className="create-event__input"
+                className="pp-input"
                 placeholder="np. Elegancki, Casual, Kostiumy..."
               />
               <div className="create-event__field-help">
@@ -866,15 +992,15 @@ const CreateEvent: React.FC = () => {
               </div>
             </div>
 
-            <div className="create-event__field">
-              <label className="create-event__label">
+            <div className="pp-field create-event__field">
+              <label className="pp-label create-event__label">
                 Dodatkowe informacje
               </label>
               <textarea
                 name="additionalInfo"
                 value={formData.additionalInfo}
                 onChange={handleInputChange}
-                className="create-event__textarea"
+                className="pp-textarea"
                 placeholder="Dodatkowe szczegóły, instrukcje, uwagi..."
                 rows={4}
               />
@@ -893,20 +1019,25 @@ const CreateEvent: React.FC = () => {
   return (
     <div className="create-event">
       <div className="create-event__container">
-        {/* Header */}
-        <div className="create-event__header">
-          <button
-            className="create-event__back"
-            onClick={() => navigate('/dashboard/events')}
-          >
-            <ArrowLeft size={20} />
-            <span>Wróć do wydarzeń</span>
-          </button>
+        <button
+          type="button"
+          className="pp-btn pp-btn--ghost pp-btn--sm create-event__back"
+          onClick={() => requestDiscard('back')}
+        >
+          <ArrowLeft size={18} />
+          Wróć do wydarzeń
+        </button>
 
-          <h1 className="create-event__title">
-            {isEditing ? 'Edytuj wydarzenie' : 'Nowe wydarzenie'}
-          </h1>
-        </div>
+        <PageHeader
+          title={isEditing ? 'Edytuj wydarzenie' : 'Nowe wydarzenie'}
+          subtitle={
+            isEditing
+              ? 'Zaktualizuj szczegóły i zapisz zmiany'
+              : 'Uzupełnij formularz, aby utworzyć wydarzenie'
+          }
+          icon={Calendar}
+          className="create-event__page-header"
+        />
 
         <div className="create-event__hero">
           <div className="create-event__hero-main">
@@ -983,7 +1114,7 @@ const CreateEvent: React.FC = () => {
         {/* Navigation */}
         <div className="create-event__navigation">
           {submitError && (
-            <div className="create-event__submit-error">
+            <div className="pp-form-alert pp-form-alert--error create-event__submit-error">
               <span>{submitError}</span>
             </div>
           )}
@@ -991,7 +1122,7 @@ const CreateEvent: React.FC = () => {
           <div>
             {currentStep > 1 && (
               <button
-                className="create-event__nav-btn create-event__nav-btn--secondary"
+                className="pp-btn pp-btn--outline create-event__nav-btn"
                 onClick={handlePrev}
                 disabled={isLoading}
               >
@@ -1008,7 +1139,7 @@ const CreateEvent: React.FC = () => {
           </div>
 
           <button
-            className="create-event__nav-btn create-event__nav-btn--primary"
+            className="pp-btn pp-btn--primary create-event__nav-btn"
             onClick={handleNext}
             disabled={isLoading || (!isEditing && currentStep === totalSteps && !canAddEvent)}
           >
@@ -1030,6 +1161,41 @@ const CreateEvent: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        open={showDiscardModal}
+        onClose={() => {
+          setShowDiscardModal(false);
+          setDiscardTarget(null);
+        }}
+        title="Porzucić zmiany?"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              className="pp-btn pp-btn--outline"
+              onClick={() => {
+                setShowDiscardModal(false);
+                setDiscardTarget(null);
+              }}
+            >
+              Kontynuuj edycję
+            </button>
+            <button
+              type="button"
+              className="pp-btn pp-btn--danger"
+              onClick={confirmDiscard}
+            >
+              Porzuć zmiany
+            </button>
+          </>
+        }
+      >
+        <p className="create-event__discard-message">
+          Masz niezapisane zmiany. Czy na pewno chcesz je porzucić?
+        </p>
+      </Modal>
     </div>
   );
 };

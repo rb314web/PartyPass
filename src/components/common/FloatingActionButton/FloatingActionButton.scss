@@ -49,7 +49,7 @@
     width: 3.5rem;
     height: 3.5rem;
     border-radius: 50%;
-    background: #3b82f6;
+    background: #6366f1;
     color: white;
     border: none;
     cursor: pointer;
@@ -118,12 +118,12 @@
     }
 
     &:focus {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid #6366f1;
       outline-offset: 2px;
     }
 
     &--primary {
-      border-color: #3b82f6;
+      border-color: #6366f1;
       background: #eff6ff;
 
       &:hover {
@@ -132,7 +132,7 @@
       }
 
       .fab__action-icon {
-        background: #3b82f6;
+        background: #6366f1;
         color: white;
       }
     }

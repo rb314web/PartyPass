@@ -1,7 +1,8 @@
 // components/common/UnifiedHeader/components/NavigationLinks/NavigationLinks.tsx
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { Zap, Sparkles, MessageCircle } from 'lucide-react';
+import { Zap, Sparkles, MessageCircle, Play, ListOrdered } from 'lucide-react';
 import './NavigationLinks.scss';
 
 export interface NavigationItem {
@@ -54,31 +55,44 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
   vertical = false,
   firstItemRef,
 }) => {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
 
   // Default navigation items for landing page
   const defaultItems: NavigationItem[] = useMemo(
     () => [
       {
-        label: 'Funkcje',
+        label: t('landing.nav.features'),
         href: '#features',
         icon: <Zap size={16} />,
-        description: 'Poznaj możliwości PartyPass',
+        description: t('landing.nav.featuresDesc'),
       },
       {
-        label: 'Cennik',
+        label: t('landing.nav.howItWorks'),
+        href: '#how-it-works',
+        icon: <ListOrdered size={16} />,
+        description: t('landing.nav.howItWorksDesc'),
+      },
+      {
+        label: t('landing.nav.pricing'),
         href: '#pricing',
         icon: <Sparkles size={16} />,
-        description: 'Wybierz plan dla siebie',
+        description: t('landing.nav.pricingDesc'),
       },
       {
-        label: 'Kontakt',
+        label: t('landing.nav.demo'),
+        href: '/demo',
+        icon: <Play size={16} />,
+        description: t('landing.nav.demoDesc'),
+      },
+      {
+        label: t('landing.nav.contact'),
         href: '#contact',
         icon: <MessageCircle size={16} />,
-        description: 'Skontaktuj się z nami',
+        description: t('landing.nav.contactDesc'),
       },
     ],
-    []
+    [t, i18n.language]
   );
 
   const navigationItems = items || defaultItems;

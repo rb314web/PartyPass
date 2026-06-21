@@ -1,5 +1,5 @@
 // components/dashboard/Activities/Activities.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -17,59 +17,55 @@ import {
 } from 'lucide-react';
 import { EventService } from '../../../services/firebase/eventService';
 import { useAuth } from '../../../hooks/useAuth';
-import { useNotifications } from '../../../hooks/useNotifications';
 import { Activity } from '../../../types';
-import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import { useDashboardViewMotion } from '../../../hooks/useDashboardViewMotion';
+import DashboardViewSkeleton from '../DashboardViewSkeleton/DashboardViewSkeleton';
+import DashboardViewBody from '../DashboardViewBody/DashboardViewBody';
+import PageHeader from '../../common/PageHeader/PageHeader';
 import './Activities.scss';
+
+const ActivitiesNotificationsPanel = lazy(
+  () => import('./ActivitiesNotificationsPanel')
+);
 
 type ActivityType = Activity['type'] | 'all';
 
 const Activities: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { notifications, markAsRead, markAllAsRead } = useNotifications(20);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    showLoader,
+    showContent,
+    className: viewClassName,
+    startLoading,
+    finishLoading,
+  } = useDashboardViewMotion({
+    variant: 'async',
+    pageClass: 'activities',
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ActivityType>('all');
   const [showNotifications, setShowNotifications] = useState(true);
-  const [fadeIn, setFadeIn] = useState(false);
 
   const loadActivities = useCallback(async () => {
     if (!user?.id) return;
 
     try {
-      setLoading(true);
-      setFadeIn(false);
+      startLoading();
       const data = await EventService.getRecentActivities(user.id, 50); // Load more activities
       setActivities(data);
-      
-      // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
-      setTimeout(() => {
-        setLoading(false);
-        // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
-        setTimeout(() => setFadeIn(true), 100);
-      }, 300);
+      finishLoading();
     } catch (error) {
       console.error('Error loading activities:', error);
       setActivities([]);
-      setLoading(false);
+      finishLoading();
     }
-  }, [user?.id]);
+  }, [user?.id, startLoading, finishLoading]);
 
   useEffect(() => {
     loadActivities();
   }, [user, loadActivities]);
-
-  const handleNotificationClick = async (notification: any) => {
-    // Mark as read
-    await markAsRead(notification.id);
-
-    // Navigate to action URL if available
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
-    }
-  };
 
   const handleActivityClick = (activity: Activity) => {
     if (activity.eventId) {
@@ -127,51 +123,39 @@ const Activities: React.FC = () => {
     contact_updated: 'Kontakty zaktualizowane',
   };
 
-  if (loading) {
-    return (
-      <div className="activities activities--loading">
-        <LoadingSpinner
-          variant="full"
-          icon={<ActivityIcon size={32} />}
-          title="Ładowanie aktywności..."
-          subtitle="Przygotowujemy historię wydarzeń"
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={`activities ${fadeIn ? 'activities--fade-in' : ''}`}>
-      <div className="activities__header">
-        <div className="activities__title-wrapper">
-          <div className="activities__icon" aria-hidden="true">
-            <ActivityIcon size={24} />
-          </div>
-          <div>
-            <h1>Aktywności</h1>
-            <p>Historia wszystkich aktywności w Twoich wydarzeniach</p>
-          </div>
-        </div>
-      </div>
+    <div className={viewClassName}>
+      <PageHeader
+        title="Aktywności"
+        subtitle="Historia wszystkich aktywności w Twoich wydarzeniach"
+        icon={ActivityIcon}
+      />
 
+      <DashboardViewBody
+        showLoader={showLoader}
+        showContent={showContent}
+        loader={<DashboardViewSkeleton variant="list" />}
+      >
       <div className="activities__controls">
-        <div className="activities__search">
-          <Search size={16} />
+        <div className="pp-search activities__search">
+          <Search size={16} className="pp-search__icon" aria-hidden="true" />
           <input
             type="text"
             placeholder="Szukaj aktywności..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="activities__search-input"
+            className="pp-input"
+            aria-label="Szukaj aktywności"
           />
         </div>
 
         <div className="activities__filter">
-          <Filter size={16} />
+          <Filter size={16} aria-hidden="true" />
           <select
             value={filterType}
             onChange={e => setFilterType(e.target.value as ActivityType)}
-            className="activities__filter-select"
+            className="pp-select activities__filter-select"
+            aria-label="Filtruj aktywności"
           >
             {Object.entries(activityTypeLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -182,68 +166,12 @@ const Activities: React.FC = () => {
         </div>
       </div>
 
-      {/* Notifications Section */}
-      {showNotifications && notifications.length > 0 && (
-        <div className="activities__notifications">
-          <div className="activities__notifications-header">
-            <h2>Powiadomienia</h2>
-            <div className="activities__notifications-actions">
-              <button
-                onClick={markAllAsRead}
-                className="activities__mark-all-read"
-              >
-                Oznacz wszystkie jako przeczytane
-              </button>
-              <button
-                onClick={() => setShowNotifications(false)}
-                className="activities__hide-notifications"
-              >
-                Ukryj
-              </button>
-            </div>
-          </div>
-
-          <div className="activities__notifications-list">
-            {notifications.slice(0, 5).map(notification => (
-              <div
-                key={notification.id}
-                className={`activities__notification ${!notification.read ? 'activities__notification--unread' : ''}`}
-                onClick={() => handleNotificationClick(notification)}
-                style={{
-                  cursor: notification.actionUrl ? 'pointer' : 'default',
-                }}
-              >
-                <div
-                  className={`activities__notification-icon activities__notification-icon--${notification.priority}`}
-                >
-                  {notification.type === 'activity' && (
-                    <CheckCircle size={20} />
-                  )}
-                  {notification.type === 'system' && <AlertCircle size={20} />}
-                  {notification.type === 'reminder' && <Calendar size={20} />}
-                  {notification.type === 'warning' && <AlertCircle size={20} />}
-                </div>
-                <div className="activities__notification-content">
-                  <div className="activities__notification-title">
-                    {notification.title}
-                  </div>
-                  <div className="activities__notification-message">
-                    {notification.message}
-                  </div>
-                  <div className="activities__notification-time">
-                    {formatDistanceToNow(notification.timestamp, {
-                      addSuffix: true,
-                      locale: pl,
-                    })}
-                  </div>
-                </div>
-                {!notification.read && (
-                  <div className="activities__notification-badge"></div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+      {showNotifications && (
+        <Suspense fallback={null}>
+          <ActivitiesNotificationsPanel
+            onHide={() => setShowNotifications(false)}
+          />
+        </Suspense>
       )}
 
       <div className="activities__content">
@@ -301,6 +229,7 @@ const Activities: React.FC = () => {
           </div>
         )}
       </div>
+      </DashboardViewBody>
     </div>
   );
 };

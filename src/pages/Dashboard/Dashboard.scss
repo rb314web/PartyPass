@@ -1,7 +1,7 @@
-// pages/Dashboard/Dashboard.scss
+// pages/Dashboard/Dashboard.scss — Studio shell
 .dashboard {
   min-height: 100vh;
-  background: var(--bg-secondary);
+  background: var(--dashboard-sidebar-bg);
   display: flex;
 
   &__layout {
@@ -15,15 +15,15 @@
     margin-left: 260px;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     min-height: 100vh;
+    background: var(--dashboard-canvas-bg);
 
     &--collapsed {
       margin-left: 80px;
     }
 
-    // Tablet screens - dopasowane do sidebara
     @media (min-width: 769px) and (max-width: 1200px) {
       margin-left: 80px;
     }
@@ -41,23 +41,14 @@
     flex: 1;
     padding: 0;
     overflow-y: auto;
-    background: var(--bg-secondary);
-    max-width: 1600px;
-    margin: 0 auto;
+    background: var(--dashboard-canvas-bg);
     width: 100%;
 
     @media (max-width: 768px) {
-      padding: 0;
-      padding-bottom: 80px;
-    }
-
-    @media (max-width: 480px) {
-      padding: 0;
       padding-bottom: 80px;
     }
   }
 
-  // Mobile optimizations
   @media (max-width: 768px) {
     &__layout {
       flex-direction: column;

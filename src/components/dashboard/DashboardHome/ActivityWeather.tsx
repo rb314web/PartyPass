@@ -1,10 +1,28 @@
 // components/dashboard/DashboardHome/ActivityWeather.tsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Activity as ActivityIcon, Cloud, MapPin, Calendar, Users, CloudRain, Sun, CloudSnow, Wind } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import {
+  Activity as ActivityIcon,
+  Cloud,
+  MapPin,
+  Calendar,
+  Users,
+  CloudRain,
+  Sun,
+  CloudSnow,
+  Wind,
+  Droplets,
+  ArrowRight,
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { pl } from 'date-fns/locale';
-import { getFromCache, saveToCache } from '../../../utils/geocodeCache';
+import { pl, enGB } from 'date-fns/locale';
+import {
+  fetchEventWeather,
+  getDaysUntilEvent,
+  getMaxForecastDays,
+  type WeatherData,
+} from '../../../services/weatherService';
 import './ActivityWeather.scss';
 
 interface LastActivity {
@@ -26,31 +44,58 @@ interface NextEvent {
 interface ActivityWeatherProps {
   lastActivity?: LastActivity;
   nextEvent?: NextEvent | null;
+  /** Pobierz prognozę dopiero gdy sekcja jest widoczna */
+  fetchWeather?: boolean;
 }
 
-interface WeatherData {
-  temp: number;
-  description: string;
-  icon: string;
-  humidity: number;
-  windSpeed: number;
-}
+const getDateLocale = (language: string) =>
+  language.startsWith('en') ? 'en-GB' : 'pl-PL';
 
-const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEvent }) => {
+const ActivityWeather: React.FC<ActivityWeatherProps> = ({
+  lastActivity,
+  nextEvent,
+  fetchWeather = true,
+}) => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const dateLocale = getDateLocale(i18n.language);
+  const dateFnsLocale = i18n.language.startsWith('en') ? enGB : pl;
+
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [weatherForecast, setWeatherForecast] = useState<WeatherData | null>(null);
+  const [weatherForecast, setWeatherForecast] = useState<WeatherData | null>(
+    null
+  );
   const [loadingWeather, setLoadingWeather] = useState(false);
 
-  const formatEventDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('pl-PL', {
+  const maxForecastDays = getMaxForecastDays();
+  const daysUntilEvent = useMemo(
+    () => (nextEvent?.date ? getDaysUntilEvent(nextEvent.date) : null),
+    [nextEvent?.date]
+  );
+
+  const locationLabel = nextEvent?.location?.split(',')[0]?.trim() ?? '';
+
+  const getForecastUnavailableMessage = (): string => {
+    if (daysUntilEvent === null) {
+      return t('dashboardHome.weatherForecastLater');
+    }
+    if (daysUntilEvent < 0) {
+      return t('dashboardHome.weatherForecastPast');
+    }
+    if (daysUntilEvent > maxForecastDays) {
+      return t('dashboardHome.weatherForecastTooFar', { days: maxForecastDays });
+    }
+    return t('dashboardHome.weatherForecastFailed');
+  };
+
+  const formatEventDateShort = (date: Date | string) =>
+    new Date(date).toLocaleDateString(dateLocale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
 
   const handleEventClick = () => {
     if (nextEvent?.id) {
@@ -58,298 +103,208 @@ const ActivityWeather: React.FC<ActivityWeatherProps> = ({ lastActivity, nextEve
     }
   };
 
-  // Pobieranie pogody
   useEffect(() => {
-    const fetchWeather = async () => {
+    if (!fetchWeather) return;
+
+    const loadWeather = async () => {
       if (!nextEvent?.location) return;
 
       setLoadingWeather(true);
+      setWeather(null);
+      setWeatherForecast(null);
+
       try {
-        const API_KEY = process.env.REACT_APP_OPENWEATHER_API_KEY;
-        
-        if (!API_KEY) {
-          setLoadingWeather(false);
-          return;
-        }
+        const result = await fetchEventWeather({
+          location: nextEvent.location,
+          latitude: nextEvent.latitude,
+          longitude: nextEvent.longitude,
+          eventDate: new Date(nextEvent.date),
+        });
 
-        let lat: number;
-        let lon: number;
-        
-        // PRIORYTET 1: Użyj zapisanych współrzędnych
-        if (nextEvent.latitude && nextEvent.longitude) {
-          lat = nextEvent.latitude;
-          lon = nextEvent.longitude;
-        } 
-        // PRIORYTET 2: Sprawdź cache
-        else {
-          const cached = getFromCache(nextEvent.location);
-          if (cached) {
-            lat = cached.lat;
-            lon = cached.lng;
-          }
-          // PRIORYTET 3: Geokoduj przez Nominatim
-          else {
-            try {
-              const geocodeUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(nextEvent.location)}&format=json&limit=1`;
-              
-              const geocodeResponse = await fetch(geocodeUrl, {
-                headers: {
-                  'User-Agent': 'PartyPass/1.0'
-                }
-              });
-              
-              if (!geocodeResponse.ok) {
-                setLoadingWeather(false);
-                return;
-              }
-              
-              const geocodeData = await geocodeResponse.json();
-              
-              if (!geocodeData || geocodeData.length === 0) {
-                setLoadingWeather(false);
-                return;
-              }
-              
-              lat = parseFloat(geocodeData[0].lat);
-              lon = parseFloat(geocodeData[0].lon);
-
-              // Zapisz do cache
-              saveToCache(nextEvent.location, lat, lon);
-            } catch (error) {
-              // Geocoding failed (network error, rate limit, connection refused) - silent fail
-              setLoadingWeather(false);
-              return;
-            }
-          }
-        }
-        
-        // Oblicz ile dni do wydarzenia
-        const eventDate = new Date(nextEvent.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventDate.setHours(0, 0, 0, 0);
-        const daysUntilEvent = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
-        // ZAWSZE pobierz aktualną pogodę
-        const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pl`;
-        const currentResponse = await fetch(currentUrl);
-        
-        if (currentResponse.ok) {
-          const currentData = await currentResponse.json();
-          setWeather({
-            temp: Math.round(currentData.main.temp),
-            description: currentData.weather[0].description,
-            icon: currentData.weather[0].icon,
-            humidity: currentData.main.humidity,
-            windSpeed: Math.round(currentData.wind.speed * 3.6),
-          });
-        }
-        
-        // Jeśli wydarzenie jest 0-5 dni w przyszłości, pobierz też prognozę
-        if (daysUntilEvent >= 0 && daysUntilEvent <= 5) {
-          const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pl`;
-          
-          const forecastResponse = await fetch(forecastUrl);
-          
-          if (forecastResponse.ok) {
-            const forecastData = await forecastResponse.json();
-            
-            // Znajdź prognozę najbliższą dacie wydarzenia (preferuj południe 12:00)
-            const targetTimestamp = eventDate.getTime();
-            let closestForecast = forecastData.list[0];
-            let smallestDiff = Math.abs(new Date(closestForecast.dt * 1000).getTime() - targetTimestamp);
-            
-            for (const forecast of forecastData.list) {
-              const forecastDate = new Date(forecast.dt * 1000);
-              const diff = Math.abs(forecastDate.getTime() - targetTimestamp);
-              
-              // Preferuj prognozy z godzin 12:00-15:00 (środek dnia)
-              const hour = forecastDate.getHours();
-              const isMidday = hour >= 12 && hour <= 15;
-              
-              if (diff < smallestDiff || (diff === smallestDiff && isMidday)) {
-                smallestDiff = diff;
-                closestForecast = forecast;
-              }
-            }
-            
-            setWeatherForecast({
-              temp: Math.round(closestForecast.main.temp),
-              description: closestForecast.weather[0].description,
-              icon: closestForecast.weather[0].icon,
-              humidity: closestForecast.main.humidity,
-              windSpeed: Math.round(closestForecast.wind.speed * 3.6),
-            });
-          }
-        } else {
-          // Wyczyść prognozę jeśli wydarzenie dzisiaj lub za daleko
-          setWeatherForecast(null);
-        }
-      } catch (error) {
-        // Weather fetch failed, silent fail
+        setWeather(result.current);
+        setWeatherForecast(result.forecast);
+      } catch {
+        setWeather(null);
+        setWeatherForecast(null);
       } finally {
         setLoadingWeather(false);
       }
     };
 
-    fetchWeather();
-  }, [nextEvent?.location, nextEvent?.latitude, nextEvent?.longitude]);
+    loadWeather();
+  }, [
+    fetchWeather,
+    nextEvent?.location,
+    nextEvent?.latitude,
+    nextEvent?.longitude,
+    nextEvent?.date,
+  ]);
 
-  const getWeatherIcon = (iconCode?: string) => {
-    if (!iconCode) return <Cloud size={32} />;
-    
-    if (iconCode.includes('01')) return <Sun size={32} />;
-    if (iconCode.includes('09') || iconCode.includes('10')) return <CloudRain size={32} />;
-    if (iconCode.includes('13')) return <CloudSnow size={32} />;
-    if (iconCode.includes('50')) return <Wind size={32} />;
-    return <Cloud size={32} />;
+  const getWeatherIcon = (iconCode?: string, size = 28) => {
+    const props = { size };
+    if (!iconCode) return <Cloud {...props} />;
+    if (iconCode.includes('01')) return <Sun {...props} />;
+    if (iconCode.includes('09') || iconCode.includes('10'))
+      return <CloudRain {...props} />;
+    if (iconCode.includes('13')) return <CloudSnow {...props} />;
+    if (iconCode.includes('50')) return <Wind {...props} />;
+    return <Cloud {...props} />;
   };
+
+  const renderWeatherPanel = (
+    label: string,
+    data: WeatherData | null,
+    unavailable?: boolean
+  ) => (
+    <div className="activity-weather__weather-panel">
+      <span className="activity-weather__weather-label">{label}</span>
+      {data ? (
+        <>
+          <div className="activity-weather__weather-main">
+            <div className="activity-weather__weather-icon">
+              {getWeatherIcon(data.icon)}
+            </div>
+            <div className="activity-weather__weather-temp">{data.temp}°C</div>
+          </div>
+          <p className="activity-weather__weather-desc">{data.description}</p>
+          <div className="activity-weather__weather-stats">
+            <span>
+              <Droplets size={13} aria-hidden />
+              {data.humidity}%
+            </span>
+            <span>
+              <Wind size={13} aria-hidden />
+              {data.windSpeed} km/h
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="activity-weather__weather-unavailable-inline">
+          <Cloud size={24} opacity={0.35} aria-hidden />
+          <p>
+            {unavailable
+              ? getForecastUnavailableMessage()
+              : t('dashboardHome.weatherNoData')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="activity-weather">
-      {/* Ostatnia aktywność */}
       <div className="activity-weather__card activity-weather__card--activity">
         <div className="activity-weather__header">
           <div className="activity-weather__header-content">
             <div className="activity-weather__icon activity-weather__icon--purple">
-              <ActivityIcon size={18} />
+              <ActivityIcon size={16} />
             </div>
-            <span className="activity-weather__title">Ostatnia aktywność</span>
+            <span className="activity-weather__title">
+              {t('dashboardHome.activityTitle')}
+            </span>
           </div>
+          <Link to="/dashboard/activities" className="activity-weather__link">
+            {t('dashboardHome.activityViewAll')}
+            <ArrowRight size={14} aria-hidden />
+          </Link>
         </div>
 
         {lastActivity ? (
-          <div className="activity-weather__content">
+          <div className="activity-weather__content activity-weather__content--activity">
             <p className="activity-weather__message">{lastActivity.message}</p>
             <span className="activity-weather__time">
-              {formatDistanceToNow(new Date(lastActivity.timestamp), { 
+              {formatDistanceToNow(new Date(lastActivity.timestamp), {
                 addSuffix: true,
-                locale: pl 
+                locale: dateFnsLocale,
               })}
             </span>
           </div>
         ) : (
-          <div className="activity-weather__empty">
-            <ActivityIcon size={32} opacity={0.3} />
-            <p>Brak ostatnich aktywności</p>
+          <div className="activity-weather__empty activity-weather__empty--inline">
+            <p>{t('dashboardHome.activityEmpty')}</p>
           </div>
         )}
       </div>
 
-      {/* Pogoda dla najbliższego wydarzenia */}
       <div className="activity-weather__card activity-weather__card--weather">
         <div className="activity-weather__header">
           <div className="activity-weather__header-content">
             <div className="activity-weather__icon activity-weather__icon--blue">
-              <Cloud size={18} />
+              <Cloud size={16} />
             </div>
-            <span className="activity-weather__title">Pogoda - Następne wydarzenie</span>
+            <div className="activity-weather__header-text">
+              <span className="activity-weather__title">
+                {t('dashboardHome.weatherTitle')}
+              </span>
+              {nextEvent?.title && (
+                <span className="activity-weather__subtitle">
+                  {nextEvent.title}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         {nextEvent && nextEvent.location ? (
           <div className="activity-weather__content">
-            <h4 className="activity-weather__event-title">{nextEvent.title}</h4>
-            
-            <div 
-              className="activity-weather__event-info activity-weather__event-info--clickable"
+            <div
+              className="activity-weather__meta-chips"
               onClick={handleEventClick}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && handleEventClick()}
             >
-              <div className="activity-weather__event-detail">
-                <Calendar size={14} />
-                <span>{formatEventDate(nextEvent.date)}</span>
-              </div>
-              <div className="activity-weather__event-detail">
-                <MapPin size={14} />
-                <span>{nextEvent.location.split(',')[0]}</span>
-              </div>
-              <div className="activity-weather__event-detail">
-                <Users size={14} />
-                <span>{nextEvent.guestCount} gości</span>
-              </div>
+              <span className="activity-weather__chip">
+                <Calendar size={12} aria-hidden />
+                {formatEventDateShort(nextEvent.date)}
+              </span>
+              <span className="activity-weather__chip">
+                <MapPin size={12} aria-hidden />
+                {locationLabel}
+              </span>
+              <span className="activity-weather__chip">
+                <Users size={12} aria-hidden />
+                {t('dashboardHome.guest', { count: nextEvent.guestCount })}
+              </span>
             </div>
 
-            {/* Pogoda */}
             <div className="activity-weather__weather-info">
               {loadingWeather ? (
                 <div className="activity-weather__weather-loading">
-                  <Cloud size={32} opacity={0.3} />
-                  <p>Ładowanie pogody...</p>
+                  <Cloud size={24} opacity={0.35} aria-hidden />
+                  <p>{t('dashboardHome.weatherLoading')}</p>
                 </div>
               ) : weather ? (
-                <>
-                  {/* Nazwa miejscowości */}
-                  <div className="activity-weather__weather-location">
-                    <MapPin size={16} />
-                    <span>{nextEvent.location.split(',')[0]}</span>
-                  </div>
-                  
-                  <div className="activity-weather__weather-container">
-                    {/* Aktualna pogoda */}
-                    <div className="activity-weather__weather-data">
-                      <h5 className="activity-weather__weather-label">Aktualna</h5>
-                    <div className="activity-weather__weather-main">
-                      <div className="activity-weather__weather-icon">
-                        {getWeatherIcon(weather.icon)}
-                      </div>
-                      <div className="activity-weather__weather-temp">
-                        {weather.temp}°C
-                      </div>
-                    </div>
-                    <div className="activity-weather__weather-details">
-                      <p className="activity-weather__weather-desc">{weather.description}</p>
-                      <div className="activity-weather__weather-stats">
-                        <span>💧 {weather.humidity}%</span>
-                        <span>💨 {weather.windSpeed} km/h</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Prognoza w trakcie wydarzenia (zawsze pokazuj box) */}
-                  <div className="activity-weather__weather-data">
-                    <h5 className="activity-weather__weather-label">W trakcie</h5>
-                    {weatherForecast ? (
-                      <>
-                        <div className="activity-weather__weather-main">
-                          <div className="activity-weather__weather-icon">
-                            {getWeatherIcon(weatherForecast.icon)}
-                          </div>
-                          <div className="activity-weather__weather-temp">
-                            {weatherForecast.temp}°C
-                          </div>
-                        </div>
-                        <div className="activity-weather__weather-details">
-                          <p className="activity-weather__weather-desc">{weatherForecast.description}</p>
-                          <div className="activity-weather__weather-stats">
-                            <span>💧 {weatherForecast.humidity}%</span>
-                            <span>💨 {weatherForecast.windSpeed} km/h</span>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="activity-weather__weather-unavailable-inline">
-                        <Cloud size={32} opacity={0.3} />
-                        <p>Prognoza będzie dostępna bliżej daty wydarzenia</p>
-                      </div>
-                    )}
-                  </div>
+                <div className="activity-weather__weather-container">
+                  {renderWeatherPanel(t('dashboardHome.weatherCurrent'), weather)}
+                  {renderWeatherPanel(
+                    t('dashboardHome.weatherDuring'),
+                    weatherForecast,
+                    true
+                  )}
                 </div>
-                </>
               ) : (
                 <div className="activity-weather__weather-placeholder">
-                  <Cloud size={32} opacity={0.3} />
-                  <p>Pogoda niedostępna</p>
+                  <Cloud size={24} opacity={0.35} aria-hidden />
+                  <p>{t('dashboardHome.weatherUnavailable')}</p>
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="activity-weather__empty">
-            <Cloud size={32} opacity={0.3} />
-            <p>Brak nadchodzących wydarzeń z lokalizacją</p>
+          <div className="activity-weather__empty activity-weather__empty--inline">
+            <p>
+              {nextEvent
+                ? t('dashboardHome.weatherNoLocation')
+                : t('dashboardHome.weatherNoUpcoming')}
+            </p>
+            <span className="activity-weather__empty-hint">
+              {nextEvent
+                ? t('dashboardHome.weatherAddLocationHint', {
+                    title: nextEvent.title,
+                  })
+                : t('dashboardHome.weatherCreateEventHint')}
+            </span>
           </div>
         )}
       </div>

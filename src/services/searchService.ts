@@ -47,11 +47,8 @@ class SearchService {
     // Check cache
     const cached = this.searchCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      console.log('🔍 SearchService.search: Returning cached results for:', query, `(${cached.results.length} results)`);
       return cached.results;
     }
-
-    console.log('🔍 SearchService.search: Performing fresh search:', { userId, query, filters, cacheSize: this.searchCache.size });
 
     const { types = ['event', 'contact'], limit = 100 } = filters;
     const results: SearchResult[] = [];
@@ -60,7 +57,6 @@ class SearchService {
     if (types.includes('event')) {
       try {
         const events = await this.searchEvents(userId, query, filters);
-        console.log(`Found ${events.length} events matching "${query}"`);
         results.push(...events);
       } catch (error) {
         console.error('Error searching events:', error);
@@ -71,23 +67,15 @@ class SearchService {
     if (types.includes('contact')) {
       try {
         const contacts = await this.searchContacts(userId, query, filters);
-        console.log(`Found ${contacts.length} contacts matching "${query}"`);
         results.push(...contacts);
       } catch (error) {
         console.error('Error searching contacts:', error);
       }
     }
 
-    console.log(`Total results before sorting: ${results.length}`);
-
-    // Sort by relevance score and limit results
     const sortedResults = results
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
-
-    console.log(
-      `Returning ${sortedResults.length} results after sorting and limiting`
-    );
 
     // Cache results
     this.searchCache.set(cacheKey, {
@@ -108,7 +96,6 @@ class SearchService {
 
   // Clear cache (useful after data changes)
   static clearCache(): void {
-    console.log('🗑️ SearchService: Clearing cache', { size: this.searchCache.size });
     this.searchCache.clear();
   }
 
@@ -126,9 +113,6 @@ class SearchService {
     query: string,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
-    console.log('🔍 SearchService.searchEvents: Starting', { userId, query, filters });
-    
-    // Use larger limit for search to get all matching events
     const result = await EventService.getUserEvents(
       userId,
       {
@@ -139,8 +123,6 @@ class SearchService {
       },
       100
     ); // Increase limit to 100 to get more results
-
-    console.log('🔍 SearchService.searchEvents: Got events', { count: result.events.length });
 
     return result.events.map((event: Event) =>
       this.eventToSearchResult(event, query)
@@ -153,11 +135,7 @@ class SearchService {
     query: string,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
-    console.log('🔍 SearchService.searchContacts: Starting', { userId, query });
-    
     const contacts = await ContactService.searchContacts(userId, query);
-
-    console.log('🔍 SearchService.searchContacts: Got contacts', { count: contacts.length });
 
     return contacts.map(contact => this.contactToSearchResult(contact, query));
   }

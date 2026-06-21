@@ -6,10 +6,12 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { MapPin, ExternalLink, Copy } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+import { formatRsvpLocationDisplay } from '../../../../../utils/rsvpEventHelpers';
 import './EventLocationMap.scss';
 
 // Fix for default markers in react-leaflet
@@ -26,6 +28,12 @@ Icon.Default.mergeOptions({
 interface EventLocationMapProps {
   location: string;
   className?: string;
+  /**
+   * Skąd brać motyw mapy:
+   * - 'class' (domyślnie): klasa `.dark` na <html> (dashboard)
+   * - 'system': preferencja przeglądarki (np. publiczna strona RSVP)
+   */
+  themeMode?: 'class' | 'system';
 }
 
 interface LocationData {
@@ -39,7 +47,9 @@ const DEFAULT_ZOOM = 15;
 const EventLocationMap: React.FC<EventLocationMapProps> = ({
   location,
   className = '',
+  themeMode = 'class',
 }) => {
+  const { t } = useTranslation();
   const [coordinates, setCoordinates] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -49,14 +59,25 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
 
   // Detect dark mode and listen for changes
   useEffect(() => {
+    // Publiczna strona (RSVP) — motyw wg ustawień przeglądarki/systemu
+    if (themeMode === 'system') {
+      if (typeof window === 'undefined' || !window.matchMedia) {
+        return;
+      }
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const update = () => setIsDarkMode(mediaQuery.matches);
+      update();
+      mediaQuery.addEventListener('change', update);
+      return () => mediaQuery.removeEventListener('change', update);
+    }
+
+    // Dashboard — klasa `.dark` na <html>
     const checkDarkMode = () => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
     };
 
-    // Initial check
     checkDarkMode();
 
-    // Listen for theme changes
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -64,7 +85,7 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [themeMode]);
 
   // Choose tile layer based on theme
   const tileLayerUrl = isDarkMode
@@ -85,6 +106,21 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
       .map(part => part.trim())
       .filter(Boolean);
   }, [location]);
+
+  const displayAddress = useMemo(() => {
+    if (!location?.trim()) {
+      return { primary: '', full: '' };
+    }
+
+    if (themeMode === 'system') {
+      return formatRsvpLocationDisplay(location);
+    }
+
+    return {
+      primary: addressLines.slice(0, 2).join(', '),
+      full: location.trim(),
+    };
+  }, [location, themeMode, addressLines]);
 
   useEffect(() => {
     let isActive = true;
@@ -231,7 +267,11 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
     }
   }, [location]);
 
-  const stateClassName = ['event-location-map', className]
+  const stateClassName = [
+    'event-location-map',
+    isDarkMode ? 'event-location-map--dark' : '',
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -240,7 +280,7 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
       <section className={stateClassName}>
         <div className="event-location-map__state" role="status">
           <div className="event-location-map__spinner" />
-          <span>Ładowanie mapy...</span>
+          <span>{t('map.loading')}</span>
         </div>
       </section>
     );
@@ -253,14 +293,14 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
           <div className="event-location-map__placeholder">
         <div className="event-location-map__state event-location-map__state--error">
               <MapPin size={32} />
-          <p>Nie udało się wyświetlić mapy dla tej lokalizacji.</p>
+          <p>{t('map.error')}</p>
           <button
             type="button"
             onClick={openInGoogleMaps}
             className="event-location-map__state-btn"
           >
             <ExternalLink size={16} />
-            Otwórz w Google Maps
+            {t('map.openInGoogleMaps')}
           </button>
             </div>
           </div>
@@ -290,8 +330,11 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
         <div className="event-location-map__info">
           <div className="event-location-map__info-header">
             <MapPin size={18} aria-hidden="true" />
-            <div className="event-location-map__address">
-              {addressLines.slice(0, 3).join(', ')}
+            <div
+              className="event-location-map__address"
+              title={displayAddress.full}
+            >
+              {displayAddress.primary}
             </div>
           </div>
 
@@ -300,19 +343,19 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
               type="button"
               onClick={copyAddress}
               className="event-location-map__btn event-location-map__btn--secondary"
-              aria-label={copied ? 'Skopiowano adres' : 'Kopiuj adres'}
+              aria-label={copied ? t('map.copiedAria') : t('map.copyAria')}
             >
               <Copy size={16} />
-              {copied ? 'Skopiowano' : 'Kopiuj'}
+              {copied ? t('map.copied') : t('map.copy')}
             </button>
             <button
               type="button"
               onClick={openInGoogleMaps}
               className="event-location-map__btn event-location-map__btn--primary"
-              aria-label="Otwórz w Google Maps"
+              aria-label={t('map.navigateAria')}
             >
               <ExternalLink size={16} />
-              Nawiguj
+              {t('map.navigate')}
             </button>
           </div>
         </div>

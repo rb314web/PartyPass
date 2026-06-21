@@ -1,0 +1,47 @@
+.delete-guest-list-modal {
+  &__guest-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-primary);
+    margin-bottom: 1rem;
+  }
+
+  &__avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: var(--text-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  &__email {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    word-break: break-all;
+  }
+
+  &__message {
+    margin: 0;
+    text-align: center;
+
+    strong {
+      color: var(--color-error);
+    }
+  }
+}

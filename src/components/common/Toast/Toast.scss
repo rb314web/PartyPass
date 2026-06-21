@@ -19,6 +19,14 @@
   max-width: 90%;
   width: auto;
 
+  &--error {
+    background: #ef4444;
+  }
+
+  &--success {
+    background: #22c55e;
+  }
+
   &__icon {
     flex-shrink: 0;
   }

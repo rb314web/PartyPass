@@ -14,11 +14,41 @@ PartyPass stosuje **minimalistyczny, nowoczesny design** z naciskiem na:
 ## 🎯 Zasady Ogólne
 
 ### Kolory
-- **Podstawowy**: `#3b82f6` (niebieski)
+- **Podstawowy**: `#6366f1` (indigo) — token `--color-primary`
 - **Sukces**: `#10b981` (zielony)
 - **Ostrzeżenie**: `#f59e0b` (pomarańczowy)
 - **Błąd**: `#ef4444` (czerwony)
 - **Informacja**: `#06b6d4` (cyjan)
+
+### System komponentów UI (2026)
+
+Ujednolicone klasy globalne w `src/styles/globals/`:
+
+| System | Klasy / komponent | Zastosowanie |
+|--------|-------------------|--------------|
+| Przyciski | `pp-btn`, `pp-btn--primary`, `--outline`, `--danger`, `--sm`, `--lg`, `--block` | CTA, akcje formularzy |
+| Formularze | `pp-field`, `pp-label`, `pp-input`, `pp-textarea`, `pp-select`, `pp-field-error`, `pp-form-alert` | Pola i walidacja |
+| Badge | `pp-badge`, `pp-badge--success`, `--warning`, `--error`, `--info`, `--neutral` | Statusy, liczniki |
+| Modale | komponent `Modal` (`src/components/common/Modal/`) | Dialogi, pickery |
+| Nagłówki | komponent `PageHeader` | Tytuł widoku dashboardu |
+| Pusty stan | komponent `EmptyState` | Brak danych na listach |
+| Feedback | `Toast` + hook `useToast()` | Komunikaty zamiast `alert()` / `useSnackbar` |
+| Plany | `src/constants/plans.ts` | Katalog planów (landing, rejestracja, ustawienia) |
+
+Limity techniczne planów pozostają w `src/services/firebase/planLimitsService.ts` (`PLAN_LIMITS`).
+
+### Zmigrowane obszary (2026)
+
+- **Auth:** Login, Register, ForgotPassword
+- **Dashboard:** Events, Guests, Contacts, Analytics, Activities, Settings, Search, ContactUs, DashboardHome
+- **Modale:** kontakty, goście, wydarzenia, RSVP, QR, zaproszenia, ustawienia wyglądu, skróty klawiszowe
+- **Formularze wydarzeń:** CreateEvent, EditEvent, AddEvent
+- **Strony prawne:** `/terms`, `/privacy`, `/rodo` (`LegalPage`)
+- **Landing:** PricingPlans korzysta z `constants/plans.ts`
+
+**MUI usunięte** (czerwiec 2026): brak `@mui/*`, `notistack`, `MaterialUIProvider`. Kalendarz na dashboardzie: `CompactCalendar` (własny). Potwierdzenia: `Modal` zamiast `window.confirm`.
+
+Przy nowych ekranach preferuj `pp-*` + `Modal` + `useToast()` zamiast MUI Dialog / `alert()`.
 
 ### Typografia
 - **Główny font**: System fonts (Inter, -apple-system, BlinkMacSystemFont)
@@ -70,18 +100,7 @@ PartyPass stosuje **minimalistyczny, nowoczesny design** z naciskiem na:
 ```
 
 #### Przycisk Podstawowy (Primary)
-```scss
-.button--primary {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-
-  &:hover {
-    background: #2563eb;
-    border-color: #2563eb;
-  }
-}
-```
+Użyj `pp-btn pp-btn--primary` — szczegóły w `_buttons.scss`.
 
 #### Przycisk Sukces
 ```scss
@@ -450,6 +469,6 @@ PartyPass stosuje **minimalistyczny, nowoczesny design** z naciskiem na:
 
 ---
 
-*Ostatnia aktualizacja: $(date)*
-*Wersja: 1.0*
+*Ostatnia aktualizacja: czerwiec 2026*
+*Wersja: 1.1*
 

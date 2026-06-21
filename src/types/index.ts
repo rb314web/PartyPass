@@ -8,6 +8,12 @@ export interface User {
   planType: 'starter' | 'pro' | 'enterprise';
   createdAt: Date;
   avatar?: string;
+  phoneNumber?: string;
+  company?: string;
+  website?: string;
+  bio?: string;
+  timezone?: string;
+  language?: string;
 }
 
 export interface Event {
@@ -16,11 +22,13 @@ export interface Event {
   title: string;
   description: string;
   date: Date;
+  /** Termin, do którego goście mogą przesyłać/zmieniać RSVP. Brak = do dnia wydarzenia. */
+  rsvpDeadline?: Date;
   location: string;
   latitude?: number;
   longitude?: number;
   maxGuests: number;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  status: 'active' | 'completed' | 'cancelled';
   createdAt: Date;
   updatedAt?: Date;
   tags?: string[];
@@ -36,6 +44,10 @@ export interface Event {
   maybeCount: number;
   dresscode?: string;
   additionalInfo?: string;
+  /** E-mail organizatora (denormalizacja do powiadomień RSVP) */
+  organizerEmail?: string;
+  /** Telefon organizatora (denormalizacja dla gości na RSVP) */
+  organizerPhone?: string;
 
   // Legacy field for backward compatibility
   guests?: EventGuest[];
@@ -55,6 +67,21 @@ export interface Contact {
   tags?: string[];
 }
 
+// RSVP System types
+export type GuestStatus = 'pending' | 'accepted' | 'declined' | 'maybe';
+
+export type GuestInvitationKind = 'individual' | 'couple' | 'individual_with_companion';
+export type PartyMemberRole = 'primary' | 'partner' | 'companion';
+
+export interface PartyMember {
+  id: string;
+  role: PartyMemberRole;
+  contactId?: string;
+  firstName: string;
+  lastName: string;
+  dietaryRestrictions?: string;
+}
+
 export interface EventGuest {
   id: string;
   eventId: string;
@@ -62,6 +89,16 @@ export interface EventGuest {
   status: GuestStatus;
   invitedAt: Date;
   respondedAt?: Date;
+  /** Typ zaproszenia: pojedyncze, para lub singiel z towarzyszem */
+  invitationKind?: GuestInvitationKind;
+  /** Ile miejsc obejmuje to zaproszenie (1 lub 2) */
+  invitedSeatCount?: number;
+  /** Osoby objęte zaproszeniem */
+  partyMembers?: PartyMember[];
+  /** ID osób potwierdzonych przy RSVP */
+  attendingMemberIds?: string[];
+  /** Ile osób faktycznie przychodzi (0–2) */
+  attendingCount?: number;
   plusOneType?: 'none' | 'withoutDetails' | 'withDetails';
   plusOneDetails?: {
     firstName?: string;
@@ -137,9 +174,6 @@ export interface StatsCardProps {
   color: 'blue' | 'green' | 'purple' | 'orange';
 }
 
-// RSVP System types
-export type GuestStatus = 'pending' | 'accepted' | 'declined' | 'maybe';
-
 export interface CreateContactData {
   firstName: string;
   lastName: string;
@@ -155,6 +189,7 @@ export interface UpdateContactData extends Partial<CreateContactData> {}
 export interface CreateEventGuestData {
   contactId?: string; // Made optional for backward compatibility
   eventSpecificNotes?: string;
+  invitationKind?: GuestInvitationKind;
   plusOneType?: 'none' | 'withoutDetails' | 'withDetails';
   plusOneDetails?: {
     firstName?: string;
@@ -212,24 +247,62 @@ export interface RSVPResponse {
     lastName?: string;
     dietaryRestrictions?: string;
   };
+  /** Przy zaproszeniu wieloosobowym — kto przychodzi */
+  attendingMemberIds?: string[];
+  /** Dieta per osoba (klucz = PartyMember.id) */
+  memberDietary?: Record<string, string>;
 }
 
 export interface GuestInvitation {
   eventGuestId: string;
-  contactId: string;
+  contactId?: string;
   guestId?: string; // Legacy field for backward compatibility
   email: string;
+  phone?: string;
   firstName: string;
   lastName: string;
+  status: GuestStatus;
   rsvpToken: string;
   rsvpUrl: string;
   qrCode?: string;
+  lastInvitationSentAt?: Date;
 }
 
+export type InvitationKind = 'invitation' | 'reminder';
+export type InvitationChannel = 'email' | 'sms' | 'print';
+
 export interface InvitationDelivery {
-  method: 'email' | 'sms' | 'print';
+  method: InvitationChannel;
   recipients: string[];
   subject?: string;
   message?: string;
   includeQR?: boolean;
+  kind?: InvitationKind;
+}
+
+export interface InvitationSendResultItem {
+  eventGuestId: string;
+  status: 'sent' | 'failed' | 'skipped';
+  error?: string;
+}
+
+export interface InvitationSendResult {
+  sent: number;
+  failed: number;
+  skipped: number;
+  results: InvitationSendResultItem[];
+}
+
+export interface InvitationLogEntry {
+  id: string;
+  eventId: string;
+  userId: string;
+  eventGuestId: string;
+  guestName: string;
+  recipient: string;
+  channel: InvitationChannel;
+  kind: InvitationKind;
+  status: 'sent' | 'failed' | 'skipped';
+  errorMessage?: string;
+  sentAt: Date;
 }

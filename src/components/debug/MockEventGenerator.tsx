@@ -1,6 +1,6 @@
 // components/debug/MockEventGenerator.tsx
 import React, { useState } from 'react';
-import { Zap, AlertCircle, CheckCircle, Users, Trash2, Zap as ZapIcon } from 'lucide-react';
+import { Zap, AlertCircle, CheckCircle, Users, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { EventService } from '../../services/firebase/eventService';
 import { GuestService } from '../../services/firebase/guestService';
@@ -141,7 +141,7 @@ const MockEventGenerator: React.FC = () => {
       eventDate.setDate(eventDate.getDate() + daysOffset);
       eventDate.setHours(Math.floor(Math.random() * 20) + 4, 0, 0, 0);
 
-      const status = eventDate < now ? 'completed' : Math.random() > 0.2 ? 'active' : 'draft';
+      const status = eventDate < now ? 'completed' : 'active';
       const maxGuests = guestCount + Math.floor(Math.random() * 10);
       const actualGuestCount = Math.floor(maxGuests * (0.5 + Math.random() * 0.5));
       const acceptedCount = Math.floor(actualGuestCount * (0.6 + Math.random() * 0.3));

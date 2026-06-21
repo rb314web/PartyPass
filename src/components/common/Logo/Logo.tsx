@@ -34,6 +34,18 @@ export interface LogoProps {
    * @default false
    */
   collapsed?: boolean;
+
+  /**
+   * „Party” + „Pass” jak w UnifiedHeader (spójne z resztą dashboardu)
+   * @default false
+   */
+  wordmark?: boolean;
+
+  /**
+   * Kolory wordmarku na ciemnym tle (np. sidebar w trybie ciemnym)
+   * @default 'default'
+   */
+  tone?: 'default' | 'on-dark';
 }
 
 const Logo: React.FC<LogoProps> = ({
@@ -42,14 +54,15 @@ const Logo: React.FC<LogoProps> = ({
   showIcon = false,
   className = '',
   collapsed = false,
+  wordmark = false,
+  tone = 'default',
 }) => {
-  // Debug: sprawdź czy collapsed przechodzi
-  console.log('Logo collapsed:', collapsed);
-  
   const logoClasses = [
     'logo',
     `logo--${size}`,
     collapsed && 'logo--collapsed',
+    wordmark && 'logo--wordmark',
+    tone === 'on-dark' && 'logo--on-dark',
     className,
   ]
     .filter(Boolean)
@@ -67,6 +80,19 @@ const Logo: React.FC<LogoProps> = ({
     </span>
   ) : null;
 
+  const wordmarkBody =
+    collapsed && wordmark ? (
+      <span className="logo__text logo__text--monogram">
+        <span className="logo__text--primary">P</span>
+        <span className="logo__text--accent">P</span>
+      </span>
+    ) : (
+      <span className="logo__text">
+        <span className="logo__text--primary">Party</span>
+        <span className="logo__text--accent">Pass</span>
+      </span>
+    );
+
   const textFallback = (
     <span className="logo__text">
       <span className="logo__text-main">
@@ -83,7 +109,7 @@ const Logo: React.FC<LogoProps> = ({
   const content = (
     <>
       {graphic}
-      {textFallback}
+      {wordmark ? wordmarkBody : textFallback}
       <span className="logo__sr-only">PartyPass</span>
     </>
   );

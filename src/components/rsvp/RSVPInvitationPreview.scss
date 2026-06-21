@@ -1,0 +1,278 @@
+// Statyczny podgląd strony RSVP na landingu — motyw wg przełącznika aplikacji (.light / .dark),
+// nie preferencji systemowych (RSVP.scss używa prefers-color-scheme dla pełnej strony /rsvp).
+
+@mixin rsvp-preview-light-tokens {
+  --rsvp-bg: #f5f6fb;
+  --rsvp-bg-accent-1: rgba(99, 102, 241, 0.12);
+  --rsvp-bg-accent-2: rgba(168, 85, 247, 0.1);
+  --rsvp-surface: #ffffff;
+  --rsvp-surface-muted: #f7f8fc;
+  --rsvp-border: rgba(15, 23, 42, 0.08);
+  --rsvp-border-strong: rgba(15, 23, 42, 0.14);
+  --rsvp-text: #0f172a;
+  --rsvp-text-muted: #64748b;
+  --rsvp-text-strong: #334155;
+  --rsvp-placeholder: #94a3b8;
+  --rsvp-accent: #6366f1;
+  --rsvp-accent-strong: #4f46e5;
+  --rsvp-accent-contrast: #ffffff;
+  --rsvp-accent-soft: rgba(99, 102, 241, 0.1);
+  --rsvp-accent-ring: rgba(99, 102, 241, 0.22);
+  --rsvp-success: #16a34a;
+  --rsvp-success-soft: rgba(22, 163, 74, 0.12);
+  --rsvp-warning: #d97706;
+  --rsvp-warning-soft: rgba(217, 119, 6, 0.12);
+  --rsvp-danger: #dc2626;
+  --rsvp-danger-soft: rgba(220, 38, 38, 0.1);
+  --rsvp-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.08);
+  --rsvp-shadow-accent: 0 10px 24px rgba(99, 102, 241, 0.3);
+}
+
+@mixin rsvp-preview-dark-tokens {
+  --rsvp-bg: #0a0e1a;
+  --rsvp-bg-accent-1: rgba(99, 102, 241, 0.16);
+  --rsvp-bg-accent-2: rgba(168, 85, 247, 0.14);
+  --rsvp-surface: #131a2c;
+  --rsvp-surface-muted: #1a2236;
+  --rsvp-border: rgba(148, 163, 184, 0.14);
+  --rsvp-border-strong: rgba(148, 163, 184, 0.26);
+  --rsvp-text: #f1f5f9;
+  --rsvp-text-muted: #94a3b8;
+  --rsvp-text-strong: #cbd5e1;
+  --rsvp-placeholder: #64748b;
+  --rsvp-accent: #818cf8;
+  --rsvp-accent-strong: #a5b4fc;
+  --rsvp-accent-contrast: #0a0e1a;
+  --rsvp-accent-soft: rgba(129, 140, 248, 0.16);
+  --rsvp-accent-ring: rgba(129, 140, 248, 0.3);
+  --rsvp-success: #4ade80;
+  --rsvp-success-soft: rgba(74, 222, 128, 0.16);
+  --rsvp-warning: #fbbf24;
+  --rsvp-warning-soft: rgba(251, 191, 36, 0.16);
+  --rsvp-danger: #f87171;
+  --rsvp-danger-soft: rgba(248, 113, 113, 0.16);
+  --rsvp-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.5);
+  --rsvp-shadow-accent: 0 10px 26px rgba(99, 102, 241, 0.45);
+}
+
+.rsvp--preview {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  background-image: none;
+  display: block;
+  width: 100%;
+  max-width: 26rem;
+  color: var(--rsvp-text);
+
+  --preview-crossfade-ms: 420ms;
+  --preview-crossfade-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  .rsvp-preview__stage {
+    min-height: 28rem;
+    width: 100%;
+  }
+
+  .rsvp-preview__morph-slot {
+    display: grid;
+    width: 100%;
+    contain: layout style;
+    isolation: isolate;
+
+    > .rsvp-preview__morph-layer {
+      grid-area: 1 / 1;
+      min-width: 0;
+      will-change: opacity;
+    }
+
+    &--guest {
+      width: 100%;
+    }
+  }
+
+  .rsvp-form-card__guest {
+    .rsvp-preview__morph-layer {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      width: 100%;
+    }
+  }
+
+  .rsvp-preview__morph-layer {
+    opacity: 1;
+    transition: opacity var(--preview-crossfade-ms) var(--preview-crossfade-ease);
+
+    &--base.is-dimming {
+      opacity: 0;
+    }
+
+    &--overlay {
+      opacity: 0;
+      pointer-events: none;
+
+      &.is-visible {
+        opacity: 1;
+      }
+    }
+  }
+
+  &:not(.rsvp-preview--transitioning) {
+    .rsvp-preview__morph-layer--base {
+      transition: none;
+    }
+  }
+
+  .rsvp-options {
+    gap: 0.5rem;
+    min-height: 11.5rem;
+  }
+
+  .rsvp-option {
+    pointer-events: none;
+    cursor: default;
+    padding: 0.75rem 0.9rem;
+    border-radius: 13px;
+    transition:
+      border-color var(--preview-crossfade-ms) var(--preview-crossfade-ease),
+      background-color var(--preview-crossfade-ms) var(--preview-crossfade-ease),
+      box-shadow var(--preview-crossfade-ms) var(--preview-crossfade-ease);
+
+    &:hover {
+      transform: none;
+    }
+
+    &__icon {
+      transition:
+        background-color var(--preview-crossfade-ms) var(--preview-crossfade-ease),
+        color var(--preview-crossfade-ms) var(--preview-crossfade-ease);
+    }
+  }
+
+  &.rsvp--preview-interactive {
+    .rsvp-option {
+      pointer-events: auto;
+      cursor: pointer;
+      transition:
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+
+      &__icon {
+        transition: background 0.18s ease, color 0.18s ease;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rsvp-preview__morph-layer,
+    .rsvp-option,
+    .rsvp-option__icon {
+      transition: none;
+    }
+  }
+
+  .rsvp-hero {
+    padding: 1.35rem 1.4rem 1.65rem;
+    border-radius: 22px 22px 16px 16px;
+    position: relative;
+    z-index: 2;
+
+    &__top {
+      margin-bottom: 0.85rem;
+    }
+
+    &__title {
+      font-size: clamp(1.4rem, 3vw, 1.7rem);
+      margin-bottom: 0.85rem;
+      text-align: left;
+    }
+
+    &__when {
+      font-size: 0.8125rem;
+      padding: 0.7rem 0.9rem;
+      justify-content: flex-start;
+    }
+  }
+
+  .rsvp-form-card {
+    margin-top: -0.65rem;
+    border-radius: 18px;
+    position: relative;
+    z-index: 3;
+  }
+
+  .rsvp-form-card__guest,
+  .rsvp-form-card__body {
+    padding: 1.15rem 1.2rem;
+  }
+
+  .rsvp-form-card__title {
+    font-size: 1.05rem;
+  }
+
+  .rsvp-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 0.9375rem;
+  }
+}
+
+// Jasny motyw aplikacji — nadpisuje prefers-color-scheme z RSVP.scss
+html.light .rsvp--preview,
+:root.light .rsvp--preview {
+  @include rsvp-preview-light-tokens;
+  color-scheme: light;
+
+  .rsvp-hero {
+    box-shadow:
+      0 20px 40px rgba(79, 70, 229, 0.22),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  }
+
+  .rsvp-form-card {
+    box-shadow:
+      0 24px 48px rgba(15, 23, 42, 0.1),
+      0 0 0 1px rgba(15, 23, 42, 0.06);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html.light .rsvp--preview,
+  :root.light .rsvp--preview {
+    @include rsvp-preview-light-tokens;
+    color-scheme: light;
+  }
+}
+
+// Ciemny motyw aplikacji
+html.dark .rsvp--preview,
+:root.dark .rsvp--preview {
+  @include rsvp-preview-dark-tokens;
+  color-scheme: dark;
+
+  .rsvp-form-card {
+    box-shadow:
+      0 28px 56px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(148, 163, 184, 0.12);
+  }
+
+  .rsvp-hero {
+    box-shadow:
+      0 24px 48px rgba(99, 102, 241, 0.35),
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  html.dark .rsvp--preview,
+  :root.dark .rsvp--preview {
+    @include rsvp-preview-dark-tokens;
+    color-scheme: dark;
+  }
+}

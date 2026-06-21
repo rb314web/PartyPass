@@ -107,7 +107,7 @@ export interface Event {
   date: Date;
   location: string;
   maxGuests: number;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  status: 'active' | 'completed' | 'cancelled';
   createdAt: Date;
   updatedAt?: Date;
   guests: Guest[];
@@ -148,7 +148,6 @@ export interface Stats {
   totalEvents: number;
   activeEvents: number;
   completedEvents: number;
-  draftEvents: number;
   cancelledEvents: number;
   totalGuests: number;
   acceptedGuests: number;

@@ -35,9 +35,7 @@ jobs:
       run: npx tsc --noEmit
 
     - name: Run tests
-      run: npm test -- --watchAll=false --coverage --passWithNoTests
-      env:
-        CI: true
+      run: npm test -- --coverage
 
     - name: Build application
       run: npm run build

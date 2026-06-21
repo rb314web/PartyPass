@@ -1,8 +1,6 @@
 // components/dashboard/Events/DuplicateEventModal/DuplicateEventModal.tsx
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
-  X,
   Copy,
   Calendar,
   Users,
@@ -13,6 +11,7 @@ import {
 import { format, addDays, addWeeks, addMonths } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Event } from '../../../../types';
+import Modal from '../../../common/Modal/Modal';
 import './DuplicateEventModal.scss';
 
 interface DuplicateEventModalProps {
@@ -124,29 +123,26 @@ const DuplicateEventModal: React.FC<DuplicateEventModalProps> = ({
 
   if (!isOpen) return null;
 
-  return createPortal(
-    <div className="duplicate-modal">
-      <div className="duplicate-modal__overlay" onClick={onClose} />
-      <div className="duplicate-modal__content">
-        <div className="duplicate-modal__header">
-          <h2>
-            <Copy size={24} />
-            Duplikuj wydarzenie
-          </h2>
-          <button onClick={onClose} className="duplicate-modal__close">
-            <X size={24} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="duplicate-modal__form">
+  return (
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title="Duplikuj wydarzenie"
+      icon={<Copy size={24} />}
+      size="lg"
+      closeDisabled={isSubmitting}
+    >
+      <form onSubmit={handleSubmit} className="duplicate-modal__form">
           <div className="duplicate-modal__section">
             <h3>
               <FileText size={20} />
               Podstawowe informacje
             </h3>
 
-            <div className="duplicate-modal__field">
-              <label htmlFor="title">Tytuł nowego wydarzenia</label>
+            <div className="pp-field duplicate-modal__field">
+              <label className="pp-label" htmlFor="title">
+                Tytuł nowego wydarzenia
+              </label>
               <input
                 type="text"
                 id="title"
@@ -154,6 +150,7 @@ const DuplicateEventModal: React.FC<DuplicateEventModalProps> = ({
                 onChange={e =>
                   setDuplicateData(prev => ({ ...prev, title: e.target.value }))
                 }
+                className="pp-input"
                 placeholder="Wprowadź tytuł wydarzenia"
                 required
               />
@@ -331,23 +328,21 @@ const DuplicateEventModal: React.FC<DuplicateEventModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="duplicate-modal__cancel"
+              className="pp-btn pp-btn--outline duplicate-modal__cancel"
             >
               Anuluj
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="duplicate-modal__submit"
+              className="pp-btn pp-btn--primary duplicate-modal__submit"
             >
               <Save size={20} />
               {isSubmitting ? 'Duplikowanie...' : 'Duplikuj wydarzenie'}
             </button>
           </div>
         </form>
-      </div>
-    </div>,
-    document.body
+    </Modal>
   );
 };
 

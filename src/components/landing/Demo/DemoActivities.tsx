@@ -1,39 +1,60 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
-import { DemoActivity } from './demo.types';
+import { formatDistanceToNow } from 'date-fns';
+import { pl } from 'date-fns/locale';
+import {
+  Activity as ActivityIcon,
+  Calendar,
+  CheckCircle,
+  UserCheck,
+  UserPlus,
+} from 'lucide-react';
+import { Activity } from '../../../types';
+import PageHeader from '../../common/PageHeader/PageHeader';
+import { demoActivities } from './demoDashboardData';
+import '../../dashboard/Activities/Activities.scss';
 
-interface DemoActivitiesProps {
-  mockActivities: DemoActivity[];
-}
+const getActivityIcon = (type: Activity['type']) => {
+  switch (type) {
+    case 'guest_accepted':
+      return <UserCheck size={20} className="activity__icon--success" />;
+    case 'event_created':
+      return <Calendar size={20} className="activity__icon--info" />;
+    case 'contact_added':
+      return <UserPlus size={20} className="activity__icon--success" />;
+    default:
+      return <CheckCircle size={20} className="activity__icon--default" />;
+  }
+};
 
-const DemoActivities: React.FC<DemoActivitiesProps> = React.memo(({ mockActivities }) => (
-  <div className="demo__activities-content">
-    <div className="demo__page-header">
-      <h1>Aktywności</h1>
-      <p>Śledź wszystkie działania w Twoich wydarzeniach</p>
-    </div>
+const DemoActivities: React.FC = () => (
+  <div className="activities">
+    <PageHeader
+      title="Aktywności"
+      subtitle="Historia wszystkich aktywności w Twoich wydarzeniach"
+      icon={ActivityIcon}
+    />
 
-    <div className="demo__activities-list">
-      {mockActivities.map(activity => (
-        <div key={activity.id} className="demo__activity-item">
-          <activity.icon
-            size={16}
-            className={`demo__activity-icon demo__activity-icon--${activity.color}`}
-          />
-          <div className="demo__activity-content">
-            <span className="demo__activity-message">{activity.message}</span>
-            <div className="demo__activity-time">
-              <Clock size={14} />
-              <small>{activity.time}</small>
+    <div className="activities__content">
+      <div className="activities__list">
+        {demoActivities.map(activity => (
+          <article key={activity.id} className="activities__item">
+            <div className="activities__icon">{getActivityIcon(activity.type)}</div>
+            <div className="activities__content-item">
+              <p className="activities__message">{activity.message}</p>
+              <div className="activities__meta">
+                <span className="activities__time">
+                  {formatDistanceToNow(activity.timestamp, {
+                    addSuffix: true,
+                    locale: pl,
+                  })}
+                </span>
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
+          </article>
+        ))}
+      </div>
     </div>
   </div>
-));
-
-DemoActivities.displayName = 'DemoActivities';
+);
 
 export default DemoActivities;
-

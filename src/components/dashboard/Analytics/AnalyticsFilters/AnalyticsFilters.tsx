@@ -171,19 +171,22 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
       </div>
 
       {/* Search Bar */}
-      <div className="analytics-filters__search">
-        <Search size={18} className="analytics-filters__search-icon" />
+      <div className="pp-search analytics-filters__search">
+        <Search size={18} className="pp-search__icon" aria-hidden="true" />
         <input
           type="text"
           placeholder="Szukaj wydarzeń, lokalizacji..."
           value={filters.searchQuery}
           onChange={e => updateFilters({ searchQuery: e.target.value })}
-          className="analytics-filters__search-input"
+          className="pp-input"
+          aria-label="Szukaj w analityce"
         />
         {filters.searchQuery && (
           <button
-            className="analytics-filters__search-clear"
+            type="button"
+            className="pp-search__clear pp-search__clear--visible"
             onClick={() => updateFilters({ searchQuery: '' })}
+            aria-label="Wyczyść wyszukiwanie"
           >
             <X size={16} />
           </button>
@@ -245,18 +248,24 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
               icon={<Calendar size={16} />}
             >
               <div className="analytics-filters__checkbox-group">
-                {availableEventTypes.map(type => (
-                  <label key={type} className="analytics-filters__checkbox">
-                    <input
-                      type="checkbox"
-                      checked={filters.eventTypes.includes(type)}
-                      onChange={() => toggleEventType(type)}
-                    />
-                    <span className="analytics-filters__checkbox-label">
-                      {type}
-                    </span>
-                  </label>
-                ))}
+                {availableEventTypes.length > 0 ? (
+                  availableEventTypes.map(type => (
+                    <label key={type} className="analytics-filters__checkbox">
+                      <input
+                        type="checkbox"
+                        checked={filters.eventTypes.includes(type)}
+                        onChange={() => toggleEventType(type)}
+                      />
+                      <span className="analytics-filters__checkbox-label">
+                        {type}
+                      </span>
+                    </label>
+                  ))
+                ) : (
+                  <p className="analytics-filters__empty-hint">
+                    Brak typów wydarzeń do filtrowania
+                  </p>
+                )}
               </div>
             </FilterTab>
 
@@ -266,18 +275,24 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
               icon={<MapPin size={16} />}
             >
               <div className="analytics-filters__checkbox-group">
-                {availableLocations.map(location => (
-                  <label key={location} className="analytics-filters__checkbox">
-                    <input
-                      type="checkbox"
-                      checked={filters.locations.includes(location)}
-                      onChange={() => toggleLocation(location)}
-                    />
-                    <span className="analytics-filters__checkbox-label">
-                      {location}
-                    </span>
-                  </label>
-                ))}
+                {availableLocations.length > 0 ? (
+                  availableLocations.map(location => (
+                    <label key={location} className="analytics-filters__checkbox">
+                      <input
+                        type="checkbox"
+                        checked={filters.locations.includes(location)}
+                        onChange={() => toggleLocation(location)}
+                      />
+                      <span className="analytics-filters__checkbox-label">
+                        {location}
+                      </span>
+                    </label>
+                  ))
+                ) : (
+                  <p className="analytics-filters__empty-hint">
+                    Brak lokalizacji do filtrowania
+                  </p>
+                )}
               </div>
             </FilterTab>
 
@@ -324,7 +339,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
 
             <FilterTab id="status" label="Status" icon={<Users size={16} />}>
               <div className="analytics-filters__checkbox-group">
-                {['active', 'completed', 'cancelled', 'draft'].map(status => (
+                {['active', 'completed', 'cancelled'].map(status => (
                   <label key={status} className="analytics-filters__checkbox">
                     <input
                       type="checkbox"
@@ -336,9 +351,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                         ? 'Aktywne'
                         : status === 'completed'
                           ? 'Zakończone'
-                          : status === 'cancelled'
-                            ? 'Anulowane'
-                            : 'Planowane'}
+                          : 'Anulowane'}
                     </span>
                   </label>
                 ))}

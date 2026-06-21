@@ -1,7 +1,7 @@
 const React = require('react');
 
 module.exports = {
-  useNavigate: () => jest.fn(),
+  useNavigate: () => vi.fn(),
   useLocation: () => ({
     pathname: '/',
     search: '',

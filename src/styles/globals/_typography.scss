@@ -1,5 +1,7 @@
 // Global typography styles and scale
 
+@use 'sass:map';
+
 // Font sizes
 $font-sizes: (
   xs: 0.75rem,
@@ -65,10 +67,10 @@ $letter-spacing: (
   $line-height: normal,
   $spacing: normal
 ) {
-  font-size: map-get($font-sizes, $size);
-  font-weight: map-get($font-weights, $weight);
-  line-height: map-get($line-heights, $line-height);
-  letter-spacing: map-get($letter-spacing, $spacing);
+  font-size: map.get($font-sizes, $size);
+  font-weight: map.get($font-weights, $weight);
+  line-height: map.get($line-heights, $line-height);
+  letter-spacing: map.get($letter-spacing, $spacing);
 }
 
 // Heading styles

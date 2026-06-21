@@ -58,7 +58,7 @@
 
       &:hover {
         background: var(--bg-secondary, #f9fafb);
-        color: var(--color-primary, #3b82f6);
+        color: var(--color-primary, #6366f1);
       }
 
       &:active {
@@ -325,6 +325,55 @@
         flex: 1;
       }
     }
+  }
+}
+
+// Tryb ciemny wg preferencji systemu (publiczna strona RSVP)
+.event-location-map--dark {
+  background: #141a2e;
+
+  .event-location-map__info {
+    background: rgba(20, 26, 46, 0.95);
+    border-top: 1px solid rgba(75, 85, 99, 0.35);
+  }
+
+  .event-location-map__address {
+    color: #f1f5f9;
+  }
+
+  .event-location-map__btn--secondary {
+    background: rgba(148, 163, 184, 0.12);
+    border-color: rgba(148, 163, 184, 0.22);
+    color: #cbd5e1;
+
+    &:hover {
+      background: rgba(129, 140, 248, 0.16);
+      border-color: rgba(129, 140, 248, 0.4);
+      color: #f1f5f9;
+    }
+  }
+
+  .leaflet-control-zoom a {
+    background: #1b2236;
+    color: #e2e8f0;
+
+    &:hover {
+      background: #212a42;
+      color: #a5b4fc;
+    }
+  }
+
+  .leaflet-control-attribution {
+    background: rgba(20, 26, 46, 0.9);
+    color: #94a3b8;
+
+    a {
+      color: #818cf8;
+    }
+  }
+
+  .event-location-map__placeholder {
+    background: #0f1426;
   }
 }
 

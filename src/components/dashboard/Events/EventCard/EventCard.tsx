@@ -12,6 +12,7 @@ import {
   Trash2,
   Eye,
   Clock,
+  CalendarClock,
   CheckCircle2,
   AlertTriangle,
   Award,
@@ -76,8 +77,6 @@ const EventCard: React.FC<EventCardProps> = ({
     switch (status) {
       case 'active':
         return 'var(--color-success-light)';
-      case 'draft':
-        return 'var(--color-warning-light)';
       case 'completed':
         return 'var(--color-primary-light)';
       case 'cancelled':
@@ -91,8 +90,6 @@ const EventCard: React.FC<EventCardProps> = ({
     switch (status) {
       case 'active':
         return <CheckCircle2 size={14} />;
-      case 'draft':
-        return <Edit size={14} />;
       case 'completed':
         return <Award size={14} />;
       case 'cancelled':
@@ -118,6 +115,9 @@ const EventCard: React.FC<EventCardProps> = ({
   const formattedTime = format(event.date, 'HH:mm');
   const dateDay = format(event.date, 'd', { locale: pl });
   const dateMonth = format(event.date, 'LLL', { locale: pl }).toUpperCase();
+  const rsvpDeadlineLabel = event.rsvpDeadline
+    ? `RSVP do ${format(new Date(event.rsvpDeadline), 'd MMM yyyy, HH:mm', { locale: pl })}`
+    : 'RSVP do dnia wydarzenia';
   
   // Skrócona lokalizacja - tylko pierwsze 2-3 elementy
   const trimmedLocation = event.location?.trim() || '';
@@ -249,6 +249,10 @@ const EventCard: React.FC<EventCardProps> = ({
               >
                 {displayedLocation}
               </span>
+            </span>
+            <span className="event-card__top-line">
+              <CalendarClock size={14} aria-hidden="true" />
+              <span className="event-card__top-text">{rsvpDeadlineLabel}</span>
             </span>
           </div>
         </div>

@@ -1,0 +1,100 @@
+@use '../../../styles/globals/mixins' as *;
+@use '../../../styles/globals/landing-tokens' as l;
+
+.how-it-works {
+  padding: var(--l-section-pad) 0;
+  background: var(--l-bg);
+  border-top: 1px solid var(--l-line);
+
+  &__container {
+    @include container;
+    display: flex;
+    flex-direction: column;
+    gap: var(--l-section-content-gap);
+  }
+
+  &__header {
+    max-width: 34rem;
+    @include l.l-section-header-stack;
+  }
+
+  &__eyebrow {
+    @include l.l-eyebrow-pill;
+    align-self: flex-start;
+  }
+
+  &__title {
+    @include l.l-section-title;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+
+  &__subtitle {
+    @include l.l-section-subtitle;
+    line-height: 1.6;
+    text-wrap: unset;
+  }
+
+  &__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--l-card-gap);
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  &__step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--l-card-inner-gap);
+    padding: var(--l-card-pad);
+    border-radius: var(--l-radius-card);
+    background: var(--l-surface);
+    border: 1px solid var(--l-line);
+  }
+
+  &__step-num {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: color-mix(in srgb, var(--l-muted) 50%, transparent);
+  }
+
+  &__step-icon {
+    @include l.l-icon-tile;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  &__step-copy {
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--l-ink);
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--l-muted);
+    }
+  }
+}
+
+.dark {
+  .how-it-works__step {
+    background: var(--l-surface);
+    border-color: var(--l-line);
+  }
+}

@@ -1,9 +1,10 @@
 // components/dashboard/Contacts/AddContact/AddContact.tsx
 import React, { useState } from 'react';
-import { Save, Tag, X, AlertCircle, UserPlus } from 'lucide-react';
+import { Tag, X, AlertCircle, UserPlus } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { ContactService } from '../../../../services/firebase/contactService';
 import { CreateContactData } from '../../../../types';
+import Modal from '../../../common/Modal/Modal';
 import './AddContact.scss';
 
 interface AddContactProps {
@@ -131,49 +132,47 @@ const AddContact: React.FC<AddContactProps> = ({
 
   if (!open) return null;
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !loading) {
-      onClose();
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape' && !loading) {
-      onClose();
-    }
-  };
-
   return (
-    <div
-      className="add-contact-modal__overlay"
-      onClick={handleBackdropClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={-1}
-    >
-      <div className="add-contact-modal__container">
-        <div className="add-contact-modal__header">
-          <div className="add-contact-modal__icon">
-            <UserPlus size={28} />
-          </div>
-          <h2 className="add-contact-modal__title">Dodaj nowy kontakt</h2>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title="Dodaj nowy kontakt"
+      icon={<UserPlus size={24} />}
+      size="lg"
+      closeDisabled={loading}
+      footer={
+        <>
           <button
-            className="add-contact-modal__close"
+            type="button"
+            className="pp-btn pp-btn--outline"
             onClick={handleClose}
             disabled={loading}
-            aria-label="Zamknij"
           >
-            <X size={20} />
+            Anuluj
           </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="add-contact-modal__form">
-          <div className="add-contact-modal__content">
-            {error && (
-              <div className="add-contact-modal__error">
-                <AlertCircle size={16} />
-                {error}
-              </div>
-            )}
+          <button
+            type="submit"
+            form="add-contact-form"
+            className="pp-btn pp-btn--primary"
+            disabled={loading}
+          >
+            {loading ? 'Zapisywanie...' : 'Dodaj kontakt'}
+          </button>
+        </>
+      }
+    >
+      <form
+        id="add-contact-form"
+        onSubmit={handleSubmit}
+        className="add-contact-modal__form"
+      >
+        <div className="add-contact-modal__content">
+          {error && (
+            <div className="pp-form-alert pp-form-alert--error add-contact-modal__error">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
 
             <div className="add-contact-modal__contact-preview">
               <div className="add-contact-modal__avatar">
@@ -193,13 +192,13 @@ const AddContact: React.FC<AddContactProps> = ({
 
             <div className="add-contact-modal__fields">
               <div className="add-contact-modal__row">
-                <div className="add-contact-modal__field-group">
-                  <label className="add-contact-modal__label">
+                <div className="pp-field">
+                  <label className="pp-label">
                     Imię <span className="add-contact-modal__required">*</span>
                   </label>
                   <input
                     type="text"
-                    className="add-contact-modal__input"
+                    className="pp-input"
                     value={formData.firstName}
                     onChange={handleInputChange('firstName')}
                     required
@@ -207,14 +206,14 @@ const AddContact: React.FC<AddContactProps> = ({
                     placeholder="Wprowadź imię"
                   />
                 </div>
-                <div className="add-contact-modal__field-group">
-                  <label className="add-contact-modal__label">
+                <div className="pp-field">
+                  <label className="pp-label">
                     Nazwisko{' '}
                     <span className="add-contact-modal__required">*</span>
                   </label>
                   <input
                     type="text"
-                    className="add-contact-modal__input"
+                    className="pp-input"
                     value={formData.lastName}
                     onChange={handleInputChange('lastName')}
                     required
@@ -224,13 +223,13 @@ const AddContact: React.FC<AddContactProps> = ({
                 </div>
               </div>
 
-              <div className="add-contact-modal__field-group">
-                <label className="add-contact-modal__label">
+              <div className="pp-field">
+                <label className="pp-label">
                   Email <span className="add-contact-modal__required">*</span>
                 </label>
                 <input
                   type="email"
-                  className="add-contact-modal__input"
+                  className="pp-input"
                   value={formData.email}
                   onChange={handleInputChange('email')}
                   required
@@ -239,11 +238,11 @@ const AddContact: React.FC<AddContactProps> = ({
                 />
               </div>
 
-              <div className="add-contact-modal__field-group">
-                <label className="add-contact-modal__label">Telefon</label>
+              <div className="pp-field">
+                <label className="pp-label">Telefon</label>
                 <input
                   type="tel"
-                  className="add-contact-modal__input"
+                  className="pp-input"
                   value={formData.phone}
                   onChange={handleInputChange('phone')}
                   disabled={loading}
@@ -251,12 +250,10 @@ const AddContact: React.FC<AddContactProps> = ({
                 />
               </div>
 
-              <div className="add-contact-modal__field-group">
-                <label className="add-contact-modal__label">
-                  Preferencje żywieniowe
-                </label>
+              <div className="pp-field">
+                <label className="pp-label">Preferencje żywieniowe</label>
                 <textarea
-                  className="add-contact-modal__textarea"
+                  className="pp-textarea"
                   value={formData.dietaryRestrictions}
                   onChange={handleInputChange('dietaryRestrictions')}
                   disabled={loading}
@@ -265,10 +262,10 @@ const AddContact: React.FC<AddContactProps> = ({
                 />
               </div>
 
-              <div className="add-contact-modal__field-group">
-                <label className="add-contact-modal__label">Notatki</label>
+              <div className="pp-field">
+                <label className="pp-label">Notatki</label>
                 <textarea
-                  className="add-contact-modal__textarea"
+                  className="pp-textarea"
                   value={formData.notes}
                   onChange={handleInputChange('notes')}
                   disabled={loading}
@@ -277,14 +274,14 @@ const AddContact: React.FC<AddContactProps> = ({
                 />
               </div>
 
-              <div className="add-contact-modal__field-group">
-                <label className="add-contact-modal__label">Tagi</label>
+              <div className="pp-field">
+                <label className="pp-label">Tagi</label>
 
                 <div className="add-contact-modal__tag-container">
                   <div className="add-contact-modal__tag-input">
                     <input
                       type="text"
-                      className="add-contact-modal__input"
+                      className="pp-input"
                       value={newTag}
                       onChange={e => setNewTag(e.target.value)}
                       onKeyPress={e => {
@@ -298,7 +295,7 @@ const AddContact: React.FC<AddContactProps> = ({
                     />
                     <button
                       type="button"
-                      className="add-contact-modal__tag-add-btn"
+                      className="pp-btn pp-btn--outline add-contact-modal__tag-add-btn"
                       onClick={handleAddTag}
                       disabled={loading || !newTag.trim()}
                     >
@@ -327,37 +324,8 @@ const AddContact: React.FC<AddContactProps> = ({
               </div>
             </div>
           </div>
-
-          <div className="add-contact-modal__actions">
-            <button
-              type="button"
-              className="add-contact-modal__btn add-contact-modal__btn--cancel"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Anuluj
-            </button>
-            <button
-              type="submit"
-              className="add-contact-modal__btn add-contact-modal__btn--primary"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div className="add-contact-modal__spinner" />
-                  Zapisywanie...
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  Dodaj kontakt
-                </>
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

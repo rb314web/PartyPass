@@ -68,6 +68,7 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
     };
 
     loadContacts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, open, eventId]);
 
   // Get existing contact IDs for this event
@@ -163,20 +164,26 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
           plusOneType = 'withDetails';
           plusOneDetails = {
             firstName: guestOption.spouseFirstName || '',
-            lastName: guestOption.spouseLastName || ''
+            lastName: guestOption.spouseLastName || '',
           };
         } else if (guestOption.type === 'companion') {
           plusOneType = 'withDetails';
           plusOneDetails = {
             firstName: guestOption.companionFirstName || '',
-            lastName: guestOption.companionLastName || ''
+            lastName: guestOption.companionLastName || '',
           };
         }
         await EventGuestService.addContactToEvent(eventId, contactId, {
           contactId,
           eventSpecificNotes: globalSettings.eventSpecificNotes,
+          invitationKind:
+            guestOption.type === 'spouse'
+              ? 'couple'
+              : guestOption.type === 'companion'
+                ? 'individual_with_companion'
+                : 'individual',
           plusOneType,
-          plusOneDetails
+          plusOneDetails,
         }, user?.id);
       }
       onContactsAdded();
@@ -252,15 +259,16 @@ const AddContactsToEvent: React.FC<AddContactsToEventProps> = ({
           )}
 
           {/* Search */}
-          <div className="add-contacts-modal__search">
-            <Search size={20} className="add-contacts-modal__search-icon" />
+          <div className="pp-search add-contacts-modal__search">
+            <Search size={20} className="pp-search__icon" aria-hidden="true" />
             <input
               type="text"
               placeholder="Szukaj kontaktów..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               disabled={loading || loadingContacts}
-              className="add-contacts-modal__search-input"
+              className="pp-input"
+              aria-label="Szukaj kontaktów"
             />
           </div>
 

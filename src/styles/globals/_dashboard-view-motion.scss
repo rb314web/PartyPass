@@ -1,0 +1,149 @@
+// Wspólne przejścia widoków dashboardu (hook: useDashboardViewMotion)
+
+// Zmiana trasy: --dashboard-route-crossfade w PageTransition
+
+
+
+.dashboard-view {
+
+  opacity: 1;
+
+  transform: translateZ(0);
+
+
+
+  &--ready {
+
+    opacity: 1;
+
+  }
+
+
+
+  &__body {
+
+    position: relative;
+
+    display: flex;
+
+    flex-direction: column;
+
+    width: 100%;
+
+    min-height: min(40vh, 360px);
+
+  }
+
+
+
+  &__content-loading {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 100%;
+
+    min-height: min(50vh, 420px);
+
+    flex: 1;
+
+    opacity: 1;
+
+    transition: opacity var(--dashboard-route-crossfade, 0.25s) ease-out;
+
+
+
+    &--exit {
+
+      position: absolute;
+
+      inset: 0;
+
+      z-index: 1;
+
+      opacity: 0;
+
+      pointer-events: none;
+
+    }
+
+  }
+
+
+
+  &__content--enter {
+
+    position: relative;
+
+    z-index: 0;
+
+    width: 100%;
+
+    animation: dashboard-view-content-enter var(--dashboard-route-crossfade, 0.25s)
+
+      ease-out both;
+
+  }
+
+
+
+  &--loading {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 60vh;
+
+    opacity: 1;
+
+  }
+
+}
+
+
+
+@keyframes dashboard-view-content-enter {
+
+  from {
+
+    opacity: 0;
+
+  }
+
+
+
+  to {
+
+    opacity: 1;
+
+  }
+
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .dashboard-view__content-loading {
+
+    transition: none;
+
+  }
+
+
+
+  .dashboard-view__content--enter {
+
+    animation: none;
+
+  }
+
+}
+
+

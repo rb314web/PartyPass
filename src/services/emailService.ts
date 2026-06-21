@@ -1,6 +1,10 @@
 // services/emailService.ts
-import emailjs from '@emailjs/browser';
 import { GuestInvitation, Event, InvitationDelivery } from '../types';
+
+type EmailJsClient = typeof import('@emailjs/browser').default;
+
+let emailJsClient: EmailJsClient | null = null;
+let emailJsLoadPromise: Promise<EmailJsClient> | null = null;
 
 export class EmailService {
   private static readonly SERVICE_ID =
@@ -26,14 +30,29 @@ export class EmailService {
   private static readonly PUBLIC_KEY =
     process.env.REACT_APP_EMAILJS_PUBLIC_KEY || '';
 
-  /**
-   * Inicjalizuje EmailJS
-   */
+  private static async getEmailJs(): Promise<EmailJsClient> {
+    if (emailJsClient) {
+      return emailJsClient;
+    }
+
+    if (!emailJsLoadPromise) {
+      emailJsLoadPromise = import('@emailjs/browser').then(module => {
+        emailJsClient = module.default;
+        if (this.PUBLIC_KEY) {
+          emailJsClient.init(this.PUBLIC_KEY);
+        }
+        return emailJsClient;
+      });
+    }
+
+    return emailJsLoadPromise;
+  }
+
+  /** Opcjonalne preload — nie blokuje startu aplikacji. */
   static init(): void {
     if (this.PUBLIC_KEY) {
-      emailjs.init(this.PUBLIC_KEY);
+      void this.getEmailJs();
     }
-    // EmailJS is optional - silent fail if not configured
   }
 
   /**
@@ -46,9 +65,9 @@ export class EmailService {
   ): Promise<void> {
     try {
       if (!this.SERVICE_ID || !this.TEMPLATE_ID || !this.PUBLIC_KEY) {
-        // Fallback do konsoli gdy EmailJS nie jest skonfigurowany
-        this.logEmailToConsole(invitation, event, delivery);
-        return;
+        throw new Error(
+          'EmailJS nie jest skonfigurowany (REACT_APP_EMAILJS_SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY)'
+        );
       }
 
       const templateParams = {
@@ -75,6 +94,7 @@ export class EmailService {
         organizer_name: 'Organizator', // Default organizer name
       };
 
+      const emailjs = await this.getEmailJs();
       await emailjs.send(
         this.SERVICE_ID,
         this.TEMPLATE_ID,
@@ -88,9 +108,11 @@ export class EmailService {
         `❌ Błąd podczas wysyłania e-maila do ${invitation.email}:`,
         error
       );
-      // Fallback do konsoli
-      this.logEmailToConsole(invitation, event, delivery);
-      throw new Error(`Nie udało się wysłać e-maila do ${invitation.email}`);
+      throw new Error(
+        `Nie udało się wysłać e-maila do ${invitation.email}: ${
+          error instanceof Error ? error.message : 'nieznany błąd'
+        }`
+      );
     }
   }
 
@@ -206,49 +228,65 @@ PartyPass - Zarządzanie wydarzeniami
     email: string;
     name: string;
     message: string;
+    subject?: string;
+    priority?: string;
   }): Promise<void> {
     try {
       if (!this.SERVICE_ID || !this.CONTACT_TEMPLATE_ID || !this.PUBLIC_KEY) {
-        // Fallback do konsoli gdy EmailJS nie jest skonfigurowany
-        console.warn(
-          'EmailJS nie jest skonfigurowany dla formularza kontaktowego. Sprawdź zmienne środowiskowe.'
+        throw new Error(
+          'Formularz kontaktowy nie jest skonfigurowany. Ustaw REACT_APP_EMAILJS_SERVICE_ID, REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID i REACT_APP_EMAILJS_PUBLIC_KEY w .env.local'
         );
-        this.logContactFormToConsole(data);
-        return;
       }
 
-      // Przygotuj parametry szablonu
+      const priorityLabel =
+        data.priority === 'high'
+          ? 'Wysoki'
+          : data.priority === 'low'
+            ? 'Niski'
+            : 'Średni';
+
+      const subjectLine =
+        data.subject?.trim() || 'Nowa wiadomość z formularza kontaktowego';
+
+      const fullMessage = [
+        data.subject?.trim() ? `Temat: ${data.subject.trim()}` : '',
+        data.priority ? `Priorytet: ${priorityLabel}` : '',
+        '',
+        data.message.trim(),
+      ]
+        .filter((line, index, arr) => line !== '' || (index > 0 && arr[index - 1] !== ''))
+        .join('\n');
+
       const templateParams = {
         to_name: 'Administrator PartyPass',
         from_name: data.name,
+        name: data.name,
         from_email: data.email,
+        email: data.email,
         reply_to: data.email,
-        subject: 'Nowa wiadomość z formularza kontaktowego',
-        message: data.message,
+        subject: subjectLine,
+        message: fullMessage,
+        priority: priorityLabel,
+        time: new Date().toLocaleString('pl-PL', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }),
       };
 
-      // Wyślij email przez EmailJS
+      const emailjs = await this.getEmailJs();
       await emailjs.send(
         this.SERVICE_ID,
         this.CONTACT_TEMPLATE_ID,
         templateParams,
         this.PUBLIC_KEY
       );
-
-      console.log('✅ Wiadomość kontaktowa wysłana pomyślnie');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Błąd podczas wysyłania wiadomości:', error);
 
-      // Fallback do konsoli w trybie deweloperskim
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Fallback: wyświetlanie wiadomości w konsoli');
-      this.logContactFormToConsole(data);
-      }
-
-      // Rzucaj bardziej opisowy błąd
+      const err = error as { text?: string; message?: string };
       const errorMessage =
-        error.text ||
-        error.message ||
+        err.text ||
+        err.message ||
         'Nie udało się wysłać wiadomości. Spróbuj ponownie później.';
       throw new Error(errorMessage);
     }
@@ -341,6 +379,7 @@ PartyPass - Zarządzanie wydarzeniami
         total_guests: stats.total,
       };
 
+      const emailjs = await this.getEmailJs();
       await emailjs.send(
         this.SERVICE_ID,
         this.RSVP_NOTIFICATION_TEMPLATE_ID,
@@ -418,6 +457,7 @@ PartyPass - Zarządzanie wydarzeniami
         templateParams.total_guests = organizerStats.total;
       }
 
+      const emailjs = await this.getEmailJs();
       await emailjs.send(
         this.SERVICE_ID,
         templateId,

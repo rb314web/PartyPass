@@ -1,10 +1,11 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { AuthProvider } from './useAuth';
+import { auth } from '../config/firebase';
 
 // Mock Firebase Auth
-jest.mock('../config/firebase', () => ({
+vi.mock('../config/firebase', () => ({
   auth: {
-    onAuthStateChanged: jest.fn(),
+    onAuthStateChanged: vi.fn(),
     currentUser: null,
   },
 }));
@@ -15,27 +16,22 @@ describe('useAuth', () => {
   );
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('provides auth context', () => {
     const { result } = renderHook(() => {
       // We can't directly test the hook without proper mocking
       // This is a placeholder test structure
-      return { user: null, logout: jest.fn() };
+      return { user: null, logout: vi.fn() };
     }, { wrapper });
 
     expect(result.current).toBeDefined();
   });
 
-  it('handles auth state changes', async () => {
-    // Mock auth state change
-    const mockAuthStateChange = jest.fn();
-    require('../config/firebase').auth.onAuthStateChanged = mockAuthStateChange;
-
+  it('handles auth state changes', () => {
     renderHook(() => ({ user: null }), { wrapper });
 
-    // Test would verify auth state handling
-    expect(mockAuthStateChange).toHaveBeenCalled();
+    expect(auth.onAuthStateChanged).toHaveBeenCalled();
   });
 });

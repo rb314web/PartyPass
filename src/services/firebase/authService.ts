@@ -18,17 +18,15 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   updateDoc,
   deleteDoc,
+  query,
+  where,
+  collection,
   Timestamp,
 } from 'firebase/firestore';
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
-import { auth, db, storage } from '../../config/firebase';
+import { auth, db, getFirebaseStorage } from '../../config/firebase';
 import { FirebaseUser as AppUser, COLLECTIONS } from '../../types/firebase';
 import { User } from '../../types';
 
@@ -49,6 +47,11 @@ export interface UpdateProfileData {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
+  company?: string;
+  website?: string;
+  bio?: string;
+  timezone?: string;
+  language?: 'pl' | 'en' | 'de' | 'fr';
   avatar?: File;
 }
 
@@ -212,16 +215,44 @@ export class AuthService {
     data: UpdateProfileData
   ): Promise<User> {
     try {
-      const updateData: Partial<AppUser> = {
+      const userRef = doc(db, COLLECTIONS.USERS, userId);
+      const existingSnap = await getDoc(userRef);
+      const existingData = existingSnap.exists()
+        ? (existingSnap.data() as Omit<AppUser, 'uid'>)
+        : null;
+
+      const updateData: Record<string, unknown> = {
         updatedAt: Timestamp.now(),
       };
 
-      if (data.firstName) updateData.firstName = data.firstName;
-      if (data.lastName) updateData.lastName = data.lastName;
-      if (data.phoneNumber) updateData.phoneNumber = data.phoneNumber;
+      if (data.firstName !== undefined) updateData.firstName = data.firstName.trim();
+      if (data.lastName !== undefined) updateData.lastName = data.lastName.trim();
+      if (data.phoneNumber !== undefined) {
+        updateData.phoneNumber = data.phoneNumber.trim();
+      }
+      if (data.company !== undefined) updateData.company = data.company.trim();
+      if (data.website !== undefined) updateData.website = data.website.trim();
+      if (data.bio !== undefined) updateData.bio = data.bio.trim();
+
+      if (data.language !== undefined || data.timezone !== undefined) {
+        const currentPrefs = existingData?.preferences ?? {
+          notifications: { email: true, push: true, sms: false },
+          theme: 'light' as const,
+          language: 'pl' as const,
+        };
+        updateData.preferences = {
+          ...currentPrefs,
+          ...(data.language !== undefined && { language: data.language }),
+          ...(data.timezone !== undefined && { timezone: data.timezone }),
+        };
+      }
 
       // Handle avatar upload
       if (data.avatar) {
+        const [{ ref, uploadBytes, getDownloadURL }, storage] = await Promise.all([
+          import('firebase/storage'),
+          getFirebaseStorage(),
+        ]);
         const avatarRef = ref(
           storage,
           `avatars/${userId}/${Date.now()}_${data.avatar.name}`
@@ -231,23 +262,30 @@ export class AuthService {
         updateData.avatar = avatarUrl;
       }
 
-      await updateDoc(doc(db, COLLECTIONS.USERS, userId), updateData);
+      await updateDoc(userRef, updateData);
 
       // Update Firebase Auth profile
       const firebaseUser = auth.currentUser;
       if (firebaseUser) {
-        const authUpdateData: any = {};
-        if (data.firstName || data.lastName) {
-          authUpdateData.displayName =
-            `${data.firstName || ''} ${data.lastName || ''}`.trim();
+        const authUpdateData: { displayName?: string } = {};
+        if (data.firstName !== undefined || data.lastName !== undefined) {
+          const firstName =
+            data.firstName !== undefined
+              ? data.firstName.trim()
+              : existingData?.firstName ?? '';
+          const lastName =
+            data.lastName !== undefined
+              ? data.lastName.trim()
+              : existingData?.lastName ?? '';
+          authUpdateData.displayName = `${firstName} ${lastName}`.trim();
         }
-        if (Object.keys(authUpdateData).length > 0) {
+        if (authUpdateData.displayName) {
           await updateProfile(firebaseUser, authUpdateData);
         }
       }
 
       // Get updated user data
-      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
+      const userDoc = await getDoc(userRef);
       const userData = userDoc.data() as Omit<AppUser, 'uid'>;
 
       return this.convertFirebaseUserToUser(userId, userData);
@@ -318,12 +356,6 @@ export class AuthService {
   // Delete all user data from Firestore
   private static async deleteUserData(userId: string): Promise<void> {
     try {
-      // Import additional Firestore functions
-      const { getDocs, query, where, collection } = await import(
-        'firebase/firestore'
-      );
-
-      // Delete user document
       await deleteDoc(doc(db, COLLECTIONS.USERS, userId));
 
       // Get all user's events
@@ -387,6 +419,10 @@ export class AuthService {
 
       // Delete user's avatar from storage if exists
       try {
+        const [{ ref, deleteObject }, storage] = await Promise.all([
+          import('firebase/storage'),
+          getFirebaseStorage(),
+        ]);
         const avatarRef = ref(storage, `avatars/${userId}`);
         await deleteObject(avatarRef);
       } catch (error) {
@@ -429,6 +465,12 @@ export class AuthService {
       planType: firebaseUser.planType,
       createdAt: firebaseUser.createdAt.toDate(),
       avatar: firebaseUser.avatar,
+      phoneNumber: firebaseUser.phoneNumber,
+      company: firebaseUser.company,
+      website: firebaseUser.website,
+      bio: firebaseUser.bio,
+      timezone: firebaseUser.preferences?.timezone,
+      language: firebaseUser.preferences?.language,
     };
   }
 

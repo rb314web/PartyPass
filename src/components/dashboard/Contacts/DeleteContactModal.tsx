@@ -1,6 +1,7 @@
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Contact } from '../../../types';
+import Modal from '../../common/Modal/Modal';
 import './DeleteContactModal.scss';
 
 interface DeleteContactModalProps {
@@ -18,92 +19,55 @@ const DeleteContactModal: React.FC<DeleteContactModalProps> = ({
   onConfirm,
   isDeleting = false,
 }) => {
-  if (!open || !contact) return null;
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onClose();
-    }
-    if (e.key === 'Enter') {
-      onConfirm();
-    }
-  };
+  if (!contact) return null;
 
   return (
-    <div
-      className="delete-contact-modal__overlay"
-      onClick={handleBackdropClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={-1}
-    >
-      <div className="delete-contact-modal__container">
-        <div className="delete-contact-modal__header">
-          <div className="delete-contact-modal__icon">
-            <AlertTriangle size={24} />
-          </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Usuń kontakt"
+      size="sm"
+      icon={<AlertTriangle size={24} />}
+      iconVariant="danger"
+      closeDisabled={isDeleting}
+      footer={
+        <>
           <button
-            className="delete-contact-modal__close"
-            onClick={onClose}
-            disabled={isDeleting}
-            aria-label="Zamknij"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="delete-contact-modal__content">
-          <h2 className="delete-contact-modal__title">Usuń kontakt</h2>
-
-          <div className="delete-contact-modal__contact-info">
-            <div className="delete-contact-modal__avatar">
-              {contact.firstName[0]}
-              {contact.lastName[0]}
-            </div>
-            <div className="delete-contact-modal__details">
-              <div className="delete-contact-modal__name">
-                {contact.firstName} {contact.lastName}
-              </div>
-              <div className="delete-contact-modal__email">{contact.email}</div>
-            </div>
-          </div>
-
-          <p className="delete-contact-modal__message">
-            Czy na pewno chcesz usunąć ten kontakt?
-            <strong> Ta akcja jest nieodwracalna.</strong>
-          </p>
-        </div>
-
-        <div className="delete-contact-modal__actions">
-          <button
-            className="delete-contact-modal__btn delete-contact-modal__btn--cancel"
+            type="button"
+            className="pp-btn pp-btn--outline"
             onClick={onClose}
             disabled={isDeleting}
           >
             Anuluj
           </button>
           <button
-            className="delete-contact-modal__btn delete-contact-modal__btn--danger"
+            type="button"
+            className="pp-btn pp-btn--danger"
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? (
-              <>
-                <div className="delete-contact-modal__spinner" />
-                Usuwanie...
-              </>
-            ) : (
-              'Usuń kontakt'
-            )}
+            {isDeleting ? 'Usuwanie...' : 'Usuń kontakt'}
           </button>
+        </>
+      }
+    >
+      <div className="delete-contact-modal__contact-info">
+        <div className="delete-contact-modal__avatar">
+          {contact.firstName[0]}
+          {contact.lastName[0]}
+        </div>
+        <div className="delete-contact-modal__details">
+          <div className="delete-contact-modal__name">
+            {contact.firstName} {contact.lastName}
+          </div>
+          <div className="delete-contact-modal__email">{contact.email}</div>
         </div>
       </div>
-    </div>
+      <p className="delete-contact-modal__message">
+        Czy na pewno chcesz usunąć ten kontakt?
+        <strong> Ta akcja jest nieodwracalna.</strong>
+      </p>
+    </Modal>
   );
 };
 

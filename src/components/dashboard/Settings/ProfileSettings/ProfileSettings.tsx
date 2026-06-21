@@ -1,29 +1,71 @@
 // components/dashboard/Settings/ProfileSettings/ProfileSettings.tsx
-import React, { useState } from 'react';
-import { Save, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Save, Trash2, Check, AlertCircle, AlertTriangle, User } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import Modal from '../../../common/Modal/Modal';
+import PageHeader from '../../../common/PageHeader/PageHeader';
 import './ProfileSettings.scss';
 
+type ProfileFormData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
+  website: string;
+  bio: string;
+  timezone: string;
+  language: 'pl' | 'en' | 'de' | 'fr';
+};
+
+const emptyForm = (): ProfileFormData => ({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  company: '',
+  website: '',
+  bio: '',
+  timezone: 'Europe/Warsaw',
+  language: 'pl',
+});
+
 const ProfileSettings: React.FC = () => {
-  const { user, deleteAccount } = useAuth();
+  const { user, updateProfile, deleteAccount } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: '',
-    company: '',
-    website: '',
-    bio: '',
-    timezone: 'Europe/Warsaw',
-    language: 'pl',
-  });
+  const [formData, setFormData] = useState<ProfileFormData>(emptyForm);
   const [isLoading, setIsLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
+  const [saveError, setSaveError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setFormData({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phoneNumber || '',
+      company: user.company || '',
+      website: user.website || '',
+      bio: user.bio || '',
+      timezone: user.timezone || 'Europe/Warsaw',
+      language: (user.language as ProfileFormData['language']) || 'pl',
+    });
+  }, [user]);
+
+  useEffect(() => {
+    if (saveStatus !== 'saved') return;
+    const timer = setTimeout(() => setSaveStatus('idle'), 4000);
+    return () => clearTimeout(timer);
+  }, [saveStatus]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -32,17 +74,42 @@ const ProfileSettings: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (saveStatus === 'saved' || saveStatus === 'error') {
+      setSaveStatus('idle');
+      setSaveError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
     setIsLoading(true);
+    setSaveStatus('saving');
+    setSaveError('');
 
-    // Symulacja API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    alert('Profil został zaktualizowany!');
-    setIsLoading(false);
+    try {
+      await updateProfile({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        phoneNumber: formData.phone.trim(),
+        company: formData.company.trim(),
+        website: formData.website.trim(),
+        bio: formData.bio.trim(),
+        timezone: formData.timezone,
+        language: formData.language,
+      });
+      setSaveStatus('saved');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Nie udało się zapisać profilu. Spróbuj ponownie.';
+      setSaveError(message);
+      setSaveStatus('error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -62,13 +129,12 @@ const ProfileSettings: React.FC = () => {
 
     try {
       await deleteAccount(deletePassword);
-      // Po usunięciu konta użytkownik zostanie automatycznie wylogowany
-      // i przekierowany do strony głównej przez AuthGuard
       navigate('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setDeleteError(
-        err.message ||
-          'Nie udało się usunąć konta. Sprawdź hasło i spróbuj ponownie.'
+        err instanceof Error
+          ? err.message
+          : 'Nie udało się usunąć konta. Sprawdź hasło i spróbuj ponownie.'
       );
       setIsDeleting(false);
     }
@@ -76,105 +142,139 @@ const ProfileSettings: React.FC = () => {
 
   return (
     <div className="profile-settings">
-      <div className="profile-settings__header">
-        <h1>Informacje osobiste</h1>
-        <p>Zaktualizuj swoje dane osobowe i informacje kontaktowe</p>
-      </div>
+      <PageHeader
+        title="Informacje osobiste"
+        subtitle="Zaktualizuj swoje dane osobowe i informacje kontaktowe"
+        icon={User}
+        className="profile-settings__page-header"
+      />
 
       <form onSubmit={handleSubmit} className="profile-settings__form">
-        {/* Personal Information */}
         <div className="profile-settings__section">
           <h3>Dane osobowe</h3>
           <div className="profile-settings__grid">
-            <div className="profile-settings__field">
-              <label>Imię *</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="firstName">
+                Imię *
+              </label>
               <input
+                id="firstName"
                 type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
+                className="pp-input"
                 required
               />
             </div>
 
-            <div className="profile-settings__field">
-              <label>Nazwisko *</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="lastName">
+                Nazwisko *
+              </label>
               <input
+                id="lastName"
                 type="text"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
+                className="pp-input"
                 required
               />
             </div>
 
-            <div className="profile-settings__field">
-              <label>Email *</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="email">
+                Email
+              </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleInputChange}
-                required
+                readOnly
+                className="pp-input"
               />
+              <span className="profile-settings__hint">
+                Adres e-mail można zmienić w sekcji Bezpieczeństwo.
+              </span>
             </div>
 
-            <div className="profile-settings__field">
-              <label>Telefon</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="phone">
+                Telefon
+              </label>
               <input
+                id="phone"
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
+                className="pp-input"
                 placeholder="+48 123 456 789"
               />
             </div>
 
-            <div className="profile-settings__field">
-              <label>Firma</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="company">
+                Firma
+              </label>
               <input
+                id="company"
                 type="text"
                 name="company"
                 value={formData.company}
                 onChange={handleInputChange}
+                className="pp-input"
                 placeholder="Nazwa firmy"
               />
             </div>
 
-            <div className="profile-settings__field">
-              <label>Strona WWW</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="website">
+                Strona WWW
+              </label>
               <input
+                id="website"
                 type="url"
                 name="website"
                 value={formData.website}
                 onChange={handleInputChange}
+                className="pp-input"
                 placeholder="https://example.com"
               />
             </div>
           </div>
 
-          <div className="profile-settings__field">
-            <label>O mnie</label>
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="bio">
+              O mnie
+            </label>
             <textarea
+              id="bio"
               name="bio"
               value={formData.bio}
               onChange={handleInputChange}
+              className="pp-textarea"
               rows={4}
               placeholder="Opowiedz coś o sobie..."
             />
           </div>
         </div>
 
-        {/* Preferences */}
         <div className="profile-settings__section">
           <h3>Preferencje</h3>
           <div className="profile-settings__grid">
-            <div className="profile-settings__field">
-              <label>Strefa czasowa</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="timezone">
+                Strefa czasowa
+              </label>
               <select
+                id="timezone"
                 name="timezone"
                 value={formData.timezone}
                 onChange={handleInputChange}
+                className="pp-select"
               >
                 <option value="Europe/Warsaw">Europa/Warszawa (GMT+1)</option>
                 <option value="Europe/London">Europa/Londyn (GMT+0)</option>
@@ -185,12 +285,16 @@ const ProfileSettings: React.FC = () => {
               </select>
             </div>
 
-            <div className="profile-settings__field">
-              <label>Język</label>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="language">
+                Język
+              </label>
               <select
+                id="language"
                 name="language"
                 value={formData.language}
                 onChange={handleInputChange}
+                className="pp-select"
               >
                 <option value="pl">Polski</option>
                 <option value="en">English</option>
@@ -201,11 +305,25 @@ const ProfileSettings: React.FC = () => {
           </div>
         </div>
 
-        {/* Form Actions */}
         <div className="profile-settings__actions">
+          <div className="profile-settings__save-status">
+            {saveStatus === 'saved' && (
+              <span className="profile-settings__save-message profile-settings__save-message--success">
+                <Check size={16} />
+                Profil został zapisany
+              </span>
+            )}
+            {saveStatus === 'error' && (
+              <span className="profile-settings__save-message profile-settings__save-message--error">
+                <AlertCircle size={16} />
+                {saveError || 'Wystąpił błąd podczas zapisywania'}
+              </span>
+            )}
+          </div>
+
           <button
             type="submit"
-            className="profile-settings__save-btn"
+            className="pp-btn pp-btn--primary profile-settings__save-btn"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -220,12 +338,12 @@ const ProfileSettings: React.FC = () => {
         </div>
       </form>
 
-      {/* Danger Zone */}
       <div className="profile-settings__danger-zone">
         <h3>Strefa zagrożenia</h3>
         <p>Te akcje są nieodwracalne. Zachowaj ostrożność.</p>
         <button
-          className="profile-settings__danger-btn"
+          type="button"
+          className="pp-btn pp-btn--danger profile-settings__danger-btn"
           onClick={handleDeleteAccount}
         >
           <Trash2 size={16} />
@@ -233,83 +351,67 @@ const ProfileSettings: React.FC = () => {
         </button>
       </div>
 
-      {/* Delete Account Modal */}
-      {showDeleteModal && (
-        <div
-          className="profile-settings__modal-overlay"
-          onClick={() => setShowDeleteModal(false)}
-        >
-          <div
-            className="profile-settings__modal"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="profile-settings__modal-header">
-              <h3>Usuń konto</h3>
-              <button
-                className="profile-settings__modal-close"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
+      <Modal
+        open={showDeleteModal}
+        onClose={() => {
+          if (isDeleting) return;
+          setShowDeleteModal(false);
+          setDeletePassword('');
+          setDeleteError('');
+        }}
+        title="Usuń konto"
+        size="sm"
+        icon={<AlertTriangle size={24} />}
+        iconVariant="danger"
+        closeDisabled={isDeleting}
+        footer={
+          <>
+            <button
+              type="button"
+              className="pp-btn pp-btn--outline"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeleting}
+            >
+              Anuluj
+            </button>
+            <button
+              type="button"
+              className="pp-btn pp-btn--danger"
+              onClick={confirmDeleteAccount}
+              disabled={isDeleting || !deletePassword}
+            >
+              {isDeleting ? 'Usuwanie...' : 'Usuń konto'}
+            </button>
+          </>
+        }
+      >
+        <p className="profile-settings__modal-warning">
+          <strong>Ostrzeżenie:</strong> Ta akcja jest nieodwracalna. Wszystkie
+          Twoje dane, wydarzenia, kontakty i ustawienia zostaną trwale
+          usunięte.
+        </p>
 
-            <div className="profile-settings__modal-body">
-              <p className="profile-settings__modal-warning">
-                <strong>Ostrzeżenie:</strong> Ta akcja jest nieodwracalna.
-                Wszystkie Twoje dane, wydarzenia, kontakty i ustawienia zostaną
-                trwale usunięte.
-              </p>
-
-              <div className="profile-settings__field">
-                <label htmlFor="delete-password">
-                  Wprowadź hasło, aby potwierdzić *
-                </label>
-                <input
-                  id="delete-password"
-                  type="password"
-                  value={deletePassword}
-                  onChange={e => setDeletePassword(e.target.value)}
-                  placeholder="Twoje hasło"
-                  autoComplete="current-password"
-                />
-              </div>
-
-              {deleteError && (
-                <div className="profile-settings__modal-error">
-                  {deleteError}
-                </div>
-              )}
-            </div>
-
-            <div className="profile-settings__modal-footer">
-              <button
-                className="profile-settings__modal-cancel"
-                onClick={() => setShowDeleteModal(false)}
-                disabled={isDeleting}
-              >
-                Anuluj
-              </button>
-              <button
-                className="profile-settings__modal-confirm"
-                onClick={confirmDeleteAccount}
-                disabled={isDeleting || !deletePassword}
-              >
-                {isDeleting ? (
-                  <>
-                    <div className="profile-settings__spinner"></div>
-                    Usuwanie...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} />
-                    Usuń konto
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+        <div className="pp-field">
+          <label className="pp-label" htmlFor="delete-password">
+            Wprowadź hasło, aby potwierdzić *
+          </label>
+          <input
+            id="delete-password"
+            type="password"
+            value={deletePassword}
+            onChange={e => setDeletePassword(e.target.value)}
+            className="pp-input"
+            placeholder="Twoje hasło"
+            autoComplete="current-password"
+          />
         </div>
-      )}
+
+        {deleteError && (
+          <div className="pp-form-alert pp-form-alert--error">
+            {deleteError}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

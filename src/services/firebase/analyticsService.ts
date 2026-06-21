@@ -11,7 +11,26 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { COLLECTIONS } from '../../types/firebase';
-import { EventService } from './eventService';
+import {
+  formatEventCategory,
+  shortenLocationLabel,
+} from '../../utils/analyticsDisplay';
+
+function toFirestoreDate(value: unknown): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof (value as { toDate: () => Date }).toDate === 'function'
+  ) {
+    const date = (value as { toDate: () => Date }).toDate();
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  return null;
+}
 
 export interface AnalyticsMetric {
   id: string;
@@ -40,6 +59,10 @@ export interface AnalyticsReport {
   eventsThisMonth: number;
   eventsLastMonth: number;
   growthRate: number;
+  filterOptions?: {
+    eventTypes: string[];
+    locations: string[];
+  };
   popularEventTypes: Array<{
     type: string;
     count: number;
@@ -59,6 +82,7 @@ export interface AnalyticsReport {
   };
   topLocations: Array<{
     location: string;
+    locationFull: string;
     count: number;
     avgGuests: number;
   }>;
@@ -75,15 +99,181 @@ export interface AnalyticsReport {
     fastResponders: number; // < 24h
     mediumResponders: number; // 24h - 7 dni
     slowResponders: number; // > 7 dni
+    trackedResponses: number;
   };
 }
 
 export interface AnalyticsFilter {
   startDate?: Date;
   endDate?: Date;
-  eventType?: string;
+  eventTypes?: string[];
+  locations?: string[];
   status?: string[];
-  location?: string;
+  searchQuery?: string;
+  guestCountMin?: number;
+  guestCountMax?: number;
+}
+
+/** Zakres do filtrów UI (początek/koniec dnia). */
+export function buildAnalyticsDateRange(days: number): {
+  startDate: Date;
+  endDate: Date;
+} {
+  const endDate = new Date();
+  endDate.setHours(23, 59, 59, 999);
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  startDate.setHours(0, 0, 0, 0);
+  return { startDate, endDate };
+}
+
+function getEventScheduleDate(event: {
+  date?: unknown;
+  createdAt?: unknown;
+}): Date | null {
+  return toFirestoreDate(event.date) ?? toFirestoreDate(event.createdAt);
+}
+
+function normalizeEventLocation(event: { location?: unknown }): string {
+  return typeof event.location === 'string' && event.location.trim()
+    ? event.location.trim()
+    : 'Brak lokalizacji';
+}
+
+function buildFilterOptions(events: Array<{ category?: string; location?: unknown }>) {
+  const eventTypes = new Set<string>();
+  const locations = new Set<string>();
+
+  events.forEach(event => {
+    eventTypes.add(formatEventCategory(event.category?.trim() || 'other'));
+    locations.add(normalizeEventLocation(event));
+  });
+
+  return {
+    eventTypes: Array.from(eventTypes).sort((a, b) => a.localeCompare(b, 'pl')),
+    locations: Array.from(locations).sort((a, b) => a.localeCompare(b, 'pl')),
+  };
+}
+
+function getGuestCountForEvent(
+  event: { id: string; guestCount?: number },
+  guestsByEventId: Map<string, number>
+): number {
+  return guestsByEventId.get(event.id) ?? event.guestCount ?? 0;
+}
+
+function applyEventFilters(
+  events: Array<{
+    id: string;
+    title?: string;
+    category?: string;
+    status?: string;
+    location?: unknown;
+    guestCount?: number;
+    date?: unknown;
+    createdAt?: unknown;
+  }>,
+  guests: Array<{ eventId: string }>,
+  filters: AnalyticsFilter
+): typeof events {
+  let result = events;
+
+  if (filters.eventTypes?.length) {
+    const types = new Set(filters.eventTypes);
+    result = result.filter(event =>
+      types.has(formatEventCategory(event.category?.trim() || 'other'))
+    );
+  }
+
+  if (filters.locations?.length) {
+    const locs = new Set(filters.locations);
+    result = result.filter(event =>
+      locs.has(normalizeEventLocation(event))
+    );
+  }
+
+  if (filters.status?.length) {
+    const statuses = new Set(filters.status);
+    result = result.filter(
+      event => event.status != null && statuses.has(event.status)
+    );
+  }
+
+  if (filters.searchQuery?.trim()) {
+    const q = filters.searchQuery.trim().toLowerCase();
+    result = result.filter(event => {
+      const title = (event.title ?? '').toLowerCase();
+      const location = normalizeEventLocation(event).toLowerCase();
+      return title.includes(q) || location.includes(q);
+    });
+  }
+
+  if (
+    filters.guestCountMin != null ||
+    (filters.guestCountMax != null && filters.guestCountMax < Number.MAX_SAFE_INTEGER)
+  ) {
+    const guestsByEventId = new Map<string, number>();
+    guests.forEach(guest => {
+      guestsByEventId.set(
+        guest.eventId,
+        (guestsByEventId.get(guest.eventId) ?? 0) + 1
+      );
+    });
+    const min = filters.guestCountMin ?? 0;
+    const max = filters.guestCountMax ?? Number.MAX_SAFE_INTEGER;
+    result = result.filter(event => {
+      const count = getGuestCountForEvent(event, guestsByEventId);
+      return count >= min && count <= max;
+    });
+  }
+
+  return result;
+}
+
+export function aggregateRecentMetrics(
+  metrics: AnalyticsMetric[],
+  periodHours = 24
+): {
+  pageViews: { current: number; change: number };
+  userActions: { current: number; change: number };
+  eventsCreated: { current: number; change: number };
+  rsvpResponses: { current: number; change: number };
+} {
+  const now = Date.now();
+  const periodMs = periodHours * 60 * 60 * 1000;
+  const currentStart = now - periodMs;
+  const previousStart = now - 2 * periodMs;
+
+  const sumInRange = (
+    type: AnalyticsMetric['metricType'],
+    start: number,
+    end: number
+  ) =>
+    metrics
+      .filter(metric => {
+        const ts = metric.timestamp.toMillis();
+        return metric.metricType === type && ts >= start && ts < end;
+      })
+      .reduce((sum, metric) => sum + (metric.value ?? 1), 0);
+
+  const withChange = (type: AnalyticsMetric['metricType']) => {
+    const current = sumInRange(type, currentStart, now);
+    const previous = sumInRange(type, previousStart, currentStart);
+    const change =
+      previous > 0
+        ? ((current - previous) / previous) * 100
+        : current > 0
+          ? 100
+          : 0;
+    return { current, change };
+  };
+
+  return {
+    pageViews: withChange('page_view'),
+    userActions: withChange('user_action'),
+    eventsCreated: withChange('event_created'),
+    rsvpResponses: withChange('guest_responded'),
+  };
 }
 
 export class AnalyticsService {
@@ -125,13 +315,6 @@ export class AnalyticsService {
     filters: AnalyticsFilter = {}
   ): Promise<AnalyticsReport> {
     try {
-      console.log('[Analytics] Generowanie raportu dla userId:', userId);
-      
-      // Pobierz wydarzenia użytkownika
-      const eventsStats = await EventService.getEventStats(userId);
-      console.log('[Analytics] Event stats:', eventsStats);
-
-      // Pobierz szczegółowe dane wydarzeń
       const eventsQuery = query(
         collection(db, COLLECTIONS.EVENTS),
         where('userId', '==', userId),
@@ -143,9 +326,7 @@ export class AnalyticsService {
         id: doc.id,
         ...doc.data(),
       }));
-      console.log('[Analytics] Znaleziono wydarzeń:', events.length);
 
-      // Pobierz dane gości dla wszystkich wydarzeń użytkownika
       const eventIds = events.map(e => e.id);
       let guests: any[] = [];
       
@@ -168,20 +349,15 @@ export class AnalyticsService {
           })));
         }
       }
-      
-      console.log('[Analytics] Znaleziono gości:', guests.length);
 
-      // Oblicz metryki
-      const report = await this.calculateMetrics(
-        events,
-        guests,
-        eventsStats,
-        filters
-      );
-      
-      console.log('[Analytics] Wygenerowany raport:', report);
+      const report = await this.calculateMetrics(events, guests, filters);
 
-      return report;
+      return {
+        ...report,
+        filterOptions: buildFilterOptions(
+          events as Array<{ category?: string; location?: unknown }>
+        ),
+      };
     } catch (error) {
       console.error('Błąd podczas generowania raportu:', error);
       throw error;
@@ -192,63 +368,58 @@ export class AnalyticsService {
   private static async calculateMetrics(
     events: any[],
     guests: any[],
-    eventsStats: any,
     filters: AnalyticsFilter
   ): Promise<AnalyticsReport> {
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    // Filtruj wydarzenia według dat utworzenia (createdAt)
+    const rangeEnd = filters.endDate ?? now;
+
+    // Filtruj wydarzenia wg daty imprezy (fallback: data utworzenia)
     let filteredEvents = events;
     if (filters.startDate || filters.endDate) {
       filteredEvents = events.filter(event => {
-        const createdDate = event.createdAt?.toDate() || new Date();
-        if (filters.startDate && createdDate < filters.startDate) return false;
-        if (filters.endDate && createdDate > filters.endDate) return false;
+        const eventDate = getEventScheduleDate(event);
+        if (!eventDate) return false;
+        if (filters.startDate && eventDate < filters.startDate) return false;
+        if (filters.endDate && eventDate > filters.endDate) return false;
         return true;
       });
     }
-    
-    console.log('[Analytics] Filtered events:', filteredEvents.length, 'z', events.length);
-    
-    // Filtruj gości aby pasowali tylko do przefiltrowanych wydarzeń
+
+    filteredEvents = applyEventFilters(filteredEvents, guests, filters);
+
     const filteredEventIds = new Set(filteredEvents.map(e => e.id));
-    const filteredGuests = guests.filter(guest => filteredEventIds.has(guest.eventId));
-    
-    console.log('[Analytics] Filtered guests:', filteredGuests.length, 'z', guests.length);
+    const filteredGuests = guests.filter(guest =>
+      filteredEventIds.has(guest.eventId)
+    );
 
-    // Wydarzenia w tym miesiącu
-    const eventsThisMonth = events.filter(
-      event => event.createdAt.toDate() >= thisMonth
-    ).length;
-
-    // Wydarzenia w poprzednim miesiącu
-    const eventsLastMonth = events.filter(event => {
-      const createdAt = event.createdAt.toDate();
-      return createdAt >= lastMonth && createdAt < thisMonth;
+    // Wzrost: nowo utworzone wydarzenia (kalendarzowe m-ce, bez filtra zakresu)
+    const eventsThisMonth = events.filter(event => {
+      const createdAt = toFirestoreDate(event.createdAt);
+      return createdAt != null && createdAt >= thisMonth;
     }).length;
 
-    // Wzrost
+    const eventsLastMonth = events.filter(event => {
+      const createdAt = toFirestoreDate(event.createdAt);
+      return (
+        createdAt != null && createdAt >= lastMonth && createdAt < thisMonth
+      );
+    }).length;
+
     let growthRate = 0;
     if (eventsLastMonth > 0) {
-      growthRate = ((eventsThisMonth - eventsLastMonth) / eventsLastMonth) * 100;
+      growthRate =
+        ((eventsThisMonth - eventsLastMonth) / eventsLastMonth) * 100;
     } else if (eventsThisMonth > 0) {
-      // Jeśli w poprzednim miesiącu było 0, a teraz jest coś, to wzrost 100%
       growthRate = 100;
     }
-    // Jeśli oba są 0, growthRate pozostaje 0
-    
-    console.log('[Analytics] Growth calculation:', {
-      eventsThisMonth,
-      eventsLastMonth,
-      growthRate: growthRate.toFixed(1)
-    });
 
     // Popularne typy wydarzeń (na podstawie kategorii)
     const eventTypeCount = new Map<string, number>();
     filteredEvents.forEach(event => {
-      const type = event.category || 'Inne';
+      const type = formatEventCategory(event.category?.trim() || 'other');
       eventTypeCount.set(type, (eventTypeCount.get(type) || 0) + 1);
     });
 
@@ -256,25 +427,47 @@ export class AnalyticsService {
       .map(([type, count]) => ({
         type,
         count,
-        percentage: (count / filteredEvents.length) * 100,
+        percentage:
+          filteredEvents.length > 0 ? (count / filteredEvents.length) * 100 : 0,
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
-    // Trendy miesięczne (ostatnie 6 miesięcy)
     const monthlyTrends = [];
     for (let i = 5; i >= 0; i--) {
-      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const monthStart = new Date(
+        rangeEnd.getFullYear(),
+        rangeEnd.getMonth() - i,
+        1
+      );
+      const monthEnd = new Date(
+        rangeEnd.getFullYear(),
+        rangeEnd.getMonth() - i + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      );
 
-      const monthEvents = events.filter(event => {
-        const eventDate = event.createdAt.toDate();
-        return eventDate >= monthStart && eventDate <= monthEnd;
+      const monthEvents = filteredEvents.filter(event => {
+        const eventDate = getEventScheduleDate(event);
+        return (
+          eventDate != null &&
+          eventDate >= monthStart &&
+          eventDate <= monthEnd
+        );
       });
 
-      const monthGuests = guests.filter(guest => {
-        const invitedAt = guest.invitedAt.toDate();
-        return invitedAt >= monthStart && invitedAt <= monthEnd;
+      const monthGuests = filteredGuests.filter(guest => {
+        const parent = filteredEvents.find(e => e.id === guest.eventId);
+        if (!parent) return false;
+        const eventDate = getEventScheduleDate(parent);
+        return (
+          eventDate != null &&
+          eventDate >= monthStart &&
+          eventDate <= monthEnd
+        );
       });
 
       const respondedGuests = monthGuests.filter(
@@ -306,7 +499,7 @@ export class AnalyticsService {
       { count: number; totalGuests: number }
     >();
     filteredEvents.forEach(event => {
-      const location = event.location;
+      const location = normalizeEventLocation(event);
       const existing = locationCount.get(location) || {
         count: 0,
         totalGuests: 0,
@@ -318,38 +511,40 @@ export class AnalyticsService {
     });
 
     const topLocations = Array.from(locationCount.entries())
-      .map(([location, data]) => ({
-        location,
-        count: data.count,
-        avgGuests: data.count > 0 ? data.totalGuests / data.count : 0,
-      }))
+      .map(([location, data]) => {
+        const { short, full } = shortenLocationLabel(location);
+        return {
+          location: short,
+          locationFull: full,
+          count: data.count,
+          avgGuests: data.count > 0 ? data.totalGuests / data.count : 0,
+        };
+      })
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
     // Rozkład godzinowy wydarzeń
     const timeDistribution = Array.from({ length: 24 }, (_, hour) => {
       const count = filteredEvents.filter(event => {
-        const eventDate = event.date.toDate();
-        return eventDate.getHours() === hour;
+        const eventDate = getEventScheduleDate(event);
+        return eventDate != null && eventDate.getHours() === hour;
       }).length;
 
       return { hour, count };
     });
 
-    // Rozkład dni tygodnia
     const weekdays = ['Nie', 'Pon', 'Wto', 'Śro', 'Czw', 'Pią', 'Sob'];
     const weekdayDistribution = weekdays.map((day, index) => {
       const count = filteredEvents.filter(event => {
-        const eventDate = event.date.toDate();
-        return eventDate.getDay() === index;
+        const eventDate = getEventScheduleDate(event);
+        return eventDate != null && eventDate.getDay() === index;
       }).length;
 
       return { day, count };
     });
 
-    // Analiza czasu odpowiedzi
     const respondedGuests = filteredGuests.filter(
-      guest => guest.status !== 'pending' && guest.respondedAt
+      guest => guest.status !== 'pending'
     );
 
     let totalResponseTime = 0;
@@ -358,29 +553,33 @@ export class AnalyticsService {
     let slowResponders = 0;
 
     respondedGuests.forEach(guest => {
-      const invitedAt = guest.invitedAt.toDate();
-      const respondedAt = guest.respondedAt.toDate();
+      const invitedAt =
+        toFirestoreDate(guest.invitedAt) ?? toFirestoreDate(guest.createdAt);
+      const respondedAt =
+        toFirestoreDate(guest.respondedAt) ?? toFirestoreDate(guest.updatedAt);
+      if (!invitedAt || !respondedAt) return;
+
       const responseTime =
-        (respondedAt.getTime() - invitedAt.getTime()) / (1000 * 60 * 60); // godziny
+        (respondedAt.getTime() - invitedAt.getTime()) / (1000 * 60 * 60);
+
+      if (responseTime < 0 || responseTime > 24 * 180) return;
 
       totalResponseTime += responseTime;
 
       if (responseTime < 24) {
         fastResponders++;
       } else if (responseTime < 168) {
-        // 7 dni
         mediumResponders++;
       } else {
         slowResponders++;
       }
     });
 
-    const averageResponseTime =
-      respondedGuests.length > 0
-        ? totalResponseTime / respondedGuests.length
-        : 0;
+    const trackedResponses = fastResponders + mediumResponders + slowResponders;
 
-    // RSVP Rate
+    const averageResponseTime =
+      trackedResponses > 0 ? totalResponseTime / trackedResponses : 0;
+
     const totalInvited = filteredGuests.length;
     const totalResponded = respondedGuests.length;
     const rsvpRate =
@@ -406,6 +605,7 @@ export class AnalyticsService {
         fastResponders,
         mediumResponders,
         slowResponders,
+        trackedResponses,
       },
     };
   }

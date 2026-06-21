@@ -1,4 +1,5 @@
 // Global mixins for consistent styling
+@use 'buttons' as btn;
 
 // Layout mixins
 @mixin flex-between {
@@ -79,102 +80,34 @@
   border: 1px solid var(--border-color);
 }
 
-// Button base styles
+// Button base styles — delegacja do ujednoliconego systemu pp-btn
 @mixin button-base {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  letter-spacing: -0.01em;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  @include btn.pp-btn-base;
 }
 
-// Primary button - gradient purple
 @mixin button-primary {
-  @include button-base;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
+  @include btn.pp-btn-base;
+  @include btn.pp-btn-primary;
 }
 
-// Secondary button - black
 @mixin button-secondary {
-  @include button-base;
-  background: #000000;
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.85);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
+  @include btn.pp-btn-base;
+  @include btn.pp-btn-secondary;
 }
 
-// Outline button
 @mixin button-outline {
-  @include button-base;
-  background: transparent;
-  color: #000000;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-
-  &:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.24);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
+  @include btn.pp-btn-base;
+  @include btn.pp-btn-outline;
 }
 
-// Ghost button
 @mixin button-ghost {
-  @include button-base;
-  background: transparent;
-  color: rgba(0, 0, 0, 0.7);
-
-  &:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.04);
-    color: #000000;
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
+  @include btn.pp-btn-base;
+  @include btn.pp-btn-ghost;
 }
 
-// Danger button
 @mixin button-danger {
-  @include button-base;
-  background: #ef4444;
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: #dc2626;
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
+  @include btn.pp-btn-base;
+  @include btn.pp-btn-danger;
 }
 
 // Section title styles

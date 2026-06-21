@@ -1,24 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import MenuItem from '@mui/material/MenuItem';
-import Tooltip from '@mui/material/Tooltip';
-import { useSnackbar } from 'notistack';
+import { UserPlus } from 'lucide-react';
+import Modal from '../../../common/Modal/Modal';
+import Toast from '../../../common/Toast/Toast';
+import { useToast } from '../../../../hooks/useToast';
 import { GuestService } from '../../../../services/firebase/guestService';
 import { useAuth } from '../../../../hooks/useAuth';
-import { canCreateGuest, getGuestLimitErrorMessage, PlanType } from '../../../../services/firebase/planLimitsService';
+import {
+  canCreateGuest,
+  getGuestLimitErrorMessage,
+  PlanType,
+} from '../../../../services/firebase/planLimitsService';
+import '../EditGuestModal/EditGuestModal.scss';
 import './AddGuest.scss';
 
 interface AddGuestProps {
@@ -27,10 +19,7 @@ interface AddGuestProps {
   userId: string;
   eventId: string;
   onGuestAdded: () => void;
-  events: Array<{
-    id: string;
-    title: string;
-  }>;
+  events: Array<{ id: string; title: string }>;
   onEventChange: (eventId: string) => void;
 }
 
@@ -43,10 +32,9 @@ export const AddGuest: React.FC<AddGuestProps> = ({
   onEventChange,
   onGuestAdded,
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
+  const { toast, dismiss, showError, showSuccess } = useToast();
   const [loading, setLoading] = useState(false);
-  const [guestCount, setGuestCount] = useState(0);
   const [canAddGuest, setCanAddGuest] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -55,8 +43,7 @@ export const AddGuest: React.FC<AddGuestProps> = ({
     phone: '',
     dietaryRestrictions: '',
     notes: '',
-    plusOne: false,
-    plusOneType: 'none', // 'none', 'simple', 'detailed'
+    plusOneType: 'none' as 'none' | 'simple' | 'detailed',
     plusOneDetails: {
       firstName: '',
       lastName: '',
@@ -64,83 +51,81 @@ export const AddGuest: React.FC<AddGuestProps> = ({
     },
   });
 
-  // Sprawdź limit gości
   useEffect(() => {
     const checkGuestLimit = async () => {
-      if (!user) return;
-      
+      if (!user || !open) return;
       try {
         const count = await GuestService.getGuestCount(userId);
-        setGuestCount(count);
         setCanAddGuest(canCreateGuest(count, user.planType as PlanType));
       } catch (error) {
         console.error('Error checking guest limit:', error);
       }
     };
-
-    if (open) {
-      checkGuestLimit();
-    }
+    checkGuestLimit();
   }, [open, userId, user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePlusOneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePlusOneChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      plusOneDetails: {
-        ...prev.plusOneDetails,
-        [name]: value,
-      },
+      plusOneDetails: { ...prev.plusOneDetails, [name]: value },
     }));
   };
 
   const handlePlusOneTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value = e.target.value as 'none' | 'simple' | 'detailed';
     setFormData(prev => ({
       ...prev,
       plusOneType: value,
-      plusOne: value !== 'none',
-      // Reset szczegółów gdy przełączamy na 'simple'
       plusOneDetails:
-        value === 'simple'
-          ? {
-              firstName: '',
-              lastName: '',
-              dietaryRestrictions: '',
-            }
-          : prev.plusOneDetails,
+        value === 'detailed'
+          ? prev.plusOneDetails
+          : { firstName: '', lastName: '', dietaryRestrictions: '' },
     }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      dietaryRestrictions: '',
+      notes: '',
+      plusOneType: 'none',
+      plusOneDetails: { firstName: '', lastName: '', dietaryRestrictions: '' },
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!canAddGuest) return;
 
+    setLoading(true);
     try {
       const guestData = {
-        ...formData,
-        // Ensure plusOneType is correctly typed
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        dietaryRestrictions: formData.dietaryRestrictions,
+        notes: formData.notes,
         plusOneType:
-          formData.plusOneType === 'none' ||
-          formData.plusOneType === 'simple' ||
-          formData.plusOneType === 'detailed'
-            ? formData.plusOneType === 'simple'
-              ? 'withoutDetails'
-              : formData.plusOneType === 'detailed'
-                ? 'withDetails'
-                : 'none'
-            : ('none' as 'none' | 'withoutDetails' | 'withDetails'),
-        // Ustaw plusOne na podstawie typu
+          formData.plusOneType === 'simple'
+            ? ('withoutDetails' as const)
+            : formData.plusOneType === 'detailed'
+              ? ('withDetails' as const)
+              : ('none' as const),
         plusOne: formData.plusOneType !== 'none',
-        // Tylko przekaż plusOneDetails jeśli typ to 'detailed' i pola są wypełnione
         plusOneDetails:
           formData.plusOneType === 'detailed' &&
           (formData.plusOneDetails.firstName?.trim() ||
@@ -157,220 +142,278 @@ export const AddGuest: React.FC<AddGuestProps> = ({
       };
 
       await GuestService.createGuest(userId, eventId, guestData);
-      enqueueSnackbar('Gość został dodany pomyślnie!', { variant: 'success' });
+      showSuccess('Gość został dodany pomyślnie!');
+      resetForm();
       onGuestAdded();
       onClose();
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        dietaryRestrictions: '',
-        notes: '',
-        plusOne: false,
-        plusOneType: 'none',
-        plusOneDetails: {
-          firstName: '',
-          lastName: '',
-          dietaryRestrictions: '',
-        },
-      });
-    } catch (error: any) {
-      enqueueSnackbar(
-        error.message || 'Wystąpił błąd podczas dodawania gościa',
-        {
-          variant: 'error',
-        }
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Wystąpił błąd podczas dodawania gościa';
+      showError(message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleClose = () => {
+    if (loading) return;
+    onClose();
+  };
+
+  const limitMessage = !canAddGuest
+    ? getGuestLimitErrorMessage(user?.planType as PlanType)
+    : null;
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Dodaj nowego gościa</DialogTitle>
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
-          <Box sx={{ display: 'grid', gap: 2 }}>
-            <TextField
-              select
-              required
-              fullWidth
-              label="Wydarzenie"
+    <>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        title="Dodaj nowego gościa"
+        icon={<UserPlus size={24} />}
+        size="lg"
+        closeDisabled={loading}
+        footer={
+          <>
+            <button
+              type="button"
+              className="pp-btn pp-btn--outline"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Anuluj
+            </button>
+            <button
+              type="submit"
+              form="add-guest-form"
+              className="pp-btn pp-btn--primary"
+              disabled={loading || !canAddGuest}
+              title={limitMessage ?? undefined}
+            >
+              {loading ? 'Dodawanie...' : 'Dodaj gościa'}
+            </button>
+          </>
+        }
+      >
+        {limitMessage && (
+          <div className="pp-form-alert pp-form-alert--error add-guest__limit">
+            {limitMessage}
+          </div>
+        )}
+
+        <form id="add-guest-form" onSubmit={handleSubmit}>
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="add-guest-event">
+              Wydarzenie *
+            </label>
+            <select
+              id="add-guest-event"
+              className="pp-select"
               value={eventId}
               onChange={e => onEventChange(e.target.value)}
               disabled={loading}
-              sx={{ mb: 2 }}
+              required
             >
               {events.map(event => (
-                <MenuItem key={event.id} value={event.id}>
+                <option key={event.id} value={event.id}>
                   {event.title}
-                </MenuItem>
+                </option>
               ))}
-            </TextField>
+            </select>
+          </div>
 
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 2,
-              }}
-            >
-              <TextField
-                required
-                fullWidth
-                label="Imię"
+          <h3 className="edit-guest-modal__section-title">Podstawowe informacje</h3>
+
+          <div className="edit-guest-modal__row">
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="add-guest-firstName">
+                Imię *
+              </label>
+              <input
+                id="add-guest-firstName"
+                type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
+                className="pp-input"
+                required
                 disabled={loading}
               />
-              <TextField
-                required
-                fullWidth
-                label="Nazwisko"
+            </div>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="add-guest-lastName">
+                Nazwisko *
+              </label>
+              <input
+                id="add-guest-lastName"
+                type="text"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
+                className="pp-input"
+                required
                 disabled={loading}
               />
-            </Box>
-            <TextField
-              required
-              fullWidth
+            </div>
+          </div>
+
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="add-guest-email">
+              Email *
+            </label>
+            <input
+              id="add-guest-email"
               type="email"
-              label="Email"
               name="email"
               value={formData.email}
               onChange={handleChange}
+              className="pp-input"
+              required
               disabled={loading}
             />
-            <TextField
-              fullWidth
-              label="Telefon"
+          </div>
+
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="add-guest-phone">
+              Telefon
+            </label>
+            <input
+              id="add-guest-phone"
+              type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
+              className="pp-input"
               disabled={loading}
             />
-            <TextField
-              fullWidth
-              label="Preferencje żywieniowe"
+          </div>
+
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="add-guest-dietary">
+              Preferencje żywieniowe
+            </label>
+            <textarea
+              id="add-guest-dietary"
               name="dietaryRestrictions"
               value={formData.dietaryRestrictions}
               onChange={handleChange}
-              multiline
+              className="pp-textarea"
               rows={2}
               disabled={loading}
             />
-            <TextField
-              fullWidth
-              label="Notatki"
+          </div>
+
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="add-guest-notes">
+              Notatki
+            </label>
+            <textarea
+              id="add-guest-notes"
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              multiline
+              className="pp-textarea"
               rows={3}
               disabled={loading}
             />
-            <FormControl component="fieldset" disabled={loading}>
-              <FormLabel component="legend" sx={{ mb: 1, fontWeight: 600 }}>
-                Osoba towarzysząca
-              </FormLabel>
-              <RadioGroup
-                value={formData.plusOneType}
-                onChange={handlePlusOneTypeChange}
-                name="plusOneType"
-              >
-                <FormControlLabel
-                  value="none"
-                  control={<Radio size="small" />}
-                  label="Brak osoby towarzyszącej"
-                />
-                <FormControlLabel
-                  value="simple"
-                  control={<Radio size="small" />}
-                  label="Osoba towarzysząca (bez szczegółów)"
-                />
-                <FormControlLabel
-                  value="detailed"
-                  control={<Radio size="small" />}
-                  label="Osoba towarzysząca (ze szczegółami)"
-                />
-              </RadioGroup>
-            </FormControl>
+          </div>
 
-            {formData.plusOneType === 'detailed' && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                  borderRadius: 1,
-                  border: '1px solid rgba(25, 118, 210, 0.12)',
-                }}
-              >
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                  Dane osoby towarzyszącej
-                </Typography>
-                <Box sx={{ display: 'grid', gap: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Imię osoby towarzyszącej"
+          <fieldset className="edit-guest-modal__fieldset">
+            <legend className="pp-label">Osoba towarzysząca (+1)</legend>
+            <label className="edit-guest-modal__radio">
+              <input
+                type="radio"
+                name="plusOneType"
+                value="none"
+                checked={formData.plusOneType === 'none'}
+                onChange={handlePlusOneTypeChange}
+                disabled={loading}
+              />
+              Bez osoby towarzyszącej
+            </label>
+            <label className="edit-guest-modal__radio">
+              <input
+                type="radio"
+                name="plusOneType"
+                value="simple"
+                checked={formData.plusOneType === 'simple'}
+                onChange={handlePlusOneTypeChange}
+                disabled={loading}
+              />
+              Z osobą towarzyszącą (bez danych)
+            </label>
+            <label className="edit-guest-modal__radio">
+              <input
+                type="radio"
+                name="plusOneType"
+                value="detailed"
+                checked={formData.plusOneType === 'detailed'}
+                onChange={handlePlusOneTypeChange}
+                disabled={loading}
+              />
+              Z osobą towarzyszącą (z danymi)
+            </label>
+          </fieldset>
+
+          {formData.plusOneType === 'detailed' && (
+            <div className="edit-guest-modal__plus-one">
+              <h4 className="edit-guest-modal__section-title">
+                Dane osoby towarzyszącej
+              </h4>
+              <div className="edit-guest-modal__row">
+                <div className="pp-field">
+                  <label className="pp-label" htmlFor="add-plus-one-firstName">
+                    Imię
+                  </label>
+                  <input
+                    id="add-plus-one-firstName"
+                    type="text"
                     name="firstName"
                     value={formData.plusOneDetails.firstName}
                     onChange={handlePlusOneChange}
+                    className="pp-input"
                     disabled={loading}
-                    size="small"
                   />
-                  <TextField
-                    fullWidth
-                    label="Nazwisko osoby towarzyszącej"
+                </div>
+                <div className="pp-field">
+                  <label className="pp-label" htmlFor="add-plus-one-lastName">
+                    Nazwisko
+                  </label>
+                  <input
+                    id="add-plus-one-lastName"
+                    type="text"
                     name="lastName"
                     value={formData.plusOneDetails.lastName}
                     onChange={handlePlusOneChange}
+                    className="pp-input"
                     disabled={loading}
-                    size="small"
                   />
-                  <TextField
-                    fullWidth
-                    label="Preferencje żywieniowe osoby towarzyszącej"
-                    name="dietaryRestrictions"
-                    value={formData.plusOneDetails.dietaryRestrictions}
-                    onChange={handlePlusOneChange}
-                    multiline
-                    rows={2}
-                    disabled={loading}
-                    size="small"
-                  />
-                </Box>
-              </Box>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={loading}>
-            Anuluj
-          </Button>
-          <Tooltip 
-            title={!canAddGuest ? getGuestLimitErrorMessage(user?.planType as PlanType) : ''}
-            disableHoverListener={canAddGuest}
-          >
-            <span>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={loading || !canAddGuest}
-              >
-                {loading ? 'Dodawanie...' : 'Dodaj gościa'}
-              </Button>
-            </span>
-          </Tooltip>
-        </DialogActions>
-      </form>
-    </Dialog>
+                </div>
+              </div>
+              <div className="pp-field">
+                <label className="pp-label" htmlFor="add-plus-one-dietary">
+                  Preferencje żywieniowe
+                </label>
+                <textarea
+                  id="add-plus-one-dietary"
+                  name="dietaryRestrictions"
+                  value={formData.plusOneDetails.dietaryRestrictions}
+                  onChange={handlePlusOneChange}
+                  className="pp-textarea"
+                  rows={2}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          )}
+        </form>
+      </Modal>
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={dismiss} />
+      )}
+    </>
   );
 };
 

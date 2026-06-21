@@ -4,6 +4,9 @@ import axios from 'axios';
 
 admin.initializeApp();
 
+export { processRSVPResponse } from './rsvp';
+export { sendInvitations } from './invitations';
+
 // EmailJS Configuration - ustaw w Firebase Functions config:
 // firebase functions:config:set emailjs.service_id="YOUR_SERVICE_ID"
 // firebase functions:config:set emailjs.template_id="YOUR_TEMPLATE_ID"
@@ -20,7 +23,7 @@ interface ContactFormData {
  * Używa EmailJS REST API do wysyłania wiadomości
  */
 export const sendContactFormEmail = functions.https.onCall(
-  async (data: ContactFormData, context) => {
+  async (data: ContactFormData, _context: functions.https.CallableContext) => {
     // Weryfikacja danych
     if (!data.name || !data.email || !data.message) {
       throw new functions.https.HttpsError(

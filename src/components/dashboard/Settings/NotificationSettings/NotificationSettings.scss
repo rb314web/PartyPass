@@ -20,23 +20,20 @@
     border-radius: 0.5rem;
   }
 
-  &__header {
-    margin-bottom: 2rem;
+  &__page-header {
+    margin-bottom: 1.5rem;
+  }
 
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0 0 0.5rem 0;
-      letter-spacing: -0.01em;
-    }
+  &__load-error {
+    margin-top: 0.5rem;
+    color: var(--color-error);
+    font-size: 0.875rem;
+  }
 
-    p {
-      font-size: 0.9375rem;
-      color: var(--text-secondary);
-      margin: 0;
-      opacity: 0.8;
-    }
+  &__loading {
+    margin-top: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
   }
 
   &__section {
@@ -101,7 +98,7 @@
     border-radius: 0.75rem;
     flex-shrink: 0;
     border: none;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
     transition: all 0.2s ease;
 
     svg {
@@ -180,7 +177,7 @@
       }
 
       &:focus-visible + .notification-settings__slider {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
       }
     }
   }
@@ -276,7 +273,7 @@
       }
 
       &:focus-visible + .notification-settings__checkbox-custom {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
       }
     }
 
@@ -360,7 +357,7 @@
       &:focus {
         outline: none;
         border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
       }
     }
   }
@@ -435,7 +432,7 @@
       color: white;
       border-color: var(--color-primary);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
 
       svg {
         opacity: 1;
@@ -516,12 +513,12 @@
     gap: 0.5rem;
     border-radius: 0.75rem;
     border: none;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
     transition: all 0.2s ease;
 
     &:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
     }
 
     &:active:not(:disabled) {

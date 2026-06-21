@@ -1,12 +1,14 @@
 // components/dashboard/QuickActions/QuickActions.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Plus, Users, BarChart3, Settings } from 'lucide-react';
 import useActionAnalytics from '../../../hooks/useActionAnalytics';
 import './QuickActions.scss';
 
 const QuickActions: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { trackAction } = useActionAnalytics();
 
   const handleAction = async (actionName: string, path?: string) => {
@@ -23,23 +25,23 @@ const QuickActions: React.FC = () => {
   const actions = [
     {
       icon: Plus,
-      label: 'Nowe wydarzenie',
+      label: t('dashboardHome.quickNewEvent'),
       action: () => handleAction('create_event', '/dashboard/events/create'),
       primary: true,
     },
     {
       icon: Users,
-      label: 'Dodaj gości',
-      action: () => handleAction('add_guests', '/dashboard/guests'),
+      label: t('dashboardHome.quickAddGuests'),
+      action: () => handleAction('add_guests', '/dashboard/contacts'),
     },
     {
       icon: BarChart3,
-      label: 'Analityki',
+      label: t('dashboardHome.quickAnalytics'),
       action: () => handleAction('view_analytics', '/dashboard/analytics'),
     },
     {
       icon: Settings,
-      label: 'Ustawienia',
+      label: t('dashboardHome.quickSettings'),
       action: () => handleAction('view_settings', '/dashboard/settings'),
     },
   ];

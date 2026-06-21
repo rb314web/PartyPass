@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import ContactSection from './ContactSection';
 
 // Mock EmailJS
-jest.mock('@emailjs/browser', () => ({
-  send: jest.fn(),
-  init: jest.fn(),
+vi.mock('@emailjs/browser', () => ({
+  send: vi.fn(),
+  init: vi.fn(),
 }));
 
 describe('ContactSection', () => {
@@ -51,5 +51,15 @@ describe('ContactSection', () => {
     const section = document.getElementById('contact');
     expect(section).toBeInTheDocument();
     expect(section?.tagName).toBe('SECTION');
+  });
+
+  it('shows validation errors when submitting empty form', async () => {
+    render(<ContactSection />);
+
+    fireEvent.click(screen.getByRole('button', { name: /wyślij wiadomość/i }));
+
+    expect(await screen.findByText('Imię jest wymagane')).toBeInTheDocument();
+    expect(screen.getByText('Email jest wymagany')).toBeInTheDocument();
+    expect(screen.getByText('Wiadomość jest wymagana')).toBeInTheDocument();
   });
 });

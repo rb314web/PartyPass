@@ -1,0 +1,44 @@
+.delete-event-modal {
+  &__event-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-primary);
+    margin-bottom: 1rem;
+  }
+
+  &__icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  &__date {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  &__message {
+    margin: 0;
+    text-align: center;
+
+    strong {
+      color: var(--color-error);
+    }
+  }
+}

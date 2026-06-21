@@ -2,6 +2,8 @@
 // Responsive Breakpoints System for PartyPass
 // Unified breakpoints for consistent responsive design
 
+@use 'sass:map';
+
 // Breakpoint Values
 $breakpoints: (
   'mobile': 0,
@@ -33,7 +35,7 @@ $breakpoints: (
 // Mixin: Min-width media query (mobile-first approach)
 // Usage: @include respond-to('tablet') { ... }
 @mixin respond-to($breakpoint) {
-  $value: map-get($breakpoints, $breakpoint);
+  $value: map.get($breakpoints, $breakpoint);
 
   @if $value == null {
     @error "Breakpoint '#{$breakpoint}' not found in $breakpoints map.";
@@ -52,7 +54,7 @@ $breakpoints: (
 // Mixin: Max-width media query (desktop-first approach)
 // Usage: @include respond-below('tablet') { ... }
 @mixin respond-below($breakpoint) {
-  $value: map-get($breakpoints, $breakpoint);
+  $value: map.get($breakpoints, $breakpoint);
 
   @if $value == null {
     @error "Breakpoint '#{$breakpoint}' not found in $breakpoints map.";
@@ -66,8 +68,8 @@ $breakpoints: (
 // Mixin: Between two breakpoints
 // Usage: @include respond-between('tablet', 'desktop') { ... }
 @mixin respond-between($min-breakpoint, $max-breakpoint) {
-  $min-value: map-get($breakpoints, $min-breakpoint);
-  $max-value: map-get($breakpoints, $max-breakpoint);
+  $min-value: map.get($breakpoints, $min-breakpoint);
+  $max-value: map.get($breakpoints, $max-breakpoint);
 
   @if $min-value == null or $max-value == null {
     @error "Breakpoints not found in $breakpoints map.";
@@ -120,7 +122,7 @@ $breakpoints: (
 
 // Helper Functions
 @function breakpoint($name) {
-  @return map-get($breakpoints, $name);
+  @return map.get($breakpoints, $name);
 }
 
 // Common Responsive Patterns

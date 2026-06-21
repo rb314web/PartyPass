@@ -1,165 +1,98 @@
 // components/dashboard/DashboardHome/DashboardHome.tsx
-import React, { Suspense } from 'react';
-import { MapPin, LayoutDashboard } from 'lucide-react';
-import {
-  EventService,
-  EventStats,
-} from '../../../services/firebase/eventService';
-import { ContactService } from '../../../services/firebase/contactService';
+import React, { Suspense, lazy } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { MapPin, Calendar, ArrowRight, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import { Activity as ActivityType, Event } from '../../../types';
+import { Activity as ActivityType } from '../../../types';
 import './DashboardHome.scss';
 import KeyMetrics from './KeyMetrics';
-import ActivityWeather from './ActivityWeather';
+import DashboardAttention from './DashboardAttention';
+import EventReadinessPanel from './EventReadinessPanel';
 import QuickActions from '../QuickActions/QuickActions';
-import CompactCalendar from '../EventsCalendar/CompactCalendar';
 import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import { useDashboardViewMotion } from '../../../hooks/useDashboardViewMotion';
+import { useDashboardHomeData } from '../../../hooks/useDashboardHomeData';
+import { useInViewport } from '../../../hooks/useInViewport';
+import DashboardViewSkeleton from '../DashboardViewSkeleton/DashboardViewSkeleton';
+import DashboardViewBody from '../DashboardViewBody/DashboardViewBody';
 
-// Lazy load EventsMap (saves ~150KB on initial bundle)
 const EventsMap = React.lazy(() => import('../EventsMap/EventsMap'));
+const CompactCalendar = lazy(
+  () => import('../EventsCalendar/CompactCalendar')
+);
+const ActivityWeather = lazy(() => import('./ActivityWeather'));
+
+const SectionFallback = () => (
+  <div className="dashboard-home__section-loading" aria-busy="true" />
+);
+
+const getDateLocale = (language: string) =>
+  language.startsWith('en') ? 'en-GB' : 'pl-PL';
 
 const DashboardHome: React.FC = () => {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
+  const dateLocale = getDateLocale(i18n.language);
 
-  // State management
-  const [stats, setStats] = React.useState<EventStats | null>(null);
-  const [isLoadingStats, setIsLoadingStats] = React.useState(true);
-  const [totalContacts, setTotalContacts] = React.useState(0);
-  const [activities, setActivities] = React.useState<ActivityType[]>([]);
-  const [isLoadingActivities, setIsLoadingActivities] = React.useState(true);
-  const [upcomingEvents, setUpcomingEvents] = React.useState<Event[]>([]);
-  const [allEvents, setAllEvents] = React.useState<Event[]>([]);
-  const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
-  const [loading, setLoading] = React.useState(true);
-  const [fadeIn, setFadeIn] = React.useState(false);
+  const {
+    stats,
+    totalContacts,
+    activities,
+    calendarEvents,
+    mapEvents,
+    upcomingEvents,
+    isInitialLoading,
+  } = useDashboardHomeData(user?.id);
 
-  // Reset loading state when user changes (consistent with Activities behavior)
+  const {
+    showLoader,
+    showContent,
+    className: viewClassName,
+    finishLoading,
+    resetLoading,
+  } = useDashboardViewMotion({
+    variant: 'async',
+    pageClass: 'dashboard-home',
+  });
+
+  const { ref: pulseRef, isVisible: isPulseVisible } = useInViewport({
+    rootMargin: '160px',
+  });
+  const { ref: mapRef, isVisible: isMapVisible } = useInViewport({
+    rootMargin: '200px',
+  });
+
   React.useEffect(() => {
     if (user?.id) {
-      setLoading(true);
-      setFadeIn(false);
+      resetLoading();
     }
-  }, [user?.id]);
+  }, [user?.id, resetLoading]);
 
-  // Fetch stats
   React.useEffect(() => {
-    if (user?.id) {
-      setIsLoadingStats(true);
-      Promise.all([
-        EventService.getEventStats(user.id),
-        ContactService.getContactCount(user.id),
-      ])
-        .then(([eventStats, contactCount]) => {
-          setStats(eventStats);
-          setTotalContacts(contactCount);
-        })
-        .catch(() => setStats(null))
-        .finally(() => setIsLoadingStats(false));
+    if (!isInitialLoading) {
+      finishLoading();
     }
-  }, [user]);
+  }, [isInitialLoading, finishLoading]);
 
-  // Global loading state - wait until all data is loaded
-  React.useEffect(() => {
-    if (!isLoadingStats && !isLoadingActivities && !isLoadingEvents) {
-      // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
-      setTimeout(() => {
-        setLoading(false);
-        // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
-        setTimeout(() => setFadeIn(true), 100);
-      }, 300);
-    }
-  }, [isLoadingStats, isLoadingActivities, isLoadingEvents]);
-
-  // Fetch activities and events
-  React.useEffect(() => {
-    if (user?.id) {
-      setIsLoadingActivities(true);
-      EventService.getRecentActivities(user.id, 10)
-        .then(setActivities)
-        .catch((error) => {
-          console.error('Error fetching activities:', error);
-          setActivities([]);
-        })
-        .finally(() => setIsLoadingActivities(false));
-
-      setIsLoadingEvents(true);
-      EventService.getUserEvents(user.id)
-        .then((result) => {
-          if (result.events) {
-            const now = new Date();
-
-            const all = result.events.filter(
-              (event) => event.location && event.location.trim()
-            );
-            setAllEvents(all);
-
-            const upcoming = result.events
-              .filter((event) => {
-                const eventDate = new Date(event.date);
-                return (
-                  eventDate > now &&
-                  (event.status === 'active' || event.status === 'draft')
-                );
-              })
-              .sort(
-                (a, b) =>
-                  new Date(a.date).getTime() - new Date(b.date).getTime()
-              )
-              .slice(0, 5);
-            setUpcomingEvents(upcoming);
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching events:', error);
-          setAllEvents([]);
-          setUpcomingEvents([]);
-        })
-        .finally(() => setIsLoadingEvents(false));
-    }
-  }, [user]);
-
-  // Calculate smart trends
-  const calculateSmartTrend = (
-    currentValue: number,
-    monthlyValue: number
-  ): number => {
-    if (monthlyValue > 0) {
-      const estimatedPrevious = Math.max(1, Math.floor(monthlyValue * 0.8));
-      const percentChange =
-        ((monthlyValue - estimatedPrevious) / estimatedPrevious) * 100;
-      return Math.round(percentChange);
-    }
-    if (currentValue === 0) return 0;
-    return Math.floor(Math.random() * 15) + 5;
-  };
-
-  // Memoize trend calculations to avoid re-computing on every render
-  const eventsChange = React.useMemo(
-    () => calculateSmartTrend(stats?.totalEvents ?? 0, stats?.eventsThisMonth ?? 0),
-    [stats?.totalEvents, stats?.eventsThisMonth]
-  );
-
-  const guestsChange = React.useMemo(
-    () => calculateSmartTrend(stats?.totalGuests ?? 0, stats?.guestsThisMonth ?? 0),
-    [stats?.totalGuests, stats?.guestsThisMonth]
-  );
-
-  const responseRateChange = React.useMemo(() => {
-    const currentRate = stats?.responseRate ?? 0;
-    if (currentRate === 0) return 0;
-    if (currentRate >= 80) return 5;
-    if (currentRate >= 60) return 8;
-    if (currentRate >= 40) return 12;
-    return 15;
-  }, [stats?.responseRate]);
-
-  // Get next event
   const nextEvent = React.useMemo(() => {
-    if (!upcomingEvents || upcomingEvents.length === 0) return null;
+    if (!upcomingEvents.length) return null;
     return upcomingEvents[0];
   }, [upcomingEvents]);
 
-  // Filter activities - memoized to avoid re-filtering on every render
+  const weatherNextEvent = React.useMemo(() => {
+    if (!nextEvent) return null;
+    return {
+      id: nextEvent.id,
+      title: nextEvent.title,
+      date: nextEvent.date,
+      location: nextEvent.location,
+      latitude: nextEvent.latitude,
+      longitude: nextEvent.longitude,
+      guestCount: nextEvent.guestCount,
+    };
+  }, [nextEvent]);
+
   const filteredActivities = React.useMemo(() => {
     const allowedActivityTypes = [
       'guest_response',
@@ -174,97 +107,254 @@ const DashboardHome: React.FC = () => {
       'contact_updated',
     ] as const;
 
-    return activities.filter((activity) =>
+    return activities.filter((activity: ActivityType) =>
       allowedActivityTypes.includes(activity.type)
     );
   }, [activities]);
 
-  // Display loader during loading
-  if (loading) {
-    return (
-      <div className="dashboard-home dashboard-home--loading">
-        <LoadingSpinner
-          variant="full"
-          icon={<LayoutDashboard size={32} />}
-          title="Ładowanie dashboardu..."
-          subtitle="Przygotowujemy Twój przegląd"
-        />
-      </div>
-    );
-  }
+  const getGreeting = (firstName?: string) => {
+    if (!firstName) return t('dashboardHome.greetingHello');
+    const hour = new Date().getHours();
+    const timeOfDay =
+      hour < 12
+        ? t('dashboardHome.greetingMorning')
+        : hour < 18
+          ? t('dashboardHome.greetingAfternoon')
+          : t('dashboardHome.greetingEvening');
+    return `${timeOfDay}, ${firstName}`;
+  };
+
+  const formatToday = () =>
+    new Date().toLocaleDateString(dateLocale, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+
+  const formatEventDate = (date: Date | string) =>
+    new Date(date).toLocaleDateString(dateLocale, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const getDaysUntil = (date: Date | string) => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const truncateText = (text: string, max = 48) =>
+    text.length > max ? `${text.slice(0, max).trim()}…` : text;
+
+  const daysUntilNext = nextEvent ? getDaysUntil(nextEvent.date) : null;
 
   return (
-    <div className={`dashboard-home ${fadeIn ? 'dashboard-home--fade-in' : ''}`}>
-      {/* Header */}
-      <header className="dashboard-home__header">
-        <div className="dashboard-home__title-wrapper">
-          <div className="dashboard-home__header-icon" aria-hidden="true">
-            <LayoutDashboard size={24} />
+    <div className={viewClassName}>
+      <DashboardViewBody
+        showLoader={showLoader}
+        showContent={showContent}
+        loader={<DashboardViewSkeleton variant="dashboard" />}
+      >
+        <header className="dashboard-home__hero">
+          <div className="dashboard-home__hero-main">
+            <p className="dashboard-home__eyebrow">
+              <Sparkles size={14} aria-hidden />
+              {formatToday()}
+            </p>
+            <h1 className="dashboard-home__title">
+              {getGreeting(user?.firstName)}
+            </h1>
+            <p className="dashboard-home__lede">{t('dashboardHome.lede')}</p>
+            <p className="dashboard-home__actions-label">
+              {t('dashboardHome.quickActionsLabel')}
+            </p>
+            <QuickActions />
           </div>
-          <div>
-            <h1>Przegląd</h1>
-            <p>Twoje wydarzenia w skrócie</p>
-          </div>
-        </div>
-      </header>
 
-      {/* Quick Actions */}
-      <QuickActions />
+          {nextEvent ? (
+            <Link
+              to={`/dashboard/events/${nextEvent.id}`}
+              className="dashboard-home__spotlight"
+            >
+              <span className="dashboard-home__spotlight-label">
+                {t('dashboardHome.spotlightLabel')}
+              </span>
+              <h2 className="dashboard-home__spotlight-title">
+                {nextEvent.title}
+              </h2>
+              <div className="dashboard-home__spotlight-meta">
+                <span>
+                  <Calendar size={15} aria-hidden />
+                  {formatEventDate(nextEvent.date)}
+                </span>
+                {nextEvent.location && (
+                  <span title={nextEvent.location}>
+                    <MapPin size={15} aria-hidden />
+                    {truncateText(nextEvent.location)}
+                  </span>
+                )}
+                {nextEvent.guestCount > 0 && (
+                  <span>
+                    <Users size={15} aria-hidden />
+                    {t('dashboardHome.guest', { count: nextEvent.guestCount })}
+                  </span>
+                )}
+              </div>
+              <div className="dashboard-home__spotlight-footer">
+                {daysUntilNext !== null && daysUntilNext >= 0 && (
+                  <span className="dashboard-home__spotlight-countdown">
+                    {daysUntilNext === 0
+                      ? t('dashboardHome.countdownToday')
+                      : daysUntilNext === 1
+                        ? t('dashboardHome.countdownTomorrow')
+                        : t('dashboardHome.countdownDays', {
+                            count: daysUntilNext,
+                          })}
+                  </span>
+                )}
+                <span className="dashboard-home__spotlight-cta">
+                  {t('dashboardHome.spotlightOpen')}
+                  <ArrowRight size={16} aria-hidden />
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <div className="dashboard-home__spotlight dashboard-home__spotlight--empty">
+              <span className="dashboard-home__spotlight-label">
+                {t('dashboardHome.spotlightEmptyTitle')}
+              </span>
+              <p>{t('dashboardHome.spotlightEmptyDesc')}</p>
+              <Link
+                to="/dashboard/events/create"
+                className="dashboard-home__spotlight-cta dashboard-home__spotlight-cta--solo"
+              >
+                {t('dashboardHome.spotlightEmptyCta')}
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+            </div>
+          )}
+          {nextEvent && (
+            <EventReadinessPanel
+              className="dashboard-home__readiness"
+              event={nextEvent}
+              planType={user?.planType as 'starter' | 'pro' | 'enterprise' | undefined}
+              totalEvents={stats?.totalEvents ?? 0}
+            />
+          )}
+        </header>
 
-      {/* Top Grid: Key Metrics */}
-      <div className="dashboard-home__top-grid">
-        {/* Key Metrics */}
-        <KeyMetrics
-          totalEvents={stats?.totalEvents ?? 0}
-          eventsChange={eventsChange}
-          totalGuests={stats?.totalGuests ?? 0}
-          guestsChange={guestsChange}
-          totalContacts={totalContacts}
-          responseRate={stats?.responseRate ?? 0}
-          responseRateChange={responseRateChange}
-          activeEvents={stats?.activeEvents ?? 0}
-          completedEvents={stats?.completedEvents ?? 0}
-          acceptedGuests={stats?.acceptedGuests ?? 0}
+        <DashboardAttention
           pendingGuests={stats?.pendingGuests ?? 0}
+          nextEvent={nextEvent}
           planType={user?.planType as 'starter' | 'pro' | 'enterprise' | undefined}
+          totalEvents={stats?.totalEvents ?? 0}
+          totalContacts={totalContacts}
         />
-      </div>
 
-      {/* Calendar Section */}
-      <div className="dashboard-home__section dashboard-home__section--calendar">
-        <CompactCalendar events={allEvents} />
-      </div>
-
-      {/* Activity & Weather */}
-      <ActivityWeather
-        lastActivity={filteredActivities[0]}
-        nextEvent={nextEvent}
-      />
-
-      {/* Map Section */}
-      <div className="dashboard-home__section dashboard-home__section--map">
-        <div className="dashboard-home__section-header">
-          <div className="dashboard-home__header-content">
-            <div className="dashboard-home__icon dashboard-home__icon--blue">
-              <MapPin size={18} />
-            </div>
-            <h2>Mapa wydarzeń</h2>
-          </div>
-        </div>
-        <Suspense
-          fallback={
-            <div className="dashboard-home__map-loading">
-              <LoadingSpinner 
-                variant="simple" 
-                icon={<MapPin />}
-                title="Ładowanie mapy wydarzeń..." 
-              />
-            </div>
-          }
+        <section
+          className="dashboard-home__metrics"
+          aria-label={t('dashboardHome.metricsAria')}
         >
-          <EventsMap events={allEvents} />
-        </Suspense>
-      </div>
+          <KeyMetrics
+            totalEvents={stats?.totalEvents ?? 0}
+            eventsThisMonth={stats?.eventsThisMonth ?? 0}
+            responseRate={stats?.responseRate ?? 0}
+            totalContacts={totalContacts}
+            activeEvents={stats?.activeEvents ?? 0}
+            completedEvents={stats?.completedEvents ?? 0}
+            acceptedGuests={stats?.acceptedGuests ?? 0}
+            pendingGuests={stats?.pendingGuests ?? 0}
+            declinedGuests={stats?.declinedGuests ?? 0}
+            planType={user?.planType as 'starter' | 'pro' | 'enterprise' | undefined}
+          />
+        </section>
+
+        <div className="dashboard-home__bento">
+          <div className="dashboard-home__bento-head">
+            <h2 className="dashboard-home__section-title">
+              {t('dashboardHome.calendarSection')}
+            </h2>
+            <p className="dashboard-home__section-desc">
+              {t('dashboardHome.calendarDesc')}
+            </p>
+          </div>
+
+          <section
+            className="dashboard-home__bento-cell dashboard-home__bento-cell--calendar"
+            aria-label={t('dashboardHome.calendarAria')}
+          >
+            <Suspense fallback={<SectionFallback />}>
+              <CompactCalendar
+                events={calendarEvents}
+                excludeEventId={nextEvent?.id}
+              />
+            </Suspense>
+          </section>
+
+          <section
+            ref={pulseRef}
+            className="dashboard-home__bento-cell dashboard-home__bento-cell--pulse"
+            aria-label={t('dashboardHome.pulseAria')}
+          >
+            {isPulseVisible ? (
+              <Suspense fallback={<SectionFallback />}>
+                <ActivityWeather
+                  lastActivity={filteredActivities[0]}
+                  nextEvent={weatherNextEvent}
+                  fetchWeather={isPulseVisible}
+                />
+              </Suspense>
+            ) : (
+              <SectionFallback />
+            )}
+          </section>
+
+          <section
+            ref={mapRef}
+            className="dashboard-home__bento-cell dashboard-home__bento-cell--map"
+            aria-label={t('dashboardHome.mapAria')}
+          >
+            <div className="dashboard-home__map-head">
+              <div className="dashboard-home__map-head-icon">
+                <MapPin size={18} aria-hidden />
+              </div>
+              <div>
+                <h2>{t('dashboardHome.mapTitle')}</h2>
+                <p>
+                  {mapEvents.length > 0
+                    ? t('dashboardHome.mapDescWithEvents')
+                    : t('dashboardHome.mapDescEmpty')}
+                </p>
+              </div>
+            </div>
+            {isMapVisible ? (
+              <Suspense
+                fallback={
+                  <div className="dashboard-home__map-loading">
+                    <LoadingSpinner
+                      variant="simple"
+                      icon={<MapPin />}
+                      title={t('dashboardHome.mapLoading')}
+                    />
+                  </div>
+                }
+              >
+                <EventsMap events={mapEvents} />
+              </Suspense>
+            ) : (
+              <div className="dashboard-home__map-deferred" aria-hidden="true">
+                <MapPin size={28} opacity={0.25} />
+                <p>{t('dashboardHome.mapDeferred')}</p>
+              </div>
+            )}
+          </section>
+        </div>
+      </DashboardViewBody>
     </div>
   );
 };

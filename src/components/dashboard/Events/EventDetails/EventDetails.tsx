@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Calendar,
@@ -19,8 +18,7 @@ import {
   Plus,
   HelpCircle,
   ChevronDown,
-  TrendingUp,
-  UserPlus,
+  Loader2,
   Link as LinkIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -28,16 +26,46 @@ import { pl } from 'date-fns/locale';
 import { EventService } from '../../../../services/firebase/eventService';
 import { EventGuestService } from '../../../../services/firebase/eventGuestService';
 import { Event, Contact, EventGuest, GuestStatus } from '../../../../types';
+import {
+  getPartyDisplayLabel,
+  isMultiSeatInvitation,
+  aggregateRsvpCountsFromGuests,
+  getExpectedAttendanceFromGuests,
+} from '../../../../utils/partyInvitationUtils';
+import EventGuestPartyDisplay from './EventGuestPartyDisplay';
 import { useAuth } from '../../../../hooks/useAuth';
-import DuplicateEventModal, { DuplicateEventData } from '../DuplicateEventModal/DuplicateEventModal';
-import InvitationManager from '../InvitationManager/InvitationManager';
-import AddContact from '../../Contacts/AddContact/AddContact';
-import AddContactsToEvent from '../AddContactsToEvent/AddContactsToEvent';
-import EventLocationMap from './EventLocationMap/EventLocationMap';
-import DeleteGuestModal from './DeleteGuestModal';
-import RSVPLinkModal from './RSVPLinkModal';
+import type { DuplicateEventData } from '../DuplicateEventModal/DuplicateEventModal';
+import LazyEventLocationMap from './EventLocationMap/LazyEventLocationMap';
 import LoadingSpinner from '../../../common/LoadingSpinner/LoadingSpinner';
+import Toast, { ToastType } from '../../../common/Toast/Toast';
+import Modal from '../../../common/Modal/Modal';
+import PageHeader from '../../../common/PageHeader/PageHeader';
+import EventStatsPanel from './EventStatsPanel';
+import {
+  getGuestStatusLabel,
+  getGuestStatusIcon,
+  getEventStatusColor,
+  getEventStatusLabel,
+} from './eventStatusHelpers';
 import './EventDetails.scss';
+
+const DuplicateEventModal = lazy(
+  () => import('../DuplicateEventModal/DuplicateEventModal')
+);
+const DeleteEventModal = lazy(
+  () => import('../DeleteEventModal/DeleteEventModal')
+);
+const DeleteGuestModal = lazy(() => import('./DeleteGuestModal'));
+const RSVPLinkModal = lazy(() => import('./RSVPLinkModal'));
+const InvitationManager = lazy(
+  () => import('../InvitationManager/InvitationManager')
+);
+const AddContact = lazy(
+  () => import('../../Contacts/AddContact/AddContact')
+);
+const AddContactsToEvent = lazy(
+  () => import('../AddContactsToEvent/AddContactsToEvent')
+);
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +76,8 @@ const EventDetails: React.FC = () => {
   const [showGuestOptions, setShowGuestOptions] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [showDeleteEventModal, setShowDeleteEventModal] = useState(false);
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false);
   const [showInvitationManager, setShowInvitationManager] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
@@ -58,6 +88,7 @@ const EventDetails: React.FC = () => {
   const [showRSVPLinkModal, setShowRSVPLinkModal] = useState(false);
   const [selectedGuestForRSVP, setSelectedGuestForRSVP] = useState<(EventGuest & { contact: Contact }) | null>(null);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null);
+  const [statusUpdatingGuestId, setStatusUpdatingGuestId] = useState<string | null>(null);
   const [editingGuestId, setEditingGuestId] = useState<string | null>(null);
   const [editPlusOneType, setEditPlusOneType] = useState<'none' | 'spouse' | 'companion'>('none');
   const [editPlusOneDetails, setEditPlusOneDetails] = useState<{
@@ -71,6 +102,34 @@ const EventDetails: React.FC = () => {
     minutes: number;
     isPast: boolean;
   } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
+  const showToast = (message: string, type: ToastType = 'error') => {
+    setToast({ message, type });
+  };
+
+  const guestStats = React.useMemo(
+    () => aggregateRsvpCountsFromGuests(eventGuests),
+    [eventGuests]
+  );
+
+  const expectedAttendance = React.useMemo(
+    () => getExpectedAttendanceFromGuests(eventGuests),
+    [eventGuests]
+  );
+
+  const syncGuestsAndCounts = React.useCallback(
+    async (eventData: Event) => {
+      const guests = await EventGuestService.getEventGuests(eventData.id);
+      const counts = aggregateRsvpCountsFromGuests(guests);
+      setEventGuests(guests);
+      setEvent({ ...eventData, ...counts });
+      void EventGuestService.persistEventCounts(eventData.id, counts).catch(error => {
+        console.warn('Nie udało się zsynchronizować liczników wydarzenia:', error);
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     if (!id || !user) return;
@@ -84,12 +143,11 @@ const EventDetails: React.FC = () => {
         }
         
         const eventData = await EventService.getEventById(id, user.id);
-        setEvent(eventData);
-        
-        // Ładuj gości wydarzenia
         if (eventData) {
-          const guests = await EventGuestService.getEventGuests(eventData.id);
-          setEventGuests(guests);
+          await syncGuestsAndCounts(eventData);
+        } else {
+          setEvent(null);
+          setEventGuests([]);
         }
         
         setLoading(false);
@@ -102,7 +160,7 @@ const EventDetails: React.FC = () => {
     };
 
     loadEvent();
-  }, [id, user]);
+  }, [id, user, syncGuestsAndCounts]);
 
   // Licznik czasu do wydarzenia
   useEffect(() => {
@@ -198,16 +256,24 @@ const EventDetails: React.FC = () => {
     navigate(`/dashboard/events/edit/${id}`);
   };
 
-  const handleDelete = async () => {
-    if (!event || !window.confirm('Czy na pewno chcesz usunąć to wydarzenie? Ta operacja jest nieodwracalna.')) {
-      return;
-    }
+  const handleDelete = () => {
+    if (!event) return;
+    setShowDeleteEventModal(true);
+  };
 
+  const handleConfirmDeleteEvent = async () => {
+    if (!event) return;
+
+    setIsDeletingEvent(true);
     try {
       await EventService.deleteEvent(event.id);
       navigate('/dashboard/events');
-    } catch (error: any) {
-      alert(`Błąd podczas usuwania wydarzenia: ${error.message}`);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Nieznany błąd';
+      showToast(`Błąd podczas usuwania wydarzenia: ${message}`);
+    } finally {
+      setIsDeletingEvent(false);
     }
   };
   const handleDuplicate = () => {
@@ -226,14 +292,13 @@ const EventDetails: React.FC = () => {
         guestAction: duplicateData.guestAction
       });
 
-      // Show success message and optionally redirect
-      alert('Wydarzenie zostało pomyślnie zduplikowane!');
+      showToast('Wydarzenie zostało pomyślnie zduplikowane!', 'success');
       setShowDuplicateModal(false);
       
       // Optionally redirect to the events list to see the new event
       navigate('/dashboard/events');
     } catch (error: any) {
-      alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
+      showToast(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
     }
   };
 
@@ -288,23 +353,31 @@ const EventDetails: React.FC = () => {
       setGuestToDelete(null);
     } catch (error) {
       console.error('Błąd podczas usuwania gościa:', error);
-      alert('Wystąpił błąd podczas usuwania gościa');
+      showToast('Wystąpił błąd podczas usuwania gościa');
     } finally {
       setIsDeletingGuest(false);
     }
   };
 
-  const handleUpdateGuestStatus = async (contactId: string, newStatus: GuestStatus) => {
-    if (!event) return;
+  const handleUpdateGuestStatus = async (eventGuestId: string, newStatus: GuestStatus) => {
+    if (!event || statusUpdatingGuestId) return;
+
+    const previousGuests = eventGuests;
+    setStatusDropdownOpen(null);
+    setStatusUpdatingGuestId(eventGuestId);
+    setEventGuests(prev =>
+      prev.map(g => (g.id === eventGuestId ? { ...g, status: newStatus } : g))
+    );
 
     try {
-      await EventGuestService.updateGuestStatus(event.id, contactId, newStatus);
-      // Przeładuj listę gości
+      await EventGuestService.updateGuestStatus(event.id, eventGuestId, newStatus);
       await handleGuestAdded();
-      setStatusDropdownOpen(null);
     } catch (error) {
       console.error('Błąd podczas zmiany statusu gościa:', error);
-      alert('Wystąpił błąd podczas zmiany statusu gościa');
+      setEventGuests(previousGuests);
+      showToast('Wystąpił błąd podczas zmiany statusu gościa');
+    } finally {
+      setStatusUpdatingGuestId(null);
     }
   };
 
@@ -364,7 +437,7 @@ const EventDetails: React.FC = () => {
     // Walidacja: dla opcji "Z mężem/żoną" imię i nazwisko są wymagane
     if (editPlusOneType === 'spouse') {
       if (!editPlusOneDetails.firstName?.trim() || !editPlusOneDetails.lastName?.trim()) {
-        alert('Dla opcji "Z mężem/żoną" imię i nazwisko są wymagane');
+        showToast('Dla opcji "Z mężem/żoną" imię i nazwisko są wymagane');
         return;
       }
     }
@@ -381,7 +454,8 @@ const EventDetails: React.FC = () => {
         event.id,
         editingGuestId,
         plusOneType,
-        plusOneDetails
+        plusOneDetails,
+        editPlusOneType === 'spouse' ? 'couple' : 'individual_with_companion'
       );
       
       // Przeładuj listę gości
@@ -391,42 +465,18 @@ const EventDetails: React.FC = () => {
       setEditPlusOneDetails({});
     } catch (error) {
       console.error('Błąd podczas aktualizacji informacji o osobie towarzyszącej:', error);
-      alert('Wystąpił błąd podczas aktualizacji informacji');
+      showToast('Wystąpił błąd podczas aktualizacji informacji');
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const getGuestStatusLabel = (status: GuestStatus) => {
-    switch (status) {
-      case 'accepted': return 'Potwierdził';
-      case 'declined': return 'Odrzucił';
-      case 'maybe': return 'Może';
-      case 'pending': return 'Oczekuje';
-      default: return 'Nieznany';
-    }
-  };
-
-  const getGuestStatusIcon = (status: GuestStatus) => {
-    switch (status) {
-      case 'accepted': return <CheckCircle size={16} color="var(--success)" />;
-      case 'declined': return <XCircle size={16} color="var(--error)" />;
-      case 'maybe': return <HelpCircle size={16} color="var(--warning)" />;
-      case 'pending': return <Clock size={16} color="var(--warning)" />;
-      default: return <Clock size={16} color="var(--text-secondary)" />;
-    }
-  };
-
   const handleGuestAdded = async () => {
-    // Przeładuj wydarzenie i gości aby odświeżyć listę
     if (id && user) {
       try {
         const eventData = await EventService.getEventById(id, user.id);
-        setEvent(eventData);
-        
         if (eventData) {
-          const guests = await EventGuestService.getEventGuests(eventData.id);
-          setEventGuests(guests);
+          await syncGuestsAndCounts(eventData);
         }
       } catch (error) {
         console.error('Błąd podczas przeładowywania wydarzenia:', error);
@@ -453,7 +503,7 @@ const EventDetails: React.FC = () => {
       setEvent(updatedEventData);
       setShowSettingsModal(false);
     } catch (error: any) {
-      alert('Wystąpił błąd podczas zapisywania ustawień: ' + error.message);
+      showToast('Wystąpił błąd podczas zapisywania ustawień: ' + error.message);
     } finally {
       setIsUpdating(false);
     }
@@ -502,7 +552,7 @@ const EventDetails: React.FC = () => {
           <AlertTriangle size={48} />
           <h2>Nie znaleziono wydarzenia</h2>
           <p>Wydarzenie o podanym ID nie istnieje lub nie masz do niego dostępu.</p>
-          <button onClick={handleBack} className="button">
+          <button type="button" onClick={handleBack} className="pp-btn pp-btn--outline">
             <ArrowLeft size={20} />
             Wróć do listy wydarzeń
           </button>
@@ -511,63 +561,57 @@ const EventDetails: React.FC = () => {
     );
   }
 
-  const getStatusColor = (status: Event['status']) => {
-    switch (status) {
-      case 'active': return 'var(--success)';
-      case 'draft': return 'var(--secondary)';
-      case 'completed': return 'var(--primary)';
-      case 'cancelled': return 'var(--error)';
-      default: return 'var(--gray-500)';
-    }
-  };
-
-  const getStatusLabel = (status: Event['status']) => {
-    switch (status) {
-      case 'active': return 'Aktywne';
-      case 'draft': return 'Szkic';
-      case 'completed': return 'Zakończone';
-      case 'cancelled': return 'Anulowane';
-      default: return status;
-    }
-  };
-
   return (
     <div className="event-details">
-      {/* Nagłówek */}
-      <div className="event-details__header">
-        <button onClick={handleBack} className="event-details__back">
-          <ArrowLeft size={20} />
-          Wróć do listy wydarzeń
-        </button>
-        
-        <div className="event-details__actions">
-          <button onClick={handleEdit} className="event-details__action">
-            <Edit size={20} />
-            Edytuj
-          </button>
-          <button onClick={handleDuplicate} className="event-details__action">
-            <Copy size={20} />
-            Duplikuj
-          </button>
-          <button onClick={handleDelete} className="event-details__action event-details__action--delete">
-            <Trash2 size={20} />
-            Usuń
-          </button>
-        </div>
-      </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+      <button
+        type="button"
+        onClick={handleBack}
+        className="pp-btn pp-btn--ghost pp-btn--sm event-details__back"
+      >
+        <ArrowLeft size={18} />
+        Wróć do listy wydarzeń
+      </button>
+
+      <PageHeader
+        title={event.title}
+        subtitle={format(event.date, "EEEE, d MMMM yyyy · HH:mm", { locale: pl })}
+        icon={Calendar}
+        meta={
+          <span
+            className="event-details__status"
+            style={{ backgroundColor: getEventStatusColor(event.status) }}
+          >
+            {getEventStatusLabel(event.status)}
+          </span>
+        }
+        className="event-details__page-header"
+        actions={
+          <div className="event-details__actions">
+            <button type="button" onClick={handleEdit} className="pp-btn pp-btn--outline event-details__action">
+              <Edit size={20} />
+              Edytuj
+            </button>
+            <button type="button" onClick={handleDuplicate} className="pp-btn pp-btn--outline event-details__action">
+              <Copy size={20} />
+              Duplikuj
+            </button>
+            <button type="button" onClick={handleDelete} className="pp-btn pp-btn--danger event-details__action">
+              <Trash2 size={20} />
+              Usuń
+            </button>
+          </div>
+        }
+      />
 
       {/* Główne informacje */}
       <div className="event-details__main">
-        <div className="event-details__title-section">
-          <h1 className="event-details__title">{event.title}</h1>
-          <div 
-            className="event-details__status"
-            style={{ backgroundColor: getStatusColor(event.status) }}
-          >
-            {getStatusLabel(event.status)}
-          </div>
-        </div>
-
         <div className="event-details__meta">
           <div className="event-details__meta-item">
             <Calendar size={20} />
@@ -594,7 +638,18 @@ const EventDetails: React.FC = () => {
             <Users size={20} />
             <div className="event-details__meta-content">
               <span className="event-details__meta-label">Goście</span>
-              <span className="event-details__meta-value">{event.guestCount} / {event.maxGuests}</span>
+              <span className="event-details__meta-value">{guestStats.guestCount} / {event.maxGuests}</span>
+            </div>
+          </div>
+          <div className="event-details__meta-item">
+            <Clock size={20} />
+            <div className="event-details__meta-content">
+              <span className="event-details__meta-label">Termin RSVP</span>
+              <span className="event-details__meta-value">
+                {event.rsvpDeadline
+                  ? format(new Date(event.rsvpDeadline), "d MMMM yyyy, HH:mm", { locale: pl })
+                  : 'Do dnia wydarzenia'}
+              </span>
             </div>
           </div>
         </div>
@@ -614,160 +669,20 @@ const EventDetails: React.FC = () => {
 
             {/* Mapa lokalizacji */}
             <div className="event-details__location-section">
-              <EventLocationMap location={event.location} />
+              <LazyEventLocationMap location={event.location} />
             </div>
           </div>
         </div>
 
         {/* Prawa kolumna: Statystyki gości */}
         <div className="event-details__content-column">
-          <div className="event-details__guests-stats">
-            <h2 className="event-details__section-title">Statystyki gości</h2>
-            
-            {/* Główna statystyka - Wszyscy goście */}
-            <div className="event-details__stat-main">
-              <div className="event-details__stat-main-content">
-                <div className="event-details__stat-main-value">{event.guestCount}</div>
-                <div className="event-details__stat-main-label">z {event.maxGuests} zaproszonych</div>
-              </div>
-              <div className="event-details__stat-main-progress">
-                <div 
-                  className="event-details__stat-main-progress-fill"
-                  style={{ width: `${Math.min((event.guestCount / event.maxGuests) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-
-            {/* Licznik czasu do wydarzenia */}
-            {timeUntilEvent && (
-              <div className="event-details__countdown">
-                <div className="event-details__countdown-label">
-                  {timeUntilEvent.isPast ? 'Wydarzenie minęło' : 'Do wydarzenia pozostało'}
-                </div>
-                {!timeUntilEvent.isPast && (
-                  <div className="event-details__countdown-grid">
-                    <div className="event-details__countdown-item">
-                      <div className="event-details__countdown-value">{timeUntilEvent.days}</div>
-                      <div className="event-details__countdown-unit">dni</div>
-                    </div>
-                    <div className="event-details__countdown-separator">:</div>
-                    <div className="event-details__countdown-item">
-                      <div className="event-details__countdown-value">{timeUntilEvent.hours}</div>
-                      <div className="event-details__countdown-unit">godz</div>
-                    </div>
-                    <div className="event-details__countdown-separator">:</div>
-                    <div className="event-details__countdown-item">
-                      <div className="event-details__countdown-value">{timeUntilEvent.minutes}</div>
-                      <div className="event-details__countdown-unit">min</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Szczegółowe statystyki */}
-            <div className="event-details__stat-grid">
-              <div className="event-details__stat event-details__stat--accepted">
-                <div className="event-details__stat-content">
-                  <div className="event-details__stat-header">
-                    <CheckCircle size={18} className="event-details__stat-icon" />
-                    <div className="event-details__stat-value">{event.acceptedCount}</div>
-                  </div>
-                  <div className="event-details__stat-label">Potwierdzeni</div>
-                  {event.guestCount > 0 && (
-                    <div className="event-details__stat-percent">
-                      {Math.round((event.acceptedCount / event.guestCount) * 100)}%
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="event-details__stat event-details__stat--pending">
-                <div className="event-details__stat-content">
-                  <div className="event-details__stat-header">
-                    <Clock size={18} className="event-details__stat-icon" />
-                    <div className="event-details__stat-value">{event.pendingCount}</div>
-                  </div>
-                  <div className="event-details__stat-label">Oczekujący</div>
-                  {event.guestCount > 0 && (
-                    <div className="event-details__stat-percent">
-                      {Math.round((event.pendingCount / event.guestCount) * 100)}%
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="event-details__stat event-details__stat--declined">
-                <div className="event-details__stat-content">
-                  <div className="event-details__stat-header">
-                    <XCircle size={18} className="event-details__stat-icon" />
-                    <div className="event-details__stat-value">{event.declinedCount}</div>
-                  </div>
-                  <div className="event-details__stat-label">Odrzucili</div>
-                  {event.guestCount > 0 && (
-                    <div className="event-details__stat-percent">
-                      {Math.round((event.declinedCount / event.guestCount) * 100)}%
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="event-details__stat event-details__stat--available">
-                <div className="event-details__stat-content">
-                  <div className="event-details__stat-header">
-                    <UserPlus size={18} className="event-details__stat-icon" />
-                    <div className="event-details__stat-value">
-                      {Math.max(0, event.maxGuests - event.guestCount)}
-                    </div>
-                  </div>
-                  <div className="event-details__stat-label">Miejsca wolne</div>
-                  {event.maxGuests > 0 && (
-                    <div className="event-details__stat-percent">
-                      {Math.round(((event.maxGuests - event.guestCount) / event.maxGuests) * 100)}%
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Statystyka frekwencji */}
-            {event.guestCount > 0 && (
-              <div className="event-details__attendance-stat">
-                <div className="event-details__attendance-stat-header">
-                  <TrendingUp size={18} className="event-details__attendance-stat-icon" />
-                  <div className="event-details__attendance-stat-content">
-                    <div className="event-details__attendance-stat-label">Potencjalna frekwencja</div>
-                    <div className="event-details__attendance-stat-value">
-                      {event.acceptedCount + (event.maybeCount || 0)} / {event.maxGuests}
-                    </div>
-                  </div>
-                </div>
-                <div className="event-details__attendance-stat-bar">
-                  <div 
-                    className="event-details__attendance-stat-fill"
-                    style={{ 
-                      width: `${Math.min(((event.acceptedCount + (event.maybeCount || 0)) / event.maxGuests) * 100, 100)}%` 
-                    }}
-                  ></div>
-                </div>
-              </div>
-            )}
-
-            {/* Wskaźnik odpowiedzi */}
-            {event.guestCount > 0 && (
-              <div className="event-details__response-rate">
-                <div className="event-details__response-rate-label">Wskaźnik odpowiedzi</div>
-                <div className="event-details__response-rate-value">
-                  {Math.round(((event.acceptedCount + event.declinedCount) / event.guestCount) * 100)}%
-                </div>
-                <div className="event-details__response-rate-bar">
-                  <div 
-                    className="event-details__response-rate-fill"
-                    style={{ 
-                      width: `${((event.acceptedCount + event.declinedCount) / event.guestCount) * 100}%` 
-                    }}
-                  ></div>
-                </div>
-              </div>
-            )}
-          </div>
+          <EventStatsPanel
+            maxGuests={event.maxGuests}
+            stats={guestStats}
+            expectedAttendance={expectedAttendance}
+            invitationCount={eventGuests.length}
+            timeUntilEvent={timeUntilEvent}
+          />
         </div>
       </div>
 
@@ -775,21 +690,35 @@ const EventDetails: React.FC = () => {
       <div className="event-details__guests">
         <div className="event-details__section-header">          <h2>Lista gości</h2>
           <div className="event-details__guest-actions">
-            <button 
+            <button
+              type="button"
               onClick={downloadGuestList}
               disabled={eventGuests.length === 0}
+              className="pp-btn pp-btn--outline"
             >
               <Download size={20} />
               Pobierz listę
             </button>
-            <button 
+            <button
+              type="button"
               onClick={() => setShowInvitationManager(true)}
-              className="button--secondary"
+              className="pp-btn pp-btn--outline event-details__invitations-btn"
             >
               <Mail size={20} />
-              Zarządzaj zaproszeniami
+              Zaproszenia i przypomnienia
+              {eventGuests.filter(
+                g => g.status === 'pending' || g.status === 'maybe'
+              ).length > 0 && (
+                <span className="event-details__invitations-badge">
+                  {
+                    eventGuests.filter(
+                      g => g.status === 'pending' || g.status === 'maybe'
+                    ).length
+                  }
+                </span>
+              )}
             </button>
-            <button onClick={handleAddGuests} className="button--primary">
+            <button type="button" onClick={handleAddGuests} className="pp-btn pp-btn--primary">
               <Plus size={20} />
               Dodaj gości
             </button>
@@ -810,54 +739,67 @@ const EventDetails: React.FC = () => {
 
         {eventGuests.length > 0 ? (
           <div className="event-details__guests-list">
-            {eventGuests.map((eventGuest) => (
-              <div key={`${eventGuest.id}-${eventGuest.contact.id}`} className="event-details__guest">
+            {eventGuests.map((eventGuest) => {
+              const isPartyGuest = isMultiSeatInvitation(eventGuest);
+              const displayName =
+                getPartyDisplayLabel(eventGuest) ||
+                `${eventGuest.contact.firstName} ${eventGuest.contact.lastName}`.trim();
+
+              return (
+              <div
+                key={`${eventGuest.id}-${eventGuest.contact.id}`}
+                className="event-details__guest"
+              >
                 <div className="event-details__guest-info">
                   <div className="event-details__guest-name">
-                    {eventGuest.contact.firstName} {eventGuest.contact.lastName}
-                    {(() => {
-                      // Dla głównych gości (z contactId) - sprawdź czy ma osobę towarzyszącą
-                      if (eventGuest.contactId) {
-                        const companion = findCompanionGuest(eventGuest);
-                        if (companion) {
-                          // Sprawdź czy ma dane
-                          if (companion.contact.firstName || companion.contact.lastName) {
-                            return <span className="event-details__guest-plusone-info"> • Z {companion.contact.firstName || ''} {companion.contact.lastName || ''}</span>;
-                          } else {
-                            // Bez danych - domyślnie osoba towarzysząca
-                            return <span className="event-details__guest-plusone-info"> • Z osobą towarzyszącą</span>;
-                          }
-                        } else {
-                          return <span className="event-details__guest-plusone-info"> • Idzie sam</span>;
-                        }
-                      }
-                      // Dla osób towarzyszących (bez contactId) - nie pokazuj informacji
-                      return null;
-                    })()}
+                    {displayName}
                   </div>
+                  {isPartyGuest && (eventGuest.status || 'pending') !== 'pending' && (
+                    <EventGuestPartyDisplay eventGuest={eventGuest} />
+                  )}
                   <div className="event-details__guest-email">{eventGuest.contact.email}</div>
                 </div>
                 <div className="event-details__guest-actions">
                   <div className="event-details__guest-status-container">
                     <button 
-                      onClick={() => setStatusDropdownOpen(
-                        statusDropdownOpen === eventGuest.contact.id ? null : eventGuest.contact.id
-                      )}
-                      className="event-details__guest-status-button"
+                      onClick={() => {
+                        if (statusUpdatingGuestId === eventGuest.id) return;
+                        setStatusDropdownOpen(
+                          statusDropdownOpen === eventGuest.id ? null : eventGuest.id
+                        );
+                      }}
+                      className={`event-details__guest-status-button${
+                        statusUpdatingGuestId === eventGuest.id
+                          ? ' event-details__guest-status-button--updating'
+                          : ''
+                      }`}
                       title="Zmień status"
                       data-status={eventGuest.status}
+                      disabled={statusUpdatingGuestId === eventGuest.id}
+                      aria-busy={statusUpdatingGuestId === eventGuest.id}
                     >
-                      {getGuestStatusIcon(eventGuest.status as GuestStatus)}
+                      {statusUpdatingGuestId === eventGuest.id ? (
+                        <Loader2
+                          size={14}
+                          className="event-details__guest-status-spinner"
+                          aria-hidden
+                        />
+                      ) : (
+                        getGuestStatusIcon(eventGuest.status as GuestStatus)
+                      )}
                       <span className="event-details__guest-status-label">
                         {getGuestStatusLabel(eventGuest.status as GuestStatus)}
                       </span>
-                      <ChevronDown size={14} />
+                      {statusUpdatingGuestId !== eventGuest.id && (
+                        <ChevronDown size={14} aria-hidden />
+                      )}
                     </button>
                     
-                    {statusDropdownOpen === eventGuest.contact.id && (
+                    {statusDropdownOpen === eventGuest.id &&
+                      statusUpdatingGuestId !== eventGuest.id && (
                       <div className="event-details__status-dropdown">
                         <button
-                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'pending')}
+                          onClick={() => handleUpdateGuestStatus(eventGuest.id, 'pending')}
                           className={`event-details__status-dropdown-item ${eventGuest.status === 'pending' ? 'event-details__status-dropdown-item--active' : ''}`}
                           data-status="pending"
                         >
@@ -865,7 +807,7 @@ const EventDetails: React.FC = () => {
                           Oczekuje
                         </button>
                         <button
-                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'accepted')}
+                          onClick={() => handleUpdateGuestStatus(eventGuest.id, 'accepted')}
                           className={`event-details__status-dropdown-item ${eventGuest.status === 'accepted' ? 'event-details__status-dropdown-item--active' : ''}`}
                           data-status="accepted"
                         >
@@ -873,7 +815,7 @@ const EventDetails: React.FC = () => {
                           Potwierdził
                         </button>
                         <button
-                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'maybe')}
+                          onClick={() => handleUpdateGuestStatus(eventGuest.id, 'maybe')}
                           className={`event-details__status-dropdown-item ${eventGuest.status === 'maybe' ? 'event-details__status-dropdown-item--active' : ''}`}
                           data-status="maybe"
                         >
@@ -881,7 +823,7 @@ const EventDetails: React.FC = () => {
                           Może
                         </button>
                         <button
-                          onClick={() => handleUpdateGuestStatus(eventGuest.contact.id, 'declined')}
+                          onClick={() => handleUpdateGuestStatus(eventGuest.id, 'declined')}
                           className={`event-details__status-dropdown-item ${eventGuest.status === 'declined' ? 'event-details__status-dropdown-item--active' : ''}`}
                           data-status="declined"
                         >
@@ -921,7 +863,8 @@ const EventDetails: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="event-details__no-guests">
@@ -936,7 +879,11 @@ const EventDetails: React.FC = () => {
       <div className="event-details__settings">
         <div className="event-details__section-header">
           <h2>Ustawienia wydarzenia</h2>
-          <button onClick={() => setShowSettingsModal(true)}>
+          <button
+            type="button"
+            onClick={() => setShowSettingsModal(true)}
+            className="pp-btn pp-btn--outline"
+          >
             <Settings size={20} />
             Zarządzaj ustawieniami
           </button>
@@ -954,269 +901,335 @@ const EventDetails: React.FC = () => {
         </div>
 
         {showSettingsModal && (
-          <div className="event-details__modal">
-            <div className="event-details__modal-content">
-              <div className="event-details__modal-header">
-                <h2>Ustawienia wydarzenia</h2>
-                <button onClick={() => setShowSettingsModal(false)} className="event-details__modal-close">
-                  <XCircle size={24} />
-                </button>
-              </div>
-              
-              <form onSubmit={handleUpdateSettings} className="event-details__settings-form">
-                <div className="event-details__modal-body">
-                  <div className="event-details__form-group">
-                    <label htmlFor="dresscode">Dress code</label>
-                    <input
-                      type="text"
-                      id="dresscode"
-                      name="dresscode"
-                      defaultValue={event.dresscode || ''}
-                      placeholder="np. Strój elegancki"
-                    />
-                  </div>
-
-                  <div className="event-details__form-group">
-                    <label htmlFor="additionalInfo">Dodatkowe informacje</label>
-                    <textarea
-                      id="additionalInfo"
-                      name="additionalInfo"
-                      defaultValue={event.additionalInfo || ''}
-                      placeholder="Dodatkowe informacje dla gości..."
-                      rows={4}
-                    />
-                  </div>
-                </div>
-
-                <div className="event-details__modal-footer">
-                  <button 
-                    type="button"
-                    onClick={() => setShowSettingsModal(false)} 
-                    className="event-details__modal-button"
-                  >
-                    Anuluj
-                  </button>
-                  <button 
-                    type="submit"
-                    className="event-details__modal-button event-details__modal-button--primary"
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? 'Zapisywanie...' : 'Zapisz zmiany'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>        )}
-      </div>      {/* Modal duplikowania wydarzenia */}
-      {event && (
-        <DuplicateEventModal
-          isOpen={showDuplicateModal}
-          onClose={() => setShowDuplicateModal(false)}
-          event={event}
-          onDuplicate={handleDuplicateConfirm}
-        />
-      )}
-
-      {/* Manager zaproszeń */}
-      {event && showInvitationManager && (
-        <InvitationManager
-          event={event}
-          onClose={() => setShowInvitationManager(false)}
-        />
-      )}
-
-      {/* Modal dodawania kontaktu */}
-      <AddContact
-        open={isAddContactOpen}
-        onClose={() => setIsAddContactOpen(false)}
-        onContactAdded={handleContactAdded}
-      />
-
-      {/* Modal dodawania kontaktów */}
-      {event && (
-        <AddContactsToEvent
-          open={isAddContactsOpen}
-          onClose={() => setIsAddContactsOpen(false)}
-          eventId={event.id}
-          eventTitle={event.title}
-          onContactsAdded={handleGuestAdded}
-        />
-      )}
-
-      {/* Modal edycji osoby towarzyszącej */}
-      {editingGuestId &&
-        createPortal(
-          <div className="event-details__modal">
-            <div className="event-details__modal-content">
-              <div className="event-details__modal-header">
-                <div>
-                  <h2>Edytuj informacje o osobie towarzyszącej</h2>
-                  {(() => {
-                    const guest = eventGuests.find(g => g.contactId === editingGuestId || g.contact.id === editingGuestId);
-                    if (guest) {
-                      return (
-                        <p className="event-details__modal-guest-info">
-                          {guest.contact.firstName} {guest.contact.lastName}
-                        </p>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
-                <button 
-                  onClick={() => {
-                    setEditingGuestId(null);
-                    setEditPlusOneType('none');
-                    setEditPlusOneDetails({});
-                  }} 
-                  className="event-details__modal-close"
-                  disabled={isUpdating}
-                >
-                  <XCircle size={24} />
-                </button>
-              </div>
-
-            <form onSubmit={(e) => { e.preventDefault(); handleSavePlusOne(); }} className="event-details__settings-form">
-              <div className="event-details__modal-body">
-                <div className="event-details__form-group">
-                  <label>Opcje gościa</label>
-                  <div className="event-details__radio-group">
-                    <label className="event-details__radio-label">
-                      <input
-                        type="radio"
-                        name="plusOneType"
-                        value="none"
-                        checked={editPlusOneType === 'none'}
-                        onChange={(e) => setEditPlusOneType('none')}
-                        disabled={isUpdating}
-                      />
-                      <span>Idzie sam</span>
-                    </label>
-                    <label className="event-details__radio-label">
-                      <input
-                        type="radio"
-                        name="plusOneType"
-                        value="spouse"
-                        checked={editPlusOneType === 'spouse'}
-                        onChange={(e) => setEditPlusOneType('spouse')}
-                        disabled={isUpdating}
-                      />
-                      <span>Z mężem/żoną</span>
-                    </label>
-                    <label className="event-details__radio-label">
-                      <input
-                        type="radio"
-                        name="plusOneType"
-                        value="companion"
-                        checked={editPlusOneType === 'companion'}
-                        onChange={(e) => setEditPlusOneType('companion')}
-                        disabled={isUpdating}
-                      />
-                      <span>Z osobą towarzyszącą</span>
-                    </label>
-                  </div>
-                </div>
-
-                {(editPlusOneType === 'spouse' || editPlusOneType === 'companion') && (
-                  <>
-                    <div className="event-details__form-group">
-                      <label htmlFor="edit-plusone-firstname">
-                        {editPlusOneType === 'spouse' ? 'Imię męża/żony' : 'Imię osoby towarzyszącej (opcjonalnie)'}
-                        {editPlusOneType === 'spouse' && <span style={{ color: 'var(--color-error, #ef4444)' }}> *</span>}
-                      </label>
-                      <input
-                        type="text"
-                        id="edit-plusone-firstname"
-                        value={editPlusOneDetails.firstName || ''}
-                        onChange={(e) => setEditPlusOneDetails(prev => ({ ...prev, firstName: e.target.value }))}
-                        placeholder="Imię"
-                        disabled={isUpdating}
-                        required={editPlusOneType === 'spouse'}
-                      />
-                    </div>
-
-                    <div className="event-details__form-group">
-                      <label htmlFor="edit-plusone-lastname">
-                        {editPlusOneType === 'spouse' ? 'Nazwisko męża/żony' : 'Nazwisko osoby towarzyszącej (opcjonalnie)'}
-                        {editPlusOneType === 'spouse' && <span style={{ color: 'var(--color-error, #ef4444)' }}> *</span>}
-                      </label>
-                      <input
-                        type="text"
-                        id="edit-plusone-lastname"
-                        value={editPlusOneDetails.lastName || ''}
-                        onChange={(e) => setEditPlusOneDetails(prev => ({ ...prev, lastName: e.target.value }))}
-                        placeholder="Nazwisko"
-                        disabled={isUpdating}
-                        required={editPlusOneType === 'spouse'}
-                      />
-                    </div>
-
-                    <div className="event-details__form-group">
-                      <label htmlFor="edit-plusone-dietary">Ograniczenia dietetyczne (opcjonalnie)</label>
-                      <input
-                        type="text"
-                        id="edit-plusone-dietary"
-                        value={editPlusOneDetails.dietaryRestrictions || ''}
-                        onChange={(e) => setEditPlusOneDetails(prev => ({ ...prev, dietaryRestrictions: e.target.value }))}
-                        placeholder="np. Wegetariańskie, bezglutenowe"
-                        disabled={isUpdating}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="event-details__modal-footer">
+          <Modal
+            open={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+            title="Ustawienia wydarzenia"
+            size="md"
+            closeDisabled={isUpdating}
+            footer={
+              <>
                 <button
                   type="button"
-                  onClick={() => {
-                    setEditingGuestId(null);
-                    setEditPlusOneType('none');
-                    setEditPlusOneDetails({});
-                  }}
-                  className="event-details__modal-button"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="pp-btn pp-btn--outline"
                   disabled={isUpdating}
                 >
                   Anuluj
                 </button>
                 <button
                   type="submit"
-                  className="event-details__modal-button event-details__modal-button--primary"
-                  disabled={
-                    isUpdating || 
-                    (editPlusOneType === 'spouse' && (!editPlusOneDetails.firstName?.trim() || !editPlusOneDetails.lastName?.trim()))
-                  }
+                  form="event-settings-form"
+                  className="pp-btn pp-btn--primary"
+                  disabled={isUpdating}
                 >
                   {isUpdating ? 'Zapisywanie...' : 'Zapisz zmiany'}
                 </button>
+              </>
+            }
+          >
+            <form
+              id="event-settings-form"
+              onSubmit={handleUpdateSettings}
+              className="event-details__settings-form"
+            >
+              <div className="pp-field">
+                <label className="pp-label" htmlFor="dresscode">
+                  Dress code
+                </label>
+                <input
+                  type="text"
+                  id="dresscode"
+                  name="dresscode"
+                  className="pp-input"
+                  defaultValue={event.dresscode || ''}
+                  placeholder="np. Strój elegancki"
+                />
+              </div>
+
+              <div className="pp-field">
+                <label className="pp-label" htmlFor="additionalInfo">
+                  Dodatkowe informacje
+                </label>
+                <textarea
+                  id="additionalInfo"
+                  name="additionalInfo"
+                  className="pp-textarea"
+                  defaultValue={event.additionalInfo || ''}
+                  placeholder="Dodatkowe informacje dla gości..."
+                  rows={4}
+                />
               </div>
             </form>
-          </div>
-        </div>,
-        document.body
+          </Modal>
+        )}
+      </div>      {/* Modal duplikowania wydarzenia */}
+      {event && showDuplicateModal && (
+        <Suspense fallback={null}>
+          <DuplicateEventModal
+            isOpen={showDuplicateModal}
+            onClose={() => setShowDuplicateModal(false)}
+            event={event}
+            onDuplicate={handleDuplicateConfirm}
+          />
+        </Suspense>
       )}
 
-      <DeleteGuestModal
-        open={showDeleteGuestModal}
-        contact={guestToDelete}
-        onClose={() => {
-          setShowDeleteGuestModal(false);
-          setGuestToDelete(null);
-        }}
-        onConfirm={handleConfirmDeleteGuest}
-        isDeleting={isDeletingGuest}
-      />
+      {event && showInvitationManager && (
+        <Suspense fallback={null}>
+          <InvitationManager
+            event={event}
+            onClose={() => setShowInvitationManager(false)}
+          />
+        </Suspense>
+      )}
 
-      {event && (
-        <RSVPLinkModal
-          open={showRSVPLinkModal}
-          onClose={() => {
-            setShowRSVPLinkModal(false);
-            setSelectedGuestForRSVP(null);
+      {isAddContactOpen && (
+        <Suspense fallback={null}>
+          <AddContact
+            open={isAddContactOpen}
+            onClose={() => setIsAddContactOpen(false)}
+            onContactAdded={handleContactAdded}
+          />
+        </Suspense>
+      )}
+
+      {event && isAddContactsOpen && (
+        <Suspense fallback={null}>
+          <AddContactsToEvent
+            open={isAddContactsOpen}
+            onClose={() => setIsAddContactsOpen(false)}
+            eventId={event.id}
+            eventTitle={event.title}
+            onContactsAdded={handleGuestAdded}
+          />
+        </Suspense>
+      )}
+
+      {/* Modal edycji osoby towarzyszącej */}
+      <Modal
+        open={!!editingGuestId}
+        onClose={() => {
+          setEditingGuestId(null);
+          setEditPlusOneType('none');
+          setEditPlusOneDetails({});
+        }}
+        title="Edytuj informacje o osobie towarzyszącej"
+        size="md"
+        closeDisabled={isUpdating}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingGuestId(null);
+                setEditPlusOneType('none');
+                setEditPlusOneDetails({});
+              }}
+              className="pp-btn pp-btn--outline"
+              disabled={isUpdating}
+            >
+              Anuluj
+            </button>
+            <button
+              type="submit"
+              form="plus-one-form"
+              className="pp-btn pp-btn--primary"
+              disabled={
+                isUpdating ||
+                (editPlusOneType === 'spouse' &&
+                  (!editPlusOneDetails.firstName?.trim() ||
+                    !editPlusOneDetails.lastName?.trim()))
+              }
+            >
+              {isUpdating ? 'Zapisywanie...' : 'Zapisz zmiany'}
+            </button>
+          </>
+        }
+      >
+        {(() => {
+          const guest = eventGuests.find(
+            g =>
+              g.contactId === editingGuestId ||
+              g.contact.id === editingGuestId
+          );
+          if (guest) {
+            return (
+              <p className="event-details__modal-guest-info">
+                {guest.contact.firstName} {guest.contact.lastName}
+              </p>
+            );
+          }
+          return null;
+        })()}
+
+        <form
+          id="plus-one-form"
+          onSubmit={e => {
+            e.preventDefault();
+            handleSavePlusOne();
           }}
-          eventGuest={selectedGuestForRSVP}
-          event={event}
-        />
+        >
+          <div className="pp-field">
+            <span className="pp-label">Opcje gościa</span>
+            <div className="event-details__radio-group">
+              <label className="event-details__radio-label">
+                <input
+                  type="radio"
+                  name="plusOneType"
+                  value="none"
+                  checked={editPlusOneType === 'none'}
+                  onChange={() => setEditPlusOneType('none')}
+                  disabled={isUpdating}
+                />
+                <span>Idzie sam</span>
+              </label>
+              <label className="event-details__radio-label">
+                <input
+                  type="radio"
+                  name="plusOneType"
+                  value="spouse"
+                  checked={editPlusOneType === 'spouse'}
+                  onChange={() => setEditPlusOneType('spouse')}
+                  disabled={isUpdating}
+                />
+                <span>Z mężem/żoną</span>
+              </label>
+              <label className="event-details__radio-label">
+                <input
+                  type="radio"
+                  name="plusOneType"
+                  value="companion"
+                  checked={editPlusOneType === 'companion'}
+                  onChange={() => setEditPlusOneType('companion')}
+                  disabled={isUpdating}
+                />
+                <span>Z osobą towarzyszącą</span>
+              </label>
+            </div>
+          </div>
+
+          {(editPlusOneType === 'spouse' ||
+            editPlusOneType === 'companion') && (
+            <>
+              <div className="pp-field">
+                <label className="pp-label" htmlFor="edit-plusone-firstname">
+                  {editPlusOneType === 'spouse'
+                    ? 'Imię męża/żony'
+                    : 'Imię osoby towarzyszącej (opcjonalnie)'}
+                  {editPlusOneType === 'spouse' && (
+                    <span className="event-details__required"> *</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  id="edit-plusone-firstname"
+                  value={editPlusOneDetails.firstName || ''}
+                  onChange={e =>
+                    setEditPlusOneDetails(prev => ({
+                      ...prev,
+                      firstName: e.target.value,
+                    }))
+                  }
+                  className="pp-input"
+                  placeholder="Imię"
+                  disabled={isUpdating}
+                  required={editPlusOneType === 'spouse'}
+                />
+              </div>
+
+              <div className="pp-field">
+                <label className="pp-label" htmlFor="edit-plusone-lastname">
+                  {editPlusOneType === 'spouse'
+                    ? 'Nazwisko męża/żony'
+                    : 'Nazwisko osoby towarzyszącej (opcjonalnie)'}
+                  {editPlusOneType === 'spouse' && (
+                    <span className="event-details__required"> *</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  id="edit-plusone-lastname"
+                  value={editPlusOneDetails.lastName || ''}
+                  onChange={e =>
+                    setEditPlusOneDetails(prev => ({
+                      ...prev,
+                      lastName: e.target.value,
+                    }))
+                  }
+                  className="pp-input"
+                  placeholder="Nazwisko"
+                  disabled={isUpdating}
+                  required={editPlusOneType === 'spouse'}
+                />
+              </div>
+
+              <div className="pp-field">
+                <label className="pp-label" htmlFor="edit-plusone-dietary">
+                  Ograniczenia dietetyczne (opcjonalnie)
+                </label>
+                <input
+                  type="text"
+                  id="edit-plusone-dietary"
+                  value={editPlusOneDetails.dietaryRestrictions || ''}
+                  onChange={e =>
+                    setEditPlusOneDetails(prev => ({
+                      ...prev,
+                      dietaryRestrictions: e.target.value,
+                    }))
+                  }
+                  className="pp-input"
+                  placeholder="np. Wegetariańskie, bezglutenowe"
+                  disabled={isUpdating}
+                />
+              </div>
+            </>
+          )}
+        </form>
+      </Modal>
+
+      {showDeleteEventModal && (
+        <Suspense fallback={null}>
+          <DeleteEventModal
+            open={showDeleteEventModal}
+            event={event}
+            onClose={() => {
+              if (isDeletingEvent) return;
+              setShowDeleteEventModal(false);
+            }}
+            onConfirm={handleConfirmDeleteEvent}
+            isDeleting={isDeletingEvent}
+          />
+        </Suspense>
+      )}
+
+      {showDeleteGuestModal && (
+        <Suspense fallback={null}>
+          <DeleteGuestModal
+            open={showDeleteGuestModal}
+            contact={guestToDelete}
+            onClose={() => {
+              setShowDeleteGuestModal(false);
+              setGuestToDelete(null);
+            }}
+            onConfirm={handleConfirmDeleteGuest}
+            isDeleting={isDeletingGuest}
+          />
+        </Suspense>
+      )}
+
+      {event && showRSVPLinkModal && (
+        <Suspense fallback={null}>
+          <RSVPLinkModal
+            open={showRSVPLinkModal}
+            onClose={() => {
+              setShowRSVPLinkModal(false);
+              setSelectedGuestForRSVP(null);
+            }}
+            eventGuest={selectedGuestForRSVP}
+            event={event}
+          />
+        </Suspense>
       )}
     </div>
   );

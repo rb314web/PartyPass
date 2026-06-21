@@ -1,37 +1,36 @@
 import React from 'react';
 import { Search as SearchIcon } from 'lucide-react';
+import PageHeader from '../../common/PageHeader/PageHeader';
+import '../../../pages/Search/Search.scss';
 
-const DemoSearch: React.FC = React.memo(() => (
-  <div className="demo__search-content">
-    <div className="demo__page-header">
-      <h1>Wyszukaj</h1>
-      <p>Przeszukaj swoje wydarzenia, kontakty i więcej</p>
-    </div>
+const DemoSearch: React.FC = () => (
+  <div className="search-page">
+    <PageHeader
+      title="Wyszukaj"
+      subtitle="Przeszukaj wydarzenia, kontakty i zaproszenia"
+      icon={SearchIcon}
+    />
 
-    <div className="demo__search-bar">
-      <SearchIcon size={20} />
+    <div className="search-page__search-bar pp-search">
+      <SearchIcon size={20} className="pp-search__icon" aria-hidden="true" />
       <input
         type="text"
         placeholder="Wpisz frazę do wyszukania..."
-        className="demo__search-input"
+        className="pp-input"
         disabled
+        aria-label="Wyszukiwanie demo"
       />
     </div>
 
-    <div className="demo__search-results">
-      <div className="demo__search-placeholder">
-        <SearchIcon size={48} />
-        <h4>Wpisz frazę, aby rozpocząć wyszukiwanie</h4>
-        <p>
-          Wyszukuj w wydarzeniach, kontaktach, zaproszeniach i innych elementach
-          Twojego konta PartyPass
-        </p>
-      </div>
+    <div className="search-page__empty">
+      <SearchIcon size={48} aria-hidden />
+      <h3>Wpisz frazę, aby rozpocząć wyszukiwanie</h3>
+      <p>
+        Wyszukuj w wydarzeniach, kontaktach i zaproszeniach RSVP w swoim koncie
+        PartyPass.
+      </p>
     </div>
   </div>
-));
-
-DemoSearch.displayName = 'DemoSearch';
+);
 
 export default DemoSearch;
-

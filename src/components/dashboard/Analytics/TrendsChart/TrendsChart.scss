@@ -1,0 +1,117 @@
+@use '../../../../styles/globals/index' as *;
+
+.trends-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 100%;
+  min-width: 0;
+
+  &--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 7rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  &__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  &__legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  &__canvas {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+  }
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 9.75rem;
+  }
+
+  &__grid-line {
+    stroke: color-mix(in srgb, var(--border-primary, #444) 35%, transparent);
+    stroke-width: 1;
+    stroke-dasharray: 4 6;
+  }
+
+  &__axis-line {
+    stroke: color-mix(in srgb, var(--border-primary, #444) 55%, transparent);
+    stroke-width: 1;
+  }
+
+  &__axis-label,
+  &__month-label {
+    fill: var(--text-secondary);
+    font-size: 11px;
+    font-family: inherit;
+  }
+
+  &__month-label {
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  &__bar {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform-origin: center bottom;
+  }
+
+  &__bar-value {
+    fill: var(--text-primary);
+    font-size: 10px;
+    font-weight: 600;
+    font-family: inherit;
+  }
+
+  &__hover-band {
+    fill: color-mix(in srgb, var(--color-primary, #7b9ae8) 8%, transparent);
+  }
+
+  &__tooltip {
+    position: absolute;
+    top: 0.25rem;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-lg, 8px);
+    background: var(--card-bg, var(--bg-primary));
+    border: 1px solid var(--border-primary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 2;
+
+    strong {
+      color: var(--text-primary);
+      font-size: 0.8125rem;
+      margin-bottom: 0.125rem;
+    }
+  }
+}

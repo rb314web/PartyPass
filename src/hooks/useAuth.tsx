@@ -39,10 +39,15 @@ interface UpdateProfileData {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
+  company?: string;
+  website?: string;
+  bio?: string;
+  timezone?: string;
+  language?: 'pl' | 'en' | 'de' | 'fr';
   avatar?: File;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -112,7 +117,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       throw new Error('Użytkownik nie jest zalogowany');
     }
 
-    setLoading(true);
     setError(null);
 
     try {
@@ -122,8 +126,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const authError = err as AuthError;
       setError(authError.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -1,25 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  FormControlLabel,
-  Checkbox,
-  Box,
-  Typography,
-  Alert,
-} from '@mui/material';
+import { CalendarPlus, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { EventService } from '../../../../services/firebase/eventService';
 import { EventGuestService } from '../../../../services/firebase/eventGuestService';
 import { Contact, Event } from '../../../../types';
+import Modal from '../../../common/Modal/Modal';
 import './AddContactToEvent.scss';
 
 interface AddContactToEventProps {
@@ -28,6 +13,28 @@ interface AddContactToEventProps {
   contact: Contact;
   onSuccess: () => void;
 }
+
+const INVITATION_OPTIONS: {
+  value: 'individual' | 'couple' | 'individual_with_companion';
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: 'individual',
+    label: 'Osoba pojedyncza',
+    hint: 'Jedno zaproszenie, jedna osoba',
+  },
+  {
+    value: 'couple',
+    label: 'Para (2 osoby)',
+    hint: 'Jedno zaproszenie dla małżeństwa lub pary',
+  },
+  {
+    value: 'individual_with_companion',
+    label: 'Z osobą towarzyszącą',
+    hint: 'Jedno zaproszenie, 2 miejsca — singiel z towarzyszem',
+  },
+];
 
 const AddContactToEvent: React.FC<AddContactToEventProps> = ({
   open,
@@ -42,10 +49,9 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form data
   const [formData, setFormData] = useState({
     eventSpecificNotes: '',
-    plusOneType: 'none' as 'none' | 'withoutDetails' | 'withDetails',
+    invitationKind: 'individual' as 'individual' | 'couple' | 'individual_with_companion',
     plusOneDetails: {
       firstName: '',
       lastName: '',
@@ -53,7 +59,6 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
     },
   });
 
-  // Load user events
   useEffect(() => {
     const loadEvents = async () => {
       if (!user?.id || !open) return;
@@ -63,7 +68,7 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
         const result = await EventService.getUserEvents(user.id);
         setEvents(
           result.events.filter(
-            event => event.status === 'draft' || event.status === 'active'
+            event => event.status === 'active'
           )
         );
         setError(null);
@@ -90,24 +95,30 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
     setError(null);
 
     try {
-      await EventGuestService.addContactToEvent(selectedEventId, contact.id, {
-        contactId: contact.id,
-        eventSpecificNotes: formData.eventSpecificNotes,
-        plusOneType: formData.plusOneType,
-        plusOneDetails:
-          formData.plusOneType === 'withDetails'
-            ? formData.plusOneDetails
-            : undefined,
-      }, user?.id);
+      await EventGuestService.addContactToEvent(
+        selectedEventId,
+        contact.id,
+        {
+          contactId: contact.id,
+          eventSpecificNotes: formData.eventSpecificNotes,
+          invitationKind: formData.invitationKind,
+          plusOneType:
+            formData.invitationKind === 'individual' ? 'none' : 'withDetails',
+          plusOneDetails:
+            formData.invitationKind !== 'individual'
+              ? formData.plusOneDetails
+              : undefined,
+        },
+        user?.id
+      );
 
       onSuccess();
       onClose();
 
-      // Reset form
       setSelectedEventId('');
       setFormData({
         eventSpecificNotes: '',
-        plusOneType: 'none',
+        invitationKind: 'individual',
         plusOneDetails: {
           firstName: '',
           lastName: '',
@@ -128,154 +139,182 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
     }
   };
 
+  if (!open) return null;
+
+  const initials = `${contact.firstName?.[0] ?? ''}${contact.lastName?.[0] ?? ''}`
+    .trim()
+    .toUpperCase();
+
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Dodaj kontakt do wydarzenia</DialogTitle>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title="Dodaj kontakt do wydarzenia"
+      icon={<CalendarPlus size={24} />}
+      size="md"
+      closeDisabled={loading}
+      footer={
+        <>
+          <button
+            type="button"
+            className="pp-btn pp-btn--outline"
+            onClick={handleClose}
+            disabled={loading}
+          >
+            Anuluj
+          </button>
+          <button
+            type="submit"
+            form="add-contact-to-event-form"
+            className="pp-btn pp-btn--primary"
+            disabled={loading || !selectedEventId}
+          >
+            {loading ? 'Dodawanie...' : 'Dodaj do wydarzenia'}
+          </button>
+        </>
+      }
+    >
+      <p className="add-contact-event__subtitle">
+        {contact.firstName} {contact.lastName}
+      </p>
 
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Contact info */}
-            <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Kontakt do dodania:
-              </Typography>
-              <Typography variant="body1" fontWeight={600}>
-                {contact.firstName} {contact.lastName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {contact.email}
-              </Typography>
-            </Box>
+      <form id="add-contact-to-event-form" onSubmit={handleSubmit}>
+        <div className="add-contact-event__content">
+          {error && (
+            <div className="pp-form-alert pp-form-alert--error add-contact-event__error">
+              <AlertCircle size={18} />
+              <span>{error}</span>
+              <button
+                type="button"
+                className="add-contact-event__error-close"
+                onClick={() => setError(null)}
+                aria-label="Zamknij błąd"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
 
-            {/* Error alert */}
-            {error && (
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            )}
+            <div className="add-contact-event__contact-card">
+              <div className="add-contact-event__contact-avatar">
+                {initials || '?'}
+              </div>
+              <div className="add-contact-event__contact-info">
+                <span className="add-contact-event__contact-label">
+                  Kontakt do dodania
+                </span>
+                <span className="add-contact-event__contact-name">
+                  {contact.firstName} {contact.lastName}
+                </span>
+                {contact.email && (
+                  <span className="add-contact-event__contact-email">
+                    {contact.email}
+                  </span>
+                )}
+              </div>
+            </div>
 
-            {/* Event selection */}
-            <FormControl fullWidth required>
-              <InputLabel>Wydarzenie</InputLabel>
-              <Select
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="event-select">
+                Wydarzenie *
+              </label>
+              <select
+                id="event-select"
+                className="pp-select"
                 value={selectedEventId}
                 onChange={e => setSelectedEventId(e.target.value)}
                 disabled={loading || loadingEvents}
-                label="Wydarzenie"
+                required
               >
-                {loadingEvents ? (
-                  <MenuItem disabled>Ładowanie wydarzeń...</MenuItem>
-                ) : events.length === 0 ? (
-                  <MenuItem disabled>Brak dostępnych wydarzeń</MenuItem>
-                ) : (
-                  events.map(event => (
-                    <MenuItem key={event.id} value={event.id}>
-                      <Box>
-                        <Typography variant="body1">{event.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {event.date.toLocaleDateString('pl-PL')} -{' '}
-                          {event.location}
-                        </Typography>
-                      </Box>
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-            </FormControl>
+                <option value="" disabled>
+                  {loadingEvents
+                    ? 'Ładowanie wydarzeń...'
+                    : events.length === 0
+                      ? 'Brak dostępnych wydarzeń'
+                      : 'Wybierz wydarzenie'}
+                </option>
+                {events.map(event => (
+                  <option key={event.id} value={event.id}>
+                    {event.title} — {event.date.toLocaleDateString('pl-PL')}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {/* Event specific notes */}
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Notatki dotyczące wydarzenia"
-              value={formData.eventSpecificNotes}
-              onChange={e =>
-                setFormData(prev => ({
-                  ...prev,
-                  eventSpecificNotes: e.target.value,
-                }))
-              }
-              disabled={loading}
-              placeholder="Dodatkowe informacje dla tego gościa w kontekście wydarzenia..."
-            />
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="event-notes">
+                Notatki dotyczące wydarzenia
+              </label>
+              <textarea
+                id="event-notes"
+                className="pp-textarea"
+                rows={3}
+                value={formData.eventSpecificNotes}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    eventSpecificNotes: e.target.value,
+                  }))
+                }
+                disabled={loading}
+                placeholder="Dodatkowe informacje dla tego gościa w kontekście wydarzenia..."
+              />
+            </div>
 
-            {/* Plus one options */}
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Opcje plus one
-              </Typography>
-
-              <FormControl component="fieldset">
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={formData.plusOneType === 'none'}
-                        onChange={() =>
-                          setFormData(prev => ({
-                            ...prev,
-                            plusOneType: 'none',
-                          }))
-                        }
-                        disabled={loading}
-                      />
-                    }
-                    label="Bez plus one"
-                  />
-
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={formData.plusOneType === 'withoutDetails'}
-                        onChange={() =>
-                          setFormData(prev => ({
-                            ...prev,
-                            plusOneType: 'withoutDetails',
-                          }))
-                        }
-                        disabled={loading}
-                      />
-                    }
-                    label="Plus one bez szczegółów"
-                  />
-
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={formData.plusOneType === 'withDetails'}
-                        onChange={() =>
-                          setFormData(prev => ({
-                            ...prev,
-                            plusOneType: 'withDetails',
-                          }))
-                        }
-                        disabled={loading}
-                      />
-                    }
-                    label="Plus one ze szczegółami"
-                  />
-                </Box>
-              </FormControl>
-
-              {/* Plus one details */}
-              {formData.plusOneType === 'withDetails' && (
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Szczegóły plus one
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: 2,
-                      mb: 2,
-                    }}
+            <div className="pp-field">
+              <span className="pp-label">Typ zaproszenia</span>
+              <div className="add-contact-event__options">
+                {INVITATION_OPTIONS.map(option => (
+                  <label
+                    key={option.value}
+                    className={`add-contact-event__option ${
+                      formData.invitationKind === option.value
+                        ? 'add-contact-event__option--selected'
+                        : ''
+                    }`}
                   >
-                    <TextField
-                      label="Imię"
+                    <input
+                      type="radio"
+                      name="invitationKind"
+                      value={option.value}
+                      checked={formData.invitationKind === option.value}
+                      onChange={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          invitationKind: option.value,
+                        }))
+                      }
+                      disabled={loading}
+                    />
+                    <span className="add-contact-event__option-text">
+                      <span className="add-contact-event__option-label">
+                        {option.label}
+                      </span>
+                      <span className="add-contact-event__option-hint">
+                        {option.hint}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {formData.invitationKind !== 'individual' && (
+              <div className="add-contact-event__plus-one">
+                <span className="add-contact-event__field-label">
+                  {formData.invitationKind === 'couple'
+                    ? 'Dane partnera / partnerki'
+                    : 'Dane osoby towarzyszącej'}
+                </span>
+                <div className="add-contact-event__plus-one-grid">
+                  <div className="pp-field">
+                    <label className="pp-label" htmlFor="plus-one-first">
+                      Imię
+                    </label>
+                    <input
+                      id="plus-one-first"
+                      type="text"
+                      className="pp-input"
                       value={formData.plusOneDetails.firstName}
                       onChange={e =>
                         setFormData(prev => ({
@@ -288,9 +327,15 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
                       }
                       disabled={loading}
                     />
-
-                    <TextField
-                      label="Nazwisko"
+                  </div>
+                  <div className="pp-field">
+                    <label className="pp-label" htmlFor="plus-one-last">
+                      Nazwisko
+                    </label>
+                    <input
+                      id="plus-one-last"
+                      type="text"
+                      className="pp-input"
                       value={formData.plusOneDetails.lastName}
                       onChange={e =>
                         setFormData(prev => ({
@@ -303,11 +348,16 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
                       }
                       disabled={loading}
                     />
-                  </Box>
-
-                  <TextField
-                    fullWidth
-                    label="Ograniczenia dietetyczne"
+                  </div>
+                </div>
+                <div className="pp-field">
+                  <label className="pp-label" htmlFor="plus-one-diet">
+                    Ograniczenia dietetyczne
+                  </label>
+                  <input
+                    id="plus-one-diet"
+                    type="text"
+                    className="pp-input"
                     value={formData.plusOneDetails.dietaryRestrictions}
                     onChange={e =>
                       setFormData(prev => ({
@@ -320,26 +370,12 @@ const AddContactToEvent: React.FC<AddContactToEventProps> = ({
                     }
                     disabled={loading}
                   />
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleClose} disabled={loading}>
-            Anuluj
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading || !selectedEventId}
-          >
-            {loading ? 'Dodawanie...' : 'Dodaj do wydarzenia'}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+                </div>
+              </div>
+            )}
+          </div>
+        </form>
+    </Modal>
   );
 };
 

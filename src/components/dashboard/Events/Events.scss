@@ -1,4 +1,5 @@
 @use '../../../styles/globals/mixins' as *;
+@use '../../../styles/globals/buttons' as *;
 
 .events {
   min-height: 100vh;
@@ -21,72 +22,16 @@
   }
 }
 
+// Odstępy między sekcjami w treści (summary, toolbar, siatka)
+.events .dashboard-view__content {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+  width: 100%;
+}
+
 .events__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-xl);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-xl);
-}
-
-.events__title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-  flex-wrap: wrap;
-
-  > div {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  h1 {
-    font-size: clamp(1.9rem, 3vw, 2.5rem);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.5px;
-    line-height: 1.2;
-
-    @media (max-width: 768px) {
-      font-size: 2rem;
-    }
-
-    @media (max-width: 480px) {
-      font-size: 1.75rem;
-    }
-  }
-
-  p {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    margin: 0;
-    font-weight: 400;
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-xs);
-  }
-}
-
-.events__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-xl);
-  background: var(--color-primary-soft, rgba(99, 102, 241, 0.12));
-  color: var(--color-primary);
-  flex-shrink: 0;
-
-  svg {
-    width: 24px;
-    height: 24px;
-    stroke-width: 2.5;
-  }
+  margin-bottom: 0;
 }
 
 .events__count {
@@ -99,6 +44,12 @@
   align-items: center;
   gap: var(--space-md);
   flex-wrap: wrap;
+  flex-shrink: 0;
+
+  .plan-limit-popover__wrapper {
+    display: flex;
+    align-items: stretch;
+  }
 
   @media (max-width: 768px) {
     width: 100%;
@@ -164,32 +115,14 @@
 }
 
 .events__action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: none;
-  transition:
-    background-color 0.2s ease,
-    opacity 0.2s ease;
-
-  svg {
-    flex-shrink: 0;
-  }
+  @include pp-btn-base;
 
   &--primary {
-    background: var(--color-primary);
-    color: #fff;
-    font-weight: 600;
+    @include pp-btn-primary;
+  }
 
-    &:hover {
-      opacity: 0.92;
-    }
+  &--secondary {
+    @include pp-btn-outline;
   }
 
   &--upgrade {
@@ -197,7 +130,11 @@
     color: #fff;
     font-weight: 600;
     gap: 6px;
-    position: relative;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    max-width: 100%;
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
     animation: upgrade-pulse 2.5s ease-in-out infinite;
 
@@ -215,13 +152,16 @@
   &-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 7px;
+    justify-content: center;
+    flex: 0 0 100%;
+    padding: 3px 8px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.25);
-    font-size: 0.7rem;
+    background: rgba(0, 0, 0, 0.18);
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.3px;
     white-space: nowrap;
+    line-height: 1.2;
   }
 
   &--secondary {
@@ -278,7 +218,7 @@
 
   &--draft {
     background: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
   }
 
   &--completed {
@@ -298,7 +238,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-md);
+  gap: var(--space-lg);
   flex-wrap: wrap;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-lg);
@@ -306,87 +246,25 @@
 
   @media (max-width: 768px) {
     align-items: stretch;
+    gap: var(--space-md);
   }
 }
 
 .events__search {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex: 1;
-  min-width: 0;
-  height: 40px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-  padding: 0 0.75rem;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-
-  &:focus-within {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
-  }
-}
-
-.events__search-icon {
-  color: var(--text-tertiary);
-}
-
-.events__search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-
-  &::placeholder {
-    color: var(--text-secondary);
-  }
-}
-
-.events__search-clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    opacity 0.2s ease;
-
-  &:hover {
-    background: var(--color-primary);
-    color: #fff;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  &--visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  flex: 1 1 240px;
+  min-width: min(100%, 200px);
 }
 
 .events__toolbar-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   flex-wrap: wrap;
-  min-width: 0;
+  flex-shrink: 0;
+
+  @media (min-width: 769px) {
+    margin-left: auto;
+  }
 }
 
 .events__filter-toggle {
@@ -720,10 +598,10 @@
   }
 }
 
-// Fade-in transition dla załadowanej treści
+// Lista wydarzeń — treść widoczna od razu po zniknięciu loadera (bez podwójnego fade)
 .events {
-  opacity: 0;
-  transition: opacity 0.6s ease-out;
+  opacity: 1;
+  transform: translateZ(0);
 }
 
 .events--loading {
@@ -731,10 +609,6 @@
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  opacity: 1 !important;
-}
-
-.events--fade-in {
   opacity: 1 !important;
 }
 
@@ -972,7 +846,7 @@
     }
 
     &--draft {
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
     }
 
     &--completed {

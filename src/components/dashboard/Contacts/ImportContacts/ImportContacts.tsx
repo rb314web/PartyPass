@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../../../hooks/useAuth';
 import { ContactService } from '../../../../services/firebase/contactService';
 import { Contact } from '../../../../types';
+import PageHeader from '../../../common/PageHeader/PageHeader';
 import './ImportContacts.scss';
 
 interface ImportError {
@@ -272,19 +273,22 @@ const ImportContacts: React.FC = () => {
 
   return (
     <div className="import-contacts">
-      <div className="import-contacts__header">
-        <button
-          className="import-contacts__back"
-          onClick={() => navigate('/dashboard/contacts')}
-        >
-          <ArrowLeft size={20} />
-          Powrót
-        </button>
-        <div className="import-contacts__title">
-          <h1>Import i eksport kontaktów</h1>
-          <p>Zarządzaj bazą kontaktów za pomocą plików CSV</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Import i eksport kontaktów"
+        subtitle="Zarządzaj bazą kontaktów za pomocą plików CSV"
+        icon={Upload}
+        className="import-contacts__page-header"
+        actions={
+          <button
+            type="button"
+            className="pp-btn pp-btn--outline"
+            onClick={() => navigate('/dashboard/contacts')}
+          >
+            <ArrowLeft size={18} />
+            Powrót
+          </button>
+        }
+      />
 
       {!importResults ? (
         <div className="import-contacts__content">

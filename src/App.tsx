@@ -6,18 +6,19 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './config/queryClient';
 import { AuthProvider } from './hooks/useAuth';
+import { LanguageProvider } from './hooks/useLanguage';
 import { useAccentColor } from './hooks/useAccentColor';
 import { ThemeProvider } from './components/common/ThemeProvider/ThemeProvider';
-import { MaterialUIProvider } from './components/common/MaterialUIProvider/MaterialUIProvider';
-import { SnackbarProvider } from 'notistack';
 import AuthGuard from './components/auth/AuthGuard/AuthGuard';
-import FloatingActionButton from './components/common/FloatingActionButton/FloatingActionButton';
 import BottomNavigation from './components/common/BottomNavigation/BottomNavigation';
-import EmailService from './services/emailService';
 import { setupGlobalErrorHandlers } from './utils/errorUtils';
 import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner/LoadingSpinner';
+import ScrollToTop from './components/common/ScrollToTop/ScrollToTop';
+import LanguageContentTransition from './components/common/LanguageContentTransition/LanguageContentTransition';
 
 // Import accessibility styles
 import './styles/accessibility.scss';
@@ -26,6 +27,10 @@ import './styles/accessibility.scss';
 const Landing = lazy(() => import('./pages/Landing/Landing'));
 const Login = lazy(() => import('./components/auth/Login/Login'));
 const Register = lazy(() => import('./components/auth/Register/Register'));
+const ForgotPassword = lazy(() => import('./components/auth/ForgotPassword/ForgotPassword'));
+const Terms = lazy(() => import('./pages/Legal/Terms'));
+const Privacy = lazy(() => import('./pages/Legal/Privacy'));
+const Rodo = lazy(() => import('./pages/Legal/Rodo'));
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const DemoPage = lazy(() => import('./pages/Demo/Demo'));
 const PaymentReturn = lazy(() => import('./pages/PaymentReturn/PaymentReturn'));
@@ -37,19 +42,17 @@ function AppContent() {
   useAccentColor();
 
   useEffect(() => {
-    // Initialize global error handlers
     setupGlobalErrorHandlers();
-    
-    // Initialize EmailJS
-    EmailService.init();
   }, []);
 
   return (
+    <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-    <MaterialUIProvider>
-        <SnackbarProvider maxSnack={3}>
           <AuthProvider>
+            <LanguageProvider>
             <Router>
+              <ScrollToTop />
+              <LanguageContentTransition>
               <div className="App">
                 <Suspense
                   fallback={
@@ -73,7 +76,7 @@ function AppContent() {
                     {' '}
                     {/* Publiczne strony */}
                     <Route path="/" element={<Landing />} />
-                    <Route path="/demo" element={<DemoPage />} />
+                    <Route path="/demo/*" element={<DemoPage />} />
                     <Route path="/rsvp/:token" element={<RSVP />} />
                     {/* Strony autoryzacji - tylko dla niezalogowanych */}
                     <Route
@@ -92,6 +95,17 @@ function AppContent() {
                         </AuthGuard>
                       }
                     />
+                    <Route
+                      path="/forgot-password"
+                      element={
+                        <AuthGuard requireAuth={false}>
+                          <ForgotPassword />
+                        </AuthGuard>
+                      }
+                    />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/rodo" element={<Rodo />} />
                     {/* Chronione strony - tylko dla zalogowanych */}
                     <Route
                       path="/payment/return"
@@ -109,29 +123,30 @@ function AppContent() {
                         </AuthGuard>
                       }
                     />
-                    {/* Debug Tools */}
-                    <Route
-                      path="/debug"
-                      element={
-                        <AuthGuard requireAuth={true}>
-                          <Debug />
-                        </AuthGuard>
-                      }
-                    />
+                    {/* Debug Tools — tylko w trybie deweloperskim */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <Route
+                        path="/debug"
+                        element={
+                          <AuthGuard requireAuth={true}>
+                            <Debug />
+                          </AuthGuard>
+                        }
+                      />
+                    )}
                     {/* Przekierowania */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Suspense>
 
-                {/* Globalne komponenty nawigacji */}
-                <FloatingActionButton />
                 <BottomNavigation />
               </div>
+              </LanguageContentTransition>
             </Router>
+            </LanguageProvider>
           </AuthProvider>
-        </SnackbarProvider>
-      </MaterialUIProvider>
       </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -1,5 +1,5 @@
 // components/dashboard/Events/Events.tsx
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -7,10 +7,6 @@ import {
   Search,
   Grid3X3,
   List,
-  Edit,
-  CheckCircle,
-  AlertCircle,
-  Pause,
   Bell,
   Calendar,
   Crown,
@@ -23,24 +19,63 @@ import { Event } from '../../../types';
 import EventCard from './EventCard/EventCard';
 import EventsList from './EventsList/EventsList';
 import AddEvent from './AddEvent/AddEvent';
-import CreateEvent from './CreateEvent/CreateEvent';
-import EventDetails from './EventDetails/EventDetails';
-import EditEvent from './EditEvent/EditEvent';
-import DuplicateEventModal, {
-  DuplicateEventData,
-} from './DuplicateEventModal/DuplicateEventModal';
+import type { DuplicateEventData } from './DuplicateEventModal/DuplicateEventModal';
+import DeleteEventModal from './DeleteEventModal/DeleteEventModal';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
-import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import Toast, { ToastType } from '../../common/Toast/Toast';
+import { useDashboardViewMotion } from '../../../hooks/useDashboardViewMotion';
+import DashboardViewSkeleton from '../DashboardViewSkeleton/DashboardViewSkeleton';
+import DashboardViewBody from '../DashboardViewBody/DashboardViewBody';
 import PlanLimitPopover from '../../common/PlanLimitPopover/PlanLimitPopover';
+import PageHeader from '../../common/PageHeader/PageHeader';
+import EmptyState from '../../common/EmptyState/EmptyState';
 import './Events.scss';
 
+const CreateEvent = lazy(() => import('./CreateEvent/CreateEvent'));
+const EventDetails = lazy(() => import('./EventDetails/EventDetails'));
+const EditEvent = lazy(() => import('./EditEvent/EditEvent'));
+const DuplicateEventModal = lazy(
+  () => import('./DuplicateEventModal/DuplicateEventModal')
+);
+
+const EventsRouteFallback = () => (
+  <DashboardViewSkeleton variant="grid" />
+);
+
 type ViewMode = 'grid' | 'list';
-type FilterStatus = 'all' | 'active' | 'draft' | 'completed' | 'cancelled';
+type FilterStatus = 'all' | 'active' | 'completed' | 'cancelled';
 type SortBy = 'date' | 'name' | 'guests' | 'created';
 type RecentChange = {
   id: string;
   type: 'added' | 'modified' | 'removed';
   timestamp: Date;
+};
+
+// Czyste helpery statusu — niezależne od stanu komponentu.
+const getStatusColor = (status: Event['status']): string => {
+  switch (status) {
+    case 'active':
+      return 'var(--color-success)';
+    case 'completed':
+      return 'var(--color-primary)';
+    case 'cancelled':
+      return 'var(--color-error)';
+    default:
+      return 'var(--text-tertiary)';
+  }
+};
+
+const getStatusLabel = (status: Event['status']): string => {
+  switch (status) {
+    case 'active':
+      return 'Aktywne';
+    case 'completed':
+      return 'Zakończone';
+    case 'cancelled':
+      return 'Anulowane';
+    default:
+      return status;
+  }
 };
 
 interface EventsListPageProps {
@@ -62,14 +97,16 @@ interface EventsListPageProps {
   filterStatus: FilterStatus;
   onFilterStatusChange: (status: FilterStatus) => void;
   isLoading: boolean;
-  fadeIn: boolean;
+  showLoader: boolean;
+  showContent: boolean;
+  listClassName: string;
   onEventAction: (
     eventId: string,
     action: 'edit' | 'duplicate' | 'delete' | 'view'
   ) => void;
   getStatusColor: (status: Event['status']) => string;
   getStatusLabel: (status: Event['status']) => string;
-  getStatusIcon: (status: Event['status']) => React.ReactNode;
+  onShowToast: (message: string, type?: ToastType) => void;
 }
 
 const EventsListPage: React.FC<EventsListPageProps> = ({
@@ -91,22 +128,22 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
   filterStatus,
   onFilterStatusChange,
   isLoading,
-  fadeIn,
+  showLoader,
+  showContent,
+  listClassName,
   onEventAction,
   getStatusColor,
   getStatusLabel,
-  getStatusIcon,
+  onShowToast,
 }) => {
-  const { activeCount, plannedCount, completedCount } = useMemo(() => {
+  const { activeCount, completedCount } = useMemo(() => {
     const active = events.filter(event => event.status === 'active').length;
-    const planned = events.filter(event => event.status === 'draft').length;
     const completed = events.filter(
       event => event.status === 'completed'
     ).length;
 
     return {
       activeCount: active,
-      plannedCount: planned,
       completedCount: completed,
     };
   }, [events]);
@@ -121,100 +158,92 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
           ? 'wydarzenia'
           : 'wydarzeń';
 
-  if (isLoading) {
-    return (
-      <div className="events events--loading">
-        <LoadingSpinner
-          variant="full"
-          icon={<Calendar size={32} />}
-          title="Ładowanie wydarzeń..."
-          subtitle="Przygotowujemy Twoje wydarzenia"
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={`events ${fadeIn ? 'events--fade-in' : ''}`}>
-      <header className="events__header">
-        <div className="events__title-wrapper">
-          <div className="events__icon" aria-hidden="true">
-            <Calendar size={24} />
-          </div>
-          <div>
-            <h1>Wydarzenia</h1>
-            <p>
-              Zarządzaj swoimi wydarzeniami i śledź postępy
-              {totalEvents > 0 && (
-                <span className="events__count">
-                  {' '}
-                  • {totalEvents} {totalEventsLabel}
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="events__header-actions">
-          {recentChanges.length > 0 && (
-            <button
-              type="button"
-              className="events__action-btn events__action-btn--secondary"
-              onClick={() => {
-                const changesList = recentChanges
-                  .map(change => {
-                    const event = events.find(e => e.id === change.id);
-                    const eventTitle = event?.title || 'Nieznane wydarzenie';
-                    const typeLabel =
-                      change.type === 'added'
-                        ? 'Dodano'
-                        : change.type === 'modified'
-                          ? 'Zmieniono'
-                          : 'Usunięto';
-                    const timeAgo = Math.round(
-                      (Date.now() - change.timestamp.getTime()) / 1000
-                    );
-                    const timeLabel =
-                      timeAgo < 60
-                        ? 'przed chwilą'
-                        : timeAgo < 3600
-                          ? `${Math.round(timeAgo / 60)} min temu`
-                          : `${Math.round(timeAgo / 3600)} godz. temu`;
-                    return `${typeLabel}: ${eventTitle} (${timeLabel})`;
-                  })
-                  .join('\n');
+    <div className={listClassName}>
+      <PageHeader
+        title="Wydarzenia"
+        subtitle={
+          <>
+            Zarządzaj swoimi wydarzeniami i śledź postępy
+            {totalEvents > 0 && (
+              <span className="events__count">
+                {' '}
+                • {totalEvents} {totalEventsLabel}
+              </span>
+            )}
+          </>
+        }
+        icon={Calendar}
+        actions={
+          <>
+            {recentChanges.length > 0 && (
+              <button
+                type="button"
+                className="events__action-btn events__action-btn--secondary"
+                onClick={() => {
+                  const changesList = recentChanges
+                    .map(change => {
+                      const event = events.find(e => e.id === change.id);
+                      const eventTitle = event?.title || 'Nieznane wydarzenie';
+                      const typeLabel =
+                        change.type === 'added'
+                          ? 'Dodano'
+                          : change.type === 'modified'
+                            ? 'Zmieniono'
+                            : 'Usunięto';
+                      const timeAgo = Math.round(
+                        (Date.now() - change.timestamp.getTime()) / 1000
+                      );
+                      const timeLabel =
+                        timeAgo < 60
+                          ? 'przed chwilą'
+                          : timeAgo < 3600
+                            ? `${Math.round(timeAgo / 60)} min temu`
+                            : `${Math.round(timeAgo / 3600)} godz. temu`;
+                      return `${typeLabel}: ${eventTitle} (${timeLabel})`;
+                    })
+                    .join(' • ');
 
-                alert(`Ostatnie zmiany:\n\n${changesList}`);
-              }}
-            >
-              <Bell size={16} aria-hidden="true" />
-              <span>Ostatnie zmiany ({recentChanges.length})</span>
-            </button>
-          )}
-          <PlanLimitPopover isLimitReached={!canAddEvent} limitMessage={limitMessage}>
-            {canAddEvent ? (
-              <button
-                type="button"
-                className="events__action-btn events__action-btn--primary"
-                onClick={onCreateEvent}
+                  onShowToast(`Ostatnie zmiany — ${changesList}`, 'success');
+                }}
               >
-                <Plus size={18} aria-hidden="true" />
-                <span>Nowe wydarzenie</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="events__action-btn events__action-btn--upgrade"
-                onClick={onUpgrade}
-              >
-                <Crown size={16} aria-hidden="true" />
-                <span>Ulepsz plan</span>
-                <span className="events__action-btn-badge">Limit osiągnięty</span>
+                <Bell size={16} aria-hidden="true" />
+                <span>Ostatnie zmiany ({recentChanges.length})</span>
               </button>
             )}
-          </PlanLimitPopover>
-        </div>
-      </header>
+            <PlanLimitPopover isLimitReached={!canAddEvent} limitMessage={limitMessage}>
+              {canAddEvent ? (
+                <button
+                  type="button"
+                  className="events__action-btn events__action-btn--primary"
+                  onClick={onCreateEvent}
+                >
+                  <Plus size={18} aria-hidden="true" />
+                  <span>Nowe wydarzenie</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="events__action-btn events__action-btn--upgrade"
+                  onClick={onUpgrade}
+                >
+                  <Crown size={16} aria-hidden="true" />
+                  <span>Ulepsz plan</span>
+                  <span className="pp-badge pp-badge--warning pp-badge--sm events__action-btn-badge">
+                    Limit osiągnięty
+                  </span>
+                </button>
+              )}
+            </PlanLimitPopover>
+          </>
+        }
+      />
 
+      <DashboardViewBody
+        showLoader={showLoader}
+        showContent={showContent}
+        loader={<DashboardViewSkeleton variant="grid" />}
+      >
       <section className="events__summary" aria-label="Podsumowanie wydarzeń">
         <div className="events__summary-item">
           <div className="events__summary-label">
@@ -230,17 +259,6 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
         <div className="events__summary-item">
           <div className="events__summary-label">
             <span
-              className="events__summary-dot events__summary-dot--draft"
-              aria-hidden="true"
-            />
-            <span>Planowane</span>
-          </div>
-          <span className="events__summary-value">{plannedCount}</span>
-        </div>
-
-        <div className="events__summary-item">
-          <div className="events__summary-label">
-            <span
               className="events__summary-dot events__summary-dot--completed"
               aria-hidden="true"
             />
@@ -251,10 +269,10 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
       </section>
 
       <div className="events__toolbar">
-        <div className="events__search">
+        <div className="pp-search events__search">
           <Search
             size={18}
-            className="events__search-icon"
+            className="pp-search__icon"
             aria-hidden="true"
           />
           <input
@@ -262,12 +280,12 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
             placeholder="Szukaj wydarzeń..."
             value={searchQuery}
             onChange={e => onSearchChange(e.target.value)}
-            className="events__search-input"
+            className="pp-input"
             aria-label="Szukaj wydarzeń"
           />
           <button
             type="button"
-            className={`events__search-clear ${searchQuery ? 'events__search-clear--visible' : ''}`}
+            className={`pp-search__clear ${searchQuery ? 'pp-search__clear--visible' : ''}`}
             onClick={() => onSearchChange('')}
             title="Wyczyść wyszukiwanie"
             aria-label="Wyczyść wyszukiwanie"
@@ -338,7 +356,6 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
             [
               'all',
               'active',
-              'draft',
               'completed',
               'cancelled',
             ] as FilterStatus[]
@@ -362,7 +379,9 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
                     ? 'Wszystkie'
                     : getStatusLabel(status as Event['status'])}
                 </span>
-                <span className="events__status-count">{statusCount}</span>
+                <span className="pp-badge pp-badge--neutral pp-badge--sm events__status-count">
+                  {statusCount}
+                </span>
               </button>
             );
           })}
@@ -371,21 +390,27 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
 
       <div className="events__content">
         {filteredEvents.length === 0 ? (
-          <div className="events__empty">
-            <div className="events__empty-icon" aria-hidden="true">
-              <Calendar size={36} />
-            </div>
-            <h3>
-              {searchQuery || filterStatus !== 'all'
+          <EmptyState
+            icon={Calendar}
+            title={
+              searchQuery || filterStatus !== 'all'
                 ? 'Brak wyników'
-                : 'Nie masz jeszcze żadnych wydarzeń'}
-            </h3>
-            <p>
-              {searchQuery || filterStatus !== 'all'
+                : 'Nie masz jeszcze żadnych wydarzeń'
+            }
+            description={
+              searchQuery || filterStatus !== 'all'
                 ? 'Dostosuj wyszukiwanie lub filtry, aby zobaczyć wydarzenia.'
-                : 'Dodaj swoje pierwsze wydarzenie i zacznij planowanie.'}
-            </p>
-          </div>
+                : 'Dodaj swoje pierwsze wydarzenie i zacznij planowanie.'
+            }
+            action={
+              !searchQuery && filterStatus === 'all' && canAddEvent
+                ? {
+                    label: 'Nowe wydarzenie',
+                    onClick: onCreateEvent,
+                  }
+                : undefined
+            }
+          />
         ) : (
           <>
             {viewMode === 'grid' ? (
@@ -422,6 +447,7 @@ const EventsListPage: React.FC<EventsListPageProps> = ({
           </>
         )}
       </div>
+      </DashboardViewBody>
     </div>
   );
 };
@@ -436,13 +462,34 @@ const Events: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [showFilters, setShowFilters] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fadeIn, setFadeIn] = useState(false);
-  const [mountTime] = useState(Date.now());
+  const {
+    isLoading,
+    showLoader,
+    showContent,
+    className: eventsListClassName,
+    finishLoading,
+  } = useDashboardViewMotion({
+    variant: 'async',
+    pageClass: 'events',
+    initialLoading: true,
+  });
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [eventToDuplicate, setEventToDuplicate] = useState<Event | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false);
   const [canAddEvent, setCanAddEvent] = useState(true);
   const [limitMessage, setLimitMessage] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(
+    null
+  );
+
+  const showToast = useCallback(
+    (message: string, type: ToastType = 'error') => {
+      setToast({ message, type });
+    },
+    []
+  );
 
   // Sprawdź limit wydarzeń przy załadowaniu i po każdej zmianie listy
   useEffect(() => {
@@ -495,23 +542,13 @@ const Events: React.FC = () => {
         if (!hasInitiallyLoaded) {
           setHasInitiallyLoaded(true);
           
-          // Wymuszenie minimalnego czasu wyświetlania loadera (500ms)
-          const elapsed = Date.now() - mountTime;
-          const minDisplayTime = 500;
-          const remainingTime = Math.max(0, minDisplayTime - elapsed);
-          
-          // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
-          setTimeout(() => {
-            setIsLoading(false);
-            // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
-            setTimeout(() => setFadeIn(true), 100);
-          }, remainingTime + 300);
+          finishLoading();
         }
 
         return updatedEvents;
       });
     },
-    [hasInitiallyLoaded, mountTime]
+    [hasInitiallyLoaded, finishLoading]
   );
 
   // Show change notifications
@@ -624,7 +661,13 @@ const Events: React.FC = () => {
         handleDuplicateEvent(eventId);
         break;
       case 'delete':
-        handleDeleteEvent(eventId);
+        {
+          const event = events.find(e => e.id === eventId);
+          if (event) {
+            setEventToDelete(event);
+            setShowDeleteModal(true);
+          }
+        }
         break;
       case 'view':
         navigate(`/dashboard/events/${eventId}`);
@@ -653,7 +696,7 @@ const Events: React.FC = () => {
         id: tempId,
         title: duplicateData.title,
         date: duplicateData.date,
-        status: 'draft',
+        status: 'active',
         createdAt: new Date(),
         guests: duplicateData.includeGuests ? eventToDuplicate.guests : [],
         guestCount: duplicateData.includeGuests
@@ -683,134 +726,92 @@ const Events: React.FC = () => {
       // Remove optimistic update on error
       setEvents(prev => prev.filter(e => e.id.startsWith('temp-')));
 
-      alert(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
+      showToast(`Błąd podczas duplikowania wydarzenia: ${error.message}`);
     }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      if (
-        window.confirm(
-          'Czy na pewno chcesz usunąć to wydarzenie? Ta operacja jest nieodwracalna.'
-        )
-      ) {
-        // Optimistic update - remove immediately from UI
-        const eventToDelete = events.find(e => e.id === eventId);
-        if (eventToDelete) {
-          setEvents(prev => prev.filter(e => e.id !== eventId));
-
-          // Add to recent changes for tracking
-          setRecentChanges(prev => [
-            { id: eventId, type: 'removed', timestamp: new Date() },
-            ...prev.slice(0, 4),
-          ]);
-        }
-
-        // Perform actual deletion
-        await EventService.deleteEvent(eventId);
-
-        // Success feedback
+      const eventToRemove = events.find(e => e.id === eventId);
+      if (eventToRemove) {
+        setEvents(prev => prev.filter(e => e.id !== eventId));
+        setRecentChanges(prev => [
+          { id: eventId, type: 'removed', timestamp: new Date() },
+          ...prev.slice(0, 4),
+        ]);
       }
+
+      await EventService.deleteEvent(eventId);
     } catch (error: any) {
-      // Revert optimistic update on error
       console.error('Error deleting event:', error);
 
-      // Refresh data to restore the event
       if (user?.id) {
         const unsubscribe = EventService.subscribeToUserEvents(
           user.id,
           updatedEvents => handleRealtimeUpdate(updatedEvents)
         );
-        setTimeout(() => unsubscribe(), 1000); // Quick refresh
+        setTimeout(() => unsubscribe(), 1000);
       }
 
-      alert(`Nie udało się usunąć wydarzenia: ${error.message}`);
+      showToast(`Błąd podczas usuwania wydarzenia: ${error.message}`);
     }
   };
 
-  const getStatusColor = (status: Event['status']) => {
-    switch (status) {
-      case 'active':
-        return 'var(--color-success)';
-      case 'draft':
-        return 'var(--color-warning)';
-      case 'completed':
-        return 'var(--color-primary)';
-      case 'cancelled':
-        return 'var(--color-error)';
-      default:
-        return 'var(--text-tertiary)';
-    }
-  };
+  const handleConfirmDeleteEvent = async () => {
+    if (!eventToDelete) return;
 
-  const getStatusLabel = (status: Event['status']) => {
-    switch (status) {
-      case 'active':
-        return 'Aktywne';
-      case 'draft':
-        return 'Planowane';
-      case 'completed':
-        return 'Zakończone';
-      case 'cancelled':
-        return 'Anulowane';
-      default:
-        return status;
-    }
-  };
-
-  const getStatusIcon = (status: Event['status']) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle size={16} />;
-      case 'draft':
-        return <Edit size={16} />;
-      case 'completed':
-        return <CheckCircle size={16} />;
-      case 'cancelled':
-        return <AlertCircle size={16} />;
-      default:
-        return <Pause size={16} />;
+    setIsDeletingEvent(true);
+    try {
+      await handleDeleteEvent(eventToDelete.id);
+      setShowDeleteModal(false);
+      setEventToDelete(null);
+    } finally {
+      setIsDeletingEvent(false);
     }
   };
 
   return (
     <>
       <ErrorBoundary>
-        <Routes>
-          <Route
-            index
-            element={
-              <EventsListPage
-                events={events}
-                recentChanges={recentChanges}
-                onCreateEvent={handleCreateEvent}
-                onUpgrade={handleUpgrade}
-                canAddEvent={canAddEvent}
-                limitMessage={limitMessage}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                showFilters={showFilters}
-                onToggleFilters={() => setShowFilters(prev => !prev)}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                filteredEvents={filteredAndSortedEvents}
-                filterStatus={filterStatus}
-                onFilterStatusChange={setFilterStatus}
-                isLoading={isLoading}
-                fadeIn={fadeIn}
-                onEventAction={handleEventAction}
-                getStatusColor={getStatusColor}
-                getStatusLabel={getStatusLabel}
-                getStatusIcon={getStatusIcon}
-              />
-            }
-          />
-          <Route path="create" element={<CreateEvent />} />
-          <Route path=":id" element={<EventDetails />} />
-          <Route path="edit/:id" element={<EditEvent />} />
-        </Routes>
+        <Suspense fallback={<EventsRouteFallback />}>
+          <Routes>
+            <Route
+              index
+              element={
+                <EventsListPage
+                  events={events}
+                  recentChanges={recentChanges}
+                  onCreateEvent={handleCreateEvent}
+                  onUpgrade={handleUpgrade}
+                  canAddEvent={canAddEvent}
+                  limitMessage={limitMessage}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  showFilters={showFilters}
+                  onToggleFilters={() => setShowFilters(prev => !prev)}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  filteredEvents={filteredAndSortedEvents}
+                  filterStatus={filterStatus}
+                  onFilterStatusChange={setFilterStatus}
+                  isLoading={isLoading}
+                  showLoader={showLoader}
+                  showContent={showContent}
+                  listClassName={eventsListClassName}
+                  onEventAction={handleEventAction}
+                  getStatusColor={getStatusColor}
+                  getStatusLabel={getStatusLabel}
+                  onShowToast={showToast}
+                />
+              }
+            />
+            <Route path="create" element={<CreateEvent />} />
+            <Route path="edit/:id" element={<EditEvent />} />
+            <Route path=":id" element={<EventDetails />} />
+          </Routes>
+        </Suspense>
       </ErrorBoundary>
 
       <AddEvent
@@ -821,14 +822,36 @@ const Events: React.FC = () => {
       />
 
       {eventToDuplicate && (
-        <DuplicateEventModal
-          isOpen={showDuplicateModal}
-          onClose={() => {
-            setShowDuplicateModal(false);
-            setEventToDuplicate(null);
-          }}
-          event={eventToDuplicate}
-          onDuplicate={handleDuplicateConfirm}
+        <Suspense fallback={null}>
+          <DuplicateEventModal
+            isOpen={showDuplicateModal}
+            onClose={() => {
+              setShowDuplicateModal(false);
+              setEventToDuplicate(null);
+            }}
+            event={eventToDuplicate}
+            onDuplicate={handleDuplicateConfirm}
+          />
+        </Suspense>
+      )}
+
+      <DeleteEventModal
+        open={showDeleteModal}
+        event={eventToDelete}
+        onClose={() => {
+          if (isDeletingEvent) return;
+          setShowDeleteModal(false);
+          setEventToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteEvent}
+        isDeleting={isDeletingEvent}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </>

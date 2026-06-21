@@ -1,5 +1,5 @@
 // components/dashboard/Sidebar/Sidebar.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -8,15 +8,15 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Menu,
-  X,
   Crown,
-  ChevronRight,
   Activity,
   Search,
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 import Logo from '../../common/Logo/Logo';
+import { useThemeContext } from '../../common/ThemeProvider/ThemeProvider';
+import { preloadDashboardRoute } from '../../../utils/preloadDashboardRoute';
 import './Sidebar.scss';
 
 interface SidebarProps {
@@ -32,9 +32,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onMobileToggle,
 }) => {
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [isCompactScreen, setIsCompactScreen] = useState(false);
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
+  const { isDark } = useThemeContext();
   const location = useLocation();
 
   // Check if screen is in compact range (500px-1200px)
@@ -52,19 +53,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Auto collapse based on screen width only
   const isCollapsed = isCompactScreen;
 
-  // Debug: sprawdź wartości
-  console.log('Sidebar - isCompactScreen:', isCompactScreen);
-  console.log('Sidebar - final isCollapsed:', isCollapsed);
-
   const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/dashboard', exact: true },
-    { icon: Search, label: 'Wyszukaj', path: '/dashboard/search' },
-    { icon: Calendar, label: 'Wydarzenia', path: '/dashboard/events' },
-    { icon: Users, label: 'Kontakty', path: '/dashboard/contacts' },
-    { icon: Activity, label: 'Aktywności', path: '/dashboard/activities' },
-    { icon: BarChart3, label: 'Analityka', path: '/dashboard/analytics' },
-    { icon: Crown, label: 'Plan', path: '/dashboard/plan' },
-    { icon: Settings, label: 'Ustawienia', path: '/dashboard/settings' },
+    { icon: Home, label: t('nav.dashboard'), path: '/dashboard', exact: true },
+    { icon: Search, label: t('nav.search'), path: '/dashboard/search' },
+    { icon: Calendar, label: t('nav.events'), path: '/dashboard/events' },
+    { icon: Users, label: t('nav.contacts'), path: '/dashboard/contacts' },
+    { icon: Activity, label: t('nav.activities'), path: '/dashboard/activities' },
+    { icon: BarChart3, label: t('nav.analytics'), path: '/dashboard/analytics' },
+    { icon: Crown, label: t('nav.plan'), path: '/dashboard/plan' },
+    { icon: Settings, label: t('nav.settings'), path: '/dashboard/settings' },
   ];
 
   const isActive = (path: string, exact = false) => {
@@ -95,6 +92,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             size="small"
             href="/dashboard"
             showIcon={false}
+            wordmark
+            tone={isDark ? 'on-dark' : 'default'}
             collapsed={isCollapsed}
             className="sidebar__logo"
           />
@@ -108,6 +107,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   to={item.path}
                   className={`sidebar__link ${isActive(item.path, item.exact) ? 'sidebar__link--active' : ''}`}
                   title={item.label}
+                  onMouseEnter={() => preloadDashboardRoute(item.path)}
+                  onFocus={() => preloadDashboardRoute(item.path)}
                 >
                   <item.icon size={20} />
                   {!isCollapsed && <span>{item.label}</span>}
@@ -150,10 +151,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <button
             className="sidebar__logout"
             onClick={logout}
-            title="Wyloguj się"
+            title={t('nav.logout')}
           >
             <LogOut size={20} />
-            {!isCollapsed && <span>Wyloguj</span>}
+            {!isCollapsed && <span>{t('nav.logout')}</span>}
           </button>
         </div>
       </aside>

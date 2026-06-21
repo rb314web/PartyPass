@@ -142,7 +142,6 @@ export class PlanLimitExceededError extends Error {
     public limit: number,
     public current: number
   ) {
-    const limitTypeLabel = limitType === 'events' ? 'zdarzeniach' : limitType === 'contacts' ? 'kontaktach' : 'gościach';
     super(
       limitType === 'events'
         ? getEventLimitErrorMessage(planType)

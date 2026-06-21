@@ -2,49 +2,70 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getFunctions } from 'firebase/functions';
-import { getAnalytics, isSupported } from 'firebase/analytics';
+import type { FirebaseStorage } from 'firebase/storage';
+import type { Functions } from 'firebase/functions';
 
-// Firebase configuration from environment variables
+const env = process.env;
+
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  apiKey: env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: env.REACT_APP_FIREBASE_MEASUREMENT_ID,
 };
 
-// Validate that required Firebase config is present
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.error(
-    'Firebase configuration is incomplete. Please ensure all required environment variables are set in .env file.',
-    'Required variables: REACT_APP_FIREBASE_API_KEY, REACT_APP_FIREBASE_PROJECT_ID'
+    'Konfiguracja Firebase jest niekompletna. Ustaw zmienne środowiskowe w pliku .env.local',
+    '(wzór: .env.example). Wymagane: REACT_APP_FIREBASE_API_KEY, REACT_APP_FIREBASE_PROJECT_ID.'
   );
 }
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase services
+/** Wymagane przy starcie — logowanie i dane aplikacji. */
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const functions = getFunctions(app);
 
-// Initialize Analytics conditionally
-export const analytics = isSupported().then((yes: boolean) =>
-  yes ? getAnalytics(app) : null
-);
+let storageInstance: FirebaseStorage | null = null;
+let storageLoad: Promise<FirebaseStorage> | null = null;
 
-// Connect to emulators in development
-if (process.env.NODE_ENV === 'development') {
-  // Uncomment these lines when you want to use Firebase emulators
-  // connectAuthEmulator(auth, 'http://localhost:9099');
-  // connectFirestoreEmulator(db, 'localhost', 8080);
-  // connectStorageEmulator(storage, 'localhost', 9199);
-  // connectFunctionsEmulator(functions, 'localhost', 5001);
+/** Storage ładowany on-demand (upload awatara, zdjęć wydarzeń). */
+export function getFirebaseStorage(): Promise<FirebaseStorage> {
+  if (storageInstance) {
+    return Promise.resolve(storageInstance);
+  }
+
+  if (!storageLoad) {
+    storageLoad = import('firebase/storage').then(({ getStorage }) => {
+      storageInstance = getStorage(app);
+      return storageInstance;
+    });
+  }
+
+  return storageLoad;
+}
+
+let functionsInstance: Functions | null = null;
+let functionsLoad: Promise<Functions> | null = null;
+
+/** Cloud Functions ładowane on-demand (RSVP, zaproszenia). */
+export function getFirebaseFunctions(): Promise<Functions> {
+  if (functionsInstance) {
+    return Promise.resolve(functionsInstance);
+  }
+
+  if (!functionsLoad) {
+    functionsLoad = import('firebase/functions').then(({ getFunctions }) => {
+      functionsInstance = getFunctions(app);
+      return functionsInstance;
+    });
+  }
+
+  return functionsLoad;
 }
 
 export default app;

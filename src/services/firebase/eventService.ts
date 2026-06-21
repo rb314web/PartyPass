@@ -18,13 +18,7 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
 } from 'firebase/firestore';
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
-import { db, storage, auth } from '../../config/firebase';
+import { db, auth, getFirebaseStorage } from '../../config/firebase';
 import {
   FirebaseEvent,
   COLLECTIONS,
@@ -34,7 +28,18 @@ import { Event, Activity, Guest } from '../../types';
 import { AnalyticsService } from './analyticsService';
 import { notificationService } from '../notificationService';
 import SearchService from '../searchService';
+import { EventGuestService } from './eventGuestService';
 import { PlanLimitExceededError, canCreateEvent, getPlanLimits, PlanType } from './planLimitsService';
+
+export type EventStatus = 'active' | 'completed' | 'cancelled';
+
+/** Stare dokumenty ze statusem draft traktujemy jak aktywne. */
+function normalizeEventStatus(status: string): EventStatus {
+  if (status === 'draft' || status === 'active') return 'active';
+  if (status === 'completed') return 'completed';
+  if (status === 'cancelled') return 'cancelled';
+  return 'active';
+}
 
 export interface CreateEventData extends BaseCreateEventData {
   category?: string;
@@ -50,13 +55,13 @@ export interface CreateEventData extends BaseCreateEventData {
 }
 
 export interface UpdateEventData extends Partial<CreateEventData> {
-  status?: 'draft' | 'active' | 'completed' | 'cancelled';
+  status?: EventStatus;
   dresscode?: string;
   additionalInfo?: string;
 }
 
 export interface EventFilters {
-  status?: 'draft' | 'active' | 'completed' | 'cancelled';
+  status?: EventStatus;
   category?: string;
   dateFrom?: Date;
   dateTo?: Date;
@@ -67,7 +72,6 @@ export interface EventStats {
   totalEvents: number;
   activeEvents: number;
   completedEvents: number;
-  draftEvents: number;
   cancelledEvents: number;
   totalGuests: number;
   acceptedGuests: number;
@@ -169,6 +173,12 @@ export class EventService {
       // Sprawdź limity na podstawie planu użytkownika
       const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
       const userPlanType = (userDoc.data()?.planType || 'starter') as PlanType;
+      const organizerEmail =
+        (userDoc.data()?.email as string | undefined)?.trim() ||
+        auth.currentUser?.email?.trim() ||
+        '';
+      const organizerPhone =
+        (userDoc.data()?.phoneNumber as string | undefined)?.trim() || '';
       
       // Pobierz ilość istniejących zdarzeń użytkownika (wydajna metoda count)
       const eventsQuery = query(
@@ -190,6 +200,10 @@ export class EventService {
 
       // Upload image if provided
       if (eventData.image) {
+        const [{ ref, uploadBytes, getDownloadURL }, storage] = await Promise.all([
+          import('firebase/storage'),
+          getFirebaseStorage(),
+        ]);
         const imageRef = ref(
           storage,
           `events/${userId}/${Date.now()}_${eventData.image.name}`
@@ -206,7 +220,7 @@ export class EventService {
         date: Timestamp.fromDate(eventData.date),
         location: eventData.location,
         maxGuests: eventData.maxGuests,
-        status: 'draft',
+        status: 'active',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         category: eventData.category || 'other',
@@ -231,6 +245,19 @@ export class EventService {
       if (imageUrl) {
         eventDoc.imageUrl = imageUrl;
       }
+
+      // Termin RSVP (opcjonalny) — zapisz tylko gdy podano
+      if (eventData.rsvpDeadline) {
+        eventDoc.rsvpDeadline = Timestamp.fromDate(eventData.rsvpDeadline);
+      }
+
+      if (organizerEmail) {
+        eventDoc.organizerEmail = organizerEmail;
+      }
+      if (organizerPhone) {
+        eventDoc.organizerPhone = organizerPhone;
+      }
+
       const docRef = await addDoc(collection(db, COLLECTIONS.EVENTS), eventDoc);
 
       // Track analytics for event creation
@@ -301,6 +328,10 @@ export class EventService {
         updateFields.description = updateData.description;
       if (updateData.date)
         updateFields.date = Timestamp.fromDate(updateData.date);
+      if (updateData.rsvpDeadline !== undefined)
+        updateFields.rsvpDeadline = updateData.rsvpDeadline
+          ? Timestamp.fromDate(updateData.rsvpDeadline)
+          : (null as unknown as Timestamp);
       if (updateData.location) updateFields.location = updateData.location;
       if (updateData.maxGuests) updateFields.maxGuests = updateData.maxGuests;
       if (updateData.category) updateFields.category = updateData.category;
@@ -314,8 +345,30 @@ export class EventService {
       if (updateData.additionalInfo !== undefined)
         updateFields.additionalInfo = updateData.additionalInfo;
 
+      const existingSnap = await getDoc(eventRef);
+      if (existingSnap.exists()) {
+        const existing = existingSnap.data() as FirebaseEvent;
+        if (existing.status === 'draft' && !updateData.status) {
+          updateFields.status = 'active';
+        }
+        if (!existing.organizerEmail?.trim() && auth.currentUser?.email) {
+          updateFields.organizerEmail = auth.currentUser.email.trim();
+        }
+        if (!existing.organizerPhone?.trim()) {
+          const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, existing.userId));
+          const phone = (userDoc.data()?.phoneNumber as string | undefined)?.trim();
+          if (phone) {
+            updateFields.organizerPhone = phone;
+          }
+        }
+      }
+
       // Handle image upload
       if (updateData.image) {
+        const [{ ref, uploadBytes, getDownloadURL }, storage] = await Promise.all([
+          import('firebase/storage'),
+          getFirebaseStorage(),
+        ]);
         const imageRef = ref(
           storage,
           `events/${eventId}/${Date.now()}_${updateData.image.name}`
@@ -395,6 +448,10 @@ export class EventService {
       // 1. Usuń obrazy z Firebase Storage
       if (eventData.imageUrl) {
         try {
+          const [{ ref, deleteObject }, storage] = await Promise.all([
+            import('firebase/storage'),
+            getFirebaseStorage(),
+          ]);
           const imageRef = ref(storage, eventData.imageUrl);
           await deleteObject(imageRef);
         } catch (error) {
@@ -523,7 +580,7 @@ export class EventService {
         date: Timestamp.fromDate(duplicateData.date),
         location: originalEvent.location,
         maxGuests: originalEvent.maxGuests,
-        status: 'draft',
+        status: 'active',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         category: 'other',
@@ -712,7 +769,6 @@ export class EventService {
     }
   }   // Get event statistics
   static async getEventStats(userId: string): Promise<EventStats> {
-    const start = Date.now();
     try {
       const eventsQuery = query(
         collection(db, COLLECTIONS.EVENTS),
@@ -726,7 +782,6 @@ export class EventService {
           totalEvents: 0,
           activeEvents: 0,
           completedEvents: 0,
-          draftEvents: 0,
           cancelledEvents: 0,
           totalGuests: 0,
           acceptedGuests: 0,
@@ -748,28 +803,38 @@ export class EventService {
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      const rsvpRelevantEvents = events.filter(
+        event => event.status === 'active' || event.status === 'draft'
+      );
+      const rsvpCountsByEvent = await EventGuestService.getRsvpCountsForEvents(
+        rsvpRelevantEvents.map(event => event.id)
+      );
+
+      let rsvpGuestTotal = 0;
+      let rsvpAccepted = 0;
+      let rsvpPending = 0;
+      let rsvpDeclined = 0;
+
+      rsvpRelevantEvents.forEach(event => {
+        const counts = rsvpCountsByEvent.get(event.id);
+        if (!counts) return;
+        rsvpGuestTotal += counts.guestCount;
+        rsvpAccepted += counts.acceptedCount;
+        rsvpPending += counts.pendingCount;
+        rsvpDeclined += counts.declinedCount;
+      });
+
       const stats: EventStats = {
         totalEvents: events.length,
-        activeEvents: events.filter(e => e.status === 'active').length,
+        activeEvents: events.filter(
+          e => e.status === 'active' || e.status === 'draft'
+        ).length,
         completedEvents: events.filter(e => e.status === 'completed').length,
-        draftEvents: events.filter(e => e.status === 'draft').length,
         cancelledEvents: events.filter(e => e.status === 'cancelled').length,
-        totalGuests: events.reduce(
-          (acc, event) => acc + (event.guestCount || 0),
-          0
-        ),
-        acceptedGuests: events.reduce(
-          (acc, event) => acc + (event.acceptedCount || 0),
-          0
-        ),
-        pendingGuests: events.reduce(
-          (acc, event) => acc + (event.pendingCount || 0),
-          0
-        ),
-        declinedGuests: events.reduce(
-          (acc, event) => acc + (event.declinedCount || 0),
-          0
-        ),
+        totalGuests: rsvpGuestTotal,
+        acceptedGuests: rsvpAccepted,
+        pendingGuests: rsvpPending,
+        declinedGuests: rsvpDeclined,
         responseRate: 0,
         eventsThisMonth: events.filter(
           event => event.createdAt && event.createdAt.toDate() >= thisMonth
@@ -803,7 +868,6 @@ export class EventService {
         totalEvents: 3,
         activeEvents: 1,
         completedEvents: 1,
-        draftEvents: 1,
         cancelledEvents: 0,
         totalGuests: 25,
         acceptedGuests: 18,
@@ -821,7 +885,6 @@ export class EventService {
 
   // Get chart data for last 6 months
   static async getEventChartData(userId: string): Promise<EventChartData[]> {
-    const start = Date.now();
     try {
 
       const now = new Date();
@@ -1053,9 +1116,12 @@ export class EventService {
       title: firebaseEvent.title,
       description: firebaseEvent.description,
       date: firebaseEvent.date.toDate(),
+      rsvpDeadline: firebaseEvent.rsvpDeadline
+        ? firebaseEvent.rsvpDeadline.toDate()
+        : undefined,
       location: firebaseEvent.location,
       maxGuests: firebaseEvent.maxGuests,
-      status: firebaseEvent.status,
+      status: normalizeEventStatus(firebaseEvent.status),
       createdAt: firebaseEvent.createdAt.toDate(),
       guestCount: firebaseEvent.guestCount,
       acceptedCount: firebaseEvent.acceptedCount,
@@ -1064,6 +1130,8 @@ export class EventService {
       maybeCount: firebaseEvent.maybeCount || 0,
       dresscode: firebaseEvent.dresscode,
       additionalInfo: firebaseEvent.additionalInfo,
+      organizerEmail: firebaseEvent.organizerEmail,
+      organizerPhone: firebaseEvent.organizerPhone,
       guests: [], // Używamy liczników zamiast tablicy gości
     };
   }

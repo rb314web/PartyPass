@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Copy, Download, CheckCircle, Loader, Link as LinkIcon } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  CheckCircle,
+  Loader,
+  Link as LinkIcon,
+  ExternalLink,
+} from 'lucide-react';
 import { NewRSVPService } from '../../../../services/firebase/newRSVPService';
 import { EventGuest, Contact, Event } from '../../../../types';
+import Modal from '../../../common/Modal/Modal';
 import './RSVPLinkModal.scss';
 
 interface RSVPLinkModalProps {
@@ -66,7 +73,6 @@ const RSVPLinkModal: React.FC<RSVPLinkModalProps> = ({
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Błąd podczas kopiowania linku:', err);
-      // Fallback - wybierz tekst
       const textArea = document.createElement('textarea');
       textArea.value = rsvpUrl;
       document.body.appendChild(textArea);
@@ -87,102 +93,111 @@ const RSVPLinkModal: React.FC<RSVPLinkModalProps> = ({
     link.click();
   };
 
-  if (!open || !eventGuest || !event) return null;
+  if (!eventGuest || !event) return null;
 
   const guestName = `${eventGuest.contact.firstName} ${eventGuest.contact.lastName}`;
 
-  const modalContent = (
-    <div className="rsvp-link-modal__overlay" onClick={onClose}>
-      <div className="rsvp-link-modal__container" onClick={(e) => e.stopPropagation()}>
-        <div className="rsvp-link-modal__header">
-          <div className="rsvp-link-modal__title">
-            <LinkIcon size={24} />
-            <h2>Link RSVP dla {guestName}</h2>
-          </div>
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={`Link RSVP dla ${guestName}`}
+      icon={<LinkIcon size={24} />}
+      size="md"
+      closeDisabled={loading}
+    >
+      {loading ? (
+        <div className="rsvp-link-modal__loading">
+          <Loader size={32} className="rsvp-link-modal__spinner" />
+          <p>Generowanie linku RSVP i kodu QR...</p>
+        </div>
+      ) : error ? (
+        <div className="rsvp-link-modal__error">
+          <p>{error}</p>
           <button
-            className="rsvp-link-modal__close"
-            onClick={onClose}
-            aria-label="Zamknij"
+            type="button"
+            onClick={loadRSVPLinkAndQR}
+            className="pp-btn pp-btn--outline rsvp-link-modal__retry-btn"
           >
-            <X size={20} />
+            Spróbuj ponownie
           </button>
         </div>
-
-        <div className="rsvp-link-modal__content">
-          {loading ? (
-            <div className="rsvp-link-modal__loading">
-              <Loader size={32} className="rsvp-link-modal__spinner" />
-              <p>Generowanie linku RSVP i kodu QR...</p>
-            </div>
-          ) : error ? (
-            <div className="rsvp-link-modal__error">
-              <p>{error}</p>
-              <button onClick={loadRSVPLinkAndQR} className="rsvp-link-modal__retry-btn">
-                Spróbuj ponownie
+      ) : (
+        <>
+          <div className="rsvp-link-modal__link-section">
+            <label className="pp-label">Link RSVP</label>
+            <div className="rsvp-link-modal__link-container">
+              <input
+                type="text"
+                value={rsvpUrl}
+                readOnly
+                className="pp-input rsvp-link-modal__link-input"
+              />
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="pp-btn pp-btn--outline rsvp-link-modal__copy-btn"
+                title="Kopiuj link"
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle size={18} />
+                    <span>Skopiowano!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={18} />
+                    <span>Kopiuj</span>
+                  </>
+                )}
               </button>
             </div>
-          ) : (
-            <>
-              <div className="rsvp-link-modal__link-section">
-                <label className="rsvp-link-modal__label">Link RSVP</label>
-                <div className="rsvp-link-modal__link-container">
-                  <input
-                    type="text"
-                    value={rsvpUrl}
-                    readOnly
-                    className="rsvp-link-modal__link-input"
-                  />
-                  <button
-                    onClick={handleCopyLink}
-                    className="rsvp-link-modal__copy-btn"
-                    title="Kopiuj link"
-                  >
-                    {copied ? (
-                      <>
-                        <CheckCircle size={18} />
-                        <span>Skopiowano!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={18} />
-                        <span>Kopiuj</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <p className="rsvp-link-modal__hint">
-                  Gość może użyć tego linku, aby potwierdzić lub odwołać swoją obecność
-                </p>
+            <p className="rsvp-link-modal__hint">
+              Gość może użyć tego linku, aby potwierdzić lub odwołać swoją
+              obecność
+            </p>
+            {rsvpUrl && (
+              <a
+                href={rsvpUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pp-btn pp-btn--secondary rsvp-link-modal__preview-btn"
+              >
+                <ExternalLink size={18} />
+                <span>Podgląd jako gość</span>
+              </a>
+            )}
+          </div>
+
+          {qrCode && (
+            <div className="rsvp-link-modal__qr-section">
+              <label className="pp-label">Kod QR</label>
+              <div className="rsvp-link-modal__qr-container">
+                <img
+                  src={qrCode}
+                  alt="QR Code"
+                  className="rsvp-link-modal__qr-image"
+                />
+                <button
+                  type="button"
+                  onClick={handleDownloadQR}
+                  className="pp-btn pp-btn--outline rsvp-link-modal__download-btn"
+                  title="Pobierz kod QR"
+                >
+                  <Download size={18} />
+                  <span>Pobierz QR</span>
+                </button>
               </div>
-
-              {qrCode && (
-                <div className="rsvp-link-modal__qr-section">
-                  <label className="rsvp-link-modal__label">Kod QR</label>
-                  <div className="rsvp-link-modal__qr-container">
-                    <img src={qrCode} alt="QR Code" className="rsvp-link-modal__qr-image" />
-                    <button
-                      onClick={handleDownloadQR}
-                      className="rsvp-link-modal__download-btn"
-                      title="Pobierz kod QR"
-                    >
-                      <Download size={18} />
-                      <span>Pobierz QR</span>
-                    </button>
-                  </div>
-                  <p className="rsvp-link-modal__hint">
-                    Gość może zeskanować ten kod QR, aby przejść do strony potwierdzenia
-                  </p>
-                </div>
-              )}
-            </>
+              <p className="rsvp-link-modal__hint">
+                Gość może zeskanować ten kod QR, aby przejść do strony
+                potwierdzenia
+              </p>
+            </div>
           )}
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </Modal>
   );
-
-  return createPortal(modalContent, document.body);
 };
 
 export default RSVPLinkModal;
-

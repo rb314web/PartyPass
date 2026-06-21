@@ -18,7 +18,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('renders error UI when error occurs', () => {
-    const consoleSpy = jest
+    const consoleSpy = vi
       .spyOn(console, 'error')
       .mockImplementation(() => {});
 

@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../../../hooks/useAuth';
 import { UserSettingsService, UserNotificationSettings } from '../../../../services/firebase/userSettingsService';
 import { NotificationTriggers } from '../../../../services/notificationTriggers';
+import PageHeader from '../../../common/PageHeader/PageHeader';
 import './NotificationSettings.scss';
 
 const NotificationSettings: React.FC = () => {
@@ -50,6 +51,8 @@ const NotificationSettings: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle');
+  const [saveError, setSaveError] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [testingEmail, setTestingEmail] = useState(false);
   const [testingSMS, setTestingSMS] = useState(false);
   const [testingPush, setTestingPush] = useState(false);
@@ -59,25 +62,28 @@ const NotificationSettings: React.FC = () => {
     message: string;
   } | null>(null);
 
-  // Załaduj ustawienia przy montowaniu komponentu
   useEffect(() => {
     const loadSettings = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIsLoadingSettings(false);
+        return;
+      }
+
+      setIsLoadingSettings(true);
+      setLoadError('');
 
       try {
-        setIsLoadingSettings(true);
         const userSettings = await UserSettingsService.getUserSettings(user.id);
-        if (userSettings) {
-          setSettings(userSettings);
-        }
+        setSettings(userSettings);
       } catch (error) {
         console.error('Error loading notification settings:', error);
+        setLoadError('Nie udało się załadować ustawień powiadomień.');
       } finally {
         setIsLoadingSettings(false);
       }
     };
 
-    loadSettings();
+    void loadSettings();
   }, [user?.id]);
 
   const handleToggle = (category: keyof typeof settings, setting: string) => {
@@ -112,17 +118,21 @@ const NotificationSettings: React.FC = () => {
 
     setIsLoading(true);
     setSaveStatus('saving');
+    setSaveError('');
 
     try {
       await UserSettingsService.saveUserSettings(user.id, settings);
       setSaveStatus('saved');
-
-      // Reset status po 3 sekundach
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      setTimeout(() => setSaveStatus('idle'), 4000);
     } catch (error) {
       console.error('Error saving settings:', error);
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : 'Nie udało się zapisać ustawień powiadomień.'
+      );
       setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      setTimeout(() => setSaveStatus('idle'), 5000);
     } finally {
       setIsLoading(false);
     }
@@ -169,19 +179,15 @@ const NotificationSettings: React.FC = () => {
   const handleTestSMS = async () => {
     setTestingSMS(true);
     setTestStatus(null);
-    
-    try {
-      // SMS nie jest jeszcze zaimplementowany
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setTestStatus({
-        type: 'sms',
-        status: 'error',
-        message: 'Powiadomienia SMS nie są jeszcze dostępne.',
-      });
-      setTimeout(() => setTestStatus(null), 5000);
-    } finally {
-      setTestingSMS(false);
-    }
+
+    setTestStatus({
+      type: 'sms',
+      status: 'error',
+      message:
+        'Powiadomienia SMS nie są jeszcze dostępne. Ustawienia zostaną zapisane, ale SMS nie będą wysyłane.',
+    });
+    setTimeout(() => setTestStatus(null), 5000);
+    setTestingSMS(false);
   };
 
   const handleTestPush = async () => {
@@ -247,12 +253,22 @@ const NotificationSettings: React.FC = () => {
 
   return (
     <div className="notification-settings">
-      <div className="notification-settings__header">
-        <h1>Powiadomienia</h1>
-        <p>
-          Wybierz jak chcesz otrzymywać powiadomienia o swoich wydarzeniach
-        </p>
-      </div>
+      <PageHeader
+        title="Powiadomienia"
+        subtitle="Wybierz jak chcesz otrzymywać powiadomienia o swoich wydarzeniach"
+        icon={Bell}
+        className="notification-settings__page-header"
+        meta={
+          <>
+            {loadError && (
+              <p className="notification-settings__load-error">{loadError}</p>
+            )}
+            {isLoadingSettings && (
+              <p className="notification-settings__loading">Ładowanie ustawień...</p>
+            )}
+          </>
+        }
+      />
 
       {/* Email Notifications */}
       <div className="notification-settings__section">
@@ -698,7 +714,7 @@ const NotificationSettings: React.FC = () => {
           {saveStatus === 'error' && (
             <span className="notification-settings__save-message notification-settings__save-message--error">
               <AlertCircle size={16} />
-              Wystąpił błąd podczas zapisywania
+              {saveError || 'Wystąpił błąd podczas zapisywania'}
             </span>
           )}
         </div>
@@ -706,7 +722,7 @@ const NotificationSettings: React.FC = () => {
         <button
           className="notification-settings__save-btn"
           onClick={handleSave}
-          disabled={isLoading}
+          disabled={isLoading || isLoadingSettings || !user?.id}
         >
           {isLoading ? (
             <div className="notification-settings__spinner"></div>

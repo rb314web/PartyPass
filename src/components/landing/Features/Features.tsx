@@ -1,70 +1,73 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Calendar,
   Users,
   BarChart3,
-  Smartphone,
+  Link2,
   Mail,
   Shield,
 } from 'lucide-react';
 import './Features.scss';
 
-const features = [
-  {
-    icon: <Calendar size={32} />,
-    title: 'Łatwe tworzenie wydarzeń',
-    description:
-      'Intuicyjny kreator pomoże Ci stworzyć wydarzenie w kilka minut',
-  },
-  {
-    icon: <Users size={32} />,
-    title: 'Zarządzanie gośćmi',
-    description:
-      'Dodawaj gości, śledź odpowiedzi i zarządzaj listą uczestników',
-  },
-  {
-    icon: <Mail size={32} />,
-    title: 'Automatyczne zaproszenia',
-    description: 'Wysyłaj spersonalizowane zaproszenia email i SMS',
-  },
-  {
-    icon: <BarChart3 size={32} />,
-    title: 'Analityki',
-    description: 'Szczegółowe raporty i statystyki Twoich wydarzeń',
-  },
-  {
-    icon: <Smartphone size={32} />,
-    title: 'Aplikacja mobilna',
-    description: 'Zarządzaj wydarzeniami z każdego miejsca na Ziemi',
-  },
-  {
-    icon: <Shield size={32} />,
-    title: 'Bezpieczeństwo',
-    description: 'Twoje dane są chronione najwyższymi standardami',
-  },
-];
-
 const Features: React.FC = () => {
+  const { t, i18n } = useTranslation();
+
+  const features = useMemo(
+    () => [
+      {
+        icon: <Calendar size={24} />,
+        title: t('landing.features.eventCreationTitle'),
+        description: t('landing.features.eventCreationDesc'),
+      },
+      {
+        icon: <Users size={24} />,
+        title: t('landing.features.guestManagementTitle'),
+        description: t('landing.features.guestManagementDesc'),
+      },
+      {
+        icon: <Mail size={24} />,
+        title: t('landing.features.emailInvitesTitle'),
+        description: t('landing.features.emailInvitesDesc'),
+      },
+      {
+        icon: <BarChart3 size={24} />,
+        title: t('landing.features.analyticsTitle'),
+        description: t('landing.features.analyticsDesc'),
+      },
+      {
+        icon: <Link2 size={24} />,
+        title: t('landing.features.rsvpLinkTitle'),
+        description: t('landing.features.rsvpLinkDesc'),
+      },
+      {
+        icon: <Shield size={24} />,
+        title: t('landing.features.securityTitle'),
+        description: t('landing.features.securityDesc'),
+      },
+    ],
+    [t, i18n.language]
+  );
+
   return (
-    <section className="features" id="features">
+    <section className="features">
       <div className="features__container">
         <div className="features__header">
-          <h2 className="features__title">
-            Wszystko czego potrzebujesz w jednym miejscu
-          </h2>
-          <p className="features__subtitle">
-            PartyPass oferuje kompletny zestaw narzędzi do organizacji wydarzeń
-          </p>
+          <span className="features__eyebrow">{t('landing.features.eyebrow')}</span>
+          <h2 className="features__title">{t('landing.features.title')}</h2>
+          <p className="features__subtitle">{t('landing.features.subtitle')}</p>
         </div>
 
         <div className="features__grid">
           {features.map((feature, index) => (
             <div key={index} className="features__card">
               <div className="features__icon">{feature.icon}</div>
-              <h3 className="features__card-title">{feature.title}</h3>
-              <p className="features__card-description">
-                {feature.description}
-              </p>
+              <div className="features__card-copy">
+                <h3 className="features__card-title">{feature.title}</h3>
+                <p className="features__card-description">
+                  {feature.description}
+                </p>
+              </div>
             </div>
           ))}
         </div>

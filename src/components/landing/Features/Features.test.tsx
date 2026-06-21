@@ -6,13 +6,13 @@ describe('Features', () => {
   it('renders features section with title', () => {
     render(<Features />);
 
-    expect(screen.getByText(/wszystko czego potrzebujesz/i)).toBeInTheDocument();
+    expect(screen.getByText(/ty organizujesz/i)).toBeInTheDocument();
   });
 
   it('renders features subtitle', () => {
     render(<Features />);
 
-    expect(screen.getByText(/partyPass oferuje kompletny zestaw narzędzi/i)).toBeInTheDocument();
+    expect(screen.getByText(/panel, zaproszenia i odpowiedzi gości/i)).toBeInTheDocument();
   });
 
   it('renders feature cards', () => {
@@ -21,7 +21,7 @@ describe('Features', () => {
     // Check for feature titles
     expect(screen.getByText(/łatwe tworzenie wydarzeń/i)).toBeInTheDocument();
     expect(screen.getByText(/zarządzanie gośćmi/i)).toBeInTheDocument();
-    expect(screen.getByText(/automatyczne zaproszenia/i)).toBeInTheDocument();
+    expect(screen.getByText(/zaproszenia e-mail/i)).toBeInTheDocument();
   });
 
   it('renders feature descriptions', () => {
@@ -35,7 +35,7 @@ describe('Features', () => {
   it('renders section with proper structure', () => {
     render(<Features />);
 
-    const section = document.getElementById('features');
+    const section = document.querySelector('section.features');
     expect(section).toBeInTheDocument();
     expect(section?.tagName).toBe('SECTION');
   });

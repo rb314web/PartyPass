@@ -7,6 +7,10 @@
 // 2. Design system variables and mixins
 @forward 'party-pass-variables';
 @forward 'party-pass-mixins';
+@forward 'buttons';
+@forward 'forms';
+@forward 'badges';
+@forward 'icons';
 
 // 3. Legacy variables (for backward compatibility)
 @forward 'variables';
@@ -22,3 +26,13 @@
 @forward 'typography' hide text-style, heading-1, heading-2, heading-3,
   heading-4, body-large, body-base, body-small, caption;
 @forward 'utilities';
+@forward 'dashboard-view-motion';
+@forward 'dashboard-studio-bridge';
+
+// Emit global component styles into the main bundle
+@use 'buttons';
+@use 'forms';
+@use 'badges';
+@use 'icons';
+@use 'dashboard-view-motion';
+@use 'dashboard-studio-bridge';

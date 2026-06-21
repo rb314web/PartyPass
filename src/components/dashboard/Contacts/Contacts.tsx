@@ -4,8 +4,11 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  Suspense,
+  lazy,
 } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   Search,
@@ -17,20 +20,32 @@ import {
   Crown,
   CalendarPlus,
 } from 'lucide-react';
-import { Box, Typography } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import { Contact } from '../../../types';
 import { ContactService, ContactFilters } from '../../../services/firebase/contactService';
+import { queryKeys } from '../../../config/queryClient';
 import { EventGuestService } from '../../../services/firebase/eventGuestService';
 import { canCreateContact, getContactLimitErrorMessage, PlanType } from '../../../services/firebase/planLimitsService';
-import AddContact from './AddContact';
-import AddContactToEvent from './AddContactToEvent/AddContactToEvent';
-import EditContactModal from './EditContactModal';
-import DeleteContactModal from './DeleteContactModal';
-import ImportContacts from './ImportContacts';
-import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import { useDashboardViewMotion } from '../../../hooks/useDashboardViewMotion';
+import DashboardViewSkeleton from '../DashboardViewSkeleton/DashboardViewSkeleton';
+import DashboardViewBody from '../DashboardViewBody/DashboardViewBody';
 import PlanLimitPopover from '../../common/PlanLimitPopover/PlanLimitPopover';
+import PageHeader from '../../common/PageHeader/PageHeader';
 import './Contacts.scss';
+
+const ImportContacts = lazy(() => import('./ImportContacts/ImportContacts'));
+const AddContact = lazy(() => import('./AddContact/AddContact'));
+const AddContactToEvent = lazy(
+  () => import('./AddContactToEvent/AddContactToEvent')
+);
+const EditContactModal = lazy(() => import('./EditContactModal'));
+const DeleteContactModal = lazy(() => import('./DeleteContactModal'));
+
+const ContactsRouteFallback = () => (
+  <DashboardViewSkeleton variant="list" />
+);
+
+const EMPTY_CONTACTS: Contact[] = [];
 
 const Contacts: React.FC = () => {
   const { user } = useAuth();
@@ -41,16 +56,21 @@ const Contacts: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Core state
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const {
+    showLoader,
+    showContent,
+    className: viewClassName,
+    startLoading,
+    finishLoading,
+  } = useDashboardViewMotion({
+    variant: 'async',
+    pageClass: 'contacts',
+  });
+  const [actionError, setActionError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState(''); // Actually applied search
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [fadeIn, setFadeIn] = useState(false);
-
-  // Pagination state
-  const [lastDoc, setLastDoc] = useState<any>(null);
 
   // Modal state
   const [addContactOpen, setAddContactOpen] = useState(false);
@@ -68,55 +88,51 @@ const Contacts: React.FC = () => {
   const [highlightedContactId, setHighlightedContactId] = useState<string | null>(null);
   const contactRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // STABLE loadContacts - memoized with useCallback
-  const loadContacts = useCallback(
-    async (resetList = true) => {
-      if (!user?.id) return;
+  const contactsQuery = useQuery({
+    queryKey: queryKeys.contacts(user?.id ?? ''),
+    queryFn: async () => {
+      // Przechodzimy przez wszystkie strony (paginacja kursorowa), aby nie
+      // ukrywać kontaktów po przekroczeniu jednej paczki. Wyszukiwanie i
+      // sortowanie działają po stronie klienta na pełnej liście.
+      const filters: ContactFilters = {};
+      const PAGE_SIZE = 100;
+      const MAX_PAGES = 100; // bezpiecznik (do 10k kontaktów)
+      const all: Contact[] = [];
+      let cursor:
+        | Awaited<ReturnType<typeof ContactService.getUserContacts>>['lastDoc']
+        | undefined;
 
-      try {
-        if (resetList) {
-          setIsLoading(true);
-          setFadeIn(false);
-          setLastDoc(null);
-        }
-
-        // Load all contacts without server-side filtering
-        const filters: ContactFilters = {};
-
+      for (let page = 0; page < MAX_PAGES; page += 1) {
         const result = await ContactService.getUserContacts(
-          user.id,
+          user!.id,
           filters,
-          100, // Load more contacts for client-side filtering
-          resetList ? undefined : lastDoc
+          PAGE_SIZE,
+          cursor ?? undefined
         );
-
-        setContacts(prev =>
-          resetList ? result.contacts : [...prev, ...result.contacts]
-        );
-        setLastDoc(result.lastDoc);
-        setError(null);
-        
-        if (resetList) {
-          // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
-          setTimeout(() => {
-            setIsLoading(false);
-            // Kolejne opóźnienie dla fade-in treści po zniknięciu loadera
-            setTimeout(() => setFadeIn(true), 100);
-          }, 300);
-        }
-      } catch (err: any) {
-        console.error('Error loading contacts:', err);
-        setError(err.message || 'Błąd podczas ładowania kontaktów');
-        setContacts([]);
-        setIsLoading(false);
-      } finally {
-        if (!resetList) {
-          setIsLoading(false);
-        }
+        all.push(...result.contacts);
+        if (!result.hasMore || !result.lastDoc) break;
+        cursor = result.lastDoc;
       }
+
+      return all;
     },
-    [user?.id, lastDoc]
-  );
+    enabled: !!user?.id,
+  });
+
+  const contacts = contactsQuery.data ?? EMPTY_CONTACTS;
+  const error = contactsQuery.isError
+    ? ((contactsQuery.error as Error).message || 'Błąd podczas ładowania kontaktów')
+    : actionError;
+
+  // Spinanie stanu ładowania React Query z animacją widoku.
+  // Dzięki staleTime powrót na zakładkę nie odpala refetcha → treść od razu z cache.
+  useEffect(() => {
+    if (contactsQuery.isFetching) {
+      startLoading();
+    } else {
+      finishLoading();
+    }
+  }, [contactsQuery.isFetching, startLoading, finishLoading]);
 
   // STABLE filtered and sorted contacts - fully memoized
   const filteredAndSortedContacts = useMemo(() => {
@@ -191,9 +207,12 @@ const Contacts: React.FC = () => {
   }, []);
 
   const handleContactAdded = useCallback((newContact: Contact) => {
-    setContacts(prev => [newContact, ...prev]);
+    queryClient.setQueryData(
+      queryKeys.contacts(user?.id ?? ''),
+      (old: Contact[] = []) => [newContact, ...old]
+    );
     setAddContactOpen(false);
-  }, []);
+  }, [queryClient, user?.id]);
 
   const handleEditContact = useCallback((contact: Contact) => {
     setSelectedContact(contact);
@@ -201,25 +220,30 @@ const Contacts: React.FC = () => {
   }, []);
 
   const handleContactUpdated = useCallback((updatedContact: Contact) => {
-    setContacts(prev =>
-      prev.map(contact =>
-        contact.id === updatedContact.id ? updatedContact : contact
-      )
+    queryClient.setQueryData(
+      queryKeys.contacts(user?.id ?? ''),
+      (old: Contact[] = []) =>
+        old.map(contact =>
+          contact.id === updatedContact.id ? updatedContact : contact
+        )
     );
     setEditContactOpen(false);
     setSelectedContact(null);
-  }, []);
+  }, [queryClient, user?.id]);
 
   const handleDeleteContact = useCallback(async (contact: Contact) => {
     try {
       await ContactService.deleteContact(contact.id);
-      setContacts(prev => prev.filter(c => c.id !== contact.id));
+      queryClient.setQueryData(
+        queryKeys.contacts(user?.id ?? ''),
+        (old: Contact[] = []) => old.filter(c => c.id !== contact.id)
+      );
     } catch (error: any) {
       console.error('Error deleting contact:', error);
-      setError('Błąd podczas usuwania kontaktu');
+      setActionError('Błąd podczas usuwania kontaktu');
       throw error;
     }
-  }, []);
+  }, [queryClient, user?.id]);
 
   const handleOpenDeleteModal = useCallback((contact: Contact) => {
     setSelectedContact(contact);
@@ -333,14 +357,6 @@ const Contacts: React.FC = () => {
     }
   }, [location.pathname, navigate]);
 
-  // Load contacts on mount only
-  useEffect(() => {
-    if (user?.id) {
-      loadContacts(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
-
   // Reload contacts when returning from import page
   useEffect(() => {
     if (
@@ -348,7 +364,7 @@ const Contacts: React.FC = () => {
       user?.id &&
       location.state?.fromImport
     ) {
-      loadContacts(true);
+      queryClient.invalidateQueries({ queryKey: ['contacts', user.id] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.state]);
@@ -386,48 +402,21 @@ const Contacts: React.FC = () => {
   // Render error state - memoized
   const renderError = useCallback(
     () => (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '4rem 2rem',
-          backgroundColor: '#ffffff',
-        }}
-      >
-        <Box sx={{ color: '#ef4444', marginBottom: 2 }}>
+      <div className="contacts__error-state">
+        <div className="contacts__error-state-icon">
           <AlertCircle size={48} />
-        </Box>
-        <Typography
-          variant="h6"
-          sx={{
-            color: '#333333',
-            fontWeight: 600,
-            marginBottom: 1,
-          }}
-        >
-          Wystąpił błąd
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            color: '#666666',
-            textAlign: 'center',
-            marginBottom: 3,
-          }}
-        >
-          {error}
-        </Typography>
+        </div>
+        <h3 className="contacts__error-state-title">Wystąpił błąd</h3>
+        <p className="contacts__error-state-description">{error}</p>
         <button
-          onClick={() => loadContacts(true)}
+          onClick={() => contactsQuery.refetch()}
           className="contacts__action-btn contacts__action-btn--primary"
         >
           Spróbuj ponownie
         </button>
-      </Box>
+      </div>
     ),
-    [error, loadContacts]
+    [error, contactsQuery]
   );
 
   // Render empty state - memoized
@@ -437,17 +426,14 @@ const Contacts: React.FC = () => {
         <div className="contacts__empty-state-icon">
           <Users />
         </div>
-        <Typography variant="h6" className="contacts__empty-state-title">
+        <h3 className="contacts__empty-state-title">
           {activeSearchQuery ? 'Nie znaleziono kontaktów' : 'Brak kontaktów'}
-        </Typography>
-        <Typography
-          variant="body1"
-          className="contacts__empty-state-description"
-        >
+        </h3>
+        <p className="contacts__empty-state-description">
           {activeSearchQuery
             ? 'Spróbuj zmienić wyszukiwanie i kliknij przycisk szukaj'
             : 'Dodaj pierwszy kontakt do swojej bazy'}
-        </Typography>
+        </p>
       </div>
     ),
     [activeSearchQuery]
@@ -541,29 +527,12 @@ const Contacts: React.FC = () => {
   // Main contacts list page - memoized to prevent re-creation
   const contactsListPageContent = useMemo(
     () => {
-      if (isLoading) {
-        return (
-          <div className="contacts contacts--loading">
-            <LoadingSpinner
-              variant="full"
-              icon={<Users size={28} />}
-              title="Ładowanie kontaktów..."
-              subtitle="Przygotowujemy Twoją listę kontaktów"
-            />
-          </div>
-        );
-      }
-
       return (
-        <div className={`contacts ${fadeIn ? 'contacts--fade-in' : ''}`}>
-          <header className="contacts__header">
-            <div className="contacts__title-wrapper">
-              <div className="contacts__icon" aria-hidden="true">
-                <Users size={24} />
-              </div>
-              <div>
-                <h1>Kontakty</h1>
-              <p>
+        <div className={viewClassName}>
+          <PageHeader
+            title="Kontakty"
+            subtitle={
+              <>
                 Zarządzaj bazą kontaktów
                 {contacts.length > 0 && (
                   <span className="contacts__count">
@@ -576,51 +545,61 @@ const Contacts: React.FC = () => {
                         : 'kontaktów'}
                   </span>
                 )}
-              </p>
-            </div>
-          </div>
-          <div className="contacts__header-actions">
-            <button
-              className="contacts__action-btn contacts__action-btn--secondary"
-              onClick={handleImportContacts}
-              title="Otwórz narzędzia importu i eksportu"
-            >
-              <ArrowLeftRight size={20} />
-              Importuj / eksportuj
-            </button>
-            <PlanLimitPopover isLimitReached={!canAddContact} limitMessage={limitMessage}>
-              {canAddContact ? (
+              </>
+            }
+            icon={Users}
+            actions={
+              <>
                 <button
-                  className="contacts__action-btn contacts__action-btn--primary"
-                  onClick={handleAddContact}
-                  title="Dodaj nowy kontakt"
+                  className="contacts__action-btn contacts__action-btn--secondary"
+                  onClick={handleImportContacts}
+                  title="Otwórz narzędzia importu i eksportu"
                 >
-                  <Plus size={20} />
-                  Dodaj kontakt
+                  <ArrowLeftRight size={20} />
+                  Importuj / eksportuj
                 </button>
-              ) : (
-                <button
-                  className="contacts__action-btn contacts__action-btn--upgrade"
-                  onClick={() => navigate('/dashboard/plan')}
-                >
-                  <Crown size={16} />
-                  <span>Ulepsz plan</span>
-                  <span className="contacts__action-btn-badge">Limit osiągnięty</span>
-                </button>
-              )}
-            </PlanLimitPopover>
-          </div>
-        </header>
+                <PlanLimitPopover isLimitReached={!canAddContact} limitMessage={limitMessage}>
+                  {canAddContact ? (
+                    <button
+                      className="contacts__action-btn contacts__action-btn--primary"
+                      onClick={handleAddContact}
+                      title="Dodaj nowy kontakt"
+                    >
+                      <Plus size={20} />
+                      Dodaj kontakt
+                    </button>
+                  ) : (
+                    <button
+                      className="contacts__action-btn contacts__action-btn--upgrade"
+                      onClick={() => navigate('/dashboard/plan')}
+                    >
+                      <Crown size={16} />
+                      <span>Ulepsz plan</span>
+                      <span className="pp-badge pp-badge--warning pp-badge--sm contacts__action-btn-badge">
+                        Limit osiągnięty
+                      </span>
+                    </button>
+                  )}
+                </PlanLimitPopover>
+              </>
+            }
+          />
 
+        <DashboardViewBody
+          showLoader={showLoader}
+          showContent={showContent}
+          loader={<DashboardViewSkeleton variant="list" />}
+        >
         <div className="contacts__filters">
-          <div className="contacts__search" role="search">
-            <Search size={20} aria-hidden="true" />
+          <div className="pp-search contacts__search" role="search">
+            <Search size={20} className="pp-search__icon" aria-hidden="true" />
             <input
               ref={searchInputRef}
               type="search"
               placeholder="Szukaj kontaktów..."
               value={searchQuery}
               onChange={handleSearchChange}
+              className="pp-input"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -629,7 +608,7 @@ const Contacts: React.FC = () => {
             />
             <button
               type="button"
-              className={`contacts__search-clear${activeSearchQuery ? ' contacts__search-clear--visible' : ''}`}
+              className={`pp-search__clear${activeSearchQuery ? ' pp-search__clear--visible' : ''}`}
               onClick={handleClearSearch}
               title="Wyczyść wyszukiwanie"
               aria-label="Wyczyść wyszukiwanie"
@@ -663,6 +642,7 @@ const Contacts: React.FC = () => {
             filteredAndSortedContacts.length > 0 &&
             renderContactsList()}
         </div>
+        </DashboardViewBody>
       </div>
       );
     },
@@ -677,9 +657,10 @@ const Contacts: React.FC = () => {
       handleClearSearch,
       sortDirection,
       handleSortChange,
-      isLoading,
+      showLoader,
+      showContent,
+      viewClassName,
       error,
-      fadeIn,
       renderError,
       renderEmptyState,
       renderContactsList,
@@ -691,53 +672,69 @@ const Contacts: React.FC = () => {
 
   return (
     <>
-      <Routes>
-        <Route index element={contactsListPageContent} />
-        <Route path="add" element={contactsListPageContent} />
-        <Route path="import" element={<ImportContacts />} />
-      </Routes>
+      <Suspense fallback={<ContactsRouteFallback />}>
+        <Routes>
+          <Route index element={contactsListPageContent} />
+          <Route path="add" element={contactsListPageContent} />
+          <Route path="import" element={<ImportContacts />} />
+        </Routes>
+      </Suspense>
 
-      {/* Modals */}
-      <AddContact
-        open={addContactOpen}
-        onClose={() => setAddContactOpen(false)}
-        onContactAdded={handleContactAdded}
-      />
+      {addContactOpen && (
+        <Suspense fallback={null}>
+          <AddContact
+            open={addContactOpen}
+            onClose={() => setAddContactOpen(false)}
+            onContactAdded={handleContactAdded}
+          />
+        </Suspense>
+      )}
 
-      <EditContactModal
-        open={editContactOpen}
-        contact={selectedContact}
-        onClose={() => {
-          setEditContactOpen(false);
-          setSelectedContact(null);
-        }}
-        onContactUpdated={handleContactUpdated}
-      />
+      {editContactOpen && selectedContact && (
+        <Suspense fallback={null}>
+          <EditContactModal
+            open={editContactOpen}
+            contact={selectedContact}
+            onClose={() => {
+              setEditContactOpen(false);
+              setSelectedContact(null);
+            }}
+            onContactUpdated={handleContactUpdated}
+          />
+        </Suspense>
+      )}
 
-      <DeleteContactModal
-        open={deleteContactOpen}
-        contact={selectedContact}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-        isDeleting={isDeleting}
-      />
+      {deleteContactOpen && selectedContact && (
+        <Suspense fallback={null}>
+          <DeleteContactModal
+            open={deleteContactOpen}
+            contact={selectedContact}
+            onClose={handleCloseDeleteModal}
+            onConfirm={handleConfirmDelete}
+            isDeleting={isDeleting}
+          />
+        </Suspense>
+      )}
 
-      {selectedContactForEvent && (
-        <AddContactToEvent
-          open={addToEventOpen}
-          onClose={() => {
-            setAddToEventOpen(false);
-            setSelectedContactForEvent(null);
-          }}
-          contact={selectedContactForEvent}
-          onSuccess={() => {
-            setAddToEventOpen(false);
-            setSelectedContactForEvent(null);
-            // Odśwież liczniki wydarzeń
-            const ids = contacts.map(c => c.id);
-            EventGuestService.getContactEventCounts(ids).then(setContactEventCounts).catch(console.warn);
-          }}
-        />
+      {selectedContactForEvent && addToEventOpen && (
+        <Suspense fallback={null}>
+          <AddContactToEvent
+            open={addToEventOpen}
+            onClose={() => {
+              setAddToEventOpen(false);
+              setSelectedContactForEvent(null);
+            }}
+            contact={selectedContactForEvent}
+            onSuccess={() => {
+              setAddToEventOpen(false);
+              setSelectedContactForEvent(null);
+              const ids = contacts.map(c => c.id);
+              EventGuestService.getContactEventCounts(ids)
+                .then(setContactEventCounts)
+                .catch(console.warn);
+            }}
+          />
+        </Suspense>
       )}
     </>
   );

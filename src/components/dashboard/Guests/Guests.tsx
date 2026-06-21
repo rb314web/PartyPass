@@ -1,6 +1,7 @@
 import logger from '../../../utils/logger';
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   Search,
@@ -14,18 +15,27 @@ import {
   Edit3,
   Crown,
 } from 'lucide-react';
-import { Box, Typography, Skeleton } from '@mui/material';
 import { useAuth } from '../../../hooks/useAuth';
 import type { Guest } from '../../../types';
 import { GuestService, GuestFilters } from '../../../services/firebase/guestService';
+import { queryKeys } from '../../../config/queryClient';
 import { EventService } from '../../../services/firebase/eventService';
 import { canCreateGuest, getGuestLimitErrorMessage, PlanType } from '../../../services/firebase/planLimitsService';
 import { AddGuest } from './AddGuest/AddGuest';
 import { EditGuestModal } from './EditGuestModal/EditGuestModal';
+import DeleteGuestModal from './DeleteGuestModal';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
-import LoadingSpinner from '../../common/LoadingSpinner/LoadingSpinner';
+import { useDashboardViewMotion } from '../../../hooks/useDashboardViewMotion';
+import DashboardViewSkeleton from '../DashboardViewSkeleton/DashboardViewSkeleton';
+import DashboardViewBody from '../DashboardViewBody/DashboardViewBody';
 import PlanLimitPopover from '../../common/PlanLimitPopover/PlanLimitPopover';
+import EmptyState from '../../common/EmptyState/EmptyState';
+import Toast from '../../common/Toast/Toast';
+import { useToast } from '../../../hooks/useToast';
+import PageHeader from '../../common/PageHeader/PageHeader';
 import './Guests.scss';
+
+const EMPTY_GUESTS: Guest[] = [];
 
 const Guests = () => {
   const navigate = useNavigate();
@@ -35,58 +45,48 @@ const Guests = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const { user } = useAuth();
-  const [guests, setGuests] = useState<Guest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fadeIn, setFadeIn] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [lastDoc, setLastDoc] = useState<any>(null);
+  const queryClient = useQueryClient();
+  const {
+    showLoader,
+    showContent,
+    className: viewClassName,
+    startLoading,
+    finishLoading,
+  } = useDashboardViewMotion({
+    variant: 'async',
+    pageClass: 'guests',
+    loaderLayout: 'inline',
+  });
+  const [actionError, setActionError] = useState<string | null>(null);
+  const { toast, dismiss, showError } = useToast();
 
-  const loadGuests = useCallback(
-    async (isLoadingMore = false) => {
-      try {
-        if (!isLoadingMore) {
-          setIsLoading(true);
-        }
-        const filters: GuestFilters = {};
-        if (searchQuery) {
-          filters.search = searchQuery;
-        }
-
-        const result = await GuestService.getUserGuests(
-          user!.id,
-          filters,
-          10,
-          isLoadingMore ? lastDoc : undefined
-        );
-
-        setGuests(prev =>
-          isLoadingMore ? [...prev, ...result.guests] : result.guests
-        );
-        setLastDoc(result.lastDoc);
-        setHasMore(result.hasMore);
-        setError(null);
-        
-        // Opóźnienie dla płynnego przejścia: loader fade out → content fade in
-        if (!isLoadingMore) {
-          setTimeout(() => {
-            setIsLoading(false);
-            setTimeout(() => setFadeIn(true), 100);
-          }, 300);
-        }
-      } catch (err: any) {
-        setError(err.message);
-        setIsLoading(false);
+  const guestsQuery = useQuery({
+    queryKey: queryKeys.guests(user?.id ?? '', searchQuery),
+    queryFn: async () => {
+      const filters: GuestFilters = {};
+      if (searchQuery) {
+        filters.search = searchQuery;
       }
+      const result = await GuestService.getUserGuests(user!.id, filters, 10);
+      return result.guests;
     },
-    [user, searchQuery, lastDoc]
-  );
+    enabled: !!user?.id,
+  });
 
+  const guests = guestsQuery.data ?? EMPTY_GUESTS;
+  const error = guestsQuery.isError
+    ? (guestsQuery.error as Error).message
+    : actionError;
+
+  // Spinanie stanu ładowania React Query z animacją widoku.
+  // Dzięki staleTime powrót na zakładkę nie odpala refetcha → treść od razu z cache.
   useEffect(() => {
-    if (user?.id) {
-      loadGuests();
+    if (guestsQuery.isFetching) {
+      startLoading();
+    } else {
+      finishLoading();
     }
-  }, [user, searchQuery]);
+  }, [guestsQuery.isFetching, startLoading, finishLoading]);
 
   const filteredAndSortedGuests = useMemo(() => {
     let filtered = guests.filter(guest => {
@@ -129,6 +129,9 @@ const Guests = () => {
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [isEditGuestModalOpen, setIsEditGuestModalOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+  const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
+  const [isDeleteGuestOpen, setIsDeleteGuestOpen] = useState(false);
+  const [isDeletingGuest, setIsDeletingGuest] = useState(false);
   const [canAddGuest, setCanAddGuest] = useState(true);
   const [limitMessage, setLimitMessage] = useState('');
   const [events, setEvents] = useState<Array<{ id: string; title: string }>>(
@@ -174,14 +177,14 @@ const Guests = () => {
 
   const handleCreateGuest = () => {
     if (events.length === 0) {
-      alert('Najpierw musisz utworzyć wydarzenie');
+      showError('Najpierw musisz utworzyć wydarzenie');
       return;
     }
     setIsAddGuestOpen(true);
   };
 
   const handleGuestAdded = () => {
-    loadGuests();
+    queryClient.invalidateQueries({ queryKey: ['guests', user?.id ?? ''] });
   };
 
   const handleGuestAction = async (action: string, guestId: string) => {
@@ -194,12 +197,14 @@ const Guests = () => {
             setIsEditGuestModalOpen(true);
           }
           break;
-        case 'delete':
-          if (window.confirm('Czy na pewno chcesz usunąć tego gościa?')) {
-            await GuestService.deleteGuest(guestId);
-            setGuests(prev => prev.filter(g => g.id !== guestId));
+        case 'delete': {
+          const guestToRemove = guests.find(g => g.id === guestId);
+          if (guestToRemove) {
+            setGuestToDelete(guestToRemove);
+            setIsDeleteGuestOpen(true);
           }
           break;
+        }
         case 'email':
           window.open(`mailto:${guests.find(g => g.id === guestId)?.email}`);
           break;
@@ -211,62 +216,82 @@ const Guests = () => {
           break;
       }
     } catch (err: any) {
-      setError(err.message);
+      setActionError(err.message);
+    }
+  };
+
+  const handleConfirmDeleteGuest = async () => {
+    if (!guestToDelete) return;
+
+    setIsDeletingGuest(true);
+    try {
+      await GuestService.deleteGuest(guestToDelete.id);
+      queryClient.setQueryData(
+        queryKeys.guests(user?.id ?? '', searchQuery),
+        (old: Guest[] = []) => old.filter(g => g.id !== guestToDelete.id)
+      );
+      setIsDeleteGuestOpen(false);
+      setGuestToDelete(null);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Błąd podczas usuwania gościa';
+      setActionError(message);
+    } finally {
+      setIsDeletingGuest(false);
     }
   };
 
   const GuestsListPage = () => (
-    <div className={`guests ${fadeIn ? 'guests--fade-in' : ''}`}>
-      <div className="guests__header">
-        <div className="guests__title-wrapper">
-          <div className="guests__icon">
-            <Users size={24} />
-          </div>
-          <div>
-            <h1>Goście</h1>
-            <p>Zarządzaj listą gości swoich wydarzeń</p>
-          </div>
-        </div>
-
-        <div className="guests__header-actions">
-          <button
-            className="guests__action-btn guests__action-btn--secondary"
-            onClick={() => navigate('/dashboard/guests/import')}
-          >
-            <Download size={20} />
-            Importuj
-          </button>
-          <PlanLimitPopover isLimitReached={!canAddGuest} limitMessage={limitMessage}>
-            {canAddGuest ? (
-              <button
-                className="guests__action-btn guests__action-btn--primary"
-                onClick={handleCreateGuest}
-              >
-                <Plus size={20} />
-                Dodaj gościa
-              </button>
-            ) : (
-              <button
-                className="guests__action-btn guests__action-btn--upgrade"
-                onClick={() => navigate('/dashboard/plan')}
-              >
-                <Crown size={16} />
-                <span>Ulepsz plan</span>
-                <span className="guests__action-btn-badge">Limit osiągnięty</span>
-              </button>
-            )}
-          </PlanLimitPopover>
-        </div>
-      </div>
+    <div className={viewClassName}>
+      <PageHeader
+        title="Goście"
+        subtitle="Zarządzaj listą gości swoich wydarzeń"
+        icon={Users}
+        actions={
+          <>
+            <button
+              className="guests__action-btn guests__action-btn--secondary"
+              onClick={() => navigate('/dashboard/guests/import')}
+            >
+              <Download size={20} />
+              Importuj
+            </button>
+            <PlanLimitPopover isLimitReached={!canAddGuest} limitMessage={limitMessage}>
+              {canAddGuest ? (
+                <button
+                  className="guests__action-btn guests__action-btn--primary"
+                  onClick={handleCreateGuest}
+                >
+                  <Plus size={20} />
+                  Dodaj gościa
+                </button>
+              ) : (
+                <button
+                  className="guests__action-btn guests__action-btn--upgrade"
+                  onClick={() => navigate('/dashboard/plan')}
+                >
+                  <Crown size={16} />
+                  <span>Ulepsz plan</span>
+                  <span className="pp-badge pp-badge--warning pp-badge--sm guests__action-btn-badge">
+                    Limit osiągnięty
+                  </span>
+                </button>
+              )}
+            </PlanLimitPopover>
+          </>
+        }
+      />
 
       <div className="guests__filters">
-        <div className="guests__search">
-          <Search size={20} />
+        <div className="pp-search guests__search">
+          <Search size={20} className="pp-search__icon" aria-hidden="true" />
           <input
             type="text"
             placeholder="Szukaj gości..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
+            className="pp-input"
+            aria-label="Szukaj gości"
           />
         </div>
 
@@ -274,7 +299,7 @@ const Guests = () => {
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value as any)}
-            className="guests__filter-select"
+            className="pp-select guests__filter-select"
             style={{ display: 'none' }}
           >
             <option value="all">Wszystkie statusy</option>
@@ -287,7 +312,7 @@ const Guests = () => {
               setSortBy(field as any);
               setSortDirection(direction as any);
             }}
-            className="guests__filter-select"
+            className="pp-select guests__filter-select"
           >
             <option value="name-asc">Imię A-Z</option>
             <option value="name-desc">Imię Z-A</option>
@@ -300,111 +325,43 @@ const Guests = () => {
       </div>
 
       <div className="guests__content">
-        {isLoading ? (
-          <LoadingSpinner 
-            variant="full"
-            icon={<Users />}
-            title="Ładowanie gości..."
-            subtitle="Przygotowujemy listę Twoich gości"
-          />
-        ) : error ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '4rem 2rem',
-              backgroundColor: '#ffffff',
-            }}
-          >
-            <Box
-              sx={{
-                color: '#ef4444',
-                marginBottom: 2,
-              }}
-            >
+        <DashboardViewBody
+          showLoader={showLoader}
+          showContent={showContent}
+          loader={<DashboardViewSkeleton variant="list" />}
+        >
+        {error ? (
+          <div className="guests__error-state">
+            <div className="guests__error-icon">
               <AlertCircle size={48} />
-            </Box>
-            <Typography
-              variant="h6"
-              sx={{
-                color: '#333333',
-                fontWeight: 600,
-                marginBottom: 1,
-              }}
-            >
-              Wystąpił błąd
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: '#666666',
-                textAlign: 'center',
-                marginBottom: 3,
-              }}
-            >
-              {error}
-            </Typography>
+            </div>
+            <h3 className="guests__error-title">Wystąpił błąd</h3>
+            <p className="guests__error-message">{error}</p>
             <button
-              onClick={() => loadGuests()}
-              className="guests__action-btn guests__action-btn--primary"
+              onClick={() => guestsQuery.refetch()}
+              className="pp-btn pp-btn--primary"
             >
               Spróbuj ponownie
             </button>
-          </Box>
+          </div>
         ) : filteredAndSortedGuests.length === 0 ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '4rem 2rem',
-              backgroundColor: '#ffffff',
-            }}
-          >
-            <Box
-              sx={{
-                color: '#94a3b8',
-                marginBottom: 2,
-              }}
-            >
-              <Users size={64} />
-            </Box>
-            <Typography
-              variant="h6"
-              sx={{
-                color: '#333333',
-                fontWeight: 600,
-                marginBottom: 1,
-              }}
-            >
-              {searchQuery ? 'Nie znaleziono gości' : 'Brak gości'}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: '#666666',
-                textAlign: 'center',
-                marginBottom: 3,
-                maxWidth: '400px',
-              }}
-            >
-              {searchQuery
+          <EmptyState
+            icon={Users}
+            title={searchQuery ? 'Nie znaleziono gości' : 'Brak gości'}
+            description={
+              searchQuery
                 ? 'Spróbuj zmienić wyszukiwanie'
-                : 'Dodaj pierwszego gościa do swoich wydarzeń'}
-            </Typography>
-            {!searchQuery && (
-              <button
-                className="guests__action-btn guests__action-btn--primary"
-                onClick={handleCreateGuest}
-              >
-                <Plus size={20} />
-                Dodaj gościa
-              </button>
-            )}
-          </Box>
+                : 'Dodaj pierwszego gościa do swoich wydarzeń'
+            }
+            action={
+              !searchQuery
+                ? {
+                    label: 'Dodaj gościa',
+                    onClick: handleCreateGuest,
+                  }
+                : undefined
+            }
+          />
         ) : (
           <div className="guests__table">
             <table>
@@ -525,6 +482,7 @@ const Guests = () => {
             </table>
           </div>
         )}
+        </DashboardViewBody>
       </div>
     </div>
   );
@@ -557,6 +515,21 @@ const Guests = () => {
         guest={editingGuest}
         onGuestUpdated={handleGuestAdded}
       />
+      <DeleteGuestModal
+        open={isDeleteGuestOpen}
+        guest={guestToDelete}
+        onClose={() => {
+          if (isDeletingGuest) return;
+          setIsDeleteGuestOpen(false);
+          setGuestToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteGuest}
+        isDeleting={isDeletingGuest}
+      />
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={dismiss} />
+      )}
     </>
   );
 };

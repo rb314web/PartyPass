@@ -1,0 +1,755 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "search": "Search",
+    "events": "Events",
+    "contacts": "Contacts",
+    "activities": "Activities",
+    "analytics": "Analytics",
+    "plan": "Plan",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "common": {
+    "language": "Language",
+    "polish": "Polski",
+    "english": "English",
+    "backToHome": "Back to home page",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "email": "Email",
+    "password": "Password"
+  },
+  "auth": {
+    "loginTitle": "Welcome back!",
+    "loginSubtitle": "Sign in to your PartyPass account",
+    "registerTitle": "Create your account",
+    "registerSubtitle": "Start organizing events in minutes — free Starter plan included",
+    "forgotTitle": "Reset your password",
+    "forgotSubtitle": "Enter the email linked to your account and we'll send a reset link",
+    "forgotSubtitleSent": "Check your inbox and follow the instructions in the email",
+    "forgotSentMessage": "If an account exists, we sent an email to <strong>{{email}}</strong>.",
+    "forgotSubmit": "Send reset link",
+    "backToLogin": "Back to sign in",
+    "emailPlaceholder": "you@email.com",
+    "passwordPlaceholder": "••••••••",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "firstNamePlaceholder": "Jane",
+    "lastNamePlaceholder": "Smith",
+    "confirmPassword": "Confirm password",
+    "choosePlan": "Choose a plan",
+    "popular": "Popular",
+    "acceptTerms": "I accept the <1>terms</1> and <2>privacy policy</2>",
+    "stepPersonal": "Details",
+    "stepAccount": "Account",
+    "next": "Continue",
+    "back": "Back",
+    "createAccount": "Create account",
+    "hasAccount": "Already have an account?",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot your password?",
+    "login": "Sign in",
+    "or": "or",
+    "googleLogin": "Continue with Google",
+    "noAccount": "Don't have an account?",
+    "register": "Sign up",
+    "joinUs": "Join us",
+    "passwordMismatch": "Passwords do not match",
+    "termsRequired": "You must accept the terms",
+    "showcase": {
+      "previewLabel": "Live RSVP",
+      "previewEvent": "Summer garden party",
+      "previewGoing": "24 going",
+      "previewMaybe": "6 maybe",
+      "login": {
+        "eyebrow": "Welcome back",
+        "title": "Your events, one dashboard away",
+        "subtitle": "Pick up where you left off — guests, RSVPs, and updates in one place.",
+        "feature1": "Instant access to all your events",
+        "feature2": "Live RSVP tracking and guest lists",
+        "feature3": "Secure sign-in with Google or email",
+        "statEvents": "Events hosted",
+        "statEventsValue": "10,000+",
+        "statRsvp": "Avg. response rate",
+        "statRsvpValue": "94%"
+      },
+      "register": {
+        "eyebrow": "Get started free",
+        "title": "Launch your first event today",
+        "subtitle": "Join organizers who skip spreadsheets and messy group chats.",
+        "feature1": "Beautiful RSVP page in under 5 minutes",
+        "feature2": "Starter plan free — no credit card",
+        "feature3": "Grow from birthdays to corporate events",
+        "statEvents": "Events hosted",
+        "statEventsValue": "10,000+",
+        "statRsvp": "Avg. response rate",
+        "statRsvpValue": "94%"
+      },
+      "forgot": {
+        "eyebrow": "Account recovery",
+        "title": "We'll get you back in quickly",
+        "subtitle": "Password resets are secure and expire after 24 hours.",
+        "feature1": "Reset link sent to your inbox",
+        "feature2": "Works with email and Google accounts",
+        "feature3": "Need help? Contact our support team",
+        "statEvents": "Events hosted",
+        "statEventsValue": "10,000+",
+        "statRsvp": "Avg. response rate",
+        "statRsvpValue": "94%"
+      }
+    }
+  },
+  "landing": {
+    "heroTitle": "Invitations your guests will <1>love</1>",
+    "heroSubtitle": "A beautiful RSVP link, simple confirmations, and peace of mind for you — no messy threads or spreadsheets.",
+    "freeStart": "Free to start",
+    "freeStartLabel": "Starter plan, no credit card required",
+    "rsvpOnline": "Online RSVP",
+    "rsvpOnlineLabel": "Guest confirmations in one link",
+    "emailInvites": "Email invitations",
+    "emailInvitesLabel": "Personalized messages for guests",
+    "startFree": "Get started",
+    "watchDemo": "Watch demo",
+    "startFreeLong": "Start for free",
+    "heroEyebrow": "Organize with ease",
+    "invitation": {
+      "label": "Invitation",
+      "guestPrompt": "Will you be there?",
+      "location": "Warsaw, 12 Nowogrodzka St",
+      "poweredBy": "Sent via PartyPass",
+      "guestName": "Maria Kowalska",
+      "guestEmail": "maria@example.com",
+      "guestInitials": "MK"
+    },
+    "howItWorks": {
+      "eyebrow": "How it works",
+      "title": "From idea to confirmations in three steps",
+      "subtitle": "No complicated tools — just what you need to hear “I'll be there.”",
+      "step1Title": "Create your event",
+      "step1Desc": "Date, venue, guest list — ready in minutes.",
+      "step2Title": "Send the invitation",
+      "step2Desc": "One RSVP link in an email. Guests respond without signing up.",
+      "step3Title": "Track responses",
+      "step3Desc": "See live who’s coming, who’s unsure, and who can’t make it."
+    },
+    "nav": {
+      "features": "Features",
+      "featuresDesc": "Discover what PartyPass can do",
+      "howItWorks": "How it works",
+      "howItWorksDesc": "Three simple steps",
+      "pricing": "Pricing",
+      "pricingDesc": "Choose the right plan",
+      "demo": "Demo",
+      "demoDesc": "See the organizer dashboard",
+      "contact": "Contact",
+      "contactDesc": "Get in touch with us"
+    },
+    "heroCards": {
+      "birthdayTitle": "🎂 Maria's Birthday",
+      "birthdayDate": "June 14, 8:00 PM",
+      "birthdayRsvp": "28/35 guests confirmed",
+      "meetupTitle": "🏢 Product Design Meetup",
+      "meetupDate": "June 22, 6:30 PM",
+      "meetupAttendees": "42 attendees",
+      "liveRsvp": "+3 new RSVPs today"
+    },
+    "previewScenarios": {
+      "birthday": {
+        "title": "🎂 Maria's Birthday",
+        "date": "June 14, 8:00 PM",
+        "guestName": "Maria Kowalska",
+        "guestEmail": "maria@example.com",
+        "guestInitials": "MK"
+      },
+      "meetup": {
+        "title": "🏢 Product Design Meetup",
+        "date": "June 22, 6:30 PM",
+        "guestName": "Tomasz Wiśniewski",
+        "guestEmail": "tomasz@example.com",
+        "guestInitials": "TW"
+      },
+      "gala": {
+        "title": "✨ Charity Gala",
+        "date": "August 2, 3:00 PM",
+        "guestName": "Anna & Piotr",
+        "guestEmail": "anna.kowalska@example.com",
+        "guestInitials": "AP"
+      }
+    },
+    "features": {
+      "eyebrow": "For organizers",
+      "title": "You host. We handle the rest",
+      "subtitle": "Dashboard, invitations, and guest replies — connected in one place.",
+      "eventCreationTitle": "Easy event creation",
+      "eventCreationDesc": "An intuitive wizard helps you create an event in minutes",
+      "guestManagementTitle": "Guest management",
+      "guestManagementDesc": "Add guests, track responses, and manage your attendee list",
+      "emailInvitesTitle": "Email invitations",
+      "emailInvitesDesc": "Send personalized invitations — SMS available on the Pro plan",
+      "analyticsTitle": "Analytics",
+      "analyticsDesc": "RSVP, attendance, and event activity statistics",
+      "rsvpLinkTitle": "RSVP link",
+      "rsvpLinkDesc": "Share one link — guests confirm without logging in",
+      "securityTitle": "Security",
+      "securityDesc": "Your data is protected with the highest standards"
+    },
+    "pricing": {
+      "label": "Plans & Pricing",
+      "title": "Choose the plan",
+      "titleHighlight": "that's right for you",
+      "subtitle": "Start for free — upgrade as your events grow",
+      "free": "Free",
+      "perMonth": "/month",
+      "mostPopular": "Most popular",
+      "cta": {
+        "starter": "Start for free",
+        "pro": "Choose plan",
+        "enterprise": "Contact us"
+      },
+      "plans": {
+        "starter": {
+          "features": [
+            "Up to 10 events total",
+            "Up to 50 guests total",
+            "Up to 50 contacts",
+            "Basic email invitations",
+            "RSVP link for guests",
+            "Basic statistics"
+          ]
+        },
+        "pro": {
+          "features": [
+            "Up to 50 events total",
+            "Up to 500 guests total",
+            "Up to 1,000 contacts",
+            "Personalized invitations",
+            "SMS notifications",
+            "Advanced analytics",
+            "QR codes for guests",
+            "Priority support"
+          ]
+        },
+        "enterprise": {
+          "features": [
+            "Unlimited events",
+            "Unlimited guests",
+            "Unlimited contacts",
+            "Custom branding",
+            "Advanced analytics",
+            "API access",
+            "Dedicated manager",
+            "24/7 support",
+            "CRM integrations"
+          ]
+        }
+      }
+    },
+    "cta": {
+      "eyebrow": "Ready to get started?",
+      "title": "Host your next event without the stress",
+      "subtitle": "Create a free account and send your first invitation today.",
+      "perkFree": "Free starter plan",
+      "perkNoCard": "No credit card required",
+      "perkFast": "First invitation in 2 minutes",
+      "previewLabel": "This is what your guest sees on the RSVP link"
+    },
+    "contact": {
+      "eyebrow": "Contact",
+      "title": "Contact us",
+      "subtitle": "Have questions? We're here to help you organize the perfect event.",
+      "perkResponse": "Reply within 24 hours",
+      "perkHelp": "Help with plans, RSVP, and invitations",
+      "perkPrivacy": "Your data stays secure",
+      "formTitle": "Write to us",
+      "formHint": "Fill out the form and we'll reply to your email.",
+      "nameLabel": "Full name *",
+      "namePlaceholder": "Enter your name",
+      "emailLabel": "Email *",
+      "messageLabel": "Message *",
+      "messagePlaceholder": "How can we help you?",
+      "submit": "Send message",
+      "submitting": "Sending...",
+      "successTitle": "Thank you for your message!",
+      "successMessage": "We'll get back to you as soon as possible.",
+      "sendAnother": "Send another message",
+      "errors": {
+        "nameRequired": "Name is required",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email format",
+        "messageRequired": "Message is required",
+        "submitFailed": "Something went wrong while sending your message. Please try again later."
+      }
+    },
+    "footer": {
+      "missionFull": "Helping organizers create perfect events — from guest management and invitations to attendance tracking and results analysis.",
+      "missionShort": "Create perfect events with PartyPass.",
+      "backToTop": "Back to top",
+      "siteMap": "Site map",
+      "legal": "Legal",
+      "home": "Home",
+      "privacy": "Privacy policy",
+      "terms": "Terms of service",
+      "rodo": "GDPR",
+      "copyright": "© {{year}} partypass.pl. All rights reserved."
+    }
+  },
+  "settings": {
+    "appearanceTitle": "Appearance and personalization",
+    "appearanceSubtitle": "Customize the app interface to your preferences",
+    "loadingSettings": "Loading settings...",
+    "languageRegion": "Language and region",
+    "languageRegionHint": "Set interface language and regional formats",
+    "interfaceLanguage": "Interface language"
+  },
+  "legal": {
+    "updatedLabel": "Last updated:",
+    "backToHome": "← Back to home page",
+    "privacy": {
+      "title": "Privacy Policy",
+      "subtitle": "How we process your data in PartyPass",
+      "lastUpdated": "June 13, 2026",
+      "sections": [
+        {
+          "title": "1. Data controller",
+          "paragraphs": [
+            "The controller of personal data processed in the PartyPass Service is the platform operator. Contact: kontakt@partypass.pl."
+          ]
+        },
+        {
+          "title": "2. What data we collect",
+          "paragraphs": [
+            "We process account data (name, email), events and guest data entered by the user, and technical data (logs, session identifiers) necessary to operate the service.",
+            "Guest data (e.g. name, email, RSVP response) is processed solely to provide invitation and event management features."
+          ]
+        },
+        {
+          "title": "3. Purposes and legal bases",
+          "paragraphs": [
+            "We process data to provide the service (Art. 6(1)(b) GDPR), handle payments (lit. b), ensure security (lit. f), and — where consent is given — for marketing purposes (lit. a)."
+          ]
+        },
+        {
+          "title": "4. Data recipients",
+          "paragraphs": [
+            "We use infrastructure providers (e.g. Firebase/Google Cloud, EmailJS) acting as processors under data processing agreements.",
+            "Data is not sold to third parties for marketing purposes."
+          ]
+        },
+        {
+          "title": "5. Retention period",
+          "paragraphs": [
+            "Account data is kept for as long as you use the Service and until the account is deleted, unless a longer period is required by law.",
+            "After account deletion, data is permanently removed from active systems within a reasonable technical timeframe."
+          ]
+        },
+        {
+          "title": "6. Your rights",
+          "paragraphs": [
+            "You have the right of access, rectification, erasure, restriction of processing, data portability, and to object — within the limits set by the GDPR.",
+            "You may lodge a complaint with your supervisory authority. In Poland: the President of the Personal Data Protection Office (PUODO)."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "subtitle": "Terms of use for the PartyPass platform",
+      "lastUpdated": "June 13, 2026",
+      "sections": [
+        {
+          "title": "1. General provisions",
+          "paragraphs": [
+            "These terms define the rules for using the PartyPass service (the \"Service\") provided by the platform operator.",
+            "Using the Service means you accept these terms. If you do not accept them, do not use the Service."
+          ]
+        },
+        {
+          "title": "2. User account",
+          "paragraphs": [
+            "Registration requires accurate data and keeping your password confidential. You are responsible for actions performed on your account.",
+            "The operator may suspend or delete an account in case of a breach of these terms, the law, or the security of other users."
+          ]
+        },
+        {
+          "title": "3. Plans and payments",
+          "paragraphs": [
+            "The Service offers Starter (free), Pro, and Enterprise plans with different feature limits described on the pricing page.",
+            "Fees for paid plans are charged according to the selected billing cycle. Payment details are provided at checkout."
+          ]
+        },
+        {
+          "title": "4. Permitted use",
+          "paragraphs": [
+            "You may not use the Service to send spam, infringe third-party rights, or circumvent platform technical limits.",
+            "You retain rights to content you submit (e.g. guest data) and grant the operator a license necessary to provide the Service."
+          ]
+        },
+        {
+          "title": "5. Liability",
+          "paragraphs": [
+            "The Service is provided \"as is\". The operator strives to ensure continuity but does not guarantee uninterrupted access.",
+            "To the extent permitted by law, the operator's liability is limited to fees paid by the user in the last 12 months."
+          ]
+        },
+        {
+          "title": "6. Contact",
+          "paragraphs": [
+            "For matters related to these terms, contact: kontakt@partypass.pl."
+          ]
+        }
+      ]
+    },
+    "rodo": {
+      "title": "GDPR Information",
+      "subtitle": "Details of personal data processing",
+      "lastUpdated": "June 13, 2026",
+      "sections": [
+        {
+          "title": "1. Information for event guests",
+          "paragraphs": [
+            "The event organizer (PartyPass user) is the controller of guest data entered into the system. PartyPass acts as a processor under a data processing agreement with the organizer."
+          ]
+        },
+        {
+          "title": "2. Scope of processing",
+          "paragraphs": [
+            "Under the processing agreement we handle guest identification and contact data, RSVP status, dietary preferences, and notes entered by the organizer — solely to deliver the event."
+          ]
+        },
+        {
+          "title": "3. Security measures",
+          "paragraphs": [
+            "We use transmission encryption (HTTPS), Firebase authentication-based access control, and database security rules that limit access to the account owner's data."
+          ]
+        },
+        {
+          "title": "4. Sub-processors",
+          "paragraphs": [
+            "Data may be processed by Google Firebase (hosting, database, authentication) and — when configured — EmailJS (email delivery). The sub-processor list is updated in the privacy policy."
+          ]
+        },
+        {
+          "title": "5. GDPR contact",
+          "paragraphs": [
+            "Organizers: kontakt@partypass.pl. Event guests should direct requests regarding their data to the event organizer who entered it into the system."
+          ]
+        }
+      ]
+    }
+  },
+  "rsvp": {
+    "status": {
+      "accepted": {
+        "label": "I'll be there",
+        "hint": "With pleasure"
+      },
+      "maybe": {
+        "label": "Maybe",
+        "hint": "Not sure yet"
+      },
+      "declined": {
+        "label": "I won't be there",
+        "hint": "Unfortunately I can't make it"
+      }
+    },
+    "submitted": {
+      "accepted": {
+        "titleWithName": "Great, {{name}}! See you there",
+        "title": "Great, see you there!",
+        "message": "We're glad you're coming. See you soon!"
+      },
+      "maybe": {
+        "titleWithName": "{{name}}, still deciding?",
+        "title": "\"Maybe\" response saved",
+        "message": "Let us know when you've decided."
+      },
+      "declined": {
+        "titleWithName": "Thank you, {{name}}",
+        "title": "Thank you for letting us know",
+        "message": "We understand. If anything changes, you can update your response."
+      },
+      "changeResponseHint": "You can change your response until {{deadline}}.",
+      "changeResponse": "Change response"
+    },
+    "errors": {
+      "missingToken": "Missing token in the link",
+      "tokenNotFound": "No data found for this token",
+      "loadFailed": "Failed to load data",
+      "submitFailed": "Failed to submit response",
+      "genericTitle": "Oops! Something went wrong"
+    },
+    "deadlineExpired": {
+      "eventPassed": {
+        "title": "This event has already taken place",
+        "body": "This event is in the past, so you can no longer submit a response.",
+        "hint": "Thank you for your interest. If you have questions, contact the organizer."
+      },
+      "rsvpDeadlinePassed": {
+        "title": "The response deadline has passed",
+        "body": "The RSVP deadline has passed, but the event is still upcoming. You can no longer change your decision online.",
+        "hint": "Still need to change your response? Contact the event organizer directly."
+      },
+      "lastResponseSuffix": " Your last response was: \"{{status}}\"."
+    },
+    "notFound": {
+      "title": "Invitation not found",
+      "body": "Check that the link is correct."
+    },
+    "common": {
+      "invitation": "Invitation",
+      "invitationFor": "Invitation for"
+    },
+    "form": {
+      "willYouAttend": "Will you be attending?",
+      "responseSavedHint": "Your response has been saved — you can change it until {{deadline}}.",
+      "plusOne": "I'm bringing a plus-one (+1)",
+      "partyWhoCouple": "Who from your party is coming?",
+      "partyWhoCompanion": "Who is coming?",
+      "partySelectOne": "Select at least one person",
+      "partyUnnamed": "Companion",
+      "placeholders": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "plusOneDietary": "Plus-one dietary needs (optional)",
+        "dietaryRestrictions": "e.g. vegetarian, gluten-free...",
+        "notes": "Have a question or request? Write it here..."
+      },
+      "labels": {
+        "dietaryRestrictions": "Dietary restrictions (optional)",
+        "notes": "Additional notes (optional)"
+      },
+      "submit": {
+        "sending": "Sending...",
+        "saveChange": "Save change",
+        "sendResponse": "Submit response"
+      },
+      "deadlineHint": {
+        "passed": "The deadline to submit a response has passed.",
+        "active": "You can change your response until {{deadline}}."
+      }
+    },
+    "eventDetails": {
+      "getReady": "Get ready",
+      "weatherAndAttire": "Weather and attire",
+      "location": "Location",
+      "details": "Details",
+      "dressCode": "Dress code",
+      "additionalInfo": "Additional information",
+      "haveQuestion": "Have a question?"
+    },
+    "calendar": {
+      "addToCalendar": "Add to calendar",
+      "googleTitle": "Add to Google Calendar",
+      "google": "Google",
+      "appleTitle": "Add to Apple Calendar",
+      "apple": "Apple",
+      "downloadIcsTitle": "Download calendar file",
+      "downloadIcs": "Download .ics"
+    },
+    "organizerContact": {
+      "lead": "Contact the event organizer directly.",
+      "emailSubject": "Question about event: {{eventTitle}}",
+      "emailBody": "Hi,\n\nI have a question about the event:\n\n",
+      "sendEmail": "Send email",
+      "call": "Call"
+    },
+    "countdown": {
+      "live": "Happening now",
+      "past": "Event has already taken place",
+      "inDaysHours": "In {{days}} {{daysUnit}}, {{hours}} {{hoursUnit}}",
+      "inHoursMinutes": "In {{hours}} {{hoursUnit}}, {{minutes}} {{minutesUnit}}",
+      "inMinutes": "In {{minutes}} {{minutesUnit}}",
+      "day_one": "day",
+      "day_other": "days",
+      "hour_one": "hour",
+      "hour_other": "hours",
+      "minute_one": "minute",
+      "minute_other": "minutes"
+    }
+  },
+  "weather": {
+    "loading": "Loading weather...",
+    "unavailable": "Weather unavailable",
+    "packingLabel": "What to bring",
+    "currentRsvp": "Now",
+    "currentDefault": "Current",
+    "forecastRsvp": "During the event",
+    "forecastDefault": "During",
+    "eventPassed": "The event has already passed — forecast unavailable",
+    "eventTooFar": "Event is more than {{days}} days away — forecast unavailable",
+    "forecastFetchFailed": "Could not load the forecast for this date",
+    "wmo": {
+      "0": "clear sky",
+      "1": "mainly clear",
+      "2": "partly cloudy",
+      "3": "overcast",
+      "45": "fog",
+      "48": "depositing rime fog",
+      "51": "light drizzle",
+      "53": "drizzle",
+      "55": "dense drizzle",
+      "61": "slight rain",
+      "63": "rain",
+      "65": "heavy rain",
+      "71": "slight snow",
+      "73": "snow",
+      "75": "heavy snow",
+      "80": "rain showers",
+      "81": "rain showers",
+      "82": "violent rain showers",
+      "85": "snow showers",
+      "86": "heavy snow showers",
+      "95": "thunderstorm",
+      "96": "thunderstorm with hail",
+      "99": "thunderstorm with hail",
+      "default": "cloudy"
+    },
+    "packing": {
+      "thunderstorm": "Storms possible until evening — umbrella and rain jacket",
+      "heavyRain": "High chance of rain until evening — bring an umbrella",
+      "rainLater": "Rain expected after the start — an umbrella will help",
+      "rainPossible": "Rain possible until evening — bring an umbrella",
+      "snow": "Snow possible until evening — dress warmly",
+      "fog": "Fog possible during the day — layers for the cold",
+      "veryCold": "It may get very cold in the evening — warm jacket",
+      "cool": "Temperature will drop during the day — bring a jacket or sweater",
+      "hot": "It will be hot during the day — light clothing and water",
+      "windy": "Windy until evening — something windproof",
+      "clear": "No rain until evening — comfortable clothes are enough",
+      "cloudy": "Cloudy without rain — a light jacket just in case",
+      "default": "No rain until evening — comfortable layered clothing"
+    }
+  },
+  "map": {
+    "loading": "Loading map...",
+    "error": "Could not display the map for this location.",
+    "openInGoogleMaps": "Open in Google Maps",
+    "copy": "Copy",
+    "copied": "Copied",
+    "navigate": "Navigate",
+    "copyAria": "Copy address",
+    "copiedAria": "Address copied",
+    "navigateAria": "Open in Google Maps"
+  },
+  "dashboardHome": {
+    "lede": "RSVP, guests, and dates — all in one place.",
+    "quickActionsLabel": "Quick actions",
+    "spotlightLabel": "Next event",
+    "spotlightOpen": "Open",
+    "spotlightEmptyTitle": "No upcoming events",
+    "spotlightEmptyDesc": "Create your first event and send invitations.",
+    "spotlightEmptyCta": "New event",
+    "countdownToday": "Today",
+    "countdownTomorrow": "Tomorrow",
+    "countdownDays": "In {{count}} days",
+    "guest_one": "{{count}} guest",
+    "guest_other": "{{count}} guests",
+    "attentionTitle": "Needs attention",
+    "attentionPending_one": "{{count}} guest awaiting RSVP",
+    "attentionPending_other": "{{count}} guests awaiting RSVP",
+    "attentionPendingEvent": "{{total}} guests without a response — {{pending}} for “{{title}}”",
+    "attentionPendingEventSingle_one": "{{count}} guest awaiting RSVP for “{{title}}”",
+    "attentionPendingEventSingle_other": "{{count}} guests awaiting RSVP for “{{title}}”",
+    "attentionManageGuests": "Manage guests",
+    "attentionViewContacts": "View contacts",
+    "attentionDraft_one": "{{count}} event draft — finish and publish",
+    "attentionDraft_other": "{{count}} event drafts — finish and publish",
+    "attentionEventsLink": "Events",
+    "attentionPlanEvents": "Event limit: {{used}} / {{max}} ({{percent}}%)",
+    "attentionPlanContacts": "Contact limit: {{used}} / {{max}} ({{percent}}%)",
+    "attentionChangePlan": "Change plan",
+    "attentionEventSoon": "“{{title}}” {{when}} — review your guest list",
+    "attentionEventToday": "today",
+    "attentionEventTomorrow": "tomorrow",
+    "attentionEventInDays": "in {{count}} days",
+    "attentionOpenEvent": "Open event",
+    "metricsAria": "Key metrics",
+    "metricsEvents": "Events",
+    "metricsEventsNew_one": "1 new this month",
+    "metricsEventsNew_other": "{{count}} new this month",
+    "metricsEventsViewAll": "View all",
+    "metricsRsvp": "RSVP responses",
+    "metricsRsvpPending_one": "{{count}} guest pending",
+    "metricsRsvpPending_other": "{{count}} guests pending",
+    "metricsRsvpFootnote": "Across all invitations",
+    "metricsRsvpAnalytics": "RSVP analytics",
+    "metricsAccepted": "Confirmed",
+    "metricsPending": "Pending",
+    "metricsDeclined": "Declined",
+    "metricsActive": "Active",
+    "metricsCompleted": "Completed",
+    "metricsPlanUsage": "Plan limit usage",
+    "metricsPlanEvents": "Events",
+    "metricsPlanContacts": "Contacts",
+    "metricsChangePlan": "Change plan",
+    "metricsSeeMore": "See more",
+    "planStarter": "Starter plan",
+    "planPro": "Pro plan",
+    "planEnterprise": "Enterprise plan",
+    "calendarSection": "Calendar",
+    "calendarDesc": "Dates and upcoming events",
+    "calendarAria": "Calendar",
+    "pulseAria": "Activity and weather",
+    "mapTitle": "Event map",
+    "mapDescWithEvents": "Locations of your upcoming events",
+    "mapDescEmpty": "Add addresses to events to see the map",
+    "mapAria": "Event map",
+    "mapLoading": "Loading event map...",
+    "mapDeferred": "Map loads when you scroll here",
+    "activityTitle": "Latest activity",
+    "activityEmpty": "No recent activity",
+    "activityViewAll": "View all",
+    "weatherTitle": "Weather",
+    "weatherLoading": "Loading weather…",
+    "weatherUnavailable": "Weather unavailable",
+    "weatherNoData": "No data",
+    "weatherCurrent": "Current",
+    "weatherDuring": "During event",
+    "weatherNoLocation": "Event has no location",
+    "weatherNoUpcoming": "No upcoming event",
+    "weatherAddLocationHint": "Add an address to “{{title}}” to see the forecast.",
+    "weatherCreateEventHint": "Create an event to see the forecast.",
+    "weatherForecastLater": "Forecast will be available closer to the event date",
+    "weatherForecastPast": "The event has passed — forecast unavailable",
+    "weatherForecastTooFar": "Event is more than {{days}} days away — forecast unavailable",
+    "weatherForecastFailed": "Could not load the forecast for this date",
+    "calendarPrevMonth": "Previous month",
+    "calendarNextMonth": "Next month",
+    "calendarToday": "Today",
+    "calendarUpcoming": "Upcoming events",
+    "calendarNoUpcoming": "No upcoming events",
+    "quickNewEvent": "New event",
+    "quickAddGuests": "Add guests",
+    "quickAnalytics": "Analytics",
+    "quickSettings": "Settings",
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "greetingHello": "Hello",
+    "skeletonLoading": "Loading…",
+    "readinessEyebrow": "Readiness status",
+    "readinessAria": "Event readiness for {{title}}",
+    "readinessScore": "Readiness {{percent}} percent",
+    "readinessScoreLabel": "ready",
+    "readinessRsvpTitle": "Guest responses",
+    "readinessRsvpBarAria": "{{accepted}} confirmed, {{pending}} pending, {{declined}} declined, {{maybe}} maybe",
+    "readinessAccepted": "{{count}} confirmed",
+    "readinessPending": "{{count}} no response",
+    "readinessDeclined": "{{count}} declined",
+    "readinessMaybe": "{{count}} maybe",
+    "readinessCheckLocation": "Location set",
+    "readinessCheckLocationHint": "Add the event address",
+    "readinessCheckGuests": "Guest list",
+    "readinessCheckGuestsHint": "Add guests to the event",
+    "readinessCheckPublished": "Event published",
+    "readinessCheckPublishedPending": "Event draft",
+    "readinessCheckPublishedHint": "Publish the draft to send invitations",
+    "readinessCheckResponses": "RSVP responses",
+    "readinessCheckResponsesPending": "{{count}} guests have not responded yet",
+    "readinessCheckPlan": "Plan limit OK",
+    "readinessCheckPlanHint": "Event limit reached on your plan",
+    "readinessCta": "Manage event"
+  }
+}

@@ -3,6 +3,8 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Calendar, Settings, Users, Search, Activity, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
+import { preloadDashboardRoute } from '../../../utils/preloadDashboardRoute';
 import './BottomNavigation.scss';
 
 interface NavItem {
@@ -14,43 +16,44 @@ interface NavItem {
 
 const BottomNavigation: React.FC = () => {
   const location = useLocation();
+  const { t } = useTranslation();
   useAuth();
 
   const navItems: NavItem[] = [
     {
       path: '/dashboard',
-      label: 'Dashboard',
+      label: t('nav.dashboard'),
       icon: <Home size={20} />,
       exact: true,
     },
     {
       path: '/dashboard/search',
-      label: 'Wyszukaj',
+      label: t('nav.search'),
       icon: <Search size={20} />,
     },
     {
       path: '/dashboard/events',
-      label: 'Wydarzenia',
+      label: t('nav.events'),
       icon: <Calendar size={20} />,
     },
     {
       path: '/dashboard/contacts',
-      label: 'Kontakty',
+      label: t('nav.contacts'),
       icon: <Users size={20} />,
     },
     {
       path: '/dashboard/activities',
-      label: 'Aktywności',
+      label: t('nav.activities'),
       icon: <Activity size={20} />,
     },
     {
       path: '/dashboard/analytics',
-      label: 'Analityka',
+      label: t('nav.analytics'),
       icon: <BarChart3 size={20} />,
     },
     {
       path: '/dashboard/settings',
-      label: 'Ustawienia',
+      label: t('nav.settings'),
       icon: <Settings size={20} />,
     },
   ];
@@ -82,6 +85,9 @@ const BottomNavigation: React.FC = () => {
             to={item.path}
             className={`bottom-nav__item ${isActive(item) ? 'bottom-nav__item--active' : ''}`}
             aria-label={item.label}
+            onMouseEnter={() => preloadDashboardRoute(item.path)}
+            onFocus={() => preloadDashboardRoute(item.path)}
+            onTouchStart={() => preloadDashboardRoute(item.path)}
           >
             <div className="bottom-nav__icon">{item.icon}</div>
             <span className="bottom-nav__label">{item.label}</span>

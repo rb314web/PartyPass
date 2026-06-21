@@ -1,0 +1,34 @@
+// PartyPass — spójne ikony Lucide (plakietki nagłówków, sekcji)
+
+@mixin pp-icon-badge($size: 2.5rem, $radius: var(--radius-lg)) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border-radius: $radius;
+  background: var(--icon-badge-bg);
+  color: var(--icon-badge-color);
+  flex-shrink: 0;
+
+  svg {
+    width: calc(#{$size} * 0.55);
+    height: calc(#{$size} * 0.55);
+    stroke-width: 2.25;
+  }
+}
+
+// Bazowa waga kreski — czytelniejsze niż domyślne cienkie Lucide
+.lucide {
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pp-icon-badge {
+  @include pp-icon-badge();
+}
+
+.pp-icon-badge--lg {
+  @include pp-icon-badge(3rem, var(--radius-xl));
+}

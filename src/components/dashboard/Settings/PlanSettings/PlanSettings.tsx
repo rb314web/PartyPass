@@ -18,11 +18,21 @@ import {
   EventStats,
 } from '../../../../services/firebase/eventService';
 import { getPlanLimits, PlanType } from '../../../../services/firebase/planLimitsService';
+import { PLAN_CATALOG } from '../../../../constants/plans';
 import ConfigurationStatus from '../ConfigurationStatus';
 import './PlanSettings.scss';
+import { useDashboardViewMotion } from '../../../../hooks/useDashboardViewMotion';
+import Toast from '../../../common/Toast/Toast';
+import PageHeader from '../../../common/PageHeader/PageHeader';
+import { useToast } from '../../../../hooks/useToast';
 
 const PlanSettings: React.FC = () => {
   const { user } = useAuth();
+  const { toast, dismiss, showError } = useToast();
+  const { className: viewClassName } = useDashboardViewMotion({
+    variant: 'shell',
+    pageClass: 'plan-settings',
+  });
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(
     'monthly'
   );
@@ -43,66 +53,18 @@ const PlanSettings: React.FC = () => {
   const planType = (user?.planType as PlanType) || 'starter';
   const planLimits = getPlanLimits(planType);
 
-  const plans = [
-    {
-      id: 'starter',
-      name: 'Starter',
-      icon: Zap,
-      price: { monthly: 0, yearly: 0 },
-      description: 'Idealny na początek',
-      features: [
-        'Do 10 wydarzeń łącznie',
-        'Do 50 gości łącznie',
-        'Do 50 kontaktów łącznie',
-        'Podstawowe zaproszenia',
-        'Email support',
-        'Podstawowe statystyki',
-      ],
-      limitations: [
-        'Brak SMS powiadomień',
-        'Brak zaawansowanych analityk',
-        'Brak custom brandingu',
-      ],
-    },
-    {
-      id: 'pro',
-      name: 'Pro',
-      icon: Star,
-      price: { monthly: 29, yearly: 290 },
-      description: 'Dla profesjonalistów',
-      popular: true,
-      features: [
-        'Do 50 wydarzeń łącznie',
-        'Do 500 gości łącznie',
-        'Do 1000 kontaktów łącznie',
-        'Spersonalizowane zaproszenia',
-        'SMS powiadomienia',
-        'Zaawansowane analityki',
-        'QR kody dla gości',
-        'Priority support',
-        'Export danych',
-      ],
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      icon: Crown,
-      price: { monthly: 99, yearly: 990 },
-      description: 'Dla dużych organizacji',
-      features: [
-        'Nieograniczone wydarzenia',
-        'Nieograniczona liczba gości',
-        'Nieograniczona liczba kontaktów',
-        'Custom branding',
-        'API dostęp',
-        'Dedykowany manager',
-        '24/7 support',
-        'Integracje z CRM',
-        'White-label opcje',
-        'Advanced security',
-      ],
-    },
-  ];
+  const planIcons = { starter: Zap, pro: Star, enterprise: Crown } as const;
+
+  const plans = PLAN_CATALOG.map(entry => ({
+    id: entry.id,
+    name: entry.name,
+    icon: planIcons[entry.id],
+    price: entry.pricing,
+    description: entry.description,
+    popular: entry.popular,
+    features: entry.features,
+    limitations: entry.limitations,
+  }));
 
   const currentPlan = plans.find(p => p.id === user?.planType) ?? plans[0];
   const yearlyDiscount = 17;
@@ -154,7 +116,7 @@ const PlanSettings: React.FC = () => {
 
   const handlePlanUpgrade = async (planId: string) => {
     if (!isConfigured) {
-      alert('Autopay nie jest skonfigurowane. Skontaktuj się z administratorem.');
+      showError('Autopay nie jest skonfigurowane. Skontaktuj się z administratorem.');
       return;
     }
     resetState();
@@ -165,7 +127,7 @@ const PlanSettings: React.FC = () => {
         ? selectedPlan.price.yearly
         : selectedPlan.price.monthly;
     if (price === 0) {
-      alert(`Przejście na plan ${selectedPlan.name} zostanie wkrótce zaimplementowane!`);
+      showError(`Przejście na plan ${selectedPlan.name} zostanie wkrótce zaimplementowane!`);
       return;
     }
     try {
@@ -201,19 +163,13 @@ const PlanSettings: React.FC = () => {
   };
 
   return (
-    <div className="plan-settings">
-      {/* ── Page Header ── */}
-      <header className="plan-settings__page-header">
-        <div className="plan-settings__page-title">
-          <div className="plan-settings__page-icon">
-            <Crown size={24} />
-          </div>
-          <div>
-            <h1>Plan i subskrypcja</h1>
-            <p>Zarządzaj swoim planem, płatnościami i limitami</p>
-          </div>
-        </div>
-      </header>
+    <div className={viewClassName}>
+      <PageHeader
+        title="Plan i subskrypcja"
+        subtitle="Zarządzaj swoim planem, płatnościami i limitami"
+        icon={Crown}
+        className="plan-settings__page-header"
+      />
 
       {/* ── Config Status ── */}
       <ConfigurationStatus />
@@ -462,6 +418,9 @@ const PlanSettings: React.FC = () => {
           )}
         </div>
       </div>
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={dismiss} />
+      )}
     </div>
   );
 };

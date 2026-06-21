@@ -1,16 +1,16 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Toast from './Toast';
 
 describe('Toast', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it('renders with message', () => {
@@ -23,38 +23,33 @@ describe('Toast', () => {
     expect(iconElement).not.toBeNull();
   });
 
-  it('calls onClose after default duration', async () => {
-    const onClose = jest.fn();
+  it('calls onClose after default duration', () => {
+    const onClose = vi.fn();
     render(<Toast message="Test" onClose={onClose} />);
 
-    // Fast-forward time
-    jest.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(5000);
 
-    await waitFor(() => {
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onClose after custom duration', async () => {
-    const onClose = jest.fn();
+  it('calls onClose after custom duration', () => {
+    const onClose = vi.fn();
     const duration = 3000;
     render(<Toast message="Test" onClose={onClose} duration={duration} />);
 
-    jest.advanceTimersByTime(duration);
+    vi.advanceTimersByTime(duration);
 
-    await waitFor(() => {
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('clears timer on unmount', () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const { unmount } = render(<Toast message="Test" onClose={onClose} />);
 
     unmount();
 
     // Advance time - onClose should not be called since component unmounted
-    jest.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(5000);
 
     expect(onClose).not.toHaveBeenCalled();
   });

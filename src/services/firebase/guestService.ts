@@ -71,6 +71,44 @@ export class GuestService {
     return snapshot.data().count;
   }
 
+  /** Pojedynczy gość po ID (2 odczyty Firestore zamiast skanowania listy). */
+  static async getGuestById(
+    guestId: string,
+    userId: string
+  ): Promise<Guest | null> {
+    try {
+      const guestRef = firebaseDoc(db, COLLECTIONS.GUESTS, guestId);
+      const guestDoc = await getDoc(guestRef);
+
+      if (!guestDoc.exists()) {
+        return null;
+      }
+
+      const guestData = guestDoc.data() as FirebaseGuest;
+      if (guestData.userId !== userId) {
+        return null;
+      }
+
+      const eventDoc = await getDoc(
+        firebaseDoc(db, COLLECTIONS.EVENTS, guestData.eventId)
+      );
+      const eventData = eventDoc.data() as FirebaseEvent | undefined;
+
+      if (!eventData) {
+        return null;
+      }
+
+      return convertFirebaseGuestToGuest(
+        { ...guestData, id: guestDoc.id },
+        eventData
+      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Nieznany błąd';
+      throw new Error(`Błąd podczas pobierania gościa: ${message}`);
+    }
+  }
+
   // Get guests for user with pagination
   static async getUserGuests(
     userId: string,
@@ -208,8 +246,8 @@ export class GuestService {
       const docRef = await addDoc(collection(db, COLLECTIONS.GUESTS), newGuest);
       // Generate RSVP token after creating the guest
       try {
-        const { RSVPService } = await import('./rsvpService');
-        const rsvpToken = await RSVPService.generateRSVPToken(
+        const { NewRSVPService } = await import('./newRSVPService');
+        const rsvpToken = await NewRSVPService.generateRSVPToken(
           docRef.id,
           eventId
         );

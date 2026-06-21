@@ -1,40 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import MenuItem from '@mui/material/MenuItem';
-import CircularProgress from '@mui/material/CircularProgress';
-import IconButton from '@mui/material/IconButton';
-import Chip from '@mui/material/Chip';
-import { ArrowLeft, Save, Mail, Phone, Calendar, User, Users } from 'lucide-react';
-import { useSnackbar } from 'notistack';
+import { ArrowLeft, Save, Calendar, User, Users } from 'lucide-react';
 import { GuestService } from '../../../../services/firebase/guestService';
-import { EventService } from '../../../../services/firebase/eventService';
 import { useAuth } from '../../../../hooks/useAuth';
 import type { Guest } from '../../../../types';
 import LoadingSpinner from '../../../common/LoadingSpinner/LoadingSpinner';
+import Toast from '../../../common/Toast/Toast';
+import { useToast } from '../../../../hooks/useToast';
+import '../EditGuestModal/EditGuestModal.scss';
 import './EditGuest.scss';
+
+const STATUS_OPTIONS: Array<{ value: Guest['status']; label: string }> = [
+  { value: 'pending', label: 'Oczekujące' },
+  { value: 'accepted', label: 'Potwierdzone' },
+  { value: 'declined', label: 'Odrzucone' },
+  { value: 'maybe', label: 'Może' },
+];
+
+const statusBadgeClass: Record<Guest['status'], string> = {
+  accepted: 'pp-badge--success',
+  pending: 'pp-badge--warning',
+  declined: 'pp-badge--error',
+  maybe: 'pp-badge--info',
+};
 
 export const EditGuest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { enqueueSnackbar } = useSnackbar();
+  const { toast, dismiss, showError, showSuccess } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guest, setGuest] = useState<Guest | null>(null);
-  const [events, setEvents] = useState<Array<{ id: string; title: string }>>(
-    []
-  );
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -48,22 +46,18 @@ export const EditGuest: React.FC = () => {
 
   useEffect(() => {
     if (!id || !user) return;
-
     loadGuestData();
-    loadEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
   const loadGuestData = async () => {
     try {
       setLoading(true);
-
-      // Pobierz dane gościa - musimy przeszukać wszystkich gości użytkownika
-      const result = await GuestService.getUserGuests(user!.id, {}, 1000);
-      const foundGuest = result.guests.find(g => g.id === id);
+      const foundGuest = await GuestService.getGuestById(id!, user!.id);
 
       if (!foundGuest) {
-        enqueueSnackbar('Nie znaleziono gościa', { variant: 'error' });
-        navigate('/dashboard/guests');
+        showError('Nie znaleziono gościa');
+        navigate('/dashboard/contacts');
         return;
       }
 
@@ -78,31 +72,25 @@ export const EditGuest: React.FC = () => {
         plusOne: foundGuest.plusOne || false,
         status: foundGuest.status,
       });
-    } catch (error: any) {
-      enqueueSnackbar(error.message || 'Błąd podczas ładowania danych gościa', {
-        variant: 'error',
-      });
-      navigate('/dashboard/guests');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Błąd podczas ładowania danych gościa';
+      showError(message);
+      navigate('/dashboard/contacts');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadEvents = async () => {
-    try {
-      const result = await EventService.getUserEvents(user!.id);
-      const mappedEvents = result.events.map(event => ({
-        id: event.id,
-        title: event.title,
-      }));
-      setEvents(mappedEvents);
-    } catch (error) {
-      console.error('Błąd podczas ładowania wydarzeń:', error);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -126,40 +114,17 @@ export const EditGuest: React.FC = () => {
         status: formData.status,
       });
 
-      enqueueSnackbar('Dane gościa zostały zaktualizowane!', {
-        variant: 'success',
-      });
+      showSuccess('Dane gościa zostały zaktualizowane!');
       navigate('/dashboard/guests');
-    } catch (error: any) {
-      enqueueSnackbar(
-        error.message || 'Wystąpił błąd podczas aktualizacji gościa',
-        {
-          variant: 'error',
-        }
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Wystąpił błąd podczas aktualizacji gościa';
+      showError(message);
     } finally {
       setSaving(false);
     }
-  };
-
-  const getStatusColor = (status: Guest['status']) => {
-    const colors = {
-      accepted: 'success',
-      pending: 'warning',
-      declined: 'error',
-      maybe: 'info',
-    };
-    return colors[status];
-  };
-
-  const getStatusLabel = (status: Guest['status']) => {
-    const labels = {
-      accepted: 'Potwierdzone',
-      pending: 'Oczekujące',
-      declined: 'Odrzucone',
-      maybe: 'Może',
-    };
-    return labels[status];
   };
 
   if (loading) {
@@ -179,220 +144,223 @@ export const EditGuest: React.FC = () => {
     return (
       <div className="edit-guest edit-guest--error">
         <div className="edit-guest__error">
-          <Typography variant="h6" color="error">
-            Nie znaleziono gościa
-          </Typography>
-          <Button
+          <p>Nie znaleziono gościa</p>
+          <button
+            type="button"
+            className="pp-btn pp-btn--outline"
             onClick={() => navigate('/dashboard/guests')}
-            startIcon={<ArrowLeft size={20} />}
-            sx={{ mt: 2 }}
           >
+            <ArrowLeft size={18} />
             Powrót do listy gości
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
+  const statusLabel =
+    STATUS_OPTIONS.find(o => o.value === guest.status)?.label ?? guest.status;
+
   return (
     <div className="edit-guest">
-      <div className="edit-guest__header">
-        <IconButton
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={dismiss} />
+      )}
+
+      <header className="edit-guest__header">
+        <button
+          type="button"
           onClick={() => navigate('/dashboard/guests')}
-          className="edit-guest__back-btn"
+          className="pp-btn pp-btn--outline edit-guest__back-btn"
         >
-          <ArrowLeft size={24} />
-        </IconButton>
+          <ArrowLeft size={18} />
+          Wróć
+        </button>
 
         <div className="edit-guest__title-section">
           <div className="edit-guest__avatar">
             <User size={32} />
           </div>
           <div>
-            <Typography
-              variant="h4"
-              component="h1"
-              className="edit-guest__title"
-            >
-              Edytuj gościa
-            </Typography>
-            <Typography variant="subtitle1" color="textSecondary">
+            <h1 className="edit-guest__title">Edytuj gościa</h1>
+            <p className="edit-guest__subtitle">
               {guest.firstName} {guest.lastName}
-            </Typography>
+            </p>
           </div>
         </div>
 
         <div className="edit-guest__event-info">
-          <Chip
-            icon={<Calendar size={16} />}
-            label={guest.eventName}
-            variant="outlined"
-            color="primary"
-          />
-          <Chip
-            label={getStatusLabel(guest.status)}
-            color={getStatusColor(guest.status) as any}
-            size="small"
-          />
+          {guest.eventName && (
+            <span className="pp-badge pp-badge--primary">
+              <Calendar size={14} />
+              {guest.eventName}
+            </span>
+          )}
+          <span className={`pp-badge ${statusBadgeClass[guest.status]}`}>
+            {statusLabel}
+          </span>
         </div>
-      </div>
+      </header>
 
       <form onSubmit={handleSubmit} className="edit-guest__form">
         <div className="edit-guest__form-content">
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            {/* Basic Information */}
-            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-              Podstawowe informacje
-            </Typography>
+          <h2 className="edit-guest-modal__section-title">
+            Podstawowe informacje
+          </h2>
 
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 2,
-              }}
-            >
-              <TextField
-                required
-                fullWidth
-                label="Imię"
+          <div className="edit-guest-modal__row">
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="edit-page-firstName">
+                Imię *
+              </label>
+              <input
+                id="edit-page-firstName"
+                type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                disabled={saving}
-                InputProps={{
-                  startAdornment: (
-                    <User size={20} style={{ marginRight: 8, color: '#666' }} />
-                  ),
-                }}
-              />
-              <TextField
+                className="pp-input"
                 required
-                fullWidth
-                label="Nazwisko"
+                disabled={saving}
+              />
+            </div>
+            <div className="pp-field">
+              <label className="pp-label" htmlFor="edit-page-lastName">
+                Nazwisko *
+              </label>
+              <input
+                id="edit-page-lastName"
+                type="text"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
+                className="pp-input"
+                required
                 disabled={saving}
               />
-            </Box>
+            </div>
+          </div>
 
-            <TextField
-              required
-              fullWidth
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="edit-page-email">
+              Email *
+            </label>
+            <input
+              id="edit-page-email"
               type="email"
-              label="Email"
               name="email"
               value={formData.email}
               onChange={handleChange}
+              className="pp-input"
+              required
               disabled={saving}
-              InputProps={{
-                startAdornment: (
-                  <Mail size={20} style={{ marginRight: 8, color: '#666' }} />
-                ),
-              }}
             />
+          </div>
 
-            <TextField
-              fullWidth
-              label="Telefon"
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="edit-page-phone">
+              Telefon
+            </label>
+            <input
+              id="edit-page-phone"
+              type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
+              className="pp-input"
               disabled={saving}
-              InputProps={{
-                startAdornment: (
-                  <Phone size={20} style={{ marginRight: 8, color: '#666' }} />
-                ),
-              }}
             />
+          </div>
 
-            {/* Status */}
-            <Typography variant="h6" component="h2" sx={{ mb: 1, mt: 2 }}>
-              Status odpowiedzi
-            </Typography>
+          <h2 className="edit-guest-modal__section-title">Status odpowiedzi</h2>
 
-            <TextField
-              select
-              fullWidth
-              label="Status"
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="edit-page-status">
+              Status
+            </label>
+            <select
+              id="edit-page-status"
               name="status"
               value={formData.status}
               onChange={handleChange}
+              className="pp-select"
               disabled={saving}
-              helperText="Zmiana statusu wpłynie na statystyki wydarzenia"
             >
-              <MenuItem value="pending">Oczekujące</MenuItem>
-              <MenuItem value="accepted">Potwierdzone</MenuItem>
-              <MenuItem value="declined">Odrzucone</MenuItem>
-              <MenuItem value="maybe">Może</MenuItem>
-            </TextField>
+              {STATUS_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <span className="edit-guest__hint">
+              Zmiana statusu wpłynie na statystyki wydarzenia
+            </span>
+          </div>
 
-            {/* Additional Information */}
-            <Typography variant="h6" component="h2" sx={{ mb: 1, mt: 2 }}>
-              Dodatkowe informacje
-            </Typography>
+          <h2 className="edit-guest-modal__section-title">
+            Dodatkowe informacje
+          </h2>
 
-            <TextField
-              fullWidth
-              label="Preferencje żywieniowe"
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="edit-page-dietary">
+              Preferencje żywieniowe
+            </label>
+            <textarea
+              id="edit-page-dietary"
               name="dietaryRestrictions"
               value={formData.dietaryRestrictions}
               onChange={handleChange}
-              multiline
+              className="pp-textarea"
               rows={2}
               disabled={saving}
-              placeholder="np. wegetariańska, bezglutenowa, alergia na orzechy..."
+              placeholder="np. wegetariańska, bezglutenowa..."
             />
+          </div>
 
-            <TextField
-              fullWidth
-              label="Notatki"
+          <div className="pp-field">
+            <label className="pp-label" htmlFor="edit-page-notes">
+              Notatki
+            </label>
+            <textarea
+              id="edit-page-notes"
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              multiline
+              className="pp-textarea"
               rows={3}
               disabled={saving}
-              placeholder="Dodatkowe informacje o gościu..."
             />
+          </div>
 
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.plusOne}
-                  onChange={handleChange}
-                  name="plusOne"
-                  disabled={saving}
-                />
-              }
-              label={<Typography>Osoba towarzysząca (+1)</Typography>}
+          <label className="edit-guest-modal__radio">
+            <input
+              type="checkbox"
+              name="plusOne"
+              checked={formData.plusOne}
+              onChange={handleChange}
+              disabled={saving}
             />
-          </Box>
+            Osoba towarzysząca (+1)
+          </label>
         </div>
 
         <div className="edit-guest__form-actions">
-          <Button
+          <button
             type="button"
             onClick={() => navigate('/dashboard/guests')}
             disabled={saving}
-            variant="outlined"
-            size="large"
+            className="pp-btn pp-btn--outline"
           >
             Anuluj
-          </Button>
-          <Button
+          </button>
+          <button
             type="submit"
-            variant="contained"
-            color="primary"
             disabled={saving}
-            size="large"
-            startIcon={
-              saving ? <CircularProgress size={20} /> : <Save size={20} />
-            }
+            className="pp-btn pp-btn--primary"
           >
+            <Save size={18} />
             {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
-          </Button>
+          </button>
         </div>
       </form>
     </div>

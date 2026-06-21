@@ -2,25 +2,22 @@
 .page-transition {
   width: 100%;
   position: relative;
-  will-change: opacity;
+  isolation: isolate;
+  contain: paint;
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
-  transform: translateZ(0); // Force hardware acceleration
-
-  // Default state - idle (visible, no transition to avoid initial fade)
+  transform: translateZ(0);
   opacity: 1;
-  transition: none;
+  transition: opacity var(--dashboard-route-crossfade, 0.25s)
+    cubic-bezier(0.33, 1, 0.68, 1);
 
   &--idle {
     opacity: 1;
+    pointer-events: auto;
   }
 
   &--exiting {
     opacity: 0;
     pointer-events: none;
-  }
-
-  &--entering {
-    opacity: 1;
   }
 }

@@ -1,6 +1,7 @@
 // components/landing/ContactSection/ContactSection.tsx
-import React, { useState } from 'react';
-import { Send, CheckCircle } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Check, CheckCircle, Send } from 'lucide-react';
 import { EmailService } from '../../../services/emailService';
 import Toast from '../../common/Toast/Toast';
 import './ContactSection.scss';
@@ -12,6 +13,7 @@ interface ContactFormData {
 }
 
 const ContactSection: React.FC = () => {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ContactFormData>({
     email: '',
@@ -23,21 +25,30 @@ const ContactSection: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Partial<ContactFormData>>({});
 
+  const perks = useMemo(
+    () => [
+      t('landing.contact.perkResponse'),
+      t('landing.contact.perkHelp'),
+      t('landing.contact.perkPrivacy'),
+    ],
+    [t]
+  );
+
   const validateForm = (): boolean => {
     const newErrors: Partial<ContactFormData> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Imię jest wymagane';
+      newErrors.name = t('landing.contact.errors.nameRequired');
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email jest wymagany';
+      newErrors.email = t('landing.contact.errors.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Nieprawidłowy format email';
+      newErrors.email = t('landing.contact.errors.emailInvalid');
     }
 
     if (!formData.message.trim()) {
-      newErrors.message = 'Wiadomość jest wymagana';
+      newErrors.message = t('landing.contact.errors.messageRequired');
     }
 
     setErrors(newErrors);
@@ -53,11 +64,9 @@ const ContactSection: React.FC = () => {
       await EmailService.sendContactForm(formData);
       setIsSubmitted(true);
       setFormData({ email: '', name: '', message: '' });
-    } catch (error) {
-      console.error('Błąd wysyłania formularza:', error);
-      setError(
-        'Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie później.'
-      );
+    } catch (submitError) {
+      console.error('Błąd wysyłania formularza:', submitError);
+      setError(t('landing.contact.errors.submitFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -65,36 +74,52 @@ const ContactSection: React.FC = () => {
 
   return (
     <section className="contact-section" id="contact">
-      <div className="contact-section__container">
-        <div className="contact-section__content">
-          <div className="contact-section__info">
-            <h2>Skontaktuj się z nami</h2>
+      <div className="contact-section__inner">
+        <div className="contact-section__intro">
+          <header className="contact-section__header">
+            <span className="contact-section__eyebrow">
+              {t('landing.contact.eyebrow')}
+            </span>
+            <h2 className="contact-section__title">{t('landing.contact.title')}</h2>
             <p className="contact-section__subtitle">
-              Masz pytania? Jesteśmy tutaj, aby pomóc Ci w organizacji idealnego
-              wydarzenia.
+              {t('landing.contact.subtitle')}
             </p>
-          </div>
+          </header>
 
-          <div className="contact-section__form-wrapper">
-            {isSubmitted ? (
-              <div className="contact-section__success">
-                <CheckCircle size={64} />
-                <h3>Dziękujemy za wiadomość!</h3>
-                <p>Odpowiemy na Twoją wiadomość jak najszybciej.</p>
-                <button
-                  className="contact-section__success-button"
-                  onClick={() => setIsSubmitted(false)}
-                >
-                  Wyślij kolejną wiadomość
-                </button>
-              </div>
-            ) : (
-              <form className="contact-section__form" onSubmit={handleSubmit}>
-                <div className="contact-section__form-group">
-                  <label htmlFor="name">Imię i nazwisko *</label>
+          <ul className="contact-section__perks">
+            {perks.map(perk => (
+              <li key={perk}>
+                <Check size={16} aria-hidden="true" />
+                <span>{perk}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="contact-section__form-area">
+          {isSubmitted ? (
+            <div className="contact-section__success" role="status">
+              <CheckCircle size={48} aria-hidden="true" />
+              <h3>{t('landing.contact.successTitle')}</h3>
+              <p>{t('landing.contact.successMessage')}</p>
+              <button
+                type="button"
+                className="pp-btn pp-btn--outline"
+                onClick={() => setIsSubmitted(false)}
+              >
+                {t('landing.contact.sendAnother')}
+              </button>
+            </div>
+          ) : (
+            <form className="contact-section__form" onSubmit={handleSubmit} noValidate>
+              <div className="contact-section__fields">
+                <div className="pp-field">
+                  <label htmlFor="contact-name" className="pp-label">
+                    {t('landing.contact.nameLabel')}
+                  </label>
                   <input
                     type="text"
-                    id="name"
+                    id="contact-name"
                     value={formData.name}
                     onChange={e => {
                       setFormData(prev => ({ ...prev, name: e.target.value }));
@@ -102,16 +127,26 @@ const ContactSection: React.FC = () => {
                         setErrors(prev => ({ ...prev, name: undefined }));
                       }
                     }}
-                    className={errors.name ? 'error' : ''}
-                    placeholder="Wprowadź swoje imię"
+                    className={`pp-input${errors.name ? ' pp-input--error' : ''}`}
+                    placeholder={t('landing.contact.namePlaceholder')}
+                    autoComplete="name"
+                    aria-invalid={Boolean(errors.name)}
+                    aria-describedby={errors.name ? 'contact-name-error' : undefined}
                   />
+                  {errors.name && (
+                    <span id="contact-name-error" className="pp-field-error" role="alert">
+                      {errors.name}
+                    </span>
+                  )}
                 </div>
 
-                <div className="contact-section__form-group">
-                  <label htmlFor="email">Email *</label>
+                <div className="pp-field">
+                  <label htmlFor="contact-email" className="pp-label">
+                    {t('landing.contact.emailLabel')}
+                  </label>
                   <input
                     type="email"
-                    id="email"
+                    id="contact-email"
                     value={formData.email}
                     onChange={e => {
                       setFormData(prev => ({ ...prev, email: e.target.value }));
@@ -119,51 +154,70 @@ const ContactSection: React.FC = () => {
                         setErrors(prev => ({ ...prev, email: undefined }));
                       }
                     }}
-                    className={errors.email ? 'error' : ''}
-                    placeholder="twoj@email.com"
+                    className={`pp-input${errors.email ? ' pp-input--error' : ''}`}
+                    placeholder={t('auth.emailPlaceholder')}
+                    autoComplete="email"
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? 'contact-email-error' : undefined}
                   />
+                  {errors.email && (
+                    <span id="contact-email-error" className="pp-field-error" role="alert">
+                      {errors.email}
+                    </span>
+                  )}
                 </div>
 
-                <div className="contact-section__form-group">
-                  <label htmlFor="message">Wiadomość *</label>
+                <div className="pp-field contact-section__field--full">
+                  <label htmlFor="contact-message" className="pp-label">
+                    {t('landing.contact.messageLabel')}
+                  </label>
                   <textarea
-                    id="message"
+                    id="contact-message"
                     value={formData.message}
                     onChange={e => {
-                      setFormData(prev => ({
-                        ...prev,
-                        message: e.target.value,
-                      }));
+                      setFormData(prev => ({ ...prev, message: e.target.value }));
                       if (errors.message) {
                         setErrors(prev => ({ ...prev, message: undefined }));
                       }
                     }}
-                    className={errors.message ? 'error' : ''}
-                    placeholder="W czym możemy Ci pomóc?"
+                    className={`pp-textarea${errors.message ? ' pp-input--error' : ''}`}
+                    placeholder={t('landing.contact.messagePlaceholder')}
                     rows={5}
+                    aria-invalid={Boolean(errors.message)}
+                    aria-describedby={errors.message ? 'contact-message-error' : undefined}
                   />
+                  {errors.message && (
+                    <span id="contact-message-error" className="pp-field-error" role="alert">
+                      {errors.message}
+                    </span>
+                  )}
                 </div>
+              </div>
 
+              <div className="contact-section__form-foot">
+                <p className="contact-section__form-hint">
+                  {t('landing.contact.formHint')}
+                </p>
                 <button
                   type="submit"
-                  className="contact-section__submit"
+                  className="pp-btn pp-btn--outline pp-btn--lg"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
                       <div className="contact-section__spinner" />
-                      <span>Wysyłanie...</span>
+                      <span>{t('landing.contact.submitting')}</span>
                     </>
                   ) : (
                     <>
-                      <Send size={20} />
-                      <span>Wyślij wiadomość</span>
+                      <Send size={18} />
+                      <span>{t('landing.contact.submit')}</span>
                     </>
                   )}
                 </button>
-              </form>
-            )}
-          </div>
+              </div>
+            </form>
+          )}
         </div>
       </div>
 

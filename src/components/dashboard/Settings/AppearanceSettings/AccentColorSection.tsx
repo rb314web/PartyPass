@@ -1,5 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Palette, Pipette, X } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Palette, Pipette } from 'lucide-react';
+import Modal from '../../../common/Modal/Modal';
 
 interface AccentColor {
   id: string;
@@ -27,7 +28,6 @@ const AccentColorSection: React.FC<AccentColorSectionProps> = ({
 }) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [tempColor, setTempColor] = useState(settings.customColor);
-  const colorPickerRef = useRef<HTMLDivElement>(null);
 
   // Paleta sugerowanych kolorów
   const colorPalette = [
@@ -175,88 +175,76 @@ const AccentColorSection: React.FC<AccentColorSectionProps> = ({
         )}
       </div>
 
-      {/* Custom Color Picker Modal */}
-      {showColorPicker && (
-        <div className="appearance-settings__modal-overlay">
-          <div
-            className="appearance-settings__modal"
-            ref={colorPickerRef}
-          >
-            <div className="appearance-settings__modal-header">
-              <h4>Wybierz kolor</h4>
-              <button
-                className="appearance-settings__modal-close"
-                onClick={handleColorCancel}
-                type="button"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="appearance-settings__modal-body">
-              <div className="appearance-settings__color-picker-section">
-                <label>Wybierz kolor:</label>
-                <div className="appearance-settings__color-input-wrapper">
-                  <input
-                    type="color"
-                    value={tempColor}
-                    onChange={(e) => setTempColor(e.target.value)}
-                    className="appearance-settings__color-input"
-                  />
-                  <span className="appearance-settings__color-hex-display">
-                    {tempColor.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-
-              <div className="appearance-settings__color-palette-section">
-                <label>Popularne kolory:</label>
-                <div className="appearance-settings__color-palette">
-                  {colorPalette.map((color, index) => (
-                    <button
-                      key={index}
-                      className={`appearance-settings__palette-color ${tempColor.toLowerCase() === color.toLowerCase() ? 'active' : ''}`}
-                      style={{ backgroundColor: color }}
-                      onClick={() => setTempColor(color)}
-                      type="button"
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="appearance-settings__color-input-group">
-                <label htmlFor="hex-input">HEX:</label>
-                <input
-                  id="hex-input"
-                  type="text"
-                  value={tempColor}
-                  onChange={(e) => setTempColor(e.target.value)}
-                  className="appearance-settings__hex-input"
-                  placeholder="#000000"
-                />
-              </div>
-            </div>
-
-            <div className="appearance-settings__modal-footer">
-              <button
-                className="appearance-settings__cancel-btn"
-                onClick={handleColorCancel}
-                type="button"
-              >
-                Anuluj
-              </button>
-              <button
-                className="appearance-settings__confirm-btn"
-                onClick={handleColorConfirm}
-                type="button"
-              >
-                Zastosuj
-              </button>
-            </div>
+      <Modal
+        open={showColorPicker}
+        onClose={handleColorCancel}
+        title="Wybierz kolor"
+        icon={<Pipette size={20} />}
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              className="pp-btn pp-btn--outline"
+              onClick={handleColorCancel}
+            >
+              Anuluj
+            </button>
+            <button
+              type="button"
+              className="pp-btn pp-btn--primary"
+              onClick={handleColorConfirm}
+            >
+              Zastosuj
+            </button>
+          </>
+        }
+      >
+        <div className="appearance-settings__color-picker-section">
+          <label className="pp-label">Wybierz kolor:</label>
+          <div className="appearance-settings__color-input-wrapper">
+            <input
+              type="color"
+              value={tempColor}
+              onChange={e => setTempColor(e.target.value)}
+              className="appearance-settings__color-input"
+            />
+            <span className="appearance-settings__color-hex-display">
+              {tempColor.toUpperCase()}
+            </span>
           </div>
         </div>
-      )}
+
+        <div className="appearance-settings__color-palette-section">
+          <label className="pp-label">Popularne kolory:</label>
+          <div className="appearance-settings__color-palette">
+            {colorPalette.map((color, index) => (
+              <button
+                key={index}
+                className={`appearance-settings__palette-color ${tempColor.toLowerCase() === color.toLowerCase() ? 'active' : ''}`}
+                style={{ backgroundColor: color }}
+                onClick={() => setTempColor(color)}
+                type="button"
+                title={color}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="pp-field appearance-settings__color-input-group">
+          <label className="pp-label" htmlFor="hex-input">
+            HEX
+          </label>
+          <input
+            id="hex-input"
+            type="text"
+            value={tempColor}
+            onChange={e => setTempColor(e.target.value)}
+            className="pp-input appearance-settings__hex-input"
+            placeholder="#000000"
+          />
+        </div>
+      </Modal>
     </>
   );
 };

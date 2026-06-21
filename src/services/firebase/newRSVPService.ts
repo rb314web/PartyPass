@@ -5,12 +5,16 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  updateDoc,
   query,
   where,
-  writeBatch,
   Timestamp,
+  type QueryDocumentSnapshot,
+  type DocumentData,
 } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { resolveRsvpDeadlineFromDates } from '../../utils/rsvpEventHelpers';
+import { db, getFirebaseFunctions } from '../../config/firebase';
 import {
   EventGuest,
   Contact,
@@ -19,9 +23,14 @@ import {
   RSVPToken,
   RSVPResponse,
   GuestInvitation,
+  InvitationDelivery,
+  InvitationSendResult,
 } from '../../types';
 import { COLLECTIONS } from '../../types/firebase';
 import { EventGuestService } from './eventGuestService';
+import { InvitationService } from './invitationService';
+import { isRSVPTokenActive, parseFirestoreDate } from '../../utils/rsvpTokenUtils';
+import { buildRsvpUpdatePayload } from '../../utils/partyInvitationUtils';
 import QRCode from 'qrcode';
 
 export class NewRSVPService {
@@ -39,7 +48,23 @@ export class NewRSVPService {
     try {
       const token = this.generateUniqueToken();
       const now = new Date();
-      const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 dni
+
+      // Termin odpowiedzi: 1) rsvpDeadline ustawiony przez organizatora,
+      // 2) inaczej godzina rozpoczęcia wydarzenia. Fallback: 30 dni od teraz.
+      let expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      try {
+        const eventSnap = await getDoc(doc(db, COLLECTIONS.EVENTS, eventId));
+        if (eventSnap.exists()) {
+          const data = eventSnap.data();
+          const deadline = parseFirestoreDate(data?.rsvpDeadline);
+          const eventDate = parseFirestoreDate(data?.date);
+          if (eventDate) {
+            expiresAt = resolveRsvpDeadlineFromDates(deadline, eventDate);
+          }
+        }
+      } catch {
+        // zachowaj fallback
+      }
 
       const rsvpTokenData = {
         eventGuestId,
@@ -85,21 +110,30 @@ export class NewRSVPService {
         return null;
       }
 
-      const tokenDoc = snapshot.docs[0];
-      const tokenData = tokenDoc.data();
-
-      return {
-        id: tokenDoc.id,
-        eventGuestId: tokenData.eventGuestId,
-        eventId: tokenData.eventId,
-        token: tokenData.token,
-        isUsed: tokenData.isUsed,
-        createdAt: tokenData.createdAt.toDate(),
-        expiresAt: tokenData.expiresAt?.toDate(),
-        usedAt: tokenData.usedAt?.toDate(),
-      };
+      return this.mapTokenDocument(snapshot.docs[0]);
     } catch (error: any) {
       throw new Error(`Błąd podczas pobierania tokenu RSVP: ${error.message}`);
+    }
+  }
+
+  /**
+   * Zwraca aktualny termin RSVP dla wydarzenia (autorytatywny, „na żywo").
+   * Priorytet: rsvpDeadline ustawiony przez organizatora, inaczej godzina rozpoczęcia wydarzenia.
+   * Dzięki temu zmiana terminu przez organizatora działa również dla już wygenerowanych linków.
+   */
+  private static async getEventDeadline(eventId: string): Promise<Date | null> {
+    try {
+      const snap = await getDoc(doc(db, COLLECTIONS.EVENTS, eventId));
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      const deadline = parseFirestoreDate(data?.rsvpDeadline);
+      const eventDate = parseFirestoreDate(data?.date);
+      if (eventDate) {
+        return resolveRsvpDeadlineFromDates(deadline, eventDate);
+      }
+      return null;
+    } catch {
+      return null;
     }
   }
 
@@ -116,12 +150,15 @@ export class NewRSVPService {
         return { valid: false, reason: 'Token nie istnieje' };
       }
 
-      if (rsvpToken.isUsed) {
-        return { valid: false, reason: 'Token został już użyty' };
-      }
+      // Autorytatywny termin pochodzi z wydarzenia (uwzględnia zmiany organizatora).
+      // Gdy nie uda się go ustalić, opieramy się na terminie zapisanym w tokenie.
+      const deadline = await this.getEventDeadline(rsvpToken.eventId);
+      const deadlinePassed = deadline
+        ? deadline.getTime() < Date.now()
+        : !isRSVPTokenActive(rsvpToken);
 
-      if (rsvpToken.expiresAt && rsvpToken.expiresAt < new Date()) {
-        return { valid: false, reason: 'Token wygasł' };
+      if (deadlinePassed) {
+        return { valid: false, reason: 'Termin na przesłanie odpowiedzi minął' };
       }
 
       return { valid: true };
@@ -210,13 +247,17 @@ export class NewRSVPService {
         status: eventGuestData.status,
         invitedAt: eventGuestData.invitedAt.toDate(),
         respondedAt: eventGuestData.respondedAt?.toDate(),
+        invitationKind: eventGuestData.invitationKind,
+        invitedSeatCount: eventGuestData.invitedSeatCount,
+        partyMembers: eventGuestData.partyMembers,
+        attendingMemberIds: eventGuestData.attendingMemberIds,
+        attendingCount: eventGuestData.attendingCount,
         plusOneType: eventGuestData.plusOneType || 'none',
         plusOneDetails: eventGuestData.plusOneDetails,
         rsvpToken: token,
         eventSpecificNotes: eventGuestData.eventSpecificNotes || '',
         createdAt: eventGuestData.createdAt.toDate(),
         updatedAt: eventGuestData.updatedAt?.toDate(),
-        // Legacy fields for display
         firstName: contact.firstName,
         lastName: contact.lastName,
         email: contact.email,
@@ -231,7 +272,12 @@ export class NewRSVPService {
         title: eventData.title,
         description: eventData.description || '',
         date: eventData.date.toDate(),
+        rsvpDeadline: eventData.rsvpDeadline
+          ? eventData.rsvpDeadline.toDate()
+          : undefined,
         location: eventData.location,
+        latitude: eventData.latitude,
+        longitude: eventData.longitude,
         maxGuests: eventData.maxGuests || 0,
         guestCount: eventData.guestCount || 0,
         acceptedCount: eventData.acceptedCount || 0,
@@ -241,6 +287,9 @@ export class NewRSVPService {
         status: eventData.status,
         dresscode: eventData.dresscode || '',
         additionalInfo: eventData.additionalInfo || '',
+        organizerEmail: eventData.organizerEmail || '',
+        organizerPhone: eventData.organizerPhone || '',
+        allowPlusOne: Boolean(eventData.allowPlusOne),
         createdAt: eventData.createdAt.toDate(),
         updatedAt: eventData.updatedAt?.toDate(),
       };
@@ -258,91 +307,153 @@ export class NewRSVPService {
   }
 
   /**
-   * Przetwarza odpowiedź RSVP
+   * Przetwarza odpowiedź RSVP (Cloud Function, z fallbackiem zapisu w Firestore).
    */
   static async processRSVPResponse(
     token: string,
     response: RSVPResponse
   ): Promise<void> {
-    try {
-      const rsvpToken = await this.getRSVPToken(token);
-
-      if (!rsvpToken) {
-        throw new Error('Token nie istnieje');
-      }
-
-      const validation = await this.validateRSVPToken(token);
-      if (!validation.valid) {
-        throw new Error(validation.reason || 'Token jest nieważny');
-      }
-
-      const batch = writeBatch(db);
-
-      // Aktualizuj EventGuest
-      const eventGuestRef = doc(db, COLLECTIONS.GUESTS, rsvpToken.eventGuestId);
-      const updateData: any = {
-        status: response.status,
-        respondedAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-
-      // Dodaj plusOneType i plusOneDetails jeśli są podane
-      if (response.plusOneType) {
-        updateData.plusOneType = response.plusOneType;
-      }
-      if (response.plusOneDetails) {
-        updateData.plusOneDetails = response.plusOneDetails;
-      }
-
-      batch.update(eventGuestRef, updateData);
-
-      // Aktualizuj Contact z dodatkowymi informacjami
-      if (response.dietaryRestrictions || response.notes) {
-        const eventGuestDoc = await getDoc(eventGuestRef);
-        if (eventGuestDoc.exists()) {
-          const eventGuestData = eventGuestDoc.data();
-          if (eventGuestData.contactId) {
-          const contactRef = doc(
-            db,
-            'contacts',
-              eventGuestData.contactId
-          );
-          const contactUpdateData: any = {};
-
-          if (response.dietaryRestrictions) {
-            contactUpdateData.dietaryRestrictions =
-              response.dietaryRestrictions;
-          }
-          if (response.notes) {
-            contactUpdateData.notes = response.notes;
-          }
-          contactUpdateData.updatedAt = Timestamp.now();
-
-          batch.update(contactRef, contactUpdateData);
-          }
-        }
-      }
-
-      // Oznacz token jako użyty
-      const tokenRef = doc(db, this.RSVP_TOKENS_COLLECTION, rsvpToken.id);
-      batch.update(tokenRef, {
-        isUsed: true,
-        usedAt: Timestamp.now(),
-      });
-
-      await batch.commit();
-
-      // Aktualizuj liczniki wydarzenia
-      await EventGuestService.updateEventCounts(
-        rsvpToken.eventId,
-        response.status,
-        'add'
-      );
-    } catch (error: any) {
-      throw new Error(
-        `Błąd podczas przetwarzania odpowiedzi RSVP: ${error.message}`
-      );
+    const validation = await this.validateRSVPToken(token);
+    if (!validation.valid) {
+      throw new Error(validation.reason || 'Token jest nieważny');
     }
+
+    try {
+      const functions = await getFirebaseFunctions();
+      const callable = httpsCallable<
+        { token: string; response: RSVPResponse },
+        { success: boolean }
+      >(functions, 'processRSVPResponse');
+
+      await callable({ token, response });
+    } catch (error: unknown) {
+      if (this.shouldFallbackToLocalRsvp(error)) {
+        console.warn(
+          'Cloud Function processRSVPResponse niedostępna — zapis lokalny RSVP'
+        );
+        await this.processRSVPResponseLocally(token, response);
+        return;
+      }
+      throw new Error(this.formatRsvpError(error));
+    }
+  }
+
+  private static shouldFallbackToLocalRsvp(error: unknown): boolean {
+    const code = (error as { code?: string })?.code ?? '';
+    const normalized = code.replace(/^functions\//, '');
+    return [
+      'internal',
+      'not-found',
+      'unavailable',
+      'deadline-exceeded',
+      'unknown',
+    ].includes(normalized);
+  }
+
+  private static formatRsvpError(error: unknown): string {
+    const err = error as { message?: string; code?: string; details?: unknown };
+    const code = err?.code?.replace(/^functions\//, '') ?? '';
+    const message = (err?.message ?? '').trim();
+
+    if (message && message !== 'internal' && !message.startsWith('FirebaseError')) {
+      return message.includes('Błąd podczas przetwarzania')
+        ? message
+        : `Błąd podczas przetwarzania odpowiedzi RSVP: ${message}`;
+    }
+
+    const friendly: Record<string, string> = {
+      'invalid-argument': 'Nieprawidłowe dane odpowiedzi RSVP',
+      'not-found': 'Link RSVP jest nieprawidłowy lub wygasł',
+      'failed-precondition': 'Termin na przesłanie odpowiedzi minął',
+      'permission-denied': 'Brak uprawnień do zapisu odpowiedzi',
+      internal:
+        'Serwer RSVP jest chwilowo niedostępny. Spróbuj ponownie za chwilę.',
+      unavailable: 'Serwer RSVP jest chwilowo niedostępny',
+    };
+
+    return (
+      friendly[code] ||
+      'Nie udało się zapisać odpowiedzi RSVP. Spróbuj ponownie.'
+    );
+  }
+
+  /**
+   * Zapis odpowiedzi RSVP bez Cloud Function (wymaga reguł Firestore dla gości).
+   */
+  private static async processRSVPResponseLocally(
+    token: string,
+    response: RSVPResponse
+  ): Promise<void> {
+    const rsvpToken = await this.getRSVPToken(token);
+    if (!rsvpToken) {
+      throw new Error('Token nie istnieje');
+    }
+
+    const deadline = await this.getEventDeadline(rsvpToken.eventId);
+    const deadlinePassed = deadline
+      ? deadline.getTime() < Date.now()
+      : !isRSVPTokenActive(rsvpToken);
+
+    if (deadlinePassed) {
+      throw new Error('Termin na przesłanie odpowiedzi minął');
+    }
+
+    const eventGuestRef = doc(db, COLLECTIONS.GUESTS, rsvpToken.eventGuestId);
+    const eventGuestSnap = await getDoc(eventGuestRef);
+
+    if (!eventGuestSnap.exists()) {
+      throw new Error('Gość wydarzenia nie istnieje');
+    }
+
+    const eventGuestData = eventGuestSnap.data();
+    if (eventGuestData.eventId !== rsvpToken.eventId) {
+      throw new Error('Token nie pasuje do gościa wydarzenia');
+    }
+
+    const eventRef = doc(db, COLLECTIONS.EVENTS, rsvpToken.eventId);
+    const eventSnap = await getDoc(eventRef);
+    const allowPlusOne = Boolean(eventSnap.data()?.allowPlusOne);
+
+    const { guestUpdate, beforeState, afterState } = buildRsvpUpdatePayload(
+      eventGuestData as unknown as EventGuest,
+      response,
+      allowPlusOne
+    );
+
+    const firestoreUpdate = {
+      ...guestUpdate,
+      updatedAt: Timestamp.now(),
+      respondedAt: Timestamp.now(),
+    };
+
+    await EventGuestService.applyRsvpResponseToGuest(
+      rsvpToken.eventGuestId,
+      rsvpToken.eventId,
+      eventGuestData,
+      firestoreUpdate,
+      beforeState,
+      afterState
+    );
+  }
+
+  private static resolvePlusOneType(
+    response: RSVPResponse
+  ): 'none' | 'withoutDetails' | 'withDetails' {
+    if (response.status !== 'accepted') {
+      return 'none';
+    }
+    if (response.plusOneType) {
+      return response.plusOneType;
+    }
+    if (!response.plusOne) {
+      return 'none';
+    }
+    const details = response.plusOneDetails;
+    const hasDetails =
+      Boolean(details?.firstName?.trim()) ||
+      Boolean(details?.lastName?.trim()) ||
+      Boolean(details?.dietaryRestrictions?.trim());
+    return hasDetails ? 'withDetails' : 'withoutDetails';
   }
 
   /**
@@ -380,11 +491,9 @@ export class NewRSVPService {
     eventId: string
   ): Promise<{ rsvpUrl: string; qrCode: string; token: string }> {
     try {
-      // Sprawdź czy gość już ma token RSVP
-      let rsvpToken = await this.getRSVPTokenForEventGuest(eventGuestId);
+      let rsvpToken = await this.getActiveRSVPTokenForEventGuest(eventGuestId);
 
       if (!rsvpToken) {
-        // Generuj nowy token
         rsvpToken = await this.generateRSVPToken(eventGuestId, eventId);
       }
 
@@ -415,11 +524,9 @@ export class NewRSVPService {
       const invitations: GuestInvitation[] = [];
 
       for (const eventGuest of eventGuests) {
-        // Sprawdź czy gość już ma token RSVP
-        let rsvpToken = await this.getRSVPTokenForEventGuest(eventGuest.id);
+        let rsvpToken = await this.getActiveRSVPTokenForEventGuest(eventGuest.id);
 
         if (!rsvpToken) {
-          // Generuj nowy token
           rsvpToken = await this.generateRSVPToken(eventGuest.id, eventId);
         }
 
@@ -428,10 +535,12 @@ export class NewRSVPService {
 
         invitations.push({
           eventGuestId: eventGuest.id,
-          contactId: eventGuest.contact.id,
-          email: eventGuest.contact.email,
-          firstName: eventGuest.contact.firstName,
-          lastName: eventGuest.contact.lastName,
+          contactId: eventGuest.contactId,
+          email: eventGuest.contact?.email ?? eventGuest.email ?? '',
+          phone: eventGuest.contact?.phone ?? eventGuest.phone,
+          firstName: eventGuest.contact?.firstName ?? eventGuest.firstName,
+          lastName: eventGuest.contact?.lastName ?? eventGuest.lastName,
+          status: eventGuest.status,
           rsvpToken: rsvpToken.token,
           rsvpUrl,
           qrCode,
@@ -445,40 +554,62 @@ export class NewRSVPService {
   }
 
   /**
-   * Pobiera token RSVP dla konkretnego EventGuest
+   * Najnowszy aktywny token RSVP dla gościa (nie wygasły, nie użyte)
    */
-  private static async getRSVPTokenForEventGuest(
+  private static async getActiveRSVPTokenForEventGuest(
     eventGuestId: string
   ): Promise<RSVPToken | null> {
     try {
-      const tokenQuery = query(
+      const byEventGuestId = query(
         collection(db, this.RSVP_TOKENS_COLLECTION),
         where('eventGuestId', '==', eventGuestId)
       );
+      const byGuestId = query(
+        collection(db, this.RSVP_TOKENS_COLLECTION),
+        where('guestId', '==', eventGuestId)
+      );
 
-      const snapshot = await getDocs(tokenQuery);
+      const [eventGuestSnap, guestIdSnap] = await Promise.all([
+        getDocs(byEventGuestId),
+        getDocs(byGuestId),
+      ]);
 
-      if (snapshot.empty) {
+      const seen = new Set<string>();
+      const tokens: RSVPToken[] = [];
+
+      for (const docSnap of [...eventGuestSnap.docs, ...guestIdSnap.docs]) {
+        if (seen.has(docSnap.id)) continue;
+        seen.add(docSnap.id);
+        tokens.push(this.mapTokenDocument(docSnap));
+      }
+
+      if (tokens.length === 0) {
         return null;
       }
 
-      const tokenDoc = snapshot.docs[0];
-      const tokenData = tokenDoc.data();
-
-      return {
-        id: tokenDoc.id,
-        eventGuestId: tokenData.eventGuestId,
-        eventId: tokenData.eventId,
-        token: tokenData.token,
-        isUsed: tokenData.isUsed,
-        createdAt: tokenData.createdAt.toDate(),
-        expiresAt: tokenData.expiresAt?.toDate(),
-        usedAt: tokenData.usedAt?.toDate(),
-      };
+      tokens.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return tokens.find(isRSVPTokenActive) ?? null;
     } catch (error: any) {
       console.error('Błąd podczas pobierania tokenu RSVP:', error);
       return null;
     }
+  }
+
+  private static mapTokenDocument(
+    tokenDoc: QueryDocumentSnapshot<DocumentData>
+  ): RSVPToken {
+    const tokenData = tokenDoc.data();
+    return {
+      id: tokenDoc.id,
+      eventGuestId: tokenData.eventGuestId as string,
+      guestId: tokenData.guestId as string | undefined,
+      eventId: tokenData.eventId as string,
+      token: tokenData.token as string,
+      isUsed: Boolean(tokenData.isUsed),
+      createdAt: parseFirestoreDate(tokenData.createdAt) ?? new Date(0),
+      expiresAt: parseFirestoreDate(tokenData.expiresAt),
+      usedAt: parseFirestoreDate(tokenData.usedAt),
+    };
   }
 
   /**
@@ -488,6 +619,17 @@ export class NewRSVPService {
     const timestamp = Date.now().toString(36);
     const randomString = Math.random().toString(36).substring(2, 15);
     return `${timestamp}-${randomString}`;
+  }
+
+  /**
+   * Wysyła zaproszenia e-mailem
+   */
+  static async sendEmailInvitations(
+    invitations: GuestInvitation[],
+    event: Event,
+    delivery: InvitationDelivery
+  ): Promise<InvitationSendResult> {
+    return InvitationService.sendEmailInvitations(invitations, event, delivery);
   }
 
   /**

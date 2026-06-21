@@ -1,12 +1,19 @@
 import React from 'react';
 
-export interface DemoStat {
-  title: string;
+export interface DemoMetricDetail {
+  label: string;
+  value: string;
+}
+
+export interface DemoMetric {
+  label: string;
   value: string | number;
-  change: string;
-  trend: 'up' | 'down';
-  icon: React.ComponentType<any>;
-  color: 'blue' | 'green' | 'purple' | 'orange';
+  change?: number;
+  changeLabel: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  color: 'blue' | 'green' | 'purple';
+  details: DemoMetricDetail[];
+  linkLabel: string;
 }
 
 export interface DemoEvent {
@@ -16,13 +23,23 @@ export interface DemoEvent {
   location: string;
   guests: number;
   maxGuests: number;
+  accepted: number;
+  pending: number;
   status: 'active' | 'completed';
 }
 
-export type DemoView = 'dashboard' | 'events' | 'analytics' | 'search' | 'contacts' | 'activities' | 'settings';
+export type DemoView =
+  | 'dashboard'
+  | 'events'
+  | 'analytics'
+  | 'search'
+  | 'contacts'
+  | 'activities'
+  | 'plan'
+  | 'settings';
 
 export interface SidebarItem {
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   view: DemoView;
 }
@@ -39,10 +56,9 @@ export interface DemoContact {
 
 export interface DemoActivity {
   id: string;
-  type: 'confirmation' | 'invitation' | 'event' | 'guest';
+  type: string;
   message: string;
   time: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   color: 'success' | 'blue' | 'purple' | 'green';
 }
-

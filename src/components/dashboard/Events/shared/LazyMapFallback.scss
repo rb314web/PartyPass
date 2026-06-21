@@ -1,0 +1,11 @@
+.lazy-map-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 1px dashed var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: var(--text-sm, 0.875rem);
+}

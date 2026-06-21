@@ -1,8 +1,17 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import PricingPlans from './PricingPlans';
 
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
 describe('PricingPlans', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+  });
+
   it('renders pricing section with title', () => {
     render(<PricingPlans />);
 
@@ -13,12 +22,15 @@ describe('PricingPlans', () => {
   it('renders pricing subtitle', () => {
     render(<PricingPlans />);
 
-    expect(screen.getByText(/dopasowane rozwiązania dla profesjonalnych organizatorów eventów/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/zacznij za darmo — ulepsz plan, gdy twoje wydarzenia rosną/i)
+    ).toBeInTheDocument();
   });
 
   it('renders pricing plans', () => {
     render(<PricingPlans />);
 
+    expect(screen.getByText('Starter')).toBeInTheDocument();
     expect(screen.getByText('Pro')).toBeInTheDocument();
     expect(screen.getByText('Enterprise')).toBeInTheDocument();
   });
@@ -26,17 +38,17 @@ describe('PricingPlans', () => {
   it('renders pricing amounts', () => {
     render(<PricingPlans />);
 
+    expect(screen.getByText('Darmowy')).toBeInTheDocument();
     expect(screen.getByText('29 PLN')).toBeInTheDocument();
     expect(screen.getByText('99 PLN')).toBeInTheDocument();
-    const monthElements = screen.getAllByText(/miesiąc/i);
-    expect(monthElements.length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/miesiąc/i).length).toBeGreaterThanOrEqual(2);
   });
 
   it('renders plan features', () => {
     render(<PricingPlans />);
 
-    expect(screen.getByText(/do 15 wydarzeń miesięcznie/i)).toBeInTheDocument();
-    expect(screen.getByText(/do 200 gości na wydarzenie/i)).toBeInTheDocument();
+    expect(screen.getByText(/do 10 wydarzeń łącznie/i)).toBeInTheDocument();
+    expect(screen.getByText(/do 50 wydarzeń łącznie/i)).toBeInTheDocument();
     expect(screen.getByText(/nieograniczone wydarzenia/i)).toBeInTheDocument();
     expect(screen.getByText(/nieograniczona liczba gości/i)).toBeInTheDocument();
   });
@@ -44,8 +56,17 @@ describe('PricingPlans', () => {
   it('renders CTA buttons', () => {
     render(<PricingPlans />);
 
-    const buttons = screen.getAllByText('Wybierz plan');
-    expect(buttons.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByRole('button', { name: /rozpocznij za darmo/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /wybierz plan/i }).length).toBe(1);
+    expect(screen.getByRole('button', { name: /skontaktuj się/i })).toBeInTheDocument();
+  });
+
+  it('navigates to register with selected plan', () => {
+    render(<PricingPlans />);
+
+    fireEvent.click(screen.getByRole('button', { name: /rozpocznij za darmo/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/register?plan=starter');
   });
 
   it('renders section with proper structure', () => {
@@ -59,7 +80,6 @@ describe('PricingPlans', () => {
   it('renders plan icons', () => {
     render(<PricingPlans />);
 
-    // Check that SVG icons are present
     const icons = document.querySelectorAll('svg');
     expect(icons.length).toBeGreaterThan(0);
   });

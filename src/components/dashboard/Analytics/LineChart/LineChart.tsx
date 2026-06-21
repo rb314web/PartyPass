@@ -11,20 +11,22 @@ interface LineChartProps {
   title: string;
   color?: string;
   height?: number;
+  embedded?: boolean;
 }
 
 const LineChart: React.FC<LineChartProps> = ({
   data,
   title,
-  color = '#3b82f6',
+  color = '#6366f1',
   height = 200,
+  embedded = false,
 }) => {
   if (!data || data.length === 0) {
     return (
-      <div className="line-chart">
-        <h3 className="line-chart__title">{title}</h3>
+      <div className={`line-chart${embedded ? ' line-chart--embedded' : ''}`}>
+        {!embedded && <h3 className="line-chart__title">{title}</h3>}
         <div className="line-chart__no-data">
-          <p>No data available</p>
+          <p>Brak danych</p>
         </div>
       </div>
     );
@@ -39,6 +41,7 @@ const LineChart: React.FC<LineChartProps> = ({
   };
 
   const getX = (index: number) => {
+    if (data.length <= 1) return 160;
     return (index / (data.length - 1)) * 280 + 20;
   };
 
@@ -51,8 +54,8 @@ const LineChart: React.FC<LineChartProps> = ({
     .join(' ');
 
   return (
-    <div className="line-chart">
-      <h3 className="line-chart__title">{title}</h3>
+    <div className={`line-chart${embedded ? ' line-chart--embedded' : ''}`}>
+      {!embedded && <h3 className="line-chart__title">{title}</h3>}
       <div className="line-chart__container">
         <svg width="320" height={height + 40} className="line-chart__svg">
           {/* Grid lines */}
@@ -147,6 +150,7 @@ const LineChart: React.FC<LineChartProps> = ({
       </div>
 
       {/* Legend */}
+      {!embedded && (
       <div className="line-chart__legend">
         <div className="line-chart__legend-item">
           <span
@@ -156,6 +160,7 @@ const LineChart: React.FC<LineChartProps> = ({
           <span className="line-chart__legend-label">{title}</span>
         </div>
       </div>
+      )}
     </div>
   );
 };

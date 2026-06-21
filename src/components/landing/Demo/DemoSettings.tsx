@@ -1,70 +1,121 @@
-import React from 'react';
-import { Settings as SettingsIcon, Bell, User, Shield, Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, User, Shield, Palette, Settings as SettingsIcon } from 'lucide-react';
+import PageHeader from '../../common/PageHeader/PageHeader';
+import { useAuth } from '../../../hooks/useAuth';
+import '../../dashboard/Settings/Settings.scss';
 
-const DemoSettings: React.FC = React.memo(() => (
-  <div className="demo__settings-content">
-    <div className="demo__page-header">
-      <h1>Ustawienia</h1>
-      <p>Zarządzaj ustawieniami swojego konta</p>
+type SettingsTab = 'profile' | 'notifications' | 'security' | 'appearance';
+
+const tabs: Array<{
+  id: SettingsTab;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ size?: number }>;
+}> = [
+  { id: 'profile', label: 'Profil', description: 'Dane osobowe i kontakt', icon: User },
+  {
+    id: 'notifications',
+    label: 'Powiadomienia',
+    description: 'Email i komunikacja',
+    icon: Bell,
+  },
+  {
+    id: 'security',
+    label: 'Bezpieczeństwo',
+    description: 'Hasło i weryfikacja',
+    icon: Shield,
+  },
+  {
+    id: 'appearance',
+    label: 'Wygląd',
+    description: 'Motywy i kolory',
+    icon: Palette,
+  },
+];
+
+const DemoSettings: React.FC = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+
+  return (
+    <div className="settings">
+      <PageHeader
+        title="Ustawienia"
+        subtitle="Zarządzaj swoim kontem i preferencjami"
+        icon={SettingsIcon}
+        className="settings__header"
+      />
+
+      <div className="settings__layout">
+        <nav
+          className="settings__sidebar"
+          role="tablist"
+          aria-label="Sekcje ustawień"
+        >
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`settings__tab ${isActive ? 'settings__tab--active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <div className="settings__tab-icon">
+                  <Icon size={20} />
+                </div>
+                <div className="settings__tab-content">
+                  <span className="settings__tab-label">{tab.label}</span>
+                  <span className="settings__tab-description">
+                    {tab.description}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </nav>
+
+        <main className="settings__content" role="tabpanel">
+          {activeTab === 'profile' && (
+            <>
+              <h2>Profil</h2>
+              <p>
+                <strong>Imię i nazwisko:</strong> {user?.firstName} {user?.lastName}
+              </p>
+              <p>
+                <strong>Email:</strong> {user?.email}
+              </p>
+              <p>
+                <strong>Plan:</strong> Pro
+              </p>
+            </>
+          )}
+          {activeTab === 'notifications' && (
+            <>
+              <h2>Powiadomienia</h2>
+              <p>Przypomnienia RSVP i aktualizacje wydarzeń są włączone.</p>
+            </>
+          )}
+          {activeTab === 'security' && (
+            <>
+              <h2>Bezpieczeństwo</h2>
+              <p>W demo zmiana hasła jest niedostępna.</p>
+            </>
+          )}
+          {activeTab === 'appearance' && (
+            <>
+              <h2>Wygląd</h2>
+              <p>Motyw aplikacji jest synchronizowany z ustawieniami przeglądarki.</p>
+            </>
+          )}
+        </main>
+      </div>
     </div>
-
-    <div className="demo__settings-sections">
-      <div className="demo__settings-section">
-        <div className="demo__settings-section-header">
-          <User size={20} />
-          <h3>Profil</h3>
-        </div>
-        <div className="demo__settings-item">
-          <span>Imię i nazwisko</span>
-          <span className="demo__settings-value">Anna Kowalska</span>
-        </div>
-        <div className="demo__settings-item">
-          <span>Email</span>
-          <span className="demo__settings-value">demo@partypass.pl</span>
-        </div>
-      </div>
-
-      <div className="demo__settings-section">
-        <div className="demo__settings-section-header">
-          <Bell size={20} />
-          <h3>Powiadomienia</h3>
-        </div>
-        <div className="demo__settings-item">
-          <span>Powiadomienia email</span>
-          <span className="demo__settings-value">Włączone</span>
-        </div>
-        <div className="demo__settings-item">
-          <span>Powiadomienia push</span>
-          <span className="demo__settings-value">Wyłączone</span>
-        </div>
-      </div>
-
-      <div className="demo__settings-section">
-        <div className="demo__settings-section-header">
-          <Globe size={20} />
-          <h3>Język</h3>
-        </div>
-        <div className="demo__settings-item">
-          <span>Język interfejsu</span>
-          <span className="demo__settings-value">Polski</span>
-        </div>
-      </div>
-
-      <div className="demo__settings-section">
-        <div className="demo__settings-section-header">
-          <Shield size={20} />
-          <h3>Bezpieczeństwo</h3>
-        </div>
-        <div className="demo__settings-item">
-          <span>Weryfikacja dwuetapowa</span>
-          <span className="demo__settings-value">Wyłączona</span>
-        </div>
-      </div>
-    </div>
-  </div>
-));
-
-DemoSettings.displayName = 'DemoSettings';
+  );
+};
 
 export default DemoSettings;
-

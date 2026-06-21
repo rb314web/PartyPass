@@ -1,5 +1,6 @@
 // components/dashboard/Settings/Settings.scss
 @use '../../../styles/globals/mixins' as *;
+@use '../../../styles/globals/icons' as *;
 
 .settings {
   min-height: 100vh;
@@ -7,14 +8,6 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: 2.5rem 3rem;
-
-  // Płynna animacja pojawienia się
-  opacity: 0;
-  transition: opacity 0.6s ease-out;
-
-  &--fade-in {
-    opacity: 1;
-  }
 
   @media (max-width: 1024px) {
     padding: 2rem 2rem;
@@ -29,67 +22,7 @@
   }
 
   &__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-xl);
-    flex-wrap: wrap;
-    margin-bottom: var(--space-xl);
-  }
-
-  &__title-wrapper {
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-    flex-wrap: wrap;
-
-    > div {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-sm);
-    }
-
-    h1 {
-      font-size: clamp(1.9rem, 3vw, 2.5rem);
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0;
-      letter-spacing: -0.5px;
-      line-height: 1.2;
-
-      @media (max-width: 768px) {
-        font-size: 2rem;
-      }
-
-      @media (max-width: 480px) {
-        font-size: 1.75rem;
-      }
-    }
-
-    p {
-      font-size: 0.95rem;
-      color: var(--text-secondary);
-      margin: 0;
-      font-weight: 400;
-    }
-  }
-
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-xl);
-    background: var(--color-primary-soft, rgba(99, 102, 241, 0.12));
-    color: var(--color-primary);
-    flex-shrink: 0;
-
-    svg {
-      width: 24px;
-      height: 24px;
-      stroke-width: 2.5;
-    }
+    margin-bottom: 0;
   }
 
   &__layout {
@@ -243,5 +176,14 @@
     border-radius: 1rem;
     min-height: 600px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+    .page-header {
+      margin-bottom: 1.5rem;
+
+      &__title {
+        font-size: 1.375rem;
+        font-weight: 600;
+      }
+    }
   }
 }

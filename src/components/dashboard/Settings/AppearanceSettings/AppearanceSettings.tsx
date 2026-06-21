@@ -1,7 +1,16 @@
 // components/dashboard/Settings/AppearanceSettings/AppearanceSettings.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Palette, Globe, Type } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Palette, Globe, Type, Check, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../../../hooks/useAuth';
+import { changeAppLanguage, LANGUAGE_STORAGE_KEY, normalizeLanguage } from '../../../../i18n';
+import {
+  UserSettingsService,
+  UserAppearanceSettings,
+  AccentColorId,
+} from '../../../../services/firebase/userSettingsService';
 import AccentColorSection from './AccentColorSection';
+import PageHeader from '../../../common/PageHeader/PageHeader';
 import './AppearanceSettings.scss';
 
 // Kolory akcentu z wartościami CSS - stonowane odcienie
@@ -58,29 +67,18 @@ const accentColors = [
 ];
 
 const AppearanceSettings: React.FC = () => {
-  const [settings, setSettings] = useState({
-    theme: 'light' as 'light',
-    accentColor:
-      (localStorage.getItem('accentColor') as
-        | 'blue'
-        | 'purple'
-        | 'green'
-        | 'orange'
-        | 'red'
-        | 'teal'
-        | 'slate'
-        | 'custom') || 'blue',
-    customColor: localStorage.getItem('customAccentColor') || '#5b7fd4',
-    language: 'pl' as 'pl' | 'en' | 'de' | 'fr',
-    dateFormat: 'DD/MM/YYYY' as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD',
-    timeFormat: '24h' as '12h' | '24h',
-    currency: 'PLN' as 'PLN' | 'EUR' | 'USD' | 'GBP',
-    compactMode: false,
-    reducedMotion: false,
-    highContrast: false,
-  });
-
+  const { t, i18n } = useTranslation();
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<UserAppearanceSettings>(
+    UserSettingsService.getDefaultAppearanceSettings()
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
+  const [saveError, setSaveError] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   const applyCustomColor = useCallback((hexColor: string) => {
     const root = document.documentElement;
@@ -123,6 +121,48 @@ const AppearanceSettings: React.FC = () => {
     }
   }, [settings.accentColor, settings.customColor, applyAccentColor, applyCustomColor]);
 
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      const timer = setTimeout(() => setSaveStatus('idle'), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [saveStatus]);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!user?.id) {
+        setIsLoadingSettings(false);
+        return;
+      }
+
+      setIsLoadingSettings(true);
+      setLoadError('');
+
+      try {
+        const saved = await UserSettingsService.getAppearanceSettings(user.id);
+        const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        const normalizedLanguage = stored
+          ? normalizeLanguage(stored)
+          : normalizeLanguage(saved.language);
+        setSettings({
+          ...saved,
+          language: normalizedLanguage,
+        });
+
+        if (normalizeLanguage(i18n.language) !== normalizedLanguage) {
+          await changeAppLanguage(normalizedLanguage);
+        }
+      } catch (error) {
+        console.error('Error loading appearance settings:', error);
+        setLoadError('Nie udało się załadować ustawień wyglądu.');
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    void loadSettings();
+  }, [user?.id]);
+
   const lightenColor = (hex: string, percent: number): string => {
     const num = parseInt(hex.replace('#', ''), 16);
     const amt = Math.round(2.55 * percent);
@@ -161,51 +201,86 @@ const AppearanceSettings: React.FC = () => {
     );
   };
 
-  const handleSettingChange = (key: keyof typeof settings, value: any) => {
+  const handleSettingChange = (
+    key: keyof UserAppearanceSettings,
+    value: UserAppearanceSettings[keyof UserAppearanceSettings]
+  ) => {
     setSettings(prev => ({
       ...prev,
       [key]: value,
     }));
+
+    if (saveStatus === 'saved' || saveStatus === 'error') {
+      setSaveStatus('idle');
+      setSaveError('');
+    }
 
     // Natychmiast zastosuj kolor akcentu
     if (key === 'accentColor') {
       if (value === 'custom') {
         applyCustomColor(settings.customColor);
       } else {
-        applyAccentColor(value);
+        applyAccentColor(value as AccentColorId);
       }
-    } else if (key === 'customColor') {
+    } else if (key === 'customColor' && typeof value === 'string') {
       applyCustomColor(value);
       setSettings(prev => ({
         ...prev,
         accentColor: 'custom',
       }));
+    } else if (key === 'language' && typeof value === 'string') {
+      void changeAppLanguage(normalizeLanguage(value));
     }
   };
 
   const handleSave = async () => {
+    if (!user?.id) return;
+
     setIsLoading(true);
+    setSaveStatus('saving');
+    setSaveError('');
 
-    // Symulacja API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    alert('Ustawienia wyglądu zostały zapisane!');
-    setIsLoading(false);
+    try {
+      await UserSettingsService.saveAppearanceSettings(user.id, settings);
+      setSaveStatus('saved');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Nie udało się zapisać ustawień wyglądu.';
+      setSaveError(message);
+      setSaveStatus('error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const languages = [
-    { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'pl' as const, name: t('common.polish'), flag: '🇵🇱' },
+    { code: 'en' as const, name: t('common.english'), flag: '🇺🇸' },
   ];
 
   return (
     <div className="appearance-settings">
-      <div className="appearance-settings__header">
-        <h1>Wygląd i personalizacja</h1>
-        <p>Dostosuj interfejs aplikacji do swoich preferencji</p>
-      </div>
+      <PageHeader
+        title={t('settings.appearanceTitle')}
+        subtitle={t('settings.appearanceSubtitle')}
+        icon={Palette}
+        className="appearance-settings__page-header"
+        meta={
+          loadError ? (
+            <p className="appearance-settings__load-error">{loadError}</p>
+          ) : undefined
+        }
+      />
+
+      {isLoadingSettings ? (
+        <div className="appearance-settings__loading">
+          <div className="appearance-settings__spinner" />
+          <span>{t('settings.loadingSettings')}</span>
+        </div>
+      ) : (
+        <>
 
       <AccentColorSection
         settings={settings}
@@ -221,17 +296,17 @@ const AppearanceSettings: React.FC = () => {
             <Globe size={20} />
           </div>
           <div>
-            <h3>Język i region</h3>
-            <p>Ustaw język interfejsu i formaty regionalne</p>
+            <h3>{t('settings.languageRegion')}</h3>
+            <p>{t('settings.languageRegionHint')}</p>
           </div>
         </div>
 
         <div className="appearance-settings__form-grid">
           <div className="appearance-settings__field">
-            <label>Język interfejsu</label>
+            <label>{t('settings.interfaceLanguage')}</label>
             <select
-              value={settings.language}
-              onChange={e => handleSettingChange('language', e.target.value)}
+              value={normalizeLanguage(settings.language)}
+              onChange={e => handleSettingChange('language', e.target.value as 'pl' | 'en')}
             >
               {languages.map(lang => (
                 <option key={lang.code} value={lang.code}>
@@ -435,10 +510,26 @@ const AppearanceSettings: React.FC = () => {
 
       {/* Save Button */}
       <div className="appearance-settings__actions">
+        <div className="appearance-settings__save-status">
+          {saveStatus === 'saved' && (
+            <span className="appearance-settings__save-message appearance-settings__save-message--success">
+              <Check size={16} />
+              Ustawienia wyglądu zostały zapisane
+            </span>
+          )}
+          {saveStatus === 'error' && (
+            <span className="appearance-settings__save-message appearance-settings__save-message--error">
+              <AlertCircle size={16} />
+              {saveError || 'Wystąpił błąd podczas zapisywania'}
+            </span>
+          )}
+        </div>
+
         <button
           className="appearance-settings__save-btn"
           onClick={handleSave}
-          disabled={isLoading}
+          disabled={isLoading || !user?.id}
+          type="button"
         >
           {isLoading ? (
             <div className="appearance-settings__spinner"></div>
@@ -450,6 +541,8 @@ const AppearanceSettings: React.FC = () => {
           )}
         </button>
       </div>
+        </>
+      )}
     </div>
   );
 };

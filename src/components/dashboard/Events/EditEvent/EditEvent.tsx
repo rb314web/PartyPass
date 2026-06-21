@@ -1,6 +1,5 @@
 // components/dashboard/Events/EditEvent/EditEvent.tsx
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -18,7 +17,10 @@ import { format } from 'date-fns';
 import { EventService } from '../../../../services/firebase/eventService';
 import { Event } from '../../../../types';
 import { useAuth } from '../../../../hooks/useAuth';
-import LocationPicker from '../CreateEvent/LocationPicker/LocationPicker';
+import LazyLocationPicker from '../shared/LazyLocationPicker';
+import Toast, { ToastType } from '../../../common/Toast/Toast';
+import Modal from '../../../common/Modal/Modal';
+import PageHeader from '../../../common/PageHeader/PageHeader';
 import './EditEvent.scss';
 
 interface EventFormData {
@@ -26,6 +28,8 @@ interface EventFormData {
   description: string;
   date: string;
   time: string;
+  rsvpDeadlineDate: string;
+  rsvpDeadlineTime: string;
   location: string;
   maxGuests: number;
   dresscode: string;
@@ -45,6 +49,8 @@ const EditEvent: React.FC = () => {
     description: '',
     date: '',
     time: '',
+    rsvpDeadlineDate: '',
+    rsvpDeadlineTime: '',
     location: '',
     maxGuests: 50,
     dresscode: '',
@@ -56,6 +62,9 @@ const EditEvent: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(
+    null
+  );
 
   // Blokuj scrollowanie SYNCHRONICZNIE z renderowaniem modala
   useLayoutEffect(() => {
@@ -189,11 +198,16 @@ const EditEvent: React.FC = () => {
         if (eventData) {
           setEvent(eventData);
           const eventDate = new Date(eventData.date);
+          const deadline = eventData.rsvpDeadline
+            ? new Date(eventData.rsvpDeadline)
+            : null;
           const initialData = {
             title: eventData.title,
             description: eventData.description,
             date: format(eventDate, 'yyyy-MM-dd'),
             time: format(eventDate, 'HH:mm'),
+            rsvpDeadlineDate: deadline ? format(deadline, 'yyyy-MM-dd') : '',
+            rsvpDeadlineTime: deadline ? format(deadline, 'HH:mm') : '',
             location: eventData.location,
             maxGuests: eventData.maxGuests,
             dresscode: eventData.dresscode || '',
@@ -268,6 +282,30 @@ const EditEvent: React.FC = () => {
       newErrors.maxGuests = 'Maksymalna liczba gości musi być większa od 0';
     }
 
+    if (formData.rsvpDeadlineDate || formData.rsvpDeadlineTime) {
+      if (!formData.rsvpDeadlineDate) {
+        newErrors.rsvpDeadlineDate = 'Uzupełnij datę terminu RSVP';
+      } else if (!formData.rsvpDeadlineTime) {
+        newErrors.rsvpDeadlineTime = 'Uzupełnij godzinę terminu RSVP';
+      } else {
+        const deadline = new Date(
+          `${formData.rsvpDeadlineDate}T${formData.rsvpDeadlineTime}`
+        );
+        if (Number.isNaN(deadline.getTime())) {
+          newErrors.rsvpDeadlineDate = 'Nieprawidłowy termin RSVP';
+        } else if (formData.date && formData.time) {
+          const eventDateTime = new Date(`${formData.date}T${formData.time}`);
+          if (
+            !Number.isNaN(eventDateTime.getTime()) &&
+            deadline.getTime() > eventDateTime.getTime()
+          ) {
+            newErrors.rsvpDeadlineDate =
+              'Termin RSVP nie może być po dacie wydarzenia';
+          }
+        }
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -281,11 +319,18 @@ const EditEvent: React.FC = () => {
 
     try {
       const eventDateTime = new Date(`${formData.date}T${formData.time}`);
+      const rsvpDeadline =
+        formData.rsvpDeadlineDate && formData.rsvpDeadlineTime
+          ? new Date(
+              `${formData.rsvpDeadlineDate}T${formData.rsvpDeadlineTime}`
+            )
+          : null;
 
       const updateData = {
         title: formData.title,
         description: formData.description,
         date: eventDateTime,
+        rsvpDeadline,
         location: formData.location,
         maxGuests: formData.maxGuests,
         dresscode: formData.dresscode,
@@ -296,7 +341,10 @@ const EditEvent: React.FC = () => {
       await EventService.updateEvent(event.id, updateData);
       navigate(`/dashboard/events/${event.id}`);
     } catch (error: any) {
-      alert(`Błąd podczas zapisywania wydarzenia: ${error.message}`);
+      setToast({
+        message: `Błąd podczas zapisywania wydarzenia: ${error.message}`,
+        type: 'error',
+      });
     } finally {
       setSaving(false);
     }
@@ -310,6 +358,8 @@ const EditEvent: React.FC = () => {
         formData.description !== initialFormData.description ||
         formData.date !== initialFormData.date ||
         formData.time !== initialFormData.time ||
+        formData.rsvpDeadlineDate !== initialFormData.rsvpDeadlineDate ||
+        formData.rsvpDeadlineTime !== initialFormData.rsvpDeadlineTime ||
         formData.location !== initialFormData.location ||
         formData.maxGuests !== initialFormData.maxGuests ||
         formData.dresscode !== initialFormData.dresscode ||
@@ -339,15 +389,16 @@ const EditEvent: React.FC = () => {
 
   if (!event) {
     return (
-      <div className="edit-event__error">
+      <div className="pp-field-error edit-event__error">
         <AlertTriangle size={48} />
         <h2>Nie znaleziono wydarzenia</h2>
         <p>
           Wydarzenie o podanym ID nie istnieje lub nie masz do niego dostępu.
         </p>
         <button
+          type="button"
           onClick={() => navigate('/dashboard/events')}
-          className="button"
+          className="pp-btn pp-btn--outline"
         >
           <ArrowLeft size={20} />
           Wróć do listy wydarzeń
@@ -358,21 +409,36 @@ const EditEvent: React.FC = () => {
 
   return (
     <div className="edit-event">
-      <div className="edit-event__header">
-        <button onClick={handleCancel} className="edit-event__back">
-          <ArrowLeft size={20} />
-          Anuluj edycję
-        </button>
-        <h1>Edytuj wydarzenie</h1>
-      </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+      <button
+        type="button"
+        onClick={handleCancel}
+        className="pp-btn pp-btn--ghost pp-btn--sm edit-event__back"
+      >
+        <ArrowLeft size={18} />
+        Anuluj edycję
+      </button>
+
+      <PageHeader
+        title="Edytuj wydarzenie"
+        subtitle="Zaktualizuj szczegóły wydarzenia i zapisz zmiany"
+        icon={Calendar}
+        className="edit-event__page-header"
+      />
 
       <form onSubmit={handleSubmit} className="edit-event__form">
         <div className="edit-event__main">
           <div className="edit-event__section">
             <h2>Podstawowe informacje</h2>
 
-            <div className="edit-event__field">
-              <label htmlFor="title">
+            <div className="pp-field edit-event__field">
+              <label className="pp-label" htmlFor="title">
                 <FileText size={20} />
                 Tytuł wydarzenia *
               </label>
@@ -383,15 +449,15 @@ const EditEvent: React.FC = () => {
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="Wprowadź tytuł wydarzenia"
-                className={errors.title ? 'error' : ''}
+                className={`pp-input${errors.title ? ' pp-input--error' : ''}`}
               />
               {errors.title && (
-                <span className="edit-event__error">{errors.title}</span>
+                <span className="pp-field-error edit-event__error">{errors.title}</span>
               )}
             </div>
 
-            <div className="edit-event__field">
-              <label htmlFor="description">
+            <div className="pp-field edit-event__field">
+              <label className="pp-label" htmlFor="description">
                 <FileText size={20} />
                 Opis wydarzenia *
               </label>
@@ -402,16 +468,16 @@ const EditEvent: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Opisz swoje wydarzenie..."
                 rows={4}
-                className={errors.description ? 'error' : ''}
+                className={`pp-textarea${errors.description ? ' pp-input--error' : ''}`}
               />
               {errors.description && (
-                <span className="edit-event__error">{errors.description}</span>
+                <span className="pp-field-error edit-event__error">{errors.description}</span>
               )}
             </div>
 
             <div className="edit-event__row">
-              <div className="edit-event__field">
-                <label htmlFor="date">
+              <div className="pp-field edit-event__field">
+                <label className="pp-label" htmlFor="date">
                   <Calendar size={20} />
                   Data wydarzenia *
                 </label>
@@ -421,15 +487,15 @@ const EditEvent: React.FC = () => {
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  className={errors.date ? 'error' : ''}
+                  className={`pp-input${errors.date ? ' pp-input--error' : ''}`}
                 />
                 {errors.date && (
-                  <span className="edit-event__error">{errors.date}</span>
+                  <span className="pp-field-error edit-event__error">{errors.date}</span>
                 )}
               </div>
 
-              <div className="edit-event__field">
-                <label htmlFor="time">
+              <div className="pp-field edit-event__field">
+                <label className="pp-label" htmlFor="time">
                   <Clock size={20} />
                   Godzina *
                 </label>
@@ -439,20 +505,20 @@ const EditEvent: React.FC = () => {
                   name="time"
                   value={formData.time}
                   onChange={handleInputChange}
-                  className={errors.time ? 'error' : ''}
+                  className={`pp-input${errors.time ? ' pp-input--error' : ''}`}
                 />
                 {errors.time && (
-                  <span className="edit-event__error">{errors.time}</span>
+                  <span className="pp-field-error edit-event__error">{errors.time}</span>
                 )}
               </div>
             </div>
 
-            <div className="edit-event__field">
-              <label htmlFor="location">
+            <div className="pp-field edit-event__field">
+              <label className="pp-label" htmlFor="location">
                 <MapPin size={20} />
                 Lokalizacja *
               </label>
-              <LocationPicker
+              <LazyLocationPicker
                 value={formData.location}
                 onChange={(location: string) =>
                   setFormData(prev => ({ ...prev, location }))
@@ -462,8 +528,8 @@ const EditEvent: React.FC = () => {
               />
             </div>
 
-            <div className="edit-event__field">
-              <label htmlFor="maxGuests">
+            <div className="pp-field edit-event__field">
+              <label className="pp-label" htmlFor="maxGuests">
                 <Users size={20} />
                 Maksymalna liczba gości *
               </label>
@@ -474,10 +540,10 @@ const EditEvent: React.FC = () => {
                 value={formData.maxGuests}
                 onChange={handleInputChange}
                 min="1"
-                className={errors.maxGuests ? 'error' : ''}
+                className={`pp-input${errors.maxGuests ? ' pp-input--error' : ''}`}
               />
               {errors.maxGuests && (
-                <span className="edit-event__error">{errors.maxGuests}</span>
+                <span className="pp-field-error edit-event__error">{errors.maxGuests}</span>
               )}
             </div>
           </div>
@@ -485,8 +551,55 @@ const EditEvent: React.FC = () => {
           <div className="edit-event__section">
             <h2>Dodatkowe ustawienia</h2>
 
-            <div className="edit-event__field">
-              <label htmlFor="dresscode">Dress code</label>
+            <div className="edit-event__row">
+              <div className="pp-field edit-event__field">
+                <label className="pp-label" htmlFor="rsvpDeadlineDate">
+                  <Clock size={20} />
+                  Termin potwierdzeń (RSVP)
+                </label>
+                <input
+                  type="date"
+                  id="rsvpDeadlineDate"
+                  name="rsvpDeadlineDate"
+                  value={formData.rsvpDeadlineDate}
+                  onChange={handleInputChange}
+                  max={formData.date || undefined}
+                  className={`pp-input${errors.rsvpDeadlineDate ? ' pp-input--error' : ''}`}
+                />
+                {errors.rsvpDeadlineDate && (
+                  <span className="pp-field-error edit-event__error">
+                    {errors.rsvpDeadlineDate}
+                  </span>
+                )}
+              </div>
+
+              <div className="pp-field edit-event__field">
+                <label className="pp-label" htmlFor="rsvpDeadlineTime">
+                  <Clock size={20} />
+                  Godzina terminu
+                </label>
+                <input
+                  type="time"
+                  id="rsvpDeadlineTime"
+                  name="rsvpDeadlineTime"
+                  value={formData.rsvpDeadlineTime}
+                  onChange={handleInputChange}
+                  className={`pp-input${errors.rsvpDeadlineTime ? ' pp-input--error' : ''}`}
+                />
+                {errors.rsvpDeadlineTime && (
+                  <span className="pp-field-error edit-event__error">
+                    {errors.rsvpDeadlineTime}
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className="edit-event__field-hint">
+              Pozostaw puste, aby zezwolić na zmiany odpowiedzi do dnia
+              wydarzenia.
+            </p>
+
+            <div className="pp-field edit-event__field">
+              <label className="pp-label" htmlFor="dresscode">Dress code</label>
               <input
                 type="text"
                 id="dresscode"
@@ -497,8 +610,8 @@ const EditEvent: React.FC = () => {
               />
             </div>
 
-            <div className="edit-event__field">
-              <label htmlFor="additionalInfo">Dodatkowe informacje</label>
+            <div className="pp-field edit-event__field">
+              <label className="pp-label" htmlFor="additionalInfo">Dodatkowe informacje</label>
               <textarea
                 id="additionalInfo"
                 name="additionalInfo"
@@ -509,8 +622,8 @@ const EditEvent: React.FC = () => {
               />
             </div>
 
-            <div className="edit-event__field">
-              <label htmlFor="image">
+            <div className="pp-field edit-event__field">
+              <label className="pp-label" htmlFor="image">
                 <Upload size={20} />
                 Zdjęcie wydarzenia
               </label>
@@ -540,53 +653,41 @@ const EditEvent: React.FC = () => {
             <X size={20} />
             Anuluj
           </button>
-          <button type="submit" disabled={saving} className="edit-event__save">
+          <button type="submit" disabled={saving} className="pp-btn pp-btn--primary edit-event__save">
             <Save size={20} />
             {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
           </button>
         </div>
       </form>
 
-      {showCancelModal &&
-        createPortal(
-          <div
-            className="edit-event__modal-overlay"
-            onClick={() => setShowCancelModal(false)}
-          >
-            <div
-              className="edit-event__modal"
-              onClick={e => e.stopPropagation()}
+      <Modal
+        open={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Anulować edycję?"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(false)}
+              className="pp-btn pp-btn--outline edit-event__modal-btn"
             >
-              <div className="edit-event__modal-header">
-                <h3>Anulować edycję?</h3>
-                <button
-                  onClick={() => setShowCancelModal(false)}
-                  className="edit-event__modal-close"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <p className="edit-event__modal-text">
-                Masz niezapisane zmiany. Czy na pewno chcesz anulować edycję?
-              </p>
-              <div className="edit-event__modal-actions">
-                <button
-                  onClick={() => setShowCancelModal(false)}
-                  className="edit-event__modal-btn edit-event__modal-btn--secondary"
-                >
-                  Kontynuuj edycję
-                </button>
-                <button
-                  onClick={confirmCancel}
-                  className="edit-event__modal-btn edit-event__modal-btn--danger"
-                >
-                  Anuluj edycję
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+              Kontynuuj edycję
+            </button>
+            <button
+              type="button"
+              onClick={confirmCancel}
+              className="pp-btn pp-btn--danger edit-event__modal-btn"
+            >
+              Anuluj edycję
+            </button>
+          </>
+        }
+      >
+        <p className="edit-event__modal-text">
+          Masz niezapisane zmiany. Czy na pewno chcesz anulować edycję?
+        </p>
+      </Modal>
     </div>
   );
 };

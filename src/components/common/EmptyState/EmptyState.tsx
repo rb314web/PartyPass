@@ -11,6 +11,7 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
+  className?: string;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -18,16 +19,21 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   action,
+  className = '',
 }) => {
   return (
-    <div className="empty-state">
-      <div className="empty-state__icon">
+    <div className={`empty-state ${className}`.trim()}>
+      <div className="empty-state__icon" aria-hidden="true">
         <Icon size={48} />
       </div>
       <h3 className="empty-state__title">{title}</h3>
       <p className="empty-state__description">{description}</p>
       {action && (
-        <button className="empty-state__action" onClick={action.onClick}>
+        <button
+          type="button"
+          className="pp-btn pp-btn--primary"
+          onClick={action.onClick}
+        >
           {action.label}
         </button>
       )}

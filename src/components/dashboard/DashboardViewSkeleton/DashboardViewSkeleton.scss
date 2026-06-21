@@ -1,0 +1,326 @@
+// Skeleton widoków dashboardu — zastępuje spinner przy przełączaniu kart.
+// Kolory z motywu (działa w light/dark przez klasę .dark).
+
+.dashboard-skeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  flex: 1;
+
+  &__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  // ---- Podstawowy blok z shimmerem ----
+  &__box {
+    display: block;
+    border-radius: 12px;
+    background-color: var(--bg-tertiary, #f3f4f6);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    background-position: -150% 0;
+    animation: dashboard-skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+
+  // ---- Toolbar ----
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  &__search {
+    height: 44px;
+    flex: 1;
+    min-width: 220px;
+    border-radius: 12px;
+  }
+
+  &__btn {
+    height: 44px;
+    width: 120px;
+    border-radius: 12px;
+  }
+
+  // ---- Linie tekstu ----
+  &__line {
+    height: 12px;
+    border-radius: 6px;
+
+    &--sm {
+      width: 40%;
+    }
+    &--md {
+      width: 65%;
+    }
+    &--lg {
+      width: 85%;
+    }
+  }
+
+  // ---- Siatka kart ----
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border-radius: 16px;
+    background: var(--bg-secondary, #f9fafb);
+    border: 1px solid var(--border-primary, #e5e7eb);
+  }
+
+  &__thumb {
+    height: 130px;
+    border-radius: 12px;
+    margin-bottom: 0.25rem;
+  }
+
+  &__card-foot {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  &__chip {
+    height: 24px;
+    width: 72px;
+    border-radius: 999px;
+  }
+
+  // ---- Lista ----
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    background: var(--bg-secondary, #f9fafb);
+    border: 1px solid var(--border-primary, #e5e7eb);
+  }
+
+  &__avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &__row-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  &__row-trailing {
+    width: 88px;
+    height: 32px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  // ---- Karty statystyk ----
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: clamp(0.875rem, 2vw, 1.25rem);
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border-radius: 16px;
+    background: var(--bg-secondary, #f9fafb);
+    border: 1px solid var(--border-primary, #e5e7eb);
+  }
+
+  &__stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  // ---- Duże bloki / pigułki ----
+  &__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  &__pill {
+    height: 40px;
+    width: 140px;
+    border-radius: 999px;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  &__block {
+    height: 180px;
+    border-radius: 16px;
+
+    &--tall {
+      height: 260px;
+    }
+  }
+
+  &__row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1rem, 2vw, 1.5rem);
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &--dashboard {
+    gap: clamp(1rem, 2.5vw, 1.35rem);
+  }
+
+  &__hero {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__hero-grid {
+    display: grid;
+    grid-template-columns: 1fr minmax(240px, 0.9fr);
+    gap: clamp(0.875rem, 2vw, 1.25rem);
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__hero-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__line--pill {
+    width: 180px;
+    height: 10px;
+  }
+
+  &__block--spotlight {
+    height: 220px;
+    border-radius: var(--dashboard-radius, 1.25rem);
+  }
+
+  &__block--attention {
+    height: 72px;
+    border-radius: var(--dashboard-radius-md, 0.875rem);
+  }
+
+  &__block--readiness {
+    height: 140px;
+    border-radius: var(--dashboard-radius, 1.25rem);
+  }
+
+  &__bento {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__bento-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr minmax(220px, 0.75fr);
+    grid-template-rows: auto auto;
+    gap: clamp(0.875rem, 2vw, 1rem);
+
+    @media (max-width: 1100px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__block--calendar {
+    grid-column: 1 / 3;
+    height: 320px;
+
+    @media (max-width: 1100px) {
+      grid-column: 1;
+    }
+  }
+
+  &__block--pulse {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    height: 100%;
+    min-height: 280px;
+
+    @media (max-width: 1100px) {
+      grid-column: 1;
+      grid-row: auto;
+      min-height: 200px;
+    }
+  }
+
+  &__block--map {
+    grid-column: 1 / 3;
+    height: 220px;
+
+    @media (max-width: 1100px) {
+      grid-column: 1;
+    }
+  }
+}
+
+// ---- Tryb ciemny: delikatniejszy połysk ----
+.dark .dashboard-skeleton__box {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes dashboard-skeleton-shimmer {
+  0% {
+    background-position: -150% 0;
+  }
+  100% {
+    background-position: 150% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-skeleton__box {
+    animation: none;
+  }
+}

@@ -164,7 +164,9 @@ const FitBounds: React.FC<{ locations: EventLocation[] }> = ({ locations }) => {
 
 const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
   const navigate = useNavigate();
-  const { isDark: isDarkFromHook } = useTheme();
+  // Subskrypcja kontekstu motywu (utrzymuje re-render przy zmianie),
+  // lokalny stan isDark poniżej śledzi faktyczną klasę na <html>.
+  useTheme();
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false;
     return document.documentElement.classList.contains('dark');
@@ -383,6 +385,7 @@ const EventsMap: React.FC<EventsMapProps> = ({ events, className = '' }) => {
     return () => {
       isActive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventsWithLocation]);
 
   // Calculate center and bounds

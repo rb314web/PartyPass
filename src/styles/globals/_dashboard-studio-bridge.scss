@@ -1,0 +1,102 @@
+// Most wizualny Studio: home ma pełny layout, pozostałe widoki dzielą canvas + tokeny kart.
+
+.dashboard__content {
+  .dashboard-view:not(.dashboard-home) {
+    background: var(--dashboard-canvas-bg);
+    color: var(--dashboard-ink);
+    min-height: 100%;
+  }
+
+  .page-header {
+    &__title {
+      color: var(--dashboard-ink);
+    }
+
+    &__subtitle {
+      color: var(--dashboard-muted);
+    }
+
+    &__icon {
+      background: var(--dashboard-surface);
+      border: 1px solid var(--dashboard-line);
+      color: var(--dashboard-accent);
+    }
+  }
+
+  // ---- Wspólne karty list (Studio surface) ----
+  .event-card,
+  .events__summary-item,
+  .events__toolbar,
+  .contacts__card,
+  .activities__item,
+  .analytics__trends-panel,
+  .search-page__result,
+  .search-page__filters,
+  .guests__table {
+    background: var(--dashboard-surface);
+    border: 1px solid var(--dashboard-line);
+    box-shadow: var(--dashboard-elevation);
+    color: var(--dashboard-ink);
+  }
+
+  .event-card {
+    border-radius: var(--dashboard-radius-md);
+    box-shadow: var(--dashboard-elevation);
+
+    &:hover {
+      box-shadow: var(--dashboard-elevation-hover);
+    }
+  }
+
+  .events__summary-item,
+  .contacts__card,
+  .activities__item,
+  .search-page__result {
+    border-radius: var(--dashboard-radius-md);
+  }
+
+  .events__toolbar,
+  .search-page__filters {
+    border-radius: var(--dashboard-radius-md);
+  }
+
+  .events__summary-label,
+  .contacts__card-label,
+  .activities__item-time {
+    color: var(--dashboard-muted);
+  }
+
+  .events__summary-value,
+  .contacts__card-value {
+    color: var(--dashboard-ink);
+  }
+
+  .activities__item:hover {
+    border-color: color-mix(in srgb, var(--dashboard-accent) 28%, var(--dashboard-line));
+    background: var(--dashboard-surface);
+  }
+
+  .search-page__result:hover {
+    border-color: color-mix(in srgb, var(--dashboard-accent) 28%, var(--dashboard-line));
+  }
+
+  // Pola wyszukiwania / filtry
+  .events__search .pp-search,
+  .contacts__search .pp-search,
+  .search-page__input-container {
+    background: var(--dashboard-surface);
+    border-color: var(--dashboard-line);
+  }
+}
+
+// Główne widoki list — ten sam canvas co shell (zamiast --bg-secondary)
+.dashboard__content .events,
+.dashboard__content .contacts,
+.dashboard__content .activities,
+.dashboard__content .analytics,
+.dashboard__content .search-page,
+.dashboard__content .guests,
+.dashboard__content .settings {
+  background: var(--dashboard-canvas-bg);
+  color: var(--dashboard-ink);
+}

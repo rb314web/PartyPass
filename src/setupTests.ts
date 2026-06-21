@@ -1,3 +1,11 @@
+/// <reference types="vitest/globals" />
+import { vi, beforeAll } from 'vitest';
+import i18n from './i18n';
+
+beforeAll(async () => {
+  await i18n.changeLanguage('pl');
+});
+
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
@@ -7,30 +15,30 @@ import '@testing-library/jest-dom';
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   })),
 });
 
 // Mock window.ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
 }));
 
 // Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
 }));
 
 // Mock window.navigator.onLine
@@ -43,13 +51,13 @@ Object.defineProperty(window.navigator, 'onLine', {
 Object.defineProperty(window.navigator, 'serviceWorker', {
   writable: true,
   value: {
-    register: jest.fn().mockResolvedValue({
+    register: vi.fn().mockResolvedValue({
       scope: '/',
-      update: jest.fn(),
-      unregister: jest.fn(),
+      update: vi.fn(),
+      unregister: vi.fn(),
     }),
     ready: Promise.resolve({
-      active: { postMessage: jest.fn() },
+      active: { postMessage: vi.fn() },
     }),
   },
 });
@@ -58,7 +66,7 @@ Object.defineProperty(window.navigator, 'serviceWorker', {
 Object.defineProperty(window.navigator, 'geolocation', {
   writable: true,
   value: {
-    getCurrentPosition: jest.fn().mockImplementation((success) =>
+    getCurrentPosition: vi.fn().mockImplementation((success) =>
       success({
         coords: {
           latitude: 52.2297,
@@ -67,21 +75,21 @@ Object.defineProperty(window.navigator, 'geolocation', {
         },
       })
     ),
-    watchPosition: jest.fn(),
-    clearWatch: jest.fn(),
+    watchPosition: vi.fn(),
+    clearWatch: vi.fn(),
   },
 });
 
 // Mock TextEncoder and TextDecoder for Firebase
-global.TextEncoder = jest.fn().mockImplementation(() => ({
-  encode: jest.fn(),
+global.TextEncoder = vi.fn().mockImplementation(() => ({
+  encode: vi.fn(),
 }));
-global.TextDecoder = jest.fn().mockImplementation(() => ({
-  decode: jest.fn(),
+global.TextDecoder = vi.fn().mockImplementation(() => ({
+  decode: vi.fn(),
 }));
 
 // Mock ReadableStream for Firebase
-global.ReadableStream = jest.fn().mockImplementation(() => ({
-  getReader: jest.fn(),
+global.ReadableStream = vi.fn().mockImplementation(() => ({
+  getReader: vi.fn(),
   locked: false,
 }));

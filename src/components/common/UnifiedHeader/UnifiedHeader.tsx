@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, Sun, Moon, LogOut } from 'lucide-react';
+import { Menu, X, Search, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import NavigationLinks, { NavigationItem } from './components/NavigationLinks/NavigationLinks';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
+import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import UserMenu from '../UserMenu/UserMenu';
+import '../LanguageSwitcher/LanguageSwitcher.scss';
 import './UnifiedHeader.scss';
 
 // Extend Window interface for gtag
@@ -47,6 +50,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -208,20 +212,44 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     return hour < 18 ? <Sun size={20} /> : <Moon size={20} />;
   }, []);
 
+  const isLoginPage = location.pathname === '/login';
+  const isRegisterPage = location.pathname === '/register';
+
+  const navigateToAuth = useCallback(
+    (path: '/login' | '/register') => {
+      if (location.pathname === path) return;
+      navigate(path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [location.pathname, navigate]
+  );
+
   // Render auth buttons
   const renderAuthButtons = () => (
     <div className="unified-header__nav-auth">
       <button
-        className="unified-header__auth-btn unified-header__auth-btn--secondary"
-        onClick={() => navigate('/login')}
+        type="button"
+        className={`pp-btn pp-btn--sm ${
+          isLoginPage
+            ? 'unified-header__auth-tab unified-header__auth-tab--active'
+            : 'pp-btn--secondary'
+        }`}
+        onClick={() => navigateToAuth('/login')}
+        aria-current={isLoginPage ? 'page' : undefined}
       >
-        Zaloguj się
+        {t('auth.login')}
       </button>
       <button
-        className="unified-header__auth-btn unified-header__auth-btn--primary"
-        onClick={() => navigate('/register')}
+        type="button"
+        className={`pp-btn pp-btn--sm ${
+          isRegisterPage
+            ? 'unified-header__auth-tab unified-header__auth-tab--active'
+            : 'pp-btn--primary'
+        }`}
+        onClick={() => navigateToAuth('/register')}
+        aria-current={isRegisterPage ? 'page' : undefined}
       >
-        Dołącz do nas
+        {t('auth.joinUs')}
       </button>
     </div>
   );
@@ -271,10 +299,16 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           <Search size={20} />
         </button>
       )}
+      {(variant === 'landing' || variant === 'auth') && (
+        <LanguageSwitcher
+          compact
+          className="unified-header__language-switcher"
+        />
+      )}
       {/* Hide theme toggle on mobile for landing/auth - it's in mobile menu */}
       {!(isMobile && (variant === 'landing' || variant === 'auth')) && <ThemeToggle />}
-      {variant === 'landing' && !user && !isMobile && renderAuthButtons()}
-      {variant === 'landing' && user && !isMobile && renderUserMenu()}
+      {(variant === 'landing' || variant === 'auth') && !user && !isMobile && renderAuthButtons()}
+      {(variant === 'landing' || variant === 'auth') && user && !isMobile && renderUserMenu()}
       {(variant === 'landing' || variant === 'auth') && isMobile && (
         <button
           className="unified-header__mobile-menu-toggle"
@@ -323,7 +357,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 
           {/* Center Section - Navigation or Greeting */}
           <div className="unified-header__nav">
-            {variant === 'landing' && (
+            {(variant === 'landing' || variant === 'auth') && (
               <NavigationLinks
                 onItemClick={handleNavigationClick}
                 showDescriptions={false}
@@ -356,9 +390,17 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           >
             {/* Mobile Menu Header */}
             <div className="unified-header__mobile-menu-header">
-              <div className="unified-header__mobile-menu-logo">
+              <button
+                type="button"
+                className="unified-header__mobile-menu-logo"
+                onClick={() => {
+                  navigate('/');
+                  handleMobileMenuClose();
+                }}
+                aria-label={t('landing.footer.home', { defaultValue: 'Home' })}
+              >
                 <LogoText />
-              </div>
+              </button>
               <button
                 className="unified-header__mobile-menu-close"
                 onClick={handleMobileMenuClose}
@@ -374,22 +416,35 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
               {!user ? (
                 <div className="unified-header__mobile-menu-auth">
                   <button
-                    className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--secondary"
+                    ref={firstMenuItemRef}
+                    type="button"
+                    className={`pp-btn pp-btn--block ${
+                      isLoginPage
+                        ? 'unified-header__auth-tab unified-header__auth-tab--active'
+                        : 'pp-btn--secondary'
+                    }`}
                     onClick={() => {
-                      navigate('/login');
+                      navigateToAuth('/login');
                       handleMobileMenuClose();
                     }}
+                    aria-current={isLoginPage ? 'page' : undefined}
                   >
-                    Zaloguj się
+                    {t('auth.login')}
                   </button>
                   <button
-                    className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
+                    type="button"
+                    className={`pp-btn pp-btn--block ${
+                      isRegisterPage
+                        ? 'unified-header__auth-tab unified-header__auth-tab--active'
+                        : 'pp-btn--primary'
+                    }`}
                     onClick={() => {
-                      navigate('/register');
+                      navigateToAuth('/register');
                       handleMobileMenuClose();
                     }}
+                    aria-current={isRegisterPage ? 'page' : undefined}
                   >
-                    Dołącz do nas
+                    {t('auth.joinUs')}
                   </button>
                 </div>
               ) : (
@@ -440,11 +495,12 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 vertical={true}
                 showDescriptions={true}
                 showIcons={false}
-                firstItemRef={firstMenuItemRef}
+                firstItemRef={user ? firstMenuItemRef : undefined}
               />
 
-              {/* Theme Toggle */}
-              <div className="unified-header__mobile-menu-theme">
+              {/* Language + theme */}
+              <div className="unified-header__mobile-menu-preferences">
+                <LanguageSwitcher compact />
                 <ThemeToggle showLabel size="large" />
               </div>
             </div>

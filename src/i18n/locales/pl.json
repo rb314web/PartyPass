@@ -1,0 +1,773 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "search": "Wyszukaj",
+    "events": "Wydarzenia",
+    "contacts": "Kontakty",
+    "activities": "Aktywności",
+    "analytics": "Analityka",
+    "plan": "Plan",
+    "settings": "Ustawienia",
+    "logout": "Wyloguj się"
+  },
+  "common": {
+    "language": "Język",
+    "polish": "Polski",
+    "english": "English",
+    "backToHome": "Powrót do strony głównej",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "loading": "Ładowanie...",
+    "email": "Email",
+    "password": "Hasło"
+  },
+  "auth": {
+    "loginTitle": "Witaj ponownie!",
+    "loginSubtitle": "Zaloguj się do swojego konta PartyPass",
+    "registerTitle": "Stwórz konto",
+    "registerSubtitle": "Zacznij organizować wydarzenia w kilka minut — plan Starter gratis",
+    "forgotTitle": "Reset hasła",
+    "forgotSubtitle": "Podaj e-mail powiązany z kontem — wyślemy link do resetu",
+    "forgotSubtitleSent": "Sprawdź skrzynkę i postępuj zgodnie z instrukcją",
+    "forgotSentMessage": "Jeśli konto istnieje, wysłaliśmy wiadomość na <strong>{{email}}</strong>.",
+    "forgotSubmit": "Wyślij link resetujący",
+    "backToLogin": "Wróć do logowania",
+    "emailPlaceholder": "twoj@email.com",
+    "passwordPlaceholder": "••••••••",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "firstNamePlaceholder": "Jan",
+    "lastNamePlaceholder": "Kowalski",
+    "confirmPassword": "Potwierdź hasło",
+    "choosePlan": "Wybierz plan",
+    "popular": "Popularne",
+    "acceptTerms": "Akceptuję <1>regulamin</1> i <2>politykę prywatności</2>",
+    "stepPersonal": "Dane",
+    "stepAccount": "Konto",
+    "next": "Dalej",
+    "back": "Wstecz",
+    "createAccount": "Stwórz konto",
+    "hasAccount": "Masz już konto?",
+    "rememberMe": "Zapamiętaj mnie",
+    "forgotPassword": "Zapomniałeś hasła?",
+    "login": "Zaloguj się",
+    "or": "lub",
+    "googleLogin": "Kontynuuj z Google",
+    "noAccount": "Nie masz konta?",
+    "register": "Zarejestruj się",
+    "joinUs": "Dołącz do nas",
+    "passwordMismatch": "Hasła nie są identyczne",
+    "termsRequired": "Musisz zaakceptować regulamin",
+    "showcase": {
+      "previewLabel": "RSVP na żywo",
+      "previewEvent": "Letnie przyjęcie w ogrodzie",
+      "previewGoing": "24 potwierdza",
+      "previewMaybe": "6 może",
+      "login": {
+        "eyebrow": "Witaj z powrotem",
+        "title": "Twoje wydarzenia na wyciągnięcie ręki",
+        "subtitle": "Kontynuuj tam, gdzie skończyłeś — goście, RSVP i aktualizacje w jednym miejscu.",
+        "feature1": "Natychmiastowy dostęp do wszystkich wydarzeń",
+        "feature2": "RSVP na żywo i listy gości",
+        "feature3": "Bezpieczne logowanie e-mailem lub Google",
+        "statEvents": "Zorganizowanych wydarzeń",
+        "statEventsValue": "10 000+",
+        "statRsvp": "Średnia frekwencja RSVP",
+        "statRsvpValue": "94%"
+      },
+      "register": {
+        "eyebrow": "Zacznij za darmo",
+        "title": "Uruchom pierwsze wydarzenie już dziś",
+        "subtitle": "Dołącz do organizatorów, którzy rezygnują z arkuszy i chaosu w czatach.",
+        "feature1": "Piękna strona RSVP w mniej niż 5 minut",
+        "feature2": "Plan Starter gratis — bez karty",
+        "feature3": "Od urodzin po eventy firmowe",
+        "statEvents": "Zorganizowanych wydarzeń",
+        "statEventsValue": "10 000+",
+        "statRsvp": "Średnia frekwencja RSVP",
+        "statRsvpValue": "94%"
+      },
+      "forgot": {
+        "eyebrow": "Odzyskiwanie konta",
+        "title": "Szybko wrócisz do swoich wydarzeń",
+        "subtitle": "Link resetujący jest bezpieczny i wygasa po 24 godzinach.",
+        "feature1": "Link wysyłamy na Twój e-mail",
+        "feature2": "Działa z kontem e-mail i Google",
+        "feature3": "Potrzebujesz pomocy? Napisz do nas",
+        "statEvents": "Zorganizowanych wydarzeń",
+        "statEventsValue": "10 000+",
+        "statRsvp": "Średnia frekwencja RSVP",
+        "statRsvpValue": "94%"
+      }
+    }
+  },
+  "landing": {
+    "heroTitle": "Zaproszenia, które <1>zachwycają</1> gości",
+    "heroSubtitle": "Piękny link RSVP, proste potwierdzenia i spokój organizatora — bez chaosu w wiadomościach i arkuszach.",
+    "freeStart": "Darmowy start",
+    "freeStartLabel": "Plan Starter bez karty kredytowej",
+    "rsvpOnline": "RSVP online",
+    "rsvpOnlineLabel": "Potwierdzenia gości w jednym linku",
+    "emailInvites": "Zaproszenia e-mail",
+    "emailInvitesLabel": "Spersonalizowane wiadomości do gości",
+    "startFree": "Rozpocznij",
+    "watchDemo": "Zobacz demo",
+    "startFreeLong": "Rozpocznij za darmo",
+    "heroEyebrow": "Organizuj z lekkością",
+    "invitation": {
+      "label": "Zaproszenie",
+      "guestPrompt": "Czy będziesz?",
+      "location": "Warszawa, ul. Nowogrodzka 12",
+      "poweredBy": "Wysłane przez PartyPass",
+      "guestName": "Maria Kowalska",
+      "guestEmail": "maria@example.com",
+      "guestInitials": "MK"
+    },
+    "howItWorks": {
+      "eyebrow": "Jak to działa",
+      "title": "Od pomysłu do potwierdzeń w trzech krokach",
+      "subtitle": "Bez skomplikowanych narzędzi — tylko to, czego potrzebujesz, by goście powiedzieli „będę”.",
+      "step1Title": "Stwórz wydarzenie",
+      "step1Desc": "Data, miejsce, lista gości — gotowe w kilka minut.",
+      "step2Title": "Wyślij zaproszenie",
+      "step2Desc": "Jeden link RSVP w e-mailu. Gość odpowiada bez zakładania konta.",
+      "step3Title": "Obserwuj odpowiedzi",
+      "step3Desc": "Widzisz na żywo, kto przychodzi, kto się waha i kto nie może."
+    },
+    "nav": {
+      "features": "Funkcje",
+      "featuresDesc": "Poznaj możliwości PartyPass",
+      "howItWorks": "Jak to działa",
+      "howItWorksDesc": "Trzy proste kroki",
+      "pricing": "Cennik",
+      "pricingDesc": "Wybierz plan dla siebie",
+      "demo": "Demo",
+      "demoDesc": "Zobacz panel organizatora",
+      "contact": "Kontakt",
+      "contactDesc": "Skontaktuj się z nami"
+    },
+    "heroCards": {
+      "birthdayTitle": "🎂 Urodziny Marii",
+      "birthdayDate": "14 czerwca, 20:00",
+      "birthdayRsvp": "28/35 gości potwierdziło",
+      "meetupTitle": "🏢 Meetup Product Design",
+      "meetupDate": "22 czerwca, 18:30",
+      "meetupAttendees": "42 uczestników",
+      "liveRsvp": "+3 nowe RSVP dziś"
+    },
+    "previewScenarios": {
+      "birthday": {
+        "title": "🎂 Urodziny Marii",
+        "date": "14 czerwca, 20:00",
+        "guestName": "Maria Kowalska",
+        "guestEmail": "maria@example.com",
+        "guestInitials": "MK"
+      },
+      "meetup": {
+        "title": "🏢 Meetup Product Design",
+        "date": "22 czerwca, 18:30",
+        "guestName": "Tomasz Wiśniewski",
+        "guestEmail": "tomasz@example.com",
+        "guestInitials": "TW"
+      },
+      "gala": {
+        "title": "✨ Charity Gala",
+        "date": "2 sierpnia, 15:00",
+        "guestName": "Anna i Piotr",
+        "guestEmail": "anna.kowalska@example.com",
+        "guestInitials": "AP"
+      }
+    },
+    "features": {
+      "eyebrow": "Dla organizatora",
+      "title": "Ty organizujesz. My dbamy o resztę",
+      "subtitle": "Panel, zaproszenia i odpowiedzi gości — spięte w jednym miejscu.",
+      "eventCreationTitle": "Łatwe tworzenie wydarzeń",
+      "eventCreationDesc": "Intuicyjny kreator pomoże Ci stworzyć wydarzenie w kilka minut",
+      "guestManagementTitle": "Zarządzanie gośćmi",
+      "guestManagementDesc": "Dodawaj gości, śledź odpowiedzi i zarządzaj listą uczestników",
+      "emailInvitesTitle": "Zaproszenia e-mail",
+      "emailInvitesDesc": "Wysyłaj spersonalizowane zaproszenia — SMS dostępny w planie Pro",
+      "analyticsTitle": "Analityki",
+      "analyticsDesc": "Statystyki RSVP, frekwencji i aktywności wydarzeń",
+      "rsvpLinkTitle": "Link RSVP",
+      "rsvpLinkDesc": "Udostępnij jeden link — goście potwierdzają obecność bez logowania",
+      "securityTitle": "Bezpieczeństwo",
+      "securityDesc": "Twoje dane są chronione najwyższymi standardami"
+    },
+    "pricing": {
+      "label": "Plany i Ceny",
+      "title": "Wybierz plan",
+      "titleHighlight": "idealny dla Ciebie",
+      "subtitle": "Zacznij za darmo — ulepsz plan, gdy Twoje wydarzenia rosną",
+      "free": "Darmowy",
+      "perMonth": "/miesiąc",
+      "mostPopular": "Najpopularniejszy",
+      "cta": {
+        "starter": "Rozpocznij za darmo",
+        "pro": "Wybierz plan",
+        "enterprise": "Skontaktuj się"
+      },
+      "plans": {
+        "starter": {
+          "features": [
+            "Do 10 wydarzeń łącznie",
+            "Do 50 gości łącznie",
+            "Do 50 kontaktów",
+            "Podstawowe zaproszenia e-mail",
+            "Link RSVP dla gości",
+            "Podstawowe statystyki"
+          ]
+        },
+        "pro": {
+          "features": [
+            "Do 50 wydarzeń łącznie",
+            "Do 500 gości łącznie",
+            "Do 1000 kontaktów",
+            "Spersonalizowane zaproszenia",
+            "SMS powiadomienia",
+            "Zaawansowane analityki",
+            "QR kody dla gości",
+            "Priority support"
+          ]
+        },
+        "enterprise": {
+          "features": [
+            "Nieograniczone wydarzenia",
+            "Nieograniczona liczba gości",
+            "Nieograniczona liczba kontaktów",
+            "Custom branding",
+            "Zaawansowane analityki",
+            "API dostęp",
+            "Dedykowany manager",
+            "24/7 support",
+            "Integracje z CRM"
+          ]
+        }
+      }
+    },
+    "cta": {
+      "eyebrow": "Gotowy na start?",
+      "title": "Zorganizuj następne wydarzenie bez stresu",
+      "subtitle": "Załóż konto za darmo i wyślij pierwsze zaproszenie jeszcze dziś.",
+      "perkFree": "Darmowy plan startowy",
+      "perkNoCard": "Bez karty kredytowej",
+      "perkFast": "Pierwsze zaproszenie w 2 min",
+      "previewLabel": "Tak wygląda link RSVP dla gościa"
+    },
+    "contact": {
+      "eyebrow": "Kontakt",
+      "title": "Skontaktuj się z nami",
+      "subtitle": "Masz pytania? Jesteśmy tutaj, aby pomóc Ci w organizacji idealnego wydarzenia.",
+      "perkResponse": "Odpowiedź w ciągu 24 godzin",
+      "perkHelp": "Pomoc z planami, RSVP i zaproszeniami",
+      "perkPrivacy": "Twoje dane są bezpieczne",
+      "formTitle": "Napisz do nas",
+      "formHint": "Wypełnij formularz — odezwiemy się na podany email.",
+      "nameLabel": "Imię i nazwisko *",
+      "namePlaceholder": "Wprowadź swoje imię",
+      "emailLabel": "Email *",
+      "messageLabel": "Wiadomość *",
+      "messagePlaceholder": "W czym możemy Ci pomóc?",
+      "submit": "Wyślij wiadomość",
+      "submitting": "Wysyłanie...",
+      "successTitle": "Dziękujemy za wiadomość!",
+      "successMessage": "Odpowiemy na Twoją wiadomość jak najszybciej.",
+      "sendAnother": "Wyślij kolejną wiadomość",
+      "errors": {
+        "nameRequired": "Imię jest wymagane",
+        "emailRequired": "Email jest wymagany",
+        "emailInvalid": "Nieprawidłowy format email",
+        "messageRequired": "Wiadomość jest wymagana",
+        "submitFailed": "Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie później."
+      }
+    },
+    "footer": {
+      "missionFull": "Wsparcie organizatorów w tworzeniu perfekcyjnych wydarzeń – od zarządzania gośćmi i zaproszeniami po kontrolę frekwencji i analizę wyników.",
+      "missionShort": "Twórz perfekcyjne wydarzenia z PartyPass.",
+      "backToTop": "Wróć na górę",
+      "siteMap": "Mapa strony",
+      "legal": "Informacje prawne",
+      "home": "Strona główna",
+      "privacy": "Polityka prywatności",
+      "terms": "Regulamin",
+      "rodo": "RODO",
+      "copyright": "© {{year}} partypass.pl. Wszelkie prawa zastrzeżone."
+    }
+  },
+  "settings": {
+    "appearanceTitle": "Wygląd i personalizacja",
+    "appearanceSubtitle": "Dostosuj interfejs aplikacji do swoich preferencji",
+    "loadingSettings": "Ładowanie ustawień...",
+    "languageRegion": "Język i region",
+    "languageRegionHint": "Ustaw język interfejsu i formaty regionalne",
+    "interfaceLanguage": "Język interfejsu"
+  },
+  "legal": {
+    "updatedLabel": "Ostatnia aktualizacja:",
+    "backToHome": "← Wróć na stronę główną",
+    "privacy": {
+      "title": "Polityka prywatności",
+      "subtitle": "Jak przetwarzamy Twoje dane w PartyPass",
+      "lastUpdated": "13 czerwca 2026",
+      "sections": [
+        {
+          "title": "1. Administrator danych",
+          "paragraphs": [
+            "Administratorem danych osobowych przetwarzanych w Serwisie PartyPass jest operator platformy. Kontakt: kontakt@partypass.pl."
+          ]
+        },
+        {
+          "title": "2. Jakie dane zbieramy",
+          "paragraphs": [
+            "Przetwarzamy dane konta (imię, nazwisko, e-mail), dane wydarzeń i gości wprowadzone przez użytkownika oraz dane techniczne (logi, identyfikatory sesji) niezbędne do działania usługi.",
+            "Dane gości (np. imię, e-mail, odpowiedź RSVP) przetwarzamy wyłącznie w celu realizacji funkcji zaproszeń i organizacji wydarzeń."
+          ]
+        },
+        {
+          "title": "3. Cele i podstawy prawne",
+          "paragraphs": [
+            "Dane przetwarzamy w celu świadczenia usługi (art. 6 ust. 1 lit. b RODO), obsługi płatności (lit. b), zapewnienia bezpieczeństwa (lit. f) oraz — po wyrażeniu zgody — w celach marketingowych (lit. a)."
+          ]
+        },
+        {
+          "title": "4. Odbiorcy danych",
+          "paragraphs": [
+            "Korzystamy z dostawców infrastruktury (np. Firebase/Google Cloud, EmailJS) działających jako podmioty przetwarzające na podstawie umów powierzenia.",
+            "Dane nie są sprzedawane podmiotom trzecim w celach marketingowych."
+          ]
+        },
+        {
+          "title": "5. Okres przechowywania",
+          "paragraphs": [
+            "Dane konta przechowujemy przez czas korzystania z Serwisu i do momentu usunięcia konta, chyba że dłuższy okres wynika z przepisów prawa.",
+            "Po usunięciu konta dane są trwale usuwane z aktywnych systemów w rozsądnym terminie technicznym."
+          ]
+        },
+        {
+          "title": "6. Twoje prawa",
+          "paragraphs": [
+            "Przysługuje Ci prawo dostępu, sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych oraz wniesienia sprzeciwu — w granicach określonych przez RODO.",
+            "Skargę możesz wnieść do Prezesa Urzędu Ochrony Danych Osobowych (PUODO)."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Regulamin",
+      "subtitle": "Warunki korzystania z platformy PartyPass",
+      "lastUpdated": "13 czerwca 2026",
+      "sections": [
+        {
+          "title": "1. Postanowienia ogólne",
+          "paragraphs": [
+            "Niniejszy regulamin określa zasady korzystania z serwisu PartyPass (dalej: „Serwis”) świadczonego przez operatora platformy.",
+            "Korzystanie z Serwisu oznacza akceptację regulaminu. Jeśli nie akceptujesz jego postanowień, nie korzystaj z usługi."
+          ]
+        },
+        {
+          "title": "2. Konto użytkownika",
+          "paragraphs": [
+            "Rejestracja wymaga podania prawdziwych danych oraz utrzymania poufności hasła. Użytkownik odpowiada za działania wykonane na koncie.",
+            "Operator może zawiesić lub usunąć konto w przypadku naruszenia regulaminu, prawa lub bezpieczeństwa innych użytkowników."
+          ]
+        },
+        {
+          "title": "3. Plany i płatności",
+          "paragraphs": [
+            "Serwis oferuje plany Starter (bezpłatny), Pro i Enterprise z różnymi limitami funkcji opisanymi na stronie cennika.",
+            "Opłaty za plany płatne są pobierane zgodnie z wybranym cyklem rozliczeniowym. Szczegóły płatności podawane są przy zakupie planu."
+          ]
+        },
+        {
+          "title": "4. Dozwolone użycie",
+          "paragraphs": [
+            "Zabronione jest wykorzystywanie Serwisu do wysyłania spamu, naruszania praw osób trzecich lub obchodzenia limitów technicznych platformy.",
+            "Użytkownik zachowuje prawa do treści, które wprowadza (np. dane gości), i udziela operatorowi licencji niezbędnej do świadczenia usługi."
+          ]
+        },
+        {
+          "title": "5. Odpowiedzialność",
+          "paragraphs": [
+            "Serwis jest dostarczany w stanie „tak jak jest”. Operator dokłada starań, aby zapewnić ciągłość działania, lecz nie gwarantuje nieprzerwanego dostępu.",
+            "W zakresie dozwolonym przez prawo odpowiedzialność operatora ograniczona jest do wysokości opłat uiszczonych przez użytkownika w ostatnich 12 miesiącach."
+          ]
+        },
+        {
+          "title": "6. Kontakt",
+          "paragraphs": [
+            "W sprawach związanych z regulaminem skontaktuj się: kontakt@partypass.pl."
+          ]
+        }
+      ]
+    },
+    "rodo": {
+      "title": "Informacja RODO",
+      "subtitle": "Szczegóły przetwarzania danych osobowych",
+      "lastUpdated": "13 czerwca 2026",
+      "sections": [
+        {
+          "title": "1. Informacja dla gości wydarzeń",
+          "paragraphs": [
+            "Organizator wydarzenia (użytkownik PartyPass) jest administratorem danych gości wprowadzanych do systemu. PartyPass działa jako podmiot przetwarzający na podstawie umowy powierzenia z organizatorem."
+          ]
+        },
+        {
+          "title": "2. Zakres powierzenia",
+          "paragraphs": [
+            "W ramach powierzenia przetwarzamy dane identyfikacyjne i kontaktowe gości, status RSVP, preferencje żywieniowe oraz notatki wprowadzone przez organizatora — wyłącznie w celu realizacji wydarzenia."
+          ]
+        },
+        {
+          "title": "3. Środki bezpieczeństwa",
+          "paragraphs": [
+            "Stosujemy szyfrowanie transmisji (HTTPS), kontrolę dostępu opartą o uwierzytelnianie Firebase oraz reguły bezpieczeństwa bazy danych ograniczające dostęp do danych właściciela konta."
+          ]
+        },
+        {
+          "title": "4. Podprocesorzy",
+          "paragraphs": [
+            "Dane mogą być przetwarzane przez Google Firebase (hosting, baza danych, uwierzytelnianie) oraz — po konfiguracji przez użytkownika — EmailJS (wysyłka wiadomości e-mail). Lista podprocesorów jest aktualizowana w polityce prywatności."
+          ]
+        },
+        {
+          "title": "5. Kontakt w sprawach RODO",
+          "paragraphs": [
+            "Organizatorzy: kontakt@partypass.pl. Goście wydarzeń powinni kierować żądania dotyczące swoich danych do organizatora wydarzenia, który je wprowadził do systemu."
+          ]
+        }
+      ]
+    }
+  },
+  "rsvp": {
+    "status": {
+      "accepted": {
+        "label": "Będę",
+        "hint": "Z przyjemnością"
+      },
+      "maybe": {
+        "label": "Może",
+        "hint": "Jeszcze nie wiem"
+      },
+      "declined": {
+        "label": "Nie będę",
+        "hint": "Niestety nie dam rady"
+      }
+    },
+    "submitted": {
+      "accepted": {
+        "titleWithName": "Super, {{name}}! Widzimy się",
+        "title": "Super, widzimy się!",
+        "message": "Cieszymy się, że będziesz. Do zobaczenia wkrótce!"
+      },
+      "maybe": {
+        "titleWithName": "{{name}}, jeszcze się zastanawiasz?",
+        "title": "Odpowiedź „Może” zapisana",
+        "message": "Daj znać, gdy już będziesz wiedzieć."
+      },
+      "declined": {
+        "titleWithName": "Dziękujemy, {{name}}",
+        "title": "Dziękujemy za informację",
+        "message": "Rozumiemy. Jeśli coś się zmieni, odpowiedź możesz zaktualizować."
+      },
+      "changeResponseHint": "Odpowiedź możesz zmieniać do {{deadline}}.",
+      "changeResponse": "Zmień odpowiedź"
+    },
+    "errors": {
+      "missingToken": "Brak tokenu w linku",
+      "tokenNotFound": "Nie znaleziono danych dla tego tokenu",
+      "loadFailed": "Nie udało się załadować danych",
+      "submitFailed": "Nie udało się wysłać odpowiedzi",
+      "genericTitle": "Ups! Coś poszło nie tak"
+    },
+    "deadlineExpired": {
+      "eventPassed": {
+        "title": "To wydarzenie już się odbyło",
+        "body": "To wydarzenie już za nami, więc nie można przesłać odpowiedzi.",
+        "hint": "Dziękujemy za zainteresowanie. W razie pytań skontaktuj się z organizatorem."
+      },
+      "rsvpDeadlinePassed": {
+        "title": "Czas na odpowiedź już minął",
+        "body": "Termin przyjmowania odpowiedzi upłynął, ale samo wydarzenie jest jeszcze przed nami. Nie można już zmienić decyzji online.",
+        "hint": "Chcesz jeszcze zmienić odpowiedź? Skontaktuj się bezpośrednio z organizatorem wydarzenia."
+      },
+      "lastResponseSuffix": " Twoja ostatnia odpowiedź to: „{{status}}”."
+    },
+    "notFound": {
+      "title": "Nie znaleziono zaproszenia",
+      "body": "Sprawdź, czy link jest poprawny."
+    },
+    "common": {
+      "invitation": "Zaproszenie",
+      "invitationFor": "Zaproszenie dla"
+    },
+    "form": {
+      "willYouAttend": "Czy będziesz?",
+      "responseSavedHint": "Twoja odpowiedź została zapisana — możesz ją zmienić do {{deadline}}.",
+      "plusOne": "Przyjdę z osobą towarzyszącą (+1)",
+      "partyWhoCouple": "Kto z Was przyjdzie?",
+      "partyWhoCompanion": "Kto przyjdzie?",
+      "partySelectOne": "Zaznacz co najmniej jedną osobę",
+      "partyUnnamed": "Osoba towarzysząca",
+      "placeholders": {
+        "firstName": "Imię",
+        "lastName": "Nazwisko",
+        "plusOneDietary": "Dieta osoby towarzyszącej (opcjonalne)",
+        "dietaryRestrictions": "np. wegetariańska, bezglutenowa...",
+        "notes": "Masz pytanie albo prośbę? Napisz tutaj..."
+      },
+      "labels": {
+        "dietaryRestrictions": "Ograniczenia dietetyczne (opcjonalne)",
+        "notes": "Dodatkowe uwagi (opcjonalne)"
+      },
+      "submit": {
+        "sending": "Wysyłanie...",
+        "saveChange": "Zapisz zmianę",
+        "sendResponse": "Wyślij odpowiedź"
+      },
+      "deadlineHint": {
+        "passed": "Termin na przesłanie odpowiedzi już minął.",
+        "active": "Odpowiedź możesz zmieniać do {{deadline}}."
+      }
+    },
+    "eventDetails": {
+      "getReady": "Przygotuj się",
+      "weatherAndAttire": "Pogoda i ubiór",
+      "location": "Lokalizacja",
+      "details": "Szczegóły",
+      "dressCode": "Dress code",
+      "additionalInfo": "Dodatkowe informacje",
+      "haveQuestion": "Masz pytanie?"
+    },
+    "calendar": {
+      "addToCalendar": "Dodaj do kalendarza",
+      "googleTitle": "Dodaj do Google Calendar",
+      "google": "Google",
+      "appleTitle": "Dodaj do Apple Calendar",
+      "apple": "Apple",
+      "downloadIcsTitle": "Pobierz plik kalendarza",
+      "downloadIcs": "Pobierz .ics"
+    },
+    "organizerContact": {
+      "lead": "Skontaktuj się bezpośrednio z organizatorem wydarzenia.",
+      "emailSubject": "Pytanie o wydarzenie: {{eventTitle}}",
+      "emailBody": "Cześć,\n\nMam pytanie dotyczące wydarzenia:\n\n",
+      "sendEmail": "Napisz e-mail",
+      "call": "Zadzwoń"
+    },
+    "countdown": {
+      "live": "Trwa teraz",
+      "past": "Wydarzenie już się odbyło",
+      "inDaysHours": "Za {{days}} {{daysUnit}}, {{hours}} {{hoursUnit}}",
+      "inHoursMinutes": "Za {{hours}} {{hoursUnit}}, {{minutes}} {{minutesUnit}}",
+      "inMinutes": "Za {{minutes}} {{minutesUnit}}",
+      "day_one": "dzień",
+      "day_few": "dni",
+      "day_many": "dni",
+      "day_other": "dni",
+      "hour_one": "godzinę",
+      "hour_few": "godziny",
+      "hour_many": "godzin",
+      "hour_other": "godzin",
+      "minute_one": "minutę",
+      "minute_few": "minuty",
+      "minute_many": "minut",
+      "minute_other": "minut"
+    }
+  },
+  "weather": {
+    "loading": "Ładowanie pogody...",
+    "unavailable": "Pogoda niedostępna",
+    "packingLabel": "Co zabrać",
+    "currentRsvp": "Teraz",
+    "currentDefault": "Aktualna",
+    "forecastRsvp": "W czasie wydarzenia",
+    "forecastDefault": "W trakcie",
+    "eventPassed": "Wydarzenie już minęło — prognoza niedostępna",
+    "eventTooFar": "Wydarzenie za ponad {{days}} dni — prognoza niedostępna",
+    "forecastFetchFailed": "Nie udało się pobrać prognozy na ten termin",
+    "wmo": {
+      "0": "bezchmurnie",
+      "1": "przeważnie bezchmurnie",
+      "2": "częściowe zachmurzenie",
+      "3": "pochmurno",
+      "45": "mgła",
+      "48": "szronowa mgła",
+      "51": "słaba mżawka",
+      "53": "mżawka",
+      "55": "intensywna mżawka",
+      "61": "słaby deszcz",
+      "63": "deszcz",
+      "65": "intensywny deszcz",
+      "71": "słaby śnieg",
+      "73": "śnieg",
+      "75": "intensywny śnieg",
+      "80": "przelotne opady",
+      "81": "przelotne opady",
+      "82": "intensywne przelotne opady",
+      "85": "przelotne opady śniegu",
+      "86": "intensywne opady śniegu",
+      "95": "burza",
+      "96": "burza z gradem",
+      "99": "burza z gradem",
+      "default": "pochmurno"
+    },
+    "packing": {
+      "thunderstorm": "Burze możliwe do wieczora — parasol i kurtka przeciwdeszczowa",
+      "heavyRain": "Duża szansa opadów do końca dnia — weź parasol",
+      "rainLater": "Opady przewidywane po rozpoczęciu — parasol się przyda",
+      "rainPossible": "Możliwe opady do wieczora — weź parasol",
+      "snow": "Śnieg możliwy do końca dnia — ubierz się ciepło",
+      "fog": "Mgła możliwa w ciągu dnia — warstwy na chłód",
+      "veryCold": "Wieczorem może być bardzo chłodno — ciepła kurtka",
+      "cool": "Temperatura spadnie w ciągu dnia — weź kurtkę lub sweter",
+      "hot": "W ciągu dnia będzie gorąco — lekkie ubranie i woda",
+      "windy": "Wietrznie do wieczora — coś na wiatr",
+      "clear": "Bez opadów do wieczora — wygodne ubranie wystarczy",
+      "cloudy": "Zachmurzenie bez opadów — lekka kurtka na wszelki wypadek",
+      "default": "Brak opadów do wieczora — wygodne, warstwowe ubranie"
+    }
+  },
+  "map": {
+    "loading": "Ładowanie mapy...",
+    "error": "Nie udało się wyświetlić mapy dla tej lokalizacji.",
+    "openInGoogleMaps": "Otwórz w Google Maps",
+    "copy": "Kopiuj",
+    "copied": "Skopiowano",
+    "navigate": "Nawiguj",
+    "copyAria": "Kopiuj adres",
+    "copiedAria": "Skopiowano adres",
+    "navigateAria": "Otwórz w Google Maps"
+  },
+  "dashboardHome": {
+    "lede": "RSVP, goście i terminy — wszystko pod ręką.",
+    "quickActionsLabel": "Szybkie akcje",
+    "spotlightLabel": "Najbliższe wydarzenie",
+    "spotlightOpen": "Otwórz",
+    "spotlightEmptyTitle": "Brak nadchodzących wydarzeń",
+    "spotlightEmptyDesc": "Utwórz pierwsze wydarzenie i wyślij zaproszenia.",
+    "spotlightEmptyCta": "Nowe wydarzenie",
+    "countdownToday": "Dziś",
+    "countdownTomorrow": "Jutro",
+    "countdownDays": "Za {{count}} dni",
+    "guest_one": "{{count}} gość",
+    "guest_few": "{{count}} gości",
+    "guest_many": "{{count}} gości",
+    "guest_other": "{{count}} gości",
+    "attentionTitle": "Wymaga uwagi",
+    "attentionPending_one": "{{count}} gość czeka na odpowiedź RSVP",
+    "attentionPending_few": "{{count}} gości czeka na odpowiedź RSVP",
+    "attentionPending_many": "{{count}} gości czeka na odpowiedź RSVP",
+    "attentionPending_other": "{{count}} gości czeka na odpowiedź RSVP",
+    "attentionPendingEvent": "{{total}} gości bez odpowiedzi — {{pending}} w „{{title}}”",
+    "attentionPendingEventSingle_one": "{{count}} gość bez odpowiedzi w „{{title}}”",
+    "attentionPendingEventSingle_few": "{{count}} gości bez odpowiedzi w „{{title}}”",
+    "attentionPendingEventSingle_many": "{{count}} gości bez odpowiedzi w „{{title}}”",
+    "attentionPendingEventSingle_other": "{{count}} gości bez odpowiedzi w „{{title}}”",
+    "attentionManageGuests": "Zarządzaj gośćmi",
+    "attentionViewContacts": "Zobacz kontakty",
+    "attentionDraft_one": "{{count}} szkic wydarzenia — dokończ i opublikuj",
+    "attentionDraft_few": "{{count}} szkice wydarzeń — dokończ i opublikuj",
+    "attentionDraft_many": "{{count}} szkiców wydarzeń — dokończ i opublikuj",
+    "attentionDraft_other": "{{count}} szkice wydarzeń — dokończ i opublikuj",
+    "attentionEventsLink": "Wydarzenia",
+    "attentionPlanEvents": "Limit wydarzeń: {{used}} / {{max}} ({{percent}}%)",
+    "attentionPlanContacts": "Limit kontaktów: {{used}} / {{max}} ({{percent}}%)",
+    "attentionChangePlan": "Zmień plan",
+    "attentionEventSoon": "„{{title}}” {{when}} — sprawdź listę gości",
+    "attentionEventToday": "dziś",
+    "attentionEventTomorrow": "jutro",
+    "attentionEventInDays": "za {{count}} dni",
+    "attentionOpenEvent": "Otwórz wydarzenie",
+    "metricsAria": "Kluczowe metryki",
+    "metricsEvents": "Wydarzenia",
+    "metricsEventsNew_one": "1 nowe w tym miesiącu",
+    "metricsEventsNew_few": "{{count}} nowe w tym miesiącu",
+    "metricsEventsNew_many": "{{count}} nowe w tym miesiącu",
+    "metricsEventsNew_other": "{{count}} nowe w tym miesiącu",
+    "metricsEventsViewAll": "Zobacz wszystkie",
+    "metricsRsvp": "Odpowiedzi RSVP",
+    "metricsRsvpPending_one": "{{count}} oczekujący gość",
+    "metricsRsvpPending_few": "{{count}} oczekujących gości",
+    "metricsRsvpPending_many": "{{count}} oczekujących gości",
+    "metricsRsvpPending_other": "{{count}} oczekujących gości",
+    "metricsRsvpFootnote": "Ze wszystkich zaproszeń",
+    "metricsRsvpAnalytics": "Analityka RSVP",
+    "metricsAccepted": "Potwierdzeni",
+    "metricsPending": "Oczekujący",
+    "metricsDeclined": "Odmówili",
+    "metricsActive": "Aktywne",
+    "metricsCompleted": "Zakończone",
+    "metricsPlanUsage": "Wykorzystanie limitu planu",
+    "metricsPlanEvents": "Wydarzenia",
+    "metricsPlanContacts": "Kontakty",
+    "metricsChangePlan": "Zmień plan",
+    "metricsSeeMore": "Zobacz więcej",
+    "planStarter": "Plan Starter",
+    "planPro": "Plan Pro",
+    "planEnterprise": "Plan Enterprise",
+    "calendarSection": "Kalendarz",
+    "calendarDesc": "Terminy i nadchodzące wydarzenia",
+    "calendarAria": "Kalendarz",
+    "pulseAria": "Aktywność i pogoda",
+    "mapTitle": "Mapa wydarzeń",
+    "mapDescWithEvents": "Lokalizacje Twoich nadchodzących imprez",
+    "mapDescEmpty": "Dodaj adres do wydarzeń, aby zobaczyć mapę",
+    "mapAria": "Mapa wydarzeń",
+    "mapLoading": "Ładowanie mapy wydarzeń...",
+    "mapDeferred": "Mapa załaduje się po przewinięciu",
+    "activityTitle": "Ostatnia aktywność",
+    "activityEmpty": "Brak ostatnich aktywności",
+    "activityViewAll": "Zobacz wszystkie",
+    "weatherTitle": "Pogoda",
+    "weatherLoading": "Ładowanie pogody…",
+    "weatherUnavailable": "Pogoda niedostępna",
+    "weatherNoData": "Brak danych",
+    "weatherCurrent": "Aktualna",
+    "weatherDuring": "W trakcie",
+    "weatherNoLocation": "Brak lokalizacji wydarzenia",
+    "weatherNoUpcoming": "Brak nadchodzącego wydarzenia",
+    "weatherAddLocationHint": "Dodaj adres do „{{title}}”, aby zobaczyć pogodę.",
+    "weatherCreateEventHint": "Utwórz wydarzenie, aby zobaczyć prognozę.",
+    "weatherForecastLater": "Prognoza będzie dostępna bliżej daty wydarzenia",
+    "weatherForecastPast": "Wydarzenie już minęło — prognoza niedostępna",
+    "weatherForecastTooFar": "Wydarzenie za ponad {{days}} dni — prognoza niedostępna",
+    "weatherForecastFailed": "Nie udało się pobrać prognozy na ten termin",
+    "calendarPrevMonth": "Poprzedni miesiąc",
+    "calendarNextMonth": "Następny miesiąc",
+    "calendarToday": "Dzisiaj",
+    "calendarUpcoming": "Nadchodzące wydarzenia",
+    "calendarNoUpcoming": "Brak nadchodzących wydarzeń",
+    "quickNewEvent": "Nowe wydarzenie",
+    "quickAddGuests": "Dodaj gości",
+    "quickAnalytics": "Analityki",
+    "quickSettings": "Ustawienia",
+    "greetingMorning": "Dzień dobry",
+    "greetingAfternoon": "Dobry dzień",
+    "greetingEvening": "Dobry wieczór",
+    "greetingHello": "Witaj",
+    "skeletonLoading": "Ładowanie…",
+    "readinessEyebrow": "Status gotowości",
+    "readinessAria": "Gotowość wydarzenia {{title}}",
+    "readinessScore": "Gotowość {{percent}} procent",
+    "readinessScoreLabel": "gotowości",
+    "readinessRsvpTitle": "Odpowiedzi gości",
+    "readinessRsvpBarAria": "{{accepted}} potwierdziło, {{pending}} oczekuje, {{declined}} odmówiło, {{maybe}} może",
+    "readinessAccepted": "{{count}} potwierdziło",
+    "readinessPending": "{{count}} bez odpowiedzi",
+    "readinessDeclined": "{{count}} odmówiło",
+    "readinessMaybe": "{{count}} może",
+    "readinessCheckLocation": "Lokalizacja ustawiona",
+    "readinessCheckLocationHint": "Dodaj adres wydarzenia",
+    "readinessCheckGuests": "Lista gości",
+    "readinessCheckGuestsHint": "Dodaj gości do wydarzenia",
+    "readinessCheckPublished": "Wydarzenie opublikowane",
+    "readinessCheckPublishedPending": "Szkic wydarzenia",
+    "readinessCheckPublishedHint": "Opublikuj szkic, aby wysłać zaproszenia",
+    "readinessCheckResponses": "Odpowiedzi RSVP",
+    "readinessCheckResponsesPending": "{{count}} gości jeszcze nie odpowiedziało",
+    "readinessCheckPlan": "Limit planu OK",
+    "readinessCheckPlanHint": "Osiągnięto limit wydarzeń w planie",
+    "readinessCta": "Zarządzaj wydarzeniem"
+  }
+}

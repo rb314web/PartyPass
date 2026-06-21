@@ -1,20 +1,10 @@
 @use '../../../styles/globals/mixins' as *;
+@use '../../../styles/globals/landing-tokens' as l;
 
 .pricing-plans {
-  padding: 4rem 0;
-  background: linear-gradient(135deg, #fafbfc 0%, #f3f4f6 100%);
-  position: relative;
-  overflow: hidden;
-  margin-bottom: -2rem;
-  transition: background-color var(--transition-colors, 0.2s ease);
-
-  @media (max-width: 768px) {
-    padding-top: 2rem;
-  }
-
-  &::before {
-    display: none;
-  }
+  padding: var(--l-section-pad) 0;
+  background: var(--l-bg);
+  border-top: 1px solid var(--l-line);
 
   &__container {
     @include container;
@@ -25,283 +15,166 @@
   }
 
   &__header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 2rem;
-    position: relative;
+    @include l.l-section-header-stack-centered;
+    margin-bottom: var(--l-section-content-gap);
     width: 100%;
+    max-width: 34rem;
   }
 
   &__label {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-primary);
-    background: rgba(var(--primary-rgb), 0.1);
-    padding: 0.5rem 1rem;
-    border-radius: 100px;
-    margin-bottom: 1rem;
+    @include l.l-eyebrow-pill;
   }
 
   &__title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-    line-height: 1.2;
-    text-align: center;
-    transition: color var(--transition-colors, 0.2s ease);
-
-    @media (max-width: 768px) {
-      font-size: 1.5rem;
-      padding: 0 var(--space-md);
-    }
+    @include l.l-section-title;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
 
     &-highlight {
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      white-space: nowrap;
+      color: var(--l-accent);
     }
   }
 
   &__subtitle {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    text-align: center;
-    margin: 0 auto 1rem;
-    max-width: 500px;
-    line-height: 1.5;
-    display: block;
-    width: 100%;
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  &__billing-toggle {
-    display: inline-flex;
-    background: var(--clr-surface-a20);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xs);
-    position: relative;
-    transition: background-color var(--transition-colors, 0.2s ease);
-  }
-
-  &__toggle-btn {
-    @include button-base;
-    background: transparent;
-    color: var(--text-secondary);
-    padding: var(--space-sm) var(--space-lg);
-    font-size: 0.875rem;
-    position: relative;
-    transition: background-color var(--transition-colors, 0.2s ease),
-                color var(--transition-colors, 0.2s ease),
-                box-shadow var(--transition-normal, 0.2s ease);
-
-    &.active {
-      background: var(--clr-surface-a0);
-      color: var(--color-primary);
-      box-shadow: var(--shadow-sm);
-    }
-
-    &:not(.active):hover {
-      color: var(--text-primary);
-    }
-  }
-
-  &__discount-badge {
-    background: var(--color-success);
-    color: white;
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: var(--space-xs);
-    font-weight: 600;
+    @include l.l-section-subtitle;
+    line-height: 1.6;
+    text-wrap: unset;
   }
 
   &__grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    justify-content: center;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--l-card-gap);
+    width: 100%;
+    max-width: 1100px;
+
+    @media (max-width: 960px) {
+      grid-template-columns: 1fr;
+      max-width: 22rem;
+    }
   }
 
   &__card {
-    flex: 1;
-    min-width: 280px;
-    max-width: 340px;
-    background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     position: relative;
-    border: 2px solid rgba(229, 231, 235, 0.8);
-    transition: all 0.3s ease;
+    padding: var(--l-card-pad);
+    border-radius: var(--l-radius-card);
+    background: var(--l-bg);
+    border: 1px solid var(--l-line);
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
 
-    // Jeden kolor dla wszystkich planów
-    &:nth-child(1) {
-      --plan-color-1: #6366f1;
-      --plan-color-2: #6366f1;
-      --plan-color-rgb: 99, 102, 241;
-    }
-    &:nth-child(2) {
-      --plan-color-1: #6366f1;
-      --plan-color-2: #6366f1;
-      --plan-color-rgb: 99, 102, 241;
-    }
-    &:nth-child(3) {
-      --plan-color-1: #6366f1;
-      --plan-color-2: #6366f1;
-      --plan-color-rgb: 99, 102, 241;
-    }
-
-    // Kolorowy akcent na górze karty
     &::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      z-index: 1;
-      transition: height 0.3s ease;
+      height: 3px;
+      border-radius: var(--l-radius-card) var(--l-radius-card) 0 0;
+      background: linear-gradient(90deg, var(--l-accent-soft-border), var(--l-accent-bright));
+      opacity: 0.55;
     }
 
     &:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 32px rgba(var(--plan-color-rgb, 59, 130, 246), 0.2);
-      border-color: var(--plan-color-1);
-
-      &::before {
-        height: 6px;
-      }
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px color-mix(in srgb, var(--l-ink) 8%, transparent);
+      border-color: var(--l-accent-ring);
     }
 
-    // Popular plan styling
     &--popular {
-      border-width: 3px;
-      border-color: var(--plan-color-1);
-      box-shadow: 0 8px 24px rgba(var(--plan-color-rgb, 139, 92, 246), 0.25);
+      border-color: color-mix(in srgb, var(--l-accent-bright) 45%, transparent);
+      box-shadow: 0 12px 32px var(--l-accent-shadow);
 
       &::before {
-        height: 5px;
-      }
-
-      &::after {
-        content: 'NAJPOPULARNIEJSZY';
-        position: absolute;
-        top: -12px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(
-          135deg,
-          var(--color-primary),
-          var(--color-primary-dark)
-        );
-        color: white;
-        padding: var(--space-xs) var(--space-md);
-        border-radius: var(--radius-full);
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        box-shadow: var(--shadow-lg);
-        z-index: 2;
+        opacity: 1;
+        height: 4px;
+        background: linear-gradient(90deg, var(--l-accent-bright), var(--l-accent-hover));
       }
     }
+  }
+
+  &__popular-badge {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--l-accent-bright), var(--l-accent-hover));
+    color: #ffffff;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    z-index: 2;
+    box-shadow: 0 4px 14px var(--l-accent-shadow);
   }
 
   &__card-header {
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    padding-top: 0.35rem;
   }
 
   &__plan-icon {
-    width: 56px;
-    height: 56px;
-    @include flex-center;
-    background: linear-gradient(135deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
-    color: white;
-    border-radius: var(--radius-lg);
-    margin: 0 auto var(--space-md);
-    box-shadow: 0 4px 12px rgba(var(--plan-color-rgb, 59, 130, 246), 0.3);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    @include l.l-icon-tile;
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 0.85rem;
+    border-radius: 14px;
+    transition: transform 0.2s ease;
 
     .pricing-plans__card:hover & {
-      transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 6px 20px rgba(var(--plan-color-rgb, 59, 130, 246), 0.4);
+      transform: scale(1.05);
+    }
+
+    .pricing-plans__card--popular & {
+      color: var(--l-accent-hover);
     }
   }
 
   &__plan-name {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--space-sm);
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  &__plan-price {
-    margin-bottom: var(--space-sm);
+    color: var(--l-ink);
+    margin: 0 0 0.5rem;
   }
 
   &__price {
-    font-size: 1.75rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1;
-    margin-bottom: 0.25rem;
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--l-accent);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
   }
 
   &__price-interval {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--l-muted);
     font-weight: 500;
-    opacity: 0.8;
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  &__monthly-equivalent {
-    font-size: 0.875rem;
-    color: var(--text-tertiary);
-    margin-top: var(--space-xs);
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  &__card-body {
-    flex: 1;
+    margin-top: 0.15rem;
   }
 
   &__features {
     list-style: none;
     padding: 0;
-    margin: 1.5rem 0;
+    margin: 1.25rem 0 0;
     font-size: 0.875rem;
   }
 
   &__feature {
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-sm);
-    color: var(--text-primary);
-    font-weight: 400;
-    transition: color var(--transition-colors, 0.2s ease);
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-bottom: 0.55rem;
+    color: var(--l-ink);
+    line-height: 1.45;
 
     &:last-child {
       margin-bottom: 0;
@@ -309,147 +182,27 @@
   }
 
   &__feature-icon {
-    color: var(--plan-color-1, var(--color-primary));
+    color: var(--l-success);
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    margin-top: 0.1rem;
   }
 
   &__card-footer {
     margin-top: auto;
-    padding-top: 1rem;
-  }
+    padding-top: 1.15rem;
 
-  &__cta {
-    @include button-base;
-    width: 100%;
-    padding: var(--space-md) var(--space-lg);
-    font-size: 0.95rem;
-    font-weight: 600;
-    background: linear-gradient(135deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
-    color: white;
-    border: none;
-    box-shadow: 0 4px 12px rgba(var(--plan-color-rgb, 59, 130, 246), 0.25);
-    transition: all 0.3s ease;
-    border-radius: var(--radius-lg);
+    .pp-btn--primary {
+      @include l.l-btn-primary;
+    }
+  }
+}
+
+.dark {
+  .pricing-plans__card {
+    background: var(--l-surface);
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(var(--plan-color-rgb, 59, 130, 246), 0.35);
-    }
-
-    &--primary {
-      background: linear-gradient(135deg, var(--plan-color-1, #3b82f6), var(--plan-color-2, #60a5fa));
-      color: white;
-      border: none;
-      box-shadow: 0 4px 12px rgba(var(--plan-color-rgb, 59, 130, 246), 0.25);
-
-      &:hover {
-        box-shadow: 0 6px 20px rgba(var(--plan-color-rgb, 59, 130, 246), 0.35);
-      }
-    }
-
-    &--secondary {
-      background: white;
-      color: var(--plan-color-1, var(--text-primary));
-      border: 2px solid var(--plan-color-1, rgba(229, 231, 235, 0.8));
-      box-shadow: 0 2px 8px rgba(var(--plan-color-rgb, 59, 130, 246), 0.1);
-
-      &:hover {
-        background: linear-gradient(135deg, 
-          rgba(var(--plan-color-rgb, 59, 130, 246), 0.05) 0%, 
-          rgba(var(--plan-color-rgb, 59, 130, 246), 0.02) 100%
-        );
-        border-color: var(--plan-color-1);
-        box-shadow: 0 4px 16px rgba(var(--plan-color-rgb, 59, 130, 246), 0.2);
-      }
-    }
-  }
-
-  h4 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-xs) 0;
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  p {
-    color: var(--text-secondary);
-    margin: 0;
-    transition: color var(--transition-colors, 0.2s ease);
-  }
-
-  // Dark mode
-  @media (prefers-color-scheme: dark) {
-    background: var(--bg-primary);
-
-    &__label {
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-    }
-
-    &__card {
-      background: var(--bg-secondary);
-      border: 2px solid var(--border-primary);
-
-      &:hover {
-        border-color: var(--color-primary);
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-xl);
-      }
-
-      &--popular {
-        border-color: var(--color-primary);
-        position: relative;
-
-        &::before {
-          background: linear-gradient(135deg, var(--color-primary) 0%, rgba(168, 85, 247, 0.9) 100%);
-        }
-      }
-    }
-
-    &__plan-icon {
-      background: var(--bg-tertiary);
-      color: var(--color-primary);
-    }
-
-    &__plan-price {
-      color: var(--text-primary);
-    }
-
-    &__price {
-      color: var(--text-primary);
-    }
-
-    &__feature-icon {
-      color: var(--color-success);
-    }
-
-    &__cta {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      border: 2px solid var(--border-primary);
-
-      &:hover {
-        background: var(--color-primary);
-        border-color: var(--color-primary);
-        color: var(--text-inverse);
-      }
-    }
-
-    &__billing-toggle {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-primary);
-    }
-
-    &__toggle-btn {
-      color: var(--text-secondary);
-
-      &--active {
-        background: var(--color-primary);
-        color: var(--text-inverse);
-      }
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
     }
   }
 }

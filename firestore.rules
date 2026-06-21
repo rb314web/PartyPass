@@ -20,7 +20,7 @@ service cloud.firestore {
         && data.date is timestamp
         && data.location is string && data.location.size() > 0
         && data.maxGuests is number && data.maxGuests > 0
-        && data.status in ['draft', 'active', 'completed', 'cancelled']
+        && data.status in ['active', 'completed', 'cancelled']
         && data.createdAt is timestamp
         && data.updatedAt is timestamp
         && data.guestCount is number
@@ -38,15 +38,48 @@ service cloud.firestore {
         && (data.date is timestamp)
         && (data.location is string && data.location.size() > 0)
         && (data.maxGuests is number && data.maxGuests > 0)
-        && (data.status in ['draft', 'active', 'completed', 'cancelled'])
+        && (data.status in ['active', 'completed', 'cancelled']
+            || (data.status == 'draft' && resource.data.status == 'draft'))
         && data.updatedAt is timestamp;
     }
     
+    // Publiczna aktualizacja liczników RSVP (tylko pola statusów, bez guestCount)
+    function isPublicRsvpEventCountUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      return !isAuthenticated()
+        && diff.affectedKeys().hasOnly(['acceptedCount', 'pendingCount', 'declinedCount', 'maybeCount', 'updatedAt'])
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.title == resource.data.title
+        && request.resource.data.date == resource.data.date
+        && request.resource.data.location == resource.data.location
+        && request.resource.data.maxGuests == resource.data.maxGuests
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.guestCount == resource.data.guestCount;
+    }
+
+    // Publiczny zapis odpowiedzi RSVP na dokumencie gościa (fallback bez Cloud Function)
+    function isPublicRsvpGuestUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      let allowed = [
+        'status', 'respondedAt', 'updatedAt', 'plusOneType', 'plusOneDetails',
+        'dietaryRestrictions', 'eventSpecificNotes'
+      ];
+      return !isAuthenticated()
+        && diff.affectedKeys().hasOnly(allowed)
+        && request.resource.data.eventId == resource.data.eventId
+        && request.resource.data.status in ['accepted', 'declined', 'maybe']
+        && request.resource.data.respondedAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
     // Wydarzenia
     match /events/{eventId} {
-      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      // Pojedynczy odczyt — publiczny (strona RSVP dla gości bez konta)
+      allow get: if true;
+      allow list: if isAuthenticated() && isOwner(resource.data.userId);
       allow create: if isAuthenticated() && hasValidEventData();
-      allow update: if isAuthenticated() && isOwner(resource.data.userId) && hasValidEventUpdate();
+      allow update: if (isAuthenticated() && isOwner(resource.data.userId) && hasValidEventUpdate())
+        || isPublicRsvpEventCountUpdate();
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
     
@@ -62,23 +95,17 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
       );
       
-      // Aktualizacja - pozwól publicznie (przez stronę RSVP) lub dla zalogowanych użytkowników
-      // Walidacja tokenu RSVP odbywa się w kodzie aplikacji przed aktualizacją
-      allow update: if 
-        // Publiczna aktualizacja przez stronę RSVP
-        (!isAuthenticated()) ||
-        // Aktualizacja przez zalogowanego użytkownika
-        (
-          isAuthenticated() && (
-            isOwner(resource.data.userId) ||
-            resource.data.email == request.auth.token.email ||
-            // Właściciel wydarzenia może aktualizować gości
-            (
-              exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
-              get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.userId == request.auth.uid
-            )
+      // Aktualizacja — organizator (zalogowany) lub publiczny RSVP (ograniczone pola).
+      allow update: if isPublicRsvpGuestUpdate() || (
+        isAuthenticated() && (
+          isOwner(resource.data.userId) ||
+          resource.data.email == request.auth.token.email ||
+          (
+            exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
+            get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.userId == request.auth.uid
           )
-        );
+        )
+      );
       
       allow delete: if isAuthenticated() && (
         isOwner(resource.data.userId) ||
@@ -90,20 +117,22 @@ service cloud.firestore {
     // Aktywności
     match /activities/{activityId} {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
-      // Pozwól na tworzenie aktywności publicznie (przez system RSVP) lub przez zalogowanych
-      allow create: if 
-        (isAuthenticated() && request.resource.data.userId == request.auth.uid) ||
-        (!isAuthenticated() && request.resource.data.eventGuestId is string && request.resource.data.eventId is string);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
     
-    // Użytkownicy
+    // Użytkownicy — każdy może czytać/zmieniać wyłącznie własny profil
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && isOwner(userId);
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow update: if isAuthenticated() && request.auth.uid == userId;
       allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Ustawienia użytkownika (powiadomienia, wygląd)
+    match /userSettings/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Notyfikacje
@@ -126,18 +155,21 @@ service cloud.firestore {
     match /contacts/{contactId} {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Aktualizacja wyłącznie przez właściciela — RSVP (dieta/notatki) przez Cloud Function.
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Log wysyłek zaproszeń (zapis tylko przez Cloud Functions / Admin SDK)
+    match /invitationLogs/{logId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create, update, delete: if false;
     }
     
     // Tokeny RSVP
     match /rsvpTokens/{tokenId} {
-      // Odczyt pojedynczego tokenu - publiczny (potrzebny dla strony RSVP)
-      allow get: if true;
-      
-      // Odczyt listy tokenów (queries) - tylko dla zalogowanych użytkowników
-      // (potrzebny do sprawdzania czy token już istnieje)
-      allow list: if isAuthenticated();
+      // Odczyt tokenu po stringu (query where token==…) — publiczny, token jest sekretem w URL
+      allow read: if true;
       
       // Tworzenie tokenu - tylko dla zalogowanych użytkowników
       allow create: if isAuthenticated() && (
@@ -149,13 +181,10 @@ service cloud.firestore {
         (request.resource.data.expiresAt is timestamp || request.resource.data.expiresAt == null)
       );
       
-      // Aktualizacja tokenu - do oznaczania jako użyty (przez system RSVP)
-      // Walidacja: token może być aktualizowany tylko raz (z false na true) bez ustawienia expiresAt w przeszłości
-      allow update: if 
-        !isAuthenticated() && 
-        resource.data.isUsed == false && 
-        request.resource.data.isUsed == true &&
-        (request.resource.data.expiresAt == null || request.resource.data.expiresAt > now);
+      // Aktualizacja tokenu - tylko zalogowany właściciel (organizator).
+      // Tokeny są wielokrotnego użytku i nie są modyfikowane przez stronę publiczną,
+      // dlatego publiczny zapis jest zablokowany.
+      allow update: if isAuthenticated();
       
       // Usuwanie tokenów - tylko dla zalogowanych użytkowników
       allow delete: if isAuthenticated();

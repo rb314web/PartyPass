@@ -7,10 +7,13 @@
   // ============================================
 
   // Kolory główne
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
-  --color-primary-light: #eff6ff;
-  --color-primary-dark: #1e40af;
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-primary-light: #eef2ff;
+  --color-primary-dark: #4338ca;
+  --color-primary-soft: rgba(99, 102, 241, 0.12);
+  --icon-badge-bg: var(--color-primary-soft);
+  --icon-badge-color: var(--color-primary-dark);
 
   // Kolory statusu
   --color-success: #10b981;
@@ -56,7 +59,7 @@
   --border-primary: #e5e7eb;
   --border-secondary: #d1d5db;
   --border-tertiary: #9ca3af;
-  --border-focus: #3b82f6;
+  --border-focus: var(--color-primary);
 
   // ============================================
   // SPACING (4px increments)
@@ -76,6 +79,28 @@
   // ============================================
   // ROZMIARY FONTÓW
   // ============================================
+
+  --font-sans:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  --font-mono:
+    ui-monospace,
+    SFMono-Regular,
+    'SF Mono',
+    Menlo,
+    Consolas,
+    'Liberation Mono',
+    monospace;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
 
   --text-xs: 0.75rem; // 12px
   --text-sm: 0.875rem; // 14px
@@ -113,7 +138,7 @@
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
   --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.2);
-  --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  --shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.12);
   --shadow-popover: 0 16px 36px rgba(15, 23, 42, 0.12);
 
   // Transitions dla kolorów i właściwości związanych z motywem
@@ -142,6 +167,11 @@
   --transition-slow: 0.3s ease;
   --transition-bounce: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
+  // Dashboard: fade treści po loaderze / shell statyczny (zsynchronizuj z dashboardMotion.ts)
+  --dashboard-view-fade-duration: 0.25s;
+  // Cross-fade obszaru treści przy zmianie trasy (PageTransition)
+  --dashboard-route-crossfade: 0.25s;
+
   // ============================================
   // ROZMIARY KOMPONENTÓW
   // ============================================
@@ -150,6 +180,27 @@
   --button-height-sm: 2rem; // 32px
   --button-height-md: 2.5rem; // 40px
   --button-height-lg: 3rem; // 48px
+  --btn-radius: var(--radius-lg);
+
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-hover: var(--color-primary-hover);
+  --btn-primary-text: var(--text-inverse);
+  --btn-shadow: 0 2px 8px rgba(99, 102, 241, 0.22);
+  --btn-shadow-hover: 0 4px 14px rgba(99, 102, 241, 0.32);
+
+  --btn-secondary-bg: var(--bg-primary);
+  --btn-secondary-text: var(--text-primary);
+  --btn-secondary-border: var(--border-primary);
+  --btn-secondary-hover-bg: var(--bg-secondary);
+  --btn-secondary-hover-border: var(--border-secondary);
+
+  --btn-outline-bg: var(--bg-primary);
+  --btn-outline-text: var(--color-primary);
+  --btn-outline-border: var(--border-primary);
+  --btn-outline-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --btn-outline-hover-bg: var(--color-primary-light);
+  --btn-outline-hover-border: var(--color-primary);
+  --btn-outline-shadow-hover: 0 4px 12px rgba(99, 102, 241, 0.12);
 
   // Inputy
   --input-height-sm: 2rem; // 32px
@@ -178,6 +229,50 @@
   // Sidebar
   --sidebar-width: 16.25rem; // 260px
   --sidebar-width-collapsed: 5rem; // 80px
+
+  // Dashboard Studio — powłoka + strona główna
+  --dashboard-canvas: #f3f1eb;
+  --dashboard-canvas-grid:
+    linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+  --dashboard-canvas-grid-size: 28px 28px;
+  --dashboard-surface: #ffffff;
+  --dashboard-surface-muted: #faf8f5;
+  --dashboard-ink: #0f172a;
+  --dashboard-muted: #64748b;
+  --dashboard-line: rgba(15, 23, 42, 0.08);
+  --dashboard-line-strong: rgba(15, 23, 42, 0.14);
+  --dashboard-radius: 1.25rem;
+  --dashboard-radius-md: 0.875rem;
+  --dashboard-radius-sm: 0.625rem;
+  --dashboard-elevation:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 0 0 1px rgba(15, 23, 42, 0.06);
+  --dashboard-elevation-hover:
+    0 8px 28px rgba(29, 78, 216, 0.1),
+    0 0 0 1px rgba(29, 78, 216, 0.14);
+  --dashboard-accent: #1d4ed8;
+  --dashboard-accent-soft: #dbeafe;
+  --dashboard-spotlight: linear-gradient(135deg, #0f2744 0%, #1d4ed8 52%, #3b82f6 100%);
+  --dashboard-sidebar-bg: #0c1222;
+  --dashboard-sidebar-ink: #e2e8f0;
+  --dashboard-sidebar-muted: #94a3b8;
+  --dashboard-sidebar-line: rgba(255, 255, 255, 0.07);
+  --dashboard-sidebar-active: rgba(59, 130, 246, 0.2);
+  --dashboard-sidebar-active-ink: #f8fafc;
+  // aliasy kompatybilności
+  --dashboard-card-radius: var(--dashboard-radius-sm);
+  --dashboard-card-radius-lg: var(--dashboard-radius);
+  --dashboard-card-bg: var(--dashboard-surface);
+  --dashboard-card-border: var(--dashboard-line);
+  --dashboard-card-shadow: var(--dashboard-elevation);
+  --dashboard-card-shadow-hover: var(--dashboard-elevation-hover);
+  --dashboard-canvas-bg: var(--dashboard-canvas);
+  --dashboard-mesh: var(--dashboard-canvas-grid);
+
+  // Wordmark logo — wysoki kontrast na jasnym tle
+  --logo-wordmark-primary: #111827;
+  --logo-wordmark-accent: var(--color-primary-dark, #1d4ed8);
 }
 
 // ============================================
@@ -206,7 +301,10 @@
   --border-focus: #888888;
 
   // Kolory statusu (dostosowane dla dark mode)
-  --color-primary-light: rgba(59, 130, 246, 0.1);
+  --color-primary-light: rgba(99, 102, 241, 0.16);
+  --color-primary-soft: rgba(99, 102, 241, 0.22);
+  --icon-badge-bg: rgba(99, 102, 241, 0.22);
+  --icon-badge-color: #c7d2fe;
   --color-success-light: rgba(16, 185, 129, 0.1);
   --color-warning-light: rgba(245, 158, 11, 0.1);
   --color-error-light: rgba(239, 68, 68, 0.1);
@@ -217,7 +315,7 @@
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  --shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.2);
   --shadow-popover: 0 16px 36px rgba(0, 0, 0, 0.6);
 
   // Kolory powierzchni dla dark mode
@@ -228,6 +326,51 @@
   --clr-surface-a30: #4b5563;
   --clr-surface-a40: #6b7280;
   --clr-surface-a50: #9ca3af;
+
+  // Wordmark na ciemnym tle
+  --logo-wordmark-primary: #f1f5f9;
+  --logo-wordmark-accent: #93c5fd;
+
+  --btn-secondary-bg: var(--bg-secondary);
+  --btn-secondary-text: var(--text-primary);
+  --btn-secondary-border: var(--border-primary);
+  --btn-secondary-hover-bg: var(--bg-tertiary);
+  --btn-secondary-hover-border: var(--border-secondary);
+
+  --btn-outline-bg: transparent;
+  --btn-outline-text: #a5b4fc;
+  --btn-outline-border: var(--border-secondary);
+  --btn-outline-shadow: none;
+  --btn-outline-hover-bg: rgba(99, 102, 241, 0.12);
+  --btn-outline-hover-border: #818cf8;
+  --btn-outline-shadow-hover: none;
+
+  // Dashboard Studio — dark
+  --dashboard-canvas: #0a0c10;
+  --dashboard-canvas-grid:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  --dashboard-surface: #141820;
+  --dashboard-surface-muted: #10141c;
+  --dashboard-ink: #f1f5f9;
+  --dashboard-muted: #94a3b8;
+  --dashboard-line: rgba(255, 255, 255, 0.08);
+  --dashboard-line-strong: rgba(255, 255, 255, 0.14);
+  --dashboard-elevation:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  --dashboard-elevation-hover:
+    0 8px 28px rgba(37, 99, 235, 0.16),
+    0 0 0 1px rgba(96, 165, 250, 0.22);
+  --dashboard-accent: #60a5fa;
+  --dashboard-accent-soft: rgba(37, 99, 235, 0.16);
+  --dashboard-spotlight: linear-gradient(135deg, #0f172a 0%, #1e3a8a 48%, #2563eb 100%);
+  --dashboard-sidebar-bg: #06080d;
+  --dashboard-sidebar-ink: #e2e8f0;
+  --dashboard-sidebar-muted: #64748b;
+  --dashboard-sidebar-line: rgba(255, 255, 255, 0.06);
+  --dashboard-sidebar-active: rgba(59, 130, 246, 0.22);
+  --dashboard-sidebar-active-ink: #f8fafc;
 }
 
 // ============================================
