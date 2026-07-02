@@ -1,5 +1,5 @@
 // components/auth/Register/Register.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
@@ -86,10 +86,10 @@ const Register: React.FC = () => {
     setStep(1);
   };
 
-  const plans = getRegisterPlanOptions();
+  const plans = useMemo(() => getRegisterPlanOptions(t), [t]);
 
   const stepsHeader = (
-    <div className="register__steps" aria-label="Registration progress">
+    <div className="register__steps" aria-label={t('auth.registrationProgress')}>
       <div
         className={`register__step ${step >= 1 ? 'register__step--active' : ''} ${step > 1 ? 'register__step--done' : ''}`}
       >

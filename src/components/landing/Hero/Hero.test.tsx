@@ -9,6 +9,10 @@ vi.mock('../Demo/Demo', () => ({
     isOpen ? <div>PartyPass Dashboard - Demo</div> : null,
 }));
 
+vi.mock('../../common/LanguageSwitcher/LanguageSwitcher', () => ({
+  default: () => <div data-testid="language-switcher">PL / EN</div>,
+}));
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   BrowserRouter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

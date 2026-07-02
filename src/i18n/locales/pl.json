@@ -10,6 +10,13 @@
     "settings": "Ustawienia",
     "logout": "Wyloguj się"
   },
+  "header": {
+    "mobileMenu": {
+      "explore": "Odkrywaj",
+      "account": "Twoje konto",
+      "settings": "Ustawienia"
+    }
+  },
   "common": {
     "language": "Język",
     "polish": "Polski",
@@ -58,6 +65,7 @@
     "joinUs": "Dołącz do nas",
     "passwordMismatch": "Hasła nie są identyczne",
     "termsRequired": "Musisz zaakceptować regulamin",
+    "registrationProgress": "Postęp rejestracji",
     "showcase": {
       "previewLabel": "RSVP na żywo",
       "previewEvent": "Letnie przyjęcie w ogrodzie",
@@ -99,6 +107,35 @@
         "statRsvp": "Średnia frekwencja RSVP",
         "statRsvpValue": "94%"
       }
+    }
+  },
+  "plans": {
+    "catalog": {
+      "starter": {
+        "name": "Starter",
+        "description": "Idealny na początek",
+        "priceFree": "Darmowy",
+        "priceMonthly": "{{price}} PLN/mies."
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Dla profesjonalistów",
+        "priceFree": "Darmowy",
+        "priceMonthly": "{{price}} PLN/mies."
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "Dla dużych organizacji",
+        "priceFree": "Darmowy",
+        "priceMonthly": "{{price}} PLN/mies."
+      }
+    },
+    "limitations": {
+      "starter": [
+        "Brak SMS powiadomień",
+        "Brak zaawansowanych analityk",
+        "Brak custom brandingu"
+      ]
     }
   },
   "landing": {
@@ -150,7 +187,7 @@
       "birthdayTitle": "🎂 Urodziny Marii",
       "birthdayDate": "14 czerwca, 20:00",
       "birthdayRsvp": "28/35 gości potwierdziło",
-      "meetupTitle": "🏢 Meetup Product Design",
+      "meetupTitle": "🏢 Meetup UX",
       "meetupDate": "22 czerwca, 18:30",
       "meetupAttendees": "42 uczestników",
       "liveRsvp": "+3 nowe RSVP dziś"
@@ -158,21 +195,18 @@
     "previewScenarios": {
       "birthday": {
         "title": "🎂 Urodziny Marii",
-        "date": "14 czerwca, 20:00",
         "guestName": "Maria Kowalska",
         "guestEmail": "maria@example.com",
         "guestInitials": "MK"
       },
       "meetup": {
-        "title": "🏢 Meetup Product Design",
-        "date": "22 czerwca, 18:30",
+        "title": "🏢 Meetup UX",
         "guestName": "Tomasz Wiśniewski",
         "guestEmail": "tomasz@example.com",
         "guestInitials": "TW"
       },
       "gala": {
-        "title": "✨ Charity Gala",
-        "date": "2 sierpnia, 15:00",
+        "title": "✨ Gala charytatywna",
         "guestName": "Anna i Piotr",
         "guestEmail": "anna.kowalska@example.com",
         "guestInitials": "AP"
@@ -557,7 +591,7 @@
     },
     "countdown": {
       "live": "Trwa teraz",
-      "past": "Wydarzenie już się odbyło",
+      "past": "Już się odbyło",
       "inDaysHours": "Za {{days}} {{daysUnit}}, {{hours}} {{hoursUnit}}",
       "inHoursMinutes": "Za {{hours}} {{hoursUnit}}, {{minutes}} {{minutesUnit}}",
       "inMinutes": "Za {{minutes}} {{minutesUnit}}",

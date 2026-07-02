@@ -19,6 +19,8 @@ import {
   PenLine,
   PartyPopper,
 } from 'lucide-react';
+import RSVPStatusOptions from '../../components/rsvp/RSVPStatusOptions';
+import { useRsvpStatusOptions } from '../../components/rsvp/useRsvpStatusOptions';
 import AppLoader from '../../components/common/AppLoader/AppLoader';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher/LanguageSwitcher';
 import LazyEventLocationMap from '../../components/dashboard/Events/EventDetails/EventLocationMap/LazyEventLocationMap';
@@ -47,13 +49,6 @@ import { formatAppDate } from '../../utils/locale';
 import '../../components/common/LanguageSwitcher/LanguageSwitcher.scss';
 import './RSVPEventCountdown.scss';
 import './RSVP.scss';
-
-type StatusOption = {
-  value: Extract<GuestStatus, 'accepted' | 'declined' | 'maybe'>;
-  label: string;
-  hint: string;
-  icon: React.ReactNode;
-};
 
 type RsvpSubmittedStatus = 'accepted' | 'maybe' | 'declined';
 
@@ -117,29 +112,7 @@ const RSVP: React.FC = () => {
 
   const isMultiSeat = invitedSeatCount > 1 || partyMembers.length > 1;
 
-  const statusOptions = useMemo<StatusOption[]>(
-    () => [
-      {
-        value: 'accepted',
-        label: t('rsvp.status.accepted.label'),
-        hint: t('rsvp.status.accepted.hint'),
-        icon: <CheckCircle size={22} />,
-      },
-      {
-        value: 'maybe',
-        label: t('rsvp.status.maybe.label'),
-        hint: t('rsvp.status.maybe.hint'),
-        icon: <HelpCircle size={22} />,
-      },
-      {
-        value: 'declined',
-        label: t('rsvp.status.declined.label'),
-        hint: t('rsvp.status.declined.hint'),
-        icon: <XCircle size={22} />,
-      },
-    ],
-    [t]
-  );
+  const statusOptions = useRsvpStatusOptions();
 
   const statusBadge = useMemo(
     () => ({
@@ -653,29 +626,13 @@ const RSVP: React.FC = () => {
             <div className="rsvp-form-card__body">
               <h2 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h2>
 
-              <div className="rsvp-options" role="radiogroup">
-                {statusOptions.map(option => (
-                  <label
-                    key={option.value}
-                    className={`rsvp-option rsvp-option--${option.value} ${
-                      selectedStatus === option.value ? 'is-selected' : ''
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="status"
-                      value={option.value}
-                      checked={selectedStatus === option.value}
-                      onChange={() => setSelectedStatus(option.value)}
-                    />
-                    <span className="rsvp-option__icon">{option.icon}</span>
-                    <span className="rsvp-option__text">
-                      <span className="rsvp-option__label">{option.label}</span>
-                      <span className="rsvp-option__hint">{option.hint}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
+              <RSVPStatusOptions
+                options={statusOptions}
+                selectedValue={selectedStatus === 'pending' ? null : selectedStatus}
+                interactive
+                radioName="status"
+                onSelect={value => setSelectedStatus(value as GuestStatus)}
+              />
 
               {(selectedStatus === 'accepted' || selectedStatus === 'maybe') && (
                 <div className="rsvp-form-card__extra">

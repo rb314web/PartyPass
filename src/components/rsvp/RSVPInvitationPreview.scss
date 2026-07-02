@@ -1,5 +1,5 @@
-// Statyczny podgląd strony RSVP na landingu — motyw wg przełącznika aplikacji (.light / .dark),
-// nie preferencji systemowych (RSVP.scss używa prefers-color-scheme dla pełnej strony /rsvp).
+// Podgląd RSVP na landingu — komponenty jak na /rsvp, układ: hero → formularz.
+// Motyw wg przełącznika aplikacji (.light / .dark).
 
 @mixin rsvp-preview-light-tokens {
   --rsvp-bg: #f5f6fb;
@@ -26,6 +26,8 @@
   --rsvp-danger-soft: rgba(220, 38, 38, 0.1);
   --rsvp-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.08);
   --rsvp-shadow-accent: 0 10px 24px rgba(99, 102, 241, 0.3);
+  --rsvp-radius: 20px;
+  --rsvp-radius-sm: 14px;
 }
 
 @mixin rsvp-preview-dark-tokens {
@@ -53,6 +55,16 @@
   --rsvp-danger-soft: rgba(248, 113, 113, 0.16);
   --rsvp-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.5);
   --rsvp-shadow-accent: 0 10px 26px rgba(99, 102, 241, 0.45);
+  --rsvp-radius: 20px;
+  --rsvp-radius-sm: 14px;
+}
+
+@mixin preview-text-ellipsis {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .rsvp--preview {
@@ -62,15 +74,80 @@
   background-image: none;
   display: block;
   width: 100%;
-  max-width: 26rem;
+  max-width: 100%;
+  margin-inline: auto;
   color: var(--rsvp-text);
+  text-align: left;
+  border: none;
+  border-radius: 0;
 
   --preview-crossfade-ms: 420ms;
   --preview-crossfade-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
-  .rsvp-preview__stage {
-    min-height: 28rem;
+  .rsvp__shell {
     width: 100%;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  // Na landingu: zaproszenie (hero) nad formularzem wyboru
+  .rsvp__main {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .rsvp__aside {
+    grid-column: 1;
+    grid-row: 2;
+    position: static;
+    min-width: 0;
+  }
+
+  .rsvp-hero,
+  .rsvp-form-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .rsvp-hero__title {
+    @include preview-text-ellipsis;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .rsvp-form-card__guest-name {
+    @include preview-text-ellipsis;
+  }
+
+  .rsvp-form-card__guest-text {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .rsvp-hero__content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .rsvp-preview__morph-slot--hero {
+    height: 6rem;
+    min-height: 6rem;
+    max-height: 6rem;
+    overflow: hidden;
+  }
+
+  .rsvp-preview__morph-slot--guest {
+    height: 3.5rem;
+    min-height: 3.5rem;
+    max-height: 3.5rem;
+    overflow: hidden;
+  }
+
+  .rsvp-options,
+  .rsvp-option__text {
+    text-align: left;
+    align-items: flex-start;
   }
 
   .rsvp-preview__morph-slot {
@@ -93,8 +170,8 @@
   .rsvp-form-card__guest {
     .rsvp-preview__morph-layer {
       display: flex;
-      align-items: flex-start;
-      gap: 0.85rem;
+      align-items: center;
+      gap: 0.875rem;
       width: 100%;
     }
   }
@@ -123,49 +200,10 @@
     }
   }
 
-  .rsvp-options {
-    gap: 0.5rem;
-    min-height: 11.5rem;
-  }
-
-  .rsvp-option {
-    pointer-events: none;
-    cursor: default;
-    padding: 0.75rem 0.9rem;
-    border-radius: 13px;
-    transition:
-      border-color var(--preview-crossfade-ms) var(--preview-crossfade-ease),
-      background-color var(--preview-crossfade-ms) var(--preview-crossfade-ease),
-      box-shadow var(--preview-crossfade-ms) var(--preview-crossfade-ease);
-
-    &:hover {
-      transform: none;
-    }
-
-    &__icon {
-      transition:
-        background-color var(--preview-crossfade-ms) var(--preview-crossfade-ease),
-        color var(--preview-crossfade-ms) var(--preview-crossfade-ease);
-    }
-  }
-
-  &.rsvp--preview-interactive {
+  &:not(.rsvp--preview-interactive) {
     .rsvp-option {
-      pointer-events: auto;
-      cursor: pointer;
-      transition:
-        border-color 0.18s ease,
-        background-color 0.18s ease,
-        box-shadow 0.18s ease,
-        transform 0.18s ease;
-
-      &:hover {
-        transform: translateY(-1px);
-      }
-
-      &__icon {
-        transition: background 0.18s ease, color 0.18s ease;
-      }
+      pointer-events: none;
+      cursor: default;
     }
   }
 
@@ -176,69 +214,112 @@
       transition: none;
     }
   }
+}
+
+.rsvp--preview-hero {
+  @media (max-width: 900px) {
+    width: 100%;
+    max-width: var(--hero-mobile-content-width, clamp(18rem, 92vw, 26rem));
+    margin-inline: auto;
+  }
+
+  @media (min-width: 901px) and (max-width: 1399px) {
+    font-size: 0.9375rem;
+  }
 
   .rsvp-hero {
-    padding: 1.35rem 1.4rem 1.65rem;
-    border-radius: 22px 22px 16px 16px;
-    position: relative;
-    z-index: 2;
+    padding: clamp(1.1rem, 2vw, 1.4rem);
+  }
 
-    &__top {
-      margin-bottom: 0.85rem;
+  .rsvp-hero__top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
+    align-items: center;
+    gap: 0.5rem 0.625rem;
+    margin-bottom: clamp(0.9rem, 2vw, 1.15rem);
+  }
+
+  .rsvp-hero__eyebrow {
+    min-width: 0;
+  }
+
+  .rsvp-hero__top-actions {
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
+    gap: 0.375rem;
+  }
+
+  .rsvp-countdown {
+    min-width: 0;
+    max-width: 9.5rem;
+
+    span {
+      @include preview-text-ellipsis;
+    }
+  }
+
+  .rsvp-hero__title {
+    font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+    margin-bottom: 0.625rem;
+  }
+
+  .rsvp-preview__morph-slot--hero {
+    height: 5.25rem;
+    min-height: 5.25rem;
+    max-height: 5.25rem;
+  }
+
+  .rsvp-form-card__guest {
+    padding: clamp(1rem, 2.2vw, 1.2rem);
+  }
+
+  .rsvp-form-card__body {
+    padding: clamp(1rem, 2.2vw, 1.2rem);
+  }
+
+  @media (max-width: 420px) {
+    .rsvp-hero__top {
+      grid-template-columns: 1fr;
     }
 
-    &__title {
-      font-size: clamp(1.4rem, 3vw, 1.7rem);
-      margin-bottom: 0.85rem;
-      text-align: left;
-    }
-
-    &__when {
-      font-size: 0.8125rem;
-      padding: 0.7rem 0.9rem;
+    .rsvp-hero__top-actions {
       justify-content: flex-start;
     }
-  }
 
-  .rsvp-form-card {
-    margin-top: -0.65rem;
-    border-radius: 18px;
-    position: relative;
-    z-index: 3;
-  }
-
-  .rsvp-form-card__guest,
-  .rsvp-form-card__body {
-    padding: 1.15rem 1.2rem;
-  }
-
-  .rsvp-form-card__title {
-    font-size: 1.05rem;
-  }
-
-  .rsvp-avatar {
-    width: 44px;
-    height: 44px;
-    font-size: 0.9375rem;
+    .rsvp-countdown {
+      max-width: 100%;
+    }
   }
 }
 
-// Jasny motyw aplikacji — nadpisuje prefers-color-scheme z RSVP.scss
 html.light .rsvp--preview,
 :root.light .rsvp--preview {
   @include rsvp-preview-light-tokens;
   color-scheme: light;
 
-  .rsvp-hero {
-    box-shadow:
-      0 20px 40px rgba(79, 70, 229, 0.22),
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  }
+  &.rsvp--preview-hero {
+    .rsvp-hero {
+      box-shadow:
+        0 12px 32px rgba(67, 56, 202, 0.26),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    }
 
-  .rsvp-form-card {
-    box-shadow:
-      0 24px 48px rgba(15, 23, 42, 0.1),
-      0 0 0 1px rgba(15, 23, 42, 0.06);
+    .rsvp-form-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(18px) saturate(1.25);
+      -webkit-backdrop-filter: blur(18px) saturate(1.25);
+      border-color: rgba(255, 255, 255, 0.72);
+      box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 16px 40px rgba(15, 23, 42, 0.12);
+    }
+
+    .rsvp-form-card__guest {
+      background: rgba(247, 248, 252, 0.68);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
   }
 }
 
@@ -250,23 +331,10 @@ html.light .rsvp--preview,
   }
 }
 
-// Ciemny motyw aplikacji
 html.dark .rsvp--preview,
 :root.dark .rsvp--preview {
   @include rsvp-preview-dark-tokens;
   color-scheme: dark;
-
-  .rsvp-form-card {
-    box-shadow:
-      0 28px 56px rgba(0, 0, 0, 0.45),
-      0 0 0 1px rgba(148, 163, 184, 0.12);
-  }
-
-  .rsvp-hero {
-    box-shadow:
-      0 24px 48px rgba(99, 102, 241, 0.35),
-      0 0 0 1px rgba(255, 255, 255, 0.08) inset;
-  }
 }
 
 @media (prefers-color-scheme: light) {

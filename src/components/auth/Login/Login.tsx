@@ -12,8 +12,8 @@ import './Login.scss';
 const Login: React.FC = () => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    email: 'demo@partypass.pl',
-    password: 'demo123',
+    email: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);

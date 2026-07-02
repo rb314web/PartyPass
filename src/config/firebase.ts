@@ -4,23 +4,22 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
 import type { Functions } from 'firebase/functions';
-
-const env = process.env;
+import { readEnv } from './env';
 
 const firebaseConfig = {
-  apiKey: env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+  apiKey: readEnv('FIREBASE_API_KEY'),
+  authDomain: readEnv('FIREBASE_AUTH_DOMAIN'),
+  projectId: readEnv('FIREBASE_PROJECT_ID'),
+  storageBucket: readEnv('FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: readEnv('FIREBASE_MESSAGING_SENDER_ID'),
+  appId: readEnv('FIREBASE_APP_ID'),
+  measurementId: readEnv('FIREBASE_MEASUREMENT_ID'),
 };
 
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.error(
-    'Konfiguracja Firebase jest niekompletna. Ustaw zmienne środowiskowe w pliku .env.local',
-    '(wzór: .env.example). Wymagane: REACT_APP_FIREBASE_API_KEY, REACT_APP_FIREBASE_PROJECT_ID.'
+    'Konfiguracja Firebase jest niekompletna. Ustaw zmienne w .env',
+    '(wzór: .env.example). Wymagane: REACT_APP_FIREBASE_API_KEY lub VITE_FIREBASE_API_KEY.'
   );
 }
 

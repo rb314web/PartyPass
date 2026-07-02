@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import { useHeaderNavLayout } from '../../../hooks/useHeaderNavLayout';
 import NavigationLinks, { NavigationItem } from './components/NavigationLinks/NavigationLinks';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
@@ -16,8 +17,6 @@ declare global {
     gtag?: (command: string, targetId: string, config?: any) => void;
   }
 }
-
-const MOBILE_BREAKPOINT = 830;
 
 const LogoText: React.FC = () => (
   <span className="logo__text">
@@ -50,30 +49,94 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const isMarketingHeader = variant === 'landing' || variant === 'auth';
+
+  const {
+    containerRef,
+    measureLayerRef,
+    leftMeasureRef,
+    navMeasureRef,
+    rightMeasureRef,
+    inlineNavRef,
+    useCompactNav,
+  } = useHeaderNavLayout({
+    enabled: isMarketingHeader,
+    hasInlineNav: variant === 'landing',
+    measureKey: `${i18n.language}:${user?.id ?? 'guest'}:${location.pathname}`,
+  });
 
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileMenuClosing, setIsMobileMenuClosing] = useState(false);
-
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false);
 
   // Refs
   const headerRef = useRef<HTMLElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const firstMenuItemRef = useRef<HTMLButtonElement>(null);
 
-  // Detect mobile
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [headerGlassOpacity, setHeaderGlassOpacity] = useState(0);
+  const scrollRafRef = useRef<number>(0);
+
+  const HEADER_GLASS_FADE_START = 0;
+  const HEADER_GLASS_FADE_END = 72;
+  const HEADER_TEXT_SWITCH = 0.42;
+
+  const getScrollY = useCallback(() => {
+    return (
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0
+    );
+  }, []);
+
+  // Landing: glass fades in with scroll progress (not a hard threshold)
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    if (!enableScrollEffects || variant !== 'landing') {
+      setIsScrolled(false);
+      setHeaderGlassOpacity(0);
+      return;
+    }
+
+    const updateScrollState = () => {
+      if (scrollRafRef.current) return;
+
+      scrollRafRef.current = window.requestAnimationFrame(() => {
+        scrollRafRef.current = 0;
+        const y = getScrollY();
+        const range = HEADER_GLASS_FADE_END - HEADER_GLASS_FADE_START;
+        const progress = Math.min(
+          1,
+          Math.max(0, (y - HEADER_GLASS_FADE_START) / range)
+        );
+
+        setHeaderGlassOpacity(progress);
+        setIsScrolled(progress >= HEADER_TEXT_SWITCH);
+      });
     };
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    updateScrollState();
+    window.addEventListener('scroll', updateScrollState, { passive: true });
+    document.addEventListener('scroll', updateScrollState, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener('scroll', updateScrollState);
+      document.removeEventListener('scroll', updateScrollState, true);
+      if (scrollRafRef.current) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+      }
+    };
+  }, [enableScrollEffects, variant, getScrollY]);
+
+  // Zamknij menu po powrocie do pełnej nawigacji (np. resize okna)
+  useEffect(() => {
+    if (!useCompactNav && isMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+      setIsMobileMenuClosing(false);
+    }
+  }, [useCompactNav, isMobileMenuOpen]);
 
   // Handle mobile menu toggle
   const handleMobileMenuToggle = useCallback(() => {
@@ -123,16 +186,36 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     }
   }, [location.pathname, navigate, isMobileMenuOpen, handleMobileMenuClose, trackingEnabled, variant]);
 
-  // Lock body scroll when mobile menu is open (or closing)
+  // Lock page scroll when mobile menu is open (or closing)
   useEffect(() => {
-    if (isMobileMenuOpen || isMobileMenuClosing) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+    const shouldLockScroll = isMobileMenuOpen || isMobileMenuClosing;
+    if (!shouldLockScroll) return;
+
+    const scrollY = window.scrollY;
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.width = '100%';
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
     }
 
     return () => {
-      document.body.style.overflow = '';
+      html.style.overflow = '';
+      body.style.overflow = '';
+      body.style.position = '';
+      body.style.top = '';
+      body.style.left = '';
+      body.style.width = '';
+      body.style.paddingRight = '';
+      window.scrollTo(0, scrollY);
     };
   }, [isMobileMenuOpen, isMobileMenuClosing]);
 
@@ -299,17 +382,16 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           <Search size={20} />
         </button>
       )}
-      {(variant === 'landing' || variant === 'auth') && (
+      {(variant === 'landing' || variant === 'auth') && !useCompactNav && (
         <LanguageSwitcher
           compact
           className="unified-header__language-switcher"
         />
       )}
-      {/* Hide theme toggle on mobile for landing/auth - it's in mobile menu */}
-      {!(isMobile && (variant === 'landing' || variant === 'auth')) && <ThemeToggle />}
-      {(variant === 'landing' || variant === 'auth') && !user && !isMobile && renderAuthButtons()}
-      {(variant === 'landing' || variant === 'auth') && user && !isMobile && renderUserMenu()}
-      {(variant === 'landing' || variant === 'auth') && isMobile && (
+      {!(useCompactNav && isMarketingHeader) && <ThemeToggle />}
+      {(variant === 'landing' || variant === 'auth') && !user && !useCompactNav && renderAuthButtons()}
+      {(variant === 'landing' || variant === 'auth') && user && !useCompactNav && renderUserMenu()}
+      {isMarketingHeader && useCompactNav && (
         <button
           className="unified-header__mobile-menu-toggle"
           onClick={handleMobileMenuToggle}
@@ -327,10 +409,26 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     <>
       <header
         ref={headerRef}
-        className={`unified-header unified-header--${variant}`}
+        className={[
+          'unified-header',
+          `unified-header--${variant}`,
+          variant === 'landing' &&
+            enableScrollEffects &&
+            (isScrolled ? 'unified-header--scrolled' : 'unified-header--at-top'),
+          isMarketingHeader && useCompactNav && 'unified-header--compact-nav',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        style={
+          variant === 'landing' && enableScrollEffects
+            ? ({
+                '--header-glass-opacity': String(headerGlassOpacity),
+              } as React.CSSProperties)
+            : undefined
+        }
         role="banner"
       >
-        <div className="unified-header__container">
+        <div className="unified-header__container" ref={containerRef}>
           {/* Left Section - Logo */}
           {variant !== 'dashboard' && (
             <div className="unified-header__left">
@@ -356,8 +454,8 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           )}
 
           {/* Center Section - Navigation or Greeting */}
-          <div className="unified-header__nav">
-            {(variant === 'landing' || variant === 'auth') && (
+          <div className="unified-header__nav" ref={inlineNavRef}>
+            {variant === 'landing' && (
               <NavigationLinks
                 onItemClick={handleNavigationClick}
                 showDescriptions={false}
@@ -370,10 +468,43 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           {/* Right Section */}
           {renderRightSection()}
         </div>
+
+        {isMarketingHeader && (
+          <div
+            ref={measureLayerRef}
+            className="unified-header__layout-measure"
+            aria-hidden="true"
+          >
+            <div ref={leftMeasureRef} className="unified-header__left">
+              <div className="unified-header__logo">
+                <h1 className="logo">
+                  <LogoText />
+                </h1>
+              </div>
+            </div>
+            {variant === 'landing' && (
+              <div ref={navMeasureRef} className="unified-header__nav-measure">
+                <NavigationLinks
+                  onItemClick={() => undefined}
+                  showDescriptions={false}
+                  showIcons={false}
+                />
+              </div>
+            )}
+            <div ref={rightMeasureRef} className="unified-header__right unified-header__right--measure">
+              <LanguageSwitcher
+                compact
+                className="unified-header__language-switcher"
+              />
+              <ThemeToggle />
+              {!user ? renderAuthButtons() : renderUserMenu()}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Mobile Menu Overlay */}
-      {(isMobileMenuOpen || isMobileMenuClosing) && (variant === 'landing' || variant === 'auth') && (
+      {(isMobileMenuOpen || isMobileMenuClosing) && isMarketingHeader && (
         <div
           className={`unified-header__mobile-overlay ${isMobileMenuClosing ? 'unified-header__mobile-overlay--closing' : ''}`}
           onClick={handleMobileMenuClose}
@@ -412,41 +543,54 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 
             {/* Mobile Menu Content */}
             <div className="unified-header__mobile-menu-content">
-              {/* User Info or Auth Buttons - at the top */}
+              <section className="unified-header__mobile-menu-section">
+                <h2 className="unified-header__mobile-menu-section-title">
+                  {t('header.mobileMenu.explore')}
+                </h2>
+                <NavigationLinks
+                  onItemClick={handleNavigationClick}
+                  vertical
+                  showDescriptions={false}
+                  showIcons
+                  firstItemRef={user ? firstMenuItemRef : undefined}
+                />
+              </section>
+
               {!user ? (
-                <div className="unified-header__mobile-menu-auth">
-                  <button
-                    ref={firstMenuItemRef}
-                    type="button"
-                    className={`pp-btn pp-btn--block ${
-                      isLoginPage
-                        ? 'unified-header__auth-tab unified-header__auth-tab--active'
-                        : 'pp-btn--secondary'
-                    }`}
-                    onClick={() => {
-                      navigateToAuth('/login');
-                      handleMobileMenuClose();
-                    }}
-                    aria-current={isLoginPage ? 'page' : undefined}
-                  >
-                    {t('auth.login')}
-                  </button>
-                  <button
-                    type="button"
-                    className={`pp-btn pp-btn--block ${
-                      isRegisterPage
-                        ? 'unified-header__auth-tab unified-header__auth-tab--active'
-                        : 'pp-btn--primary'
-                    }`}
-                    onClick={() => {
-                      navigateToAuth('/register');
-                      handleMobileMenuClose();
-                    }}
-                    aria-current={isRegisterPage ? 'page' : undefined}
-                  >
-                    {t('auth.joinUs')}
-                  </button>
-                </div>
+                <section className="unified-header__mobile-menu-section">
+                  <h2 className="unified-header__mobile-menu-section-title">
+                    {t('header.mobileMenu.account')}
+                  </h2>
+                  <div className="unified-header__mobile-menu-auth">
+                    <button
+                      ref={firstMenuItemRef}
+                      type="button"
+                      className={`unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--secondary${
+                        isLoginPage ? ' unified-header__mobile-menu-auth-btn--current' : ''
+                      }`}
+                      onClick={() => {
+                        navigateToAuth('/login');
+                        handleMobileMenuClose();
+                      }}
+                      aria-current={isLoginPage ? 'page' : undefined}
+                    >
+                      {t('auth.login')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary${
+                        isRegisterPage ? ' unified-header__mobile-menu-auth-btn--current' : ''
+                      }`}
+                      onClick={() => {
+                        navigateToAuth('/register');
+                        handleMobileMenuClose();
+                      }}
+                      aria-current={isRegisterPage ? 'page' : undefined}
+                    >
+                      {t('auth.joinUs')}
+                    </button>
+                  </div>
+                </section>
               ) : (
                 <div className="unified-header__mobile-menu-user">
                   <div className="unified-header__mobile-menu-user-info">
@@ -489,19 +633,14 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 </div>
               )}
 
-              {/* Navigation Links */}
-              <NavigationLinks
-                onItemClick={handleNavigationClick}
-                vertical={true}
-                showDescriptions={true}
-                showIcons={false}
-                firstItemRef={user ? firstMenuItemRef : undefined}
-              />
-
-              {/* Language + theme */}
               <div className="unified-header__mobile-menu-preferences">
-                <LanguageSwitcher compact />
-                <ThemeToggle showLabel size="large" />
+                <span className="unified-header__mobile-menu-section-title unified-header__mobile-menu-section-title--inline">
+                  {t('header.mobileMenu.settings')}
+                </span>
+                <div className="unified-header__mobile-menu-preferences-row">
+                  <LanguageSwitcher compact />
+                  <ThemeToggle showLabel size="large" />
+                </div>
               </div>
             </div>
           </div>

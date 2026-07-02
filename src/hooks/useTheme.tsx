@@ -1,7 +1,9 @@
 // hooks/useTheme.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
+
+export const THEME_TRANSITION_MS = 350;
 
 interface UseThemeReturn {
   theme: Theme;
@@ -10,21 +12,33 @@ interface UseThemeReturn {
   setTheme: (theme: Theme) => void;
 }
 
-// Funkcja pomocnicza do wykrywania preferencji systemowych
+interface ApplyThemeOptions {
+  animate?: boolean;
+}
+
+type DocumentWithViewTransition = Document & {
+  startViewTransition?: (updateCallback: () => void) => {
+    finished: Promise<void>;
+  };
+};
+
 const getSystemPreference = (): boolean => {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
-// Funkcja pomocnicza do określania czy tryb ciemny jest aktywny
 const resolveIsDark = (currentTheme: Theme): boolean => {
   if (currentTheme === 'dark') return true;
   if (currentTheme === 'light') return false;
   return getSystemPreference();
 };
 
+const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+};
+
 export const useTheme = (): UseThemeReturn => {
-  // Inicjalizacja z localStorage lub preferencjami systemowymi
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
     const saved = localStorage.getItem('partypass_theme') as Theme | null;
@@ -32,65 +46,81 @@ export const useTheme = (): UseThemeReturn => {
   });
 
   const [isDark, setIsDark] = useState(() => resolveIsDark(theme));
+  const hasAppliedInitialTheme = useRef(false);
 
-  // Funkcja aplikująca motyw do dokumentu
-  const applyTheme = useCallback((currentTheme: Theme) => {
+  const applyTheme = useCallback((currentTheme: Theme, options: ApplyThemeOptions = {}) => {
+    const { animate = true } = options;
     const root = document.documentElement;
     const body = document.body;
     const shouldBeDark = resolveIsDark(currentTheme);
-    
-    // Dodaj klasę animacji podczas zmiany motywu
-    body.classList.add('theme-transitioning');
-    
-    // Krótkie opóźnienie dla płynniejszej animacji
-    requestAnimationFrame(() => {
-      setIsDark(shouldBeDark);
 
-      // Dodaj lub usuń klasę 'dark' z elementu html
+    const commitTheme = () => {
+      setIsDark(shouldBeDark);
       root.classList.toggle('dark', shouldBeDark);
       root.classList.toggle('light', !shouldBeDark);
-      
-      // Usuń klasę animacji po zakończeniu przejścia
-      setTimeout(() => {
-        body.classList.remove('theme-transitioning');
-      }, 500); // Dopasuj do czasu transition (0.5s)
-    });
+    };
+
+    const shouldAnimate =
+      animate && hasAppliedInitialTheme.current && !prefersReducedMotion();
+
+    const clearTransitionClasses = () => {
+      body.classList.remove('theme-transitioning', 'theme-view-transitioning');
+    };
+
+    if (!shouldAnimate) {
+      clearTransitionClasses();
+      commitTheme();
+      hasAppliedInitialTheme.current = true;
+      return;
+    }
+
+    const startViewTransition = (document as DocumentWithViewTransition)
+      .startViewTransition;
+
+    if (typeof startViewTransition === 'function') {
+      body.classList.add('theme-view-transitioning');
+      const transition = startViewTransition.call(document, commitTheme);
+      transition.finished.then(clearTransitionClasses).catch(clearTransitionClasses);
+      hasAppliedInitialTheme.current = true;
+      return;
+    }
+
+    body.classList.add('theme-transitioning');
+    commitTheme();
+    window.setTimeout(clearTransitionClasses, THEME_TRANSITION_MS);
+    hasAppliedInitialTheme.current = true;
   }, []);
 
-  // Ustaw motyw (light/dark/system)
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem('partypass_theme', newTheme);
-    applyTheme(newTheme);
+    applyTheme(newTheme, { animate: true });
   }, [applyTheme]);
 
-  // Przełącz między light a dark (system pomija)
   const toggleTheme = useCallback(() => {
     const currentIsDark = resolveIsDark(theme);
     const newTheme: Theme = currentIsDark ? 'light' : 'dark';
     setTheme(newTheme);
   }, [theme, setTheme]);
 
-  // Aplikuj motyw przy montowaniu
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme, applyTheme]);
+    applyTheme(theme, { animate: false });
+    // Tylko przy starcie — toggle animuje przez setTheme()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyTheme]);
 
-  // Nasłuchuj zmian preferencji systemowych dla 'system' mode
   useEffect(() => {
     if (theme !== 'system') return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = () => {
-      applyTheme('system');
+      applyTheme('system', { animate: true });
     };
 
-    // Obsługa dla starszych przeglądarek
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener('change', handleChange);
     } else {
-      // Fallback dla starszych przeglądarek
       mediaQuery.addListener(handleChange);
     }
 

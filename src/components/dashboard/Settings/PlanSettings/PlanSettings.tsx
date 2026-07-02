@@ -1,5 +1,5 @@
 // components/dashboard/Settings/PlanSettings/PlanSettings.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Check,
   Crown,
@@ -18,15 +18,17 @@ import {
   EventStats,
 } from '../../../../services/firebase/eventService';
 import { getPlanLimits, PlanType } from '../../../../services/firebase/planLimitsService';
-import { PLAN_CATALOG } from '../../../../constants/plans';
+import { getPlanCatalog } from '../../../../constants/plans';
 import ConfigurationStatus from '../ConfigurationStatus';
 import './PlanSettings.scss';
 import { useDashboardViewMotion } from '../../../../hooks/useDashboardViewMotion';
 import Toast from '../../../common/Toast/Toast';
 import PageHeader from '../../../common/PageHeader/PageHeader';
 import { useToast } from '../../../../hooks/useToast';
+import { useTranslation } from 'react-i18next';
 
 const PlanSettings: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast, dismiss, showError } = useToast();
   const { className: viewClassName } = useDashboardViewMotion({
@@ -55,16 +57,19 @@ const PlanSettings: React.FC = () => {
 
   const planIcons = { starter: Zap, pro: Star, enterprise: Crown } as const;
 
-  const plans = PLAN_CATALOG.map(entry => ({
-    id: entry.id,
-    name: entry.name,
-    icon: planIcons[entry.id],
-    price: entry.pricing,
-    description: entry.description,
-    popular: entry.popular,
-    features: entry.features,
-    limitations: entry.limitations,
-  }));
+  const plans = useMemo(() => {
+    const catalog = getPlanCatalog(t);
+    return catalog.map(entry => ({
+      id: entry.id,
+      name: entry.name,
+      icon: planIcons[entry.id],
+      price: entry.pricing,
+      description: entry.description,
+      popular: entry.popular,
+      features: entry.features,
+      limitations: entry.limitations,
+    }));
+  }, [t]);
 
   const currentPlan = plans.find(p => p.id === user?.planType) ?? plans[0];
   const yearlyDiscount = 17;

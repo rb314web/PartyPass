@@ -17,14 +17,14 @@
   &__list--vertical {
     flex-direction: column;
     align-items: stretch;
-    gap: 0;
+    gap: 0.5rem;
     width: 100%;
     list-style: none;
     margin: 0;
     padding: 0;
-    border: 1px solid var(--border-primary, #e5e7eb);
-    border-radius: 12px;
-    overflow: hidden;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
 
     .navigation-links__item {
       width: 100%;
@@ -33,31 +33,54 @@
     .navigation-links__button {
       width: 100%;
       justify-content: flex-start;
-      padding: 1rem 1.25rem;
+      gap: 0;
+      padding: 0.875rem 1rem;
       height: auto;
-      min-height: 48px;
-      border-radius: 0;
-      font-size: 1rem;
-      font-weight: 500;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid var(--border-primary, #e5e7eb);
-      transition: background 0.15s ease;
+      min-height: 3rem;
+      border-radius: 14px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      background: color-mix(in srgb, var(--bg-primary, #fff) 90%, var(--l-accent-soft, #eff6ff));
+      border: 1px solid var(--l-line, rgba(15, 23, 42, 0.08));
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
       text-align: left;
-      color: var(--text-primary, #1f2937);
+      color: var(--l-ink, #0f172a);
       box-sizing: border-box;
 
       &:hover {
-        background: var(--bg-secondary, rgba(0, 0, 0, 0.03));
+        background: var(--l-accent-soft, #eff6ff);
+        border-color: var(--l-accent-soft-border, #bfdbfe);
+        transform: translateX(2px);
       }
 
       &:active {
-        background: var(--bg-tertiary, rgba(0, 0, 0, 0.06));
+        transform: translateX(0) scale(0.99);
       }
     }
 
     .navigation-links__item:last-child .navigation-links__button {
-      border-bottom: none;
+      border-bottom: 1px solid var(--l-line, rgba(15, 23, 42, 0.08));
+    }
+
+    .navigation-links__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 10px;
+      background: var(--l-accent-soft, #eff6ff);
+      border: 1px solid var(--l-accent-soft-border, #bfdbfe);
+      color: var(--l-accent, #2563eb);
+      flex-shrink: 0;
+    }
+
+    .navigation-links__content {
+      gap: 0.75rem;
     }
   }
 
@@ -196,34 +219,36 @@
     font-weight: 400;
   }
 
-  // Mobile menu specific styles (vertical mode)
+  // Mobile menu — vertical drawer
   &--vertical {
-    .navigation-links__label {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-primary, #1f2937);
-    }
+    display: flex;
+    width: 100%;
 
     .navigation-links__description {
-      font-size: 0.875rem;
-      color: var(--text-secondary, #6b7280);
-      opacity: 0.7;
-      margin-top: 0.25rem;
+      display: none;
+    }
+
+    .navigation-links__label {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--l-ink, #0f172a);
     }
 
     .navigation-links__button {
       &--active {
-        background: rgba(99, 102, 241, 0.08);
-        border-color: rgba(99, 102, 241, 0.4);
-        color: #6366f1;
+        background: var(--l-accent-soft, #eff6ff);
+        border-color: var(--l-accent, #2563eb);
+        color: var(--l-accent, #2563eb);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--l-accent) 25%, transparent);
 
         .navigation-links__label {
-          color: #6366f1;
-          font-weight: 600;
+          color: var(--l-accent, #2563eb);
         }
 
-        .navigation-links__description {
-          color: rgba(99, 102, 241, 0.8);
+        .navigation-links__icon {
+          background: color-mix(in srgb, var(--l-accent) 15%, #fff);
+          border-color: var(--l-accent-soft-border, #bfdbfe);
+          color: var(--l-accent, #2563eb);
         }
       }
     }
@@ -234,21 +259,15 @@
   // ============================================
 
   @include respond-below('tablet-lg') {
-    &__description {
-      display: none;
-    }
-
-    &__button {
-      padding: 0.625rem 0.875rem;
-      font-size: 0.875rem;
-    }
-  }
-
-  @include respond-below('tablet') {
-    // Hidden on mobile in header - shown in mobile menu instead
-    // But allow display when in vertical mode (mobile menu)
     &:not(.navigation-links--vertical) {
-      display: none;
+      .navigation-links__description {
+        display: none;
+      }
+
+      .navigation-links__button {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+      }
     }
   }
 }

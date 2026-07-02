@@ -1,5 +1,5 @@
 // components/landing/PricingPlans/PricingPlans.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Star, Zap, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,11 +8,10 @@ import { getLandingPlans } from '../../../constants/plans';
 import type { PlanType } from '../../../services/firebase/planLimitsService';
 import './PricingPlans.scss';
 
-const plans: Plan[] = getLandingPlans();
-
 const PricingPlans: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const plans: Plan[] = useMemo(() => getLandingPlans(t), [t]);
 
   const getPlanIcon = (planId: string) => {
     switch (planId) {

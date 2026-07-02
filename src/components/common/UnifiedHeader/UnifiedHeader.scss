@@ -1,20 +1,6 @@
 // components/common/UnifiedHeader/UnifiedHeader.scss
 @use '../../../styles/globals' as *;
 
-$header-mobile-breakpoint: 830px;
-
-@mixin header-mobile {
-  @media (max-width: calc(#{$header-mobile-breakpoint} - 1px)) {
-    @content;
-  }
-}
-
-@mixin header-desktop {
-  @media (min-width: $header-mobile-breakpoint) {
-    @content;
-  }
-}
-
 .unified-header {
   position: sticky;
   top: 0;
@@ -173,8 +159,10 @@ $header-mobile-breakpoint: 830px;
     align-items: center;
     gap: 0.75rem;
     flex-shrink: 0;
-    margin-left: auto; // Wypchnij na prawo na desktop
+    margin-left: auto;
     justify-content: flex-end;
+    position: relative;
+    z-index: 2;
     transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     @media (max-width: 768px) {
@@ -188,12 +176,22 @@ $header-mobile-breakpoint: 830px;
   }
 
   &__mobile-menu-preferences {
+    margin-top: auto;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--l-line, rgba(15, 23, 42, 0.08));
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding-top: 1.25rem;
-    margin-top: 1.25rem;
-    border-top: 1px solid var(--border-primary, rgba(148, 163, 184, 0.2));
+    gap: 0.75rem;
+  }
+
+  &__mobile-menu-preferences-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg-primary) 88%, var(--l-accent-soft));
+    border: 1px solid var(--l-line, rgba(15, 23, 42, 0.08));
   }
 
   &__auth-btn {
@@ -412,9 +410,32 @@ $header-mobile-breakpoint: 830px;
   }
 
 
+  // Ukryty pomiar layoutu (ResizeObserver) — landing/auth
+  &__layout-measure {
+    position: fixed;
+    left: -200vw;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: max-content;
+    visibility: hidden;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: -1;
+  }
+
+  &__nav-measure {
+    flex-shrink: 0;
+
+    .navigation-links {
+      display: flex !important;
+    }
+  }
+
   // Mobile Menu Toggle Button
   &__mobile-menu-toggle {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     width: 40px;
@@ -445,10 +466,6 @@ $header-mobile-breakpoint: 830px;
     &:focus-visible {
       outline: 2px solid var(--color-primary);
       outline-offset: 2px;
-    }
-
-    @include header-desktop {
-      display: none;
     }
   }
 
@@ -513,12 +530,7 @@ $header-mobile-breakpoint: 830px;
   // Mobile Menu Overlay
   &__mobile-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
     z-index: var(--z-modal, 1000);
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
@@ -526,6 +538,7 @@ $header-mobile-breakpoint: 830px;
     animation: mobileOverlayFadeIn 0.2s ease;
     touch-action: none;
     overscroll-behavior: none;
+    overflow: hidden;
 
     &--closing {
       animation: mobileOverlayFadeOut 0.3s ease;
@@ -535,36 +548,37 @@ $header-mobile-breakpoint: 830px;
   // Mobile Menu Panel
   &__mobile-menu {
     position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 85%;
-    max-width: 380px;
-    height: 100vh;
-        background: var(--bg-primary, #ffffff);
-    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(92vw, 400px);
+    background:
+      linear-gradient(180deg, var(--l-accent-soft, #eff6ff) 0%, var(--bg-primary, #fff) 22%),
+      var(--bg-primary, #ffffff);
+    box-shadow: -8px 0 40px rgba(15, 23, 42, 0.12);
     z-index: calc(var(--z-modal, 1000) + 1);
-        overflow-y: auto;
-    overflow-x: hidden;
-    animation: mobileMenuSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        flex-direction: column;
+    overflow: hidden;
+    animation: mobileMenuSlideIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
 
     &--closing {
-      animation: mobileMenuSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-}
+      animation: mobileMenuSlideOut 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
 
   // Mobile Menu Header
   &__mobile-menu-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-primary, rgba(0, 0, 0, 0.1));
+    padding: 1rem 1.25rem;
     flex-shrink: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--l-line, rgba(15, 23, 42, 0.08)) 80%, transparent);
+    background: color-mix(in srgb, var(--bg-primary, #fff) 72%, transparent);
+    backdrop-filter: blur(12px);
   }
 
   &__mobile-menu-logo {
@@ -602,19 +616,20 @@ $header-mobile-breakpoint: 830px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 2.25rem;
+    height: 2.25rem;
     padding: 0;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+    background: color-mix(in srgb, var(--bg-primary) 80%, var(--l-accent-soft, #eff6ff));
+    border: 1px solid var(--l-line, rgba(15, 23, 42, 0.08));
+    border-radius: 999px;
+    color: var(--text-secondary, #64748b);
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.05);
-      color: var(--text-primary);
+      background: var(--l-accent-soft, #eff6ff);
+      color: var(--l-accent, #2563eb);
+      border-color: var(--l-accent-soft-border, #bfdbfe);
     }
 
     &:active {
@@ -634,73 +649,94 @@ $header-mobile-breakpoint: 830px;
 
   // Mobile Menu Content
   &__mobile-menu-content {
-    padding: 1rem 1.5rem;
+    flex: 1;
+    min-height: 0;
+    padding: 1.25rem 1.25rem 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  &__mobile-menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__mobile-menu-section-title {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--l-muted, #64748b);
+
+    &--inline {
+      margin-bottom: 0.25rem;
+    }
   }
 
   // Mobile Menu Auth Buttons
   &__mobile-menu-auth {
-      display: flex;
+    display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-primary, rgba(0, 0, 0, 0.1));
-    margin-bottom: 0.5rem;
+    gap: 0.625rem;
   }
 
   &__mobile-menu-auth-btn {
     width: 100%;
-    padding: 1rem 1.25rem;
-      border-radius: 12px;
-        font-weight: 600;
-    font-size: 1rem;
-    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0.875rem 1.25rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
     cursor: pointer;
-    min-height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    box-shadow: none;
 
-        &--primary {
-      background: var(--color-primary, #6366f1);
-      color: #ffffff;
-      border: 2px solid var(--color-primary, #6366f1);
+    &--secondary {
+      background: color-mix(in srgb, var(--bg-primary) 92%, var(--l-accent-soft));
+      color: var(--l-ink, #0f172a);
+      border-color: var(--l-line, rgba(15, 23, 42, 0.1));
 
-          &:hover {
-        background: var(--color-primary-dark, #2563eb);
-        border-color: var(--color-primary-dark, #2563eb);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
-    }
-
-      &:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-          }
-    }
-
-        &--secondary {
-      background: transparent;
-      color: var(--text-primary);
-      border: 2px solid var(--border-primary, rgba(0, 0, 0, 0.2));
-
-          &:hover {
-        background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
-        border-color: var(--border-secondary, rgba(0, 0, 0, 0.3));
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          }
-
-      &:active {
-        transform: translateY(0);
-        }
+      &:hover {
+        border-color: var(--l-accent-soft-border, #bfdbfe);
+        background: var(--l-accent-soft, #eff6ff);
       }
+    }
+
+    &--primary {
+      background: linear-gradient(135deg, var(--l-btn-from, #2563eb), var(--l-btn-to, #1d4ed8));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+
+      &:hover {
+        filter: brightness(1.04);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);
+      }
+    }
+
+    &--secondary.unified-header__mobile-menu-auth-btn--current {
+      border-color: var(--l-accent, #2563eb);
+      background: var(--l-accent-soft, #eff6ff);
+    }
+
+    &--primary.unified-header__mobile-menu-auth-btn--current {
+      box-shadow:
+        0 4px 12px rgba(37, 99, 235, 0.18),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+    }
 
     &:focus-visible {
       outline: 2px solid var(--color-primary);
@@ -874,23 +910,35 @@ $header-mobile-breakpoint: 830px;
   // VARIANT MODIFIERS
   // ============================================
 
-  // Landing & auth variants — shared public marketing header
-  &--landing,
+  // Landing — fixed at top (sticky breaks inside flex `.landing`)
+  &--landing {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  // Auth — stałe tło (landing używa ::before + scroll)
   &--auth {
     background: color-mix(in srgb, var(--l-hero-bg, #f0f9ff) 94%, transparent);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid var(--l-line, rgba(229, 231, 235, 0.8));
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
 
-    // Dark mode support
-    .dark & {
-      background: color-mix(in srgb, var(--bg-primary) 75%, transparent);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  // Landing & auth variants — shared public marketing header
+  &--landing,
+  &--auth {
+    border-bottom: 1px solid var(--l-line, rgba(229, 231, 235, 0.8));
+    box-shadow: none;
+
+    &.unified-header--at-top {
+      border-bottom-color: transparent;
+      box-shadow: none;
     }
+
+    // Scrolled glass — tło w Landing.scss (::before + --header-glass-opacity)
 
     // Style overrides for landing - match container width
     .unified-header__container {
@@ -898,8 +946,41 @@ $header-mobile-breakpoint: 830px;
       max-width: 1200px;
       padding-top: 0;
       padding-bottom: 0;
-      gap: 2rem;
+      gap: 1rem;
+    }
 
+    .unified-header__right {
+      background: transparent;
+      padding-left: 0.625rem;
+      margin-left: auto;
+    }
+
+    // Pełna nawigacja inline albo hamburger — decyzja w JS (useHeaderNavLayout)
+    .navigation-links:not(.navigation-links--vertical) {
+      flex-shrink: 0;
+
+      .navigation-links__list {
+        flex-wrap: nowrap;
+      }
+
+      .navigation-links__item {
+        flex-shrink: 0;
+      }
+    }
+
+    &.unified-header--compact-nav {
+      .unified-header__nav .navigation-links:not(.navigation-links--vertical) {
+        display: none;
+      }
+
+      .unified-header__nav {
+        flex: 0;
+        min-width: 0;
+      }
+
+      .unified-header__mobile-menu-toggle {
+        display: flex;
+      }
     }
 
     // Navigation links styling on landing - minimalist
@@ -981,19 +1062,13 @@ $header-mobile-breakpoint: 830px;
       // Always visible
     }
 
-    // Override scrolled state for landing - subtle shadow
-    &.unified-header--scrolled {
-      backdrop-filter: blur(24px) saturate(200%);
-      -webkit-backdrop-filter: blur(24px) saturate(200%);
-      background: rgba(247, 248, 250, 0.98);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border-bottom: 1px solid rgba(229, 231, 235, 0.9);
+    // Scrolled glass — tło w Landing.scss
+  }
 
-      .dark & {
-        background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
-        box-shadow: var(--shadow-md);
-        border-bottom: 1px solid var(--border-primary);
-      }
+  // Auth pages — minimal header (nav w menu mobilnym)
+  &--auth {
+    .dark &:not(.unified-header--at-top) .unified-header__right {
+      background: transparent;
     }
   }
 

@@ -1,133 +1,153 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, CheckCircle, HelpCircle, XCircle } from 'lucide-react';
+import { Calendar, Send } from 'lucide-react';
 import { usePreviewCarousel } from '../../hooks/usePreviewCarousel';
 import PreviewMorphSlot from './PreviewMorphSlot';
+import RSVPStatusOptions from './RSVPStatusOptions';
+import RSVPInvitationHeroSection from './RSVPInvitationHeroSection';
+import { useRsvpStatusOptions } from './useRsvpStatusOptions';
+import {
+  formatPreviewScenarioDate,
+  RSVP_PREVIEW_SCENARIO_DATES,
+  RSVP_PREVIEW_SCENARIO_KEYS,
+  RSVP_PREVIEW_SCENARIO_SELECTION,
+  type RsvpPreviewScenarioKey,
+  type RsvpPreviewScenarioState,
+} from '../../constants/rsvpPreviewScenarios';
 import '../../pages/RSVP/RSVP.scss';
 import './RSVPInvitationPreview.scss';
-
-const PREVIEW_SCENARIO_KEYS = ['birthday', 'meetup', 'gala'] as const;
-type PreviewScenarioKey = (typeof PREVIEW_SCENARIO_KEYS)[number];
-
-const SCENARIO_SELECTED_INDEX: Record<PreviewScenarioKey, number> = {
-  birthday: 0,
-  meetup: 1,
-  gala: 2,
-};
-
-type StatusOption = {
-  value: string;
-  label: string;
-  hint: string;
-  icon: React.ReactNode;
-};
 
 export interface RSVPInvitationPreviewProps {
   autoRotate?: boolean;
   variant?: 'hero' | 'flat';
   interactive?: boolean;
+  onScenarioStateChange?: (state: RsvpPreviewScenarioState) => void;
 }
 
-const INTERACTIVE_SCENARIO: PreviewScenarioKey = 'birthday';
+const INTERACTIVE_SCENARIO: RsvpPreviewScenarioKey = 'birthday';
 
-const RSVPInvitationPreviewInteractive: React.FC<{ variant: 'hero' | 'flat' }> = ({
-  variant,
+const PreviewFormFooter: React.FC<{ deadline: string }> = ({ deadline }) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="rsvp-form-card__footer">
+      <button type="button" className="rsvp-btn rsvp-btn--primary" disabled>
+        <Send size={18} />
+        {t('rsvp.form.submit.sendResponse')}
+      </button>
+      <p className="rsvp-form-card__hint">
+        {t('rsvp.form.deadlineHint.active', { deadline })}
+      </p>
+    </div>
+  );
+};
+
+const GuestIdentity: React.FC<{ scenarioKey: RsvpPreviewScenarioKey }> = ({
+  scenarioKey,
 }) => {
   const { t } = useTranslation();
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const scenarioBase = `landing.previewScenarios.${INTERACTIVE_SCENARIO}`;
+  const scenarioBase = `landing.previewScenarios.${scenarioKey}`;
 
-  const statusOptions = useMemo(
-    () => [
-      {
-        value: 'accepted',
-        label: t('rsvp.status.accepted.label'),
-        hint: t('rsvp.status.accepted.hint'),
-        icon: <CheckCircle size={22} />,
-      },
-      {
-        value: 'maybe',
-        label: t('rsvp.status.maybe.label'),
-        hint: t('rsvp.status.maybe.hint'),
-        icon: <HelpCircle size={22} />,
-      },
-      {
-        value: 'declined',
-        label: t('rsvp.status.declined.label'),
-        hint: t('rsvp.status.declined.hint'),
-        icon: <XCircle size={22} />,
-      },
-    ],
-    [t]
+  return (
+    <>
+      <div className="rsvp-avatar" aria-hidden="true">
+        {t(`${scenarioBase}.guestInitials`)}
+      </div>
+      <div className="rsvp-form-card__guest-text">
+        <span className="rsvp-form-card__guest-label">
+          {t('rsvp.common.invitationFor')}
+        </span>
+        <span
+          className="rsvp-form-card__guest-name"
+          title={t(`${scenarioBase}.guestName`)}
+        >
+          {t(`${scenarioBase}.guestName`)}
+        </span>
+        <span className="rsvp-form-card__guest-email">
+          {t(`${scenarioBase}.guestEmail`)}
+        </span>
+      </div>
+    </>
   );
+};
+
+const HeroDetails: React.FC<{ scenarioKey: RsvpPreviewScenarioKey }> = ({
+  scenarioKey,
+}) => {
+  const { t, i18n } = useTranslation();
+  const scenarioBase = `landing.previewScenarios.${scenarioKey}`;
+  const formattedDate = formatPreviewScenarioDate(
+    RSVP_PREVIEW_SCENARIO_DATES[scenarioKey],
+    i18n.language
+  );
+  const title = t(`${scenarioBase}.title`);
+
+  return (
+    <>
+      <h1 className="rsvp-hero__title" title={title}>
+        {title}
+      </h1>
+      <ul className="rsvp-hero__meta">
+        <li className="rsvp-hero__meta-item">
+          <Calendar size={16} aria-hidden="true" />
+          <span>{formattedDate}</span>
+        </li>
+      </ul>
+    </>
+  );
+};
+
+const RSVPInvitationPreviewInteractive: React.FC<{
+  variant: 'hero' | 'flat';
+  onScenarioStateChange?: (state: RsvpPreviewScenarioState) => void;
+}> = ({ variant, onScenarioStateChange }) => {
+  const { t, i18n } = useTranslation();
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const statusOptions = useRsvpStatusOptions();
+  const formattedDate = formatPreviewScenarioDate(
+    RSVP_PREVIEW_SCENARIO_DATES[INTERACTIVE_SCENARIO],
+    i18n.language
+  );
+
+  useEffect(() => {
+    onScenarioStateChange?.({
+      index: RSVP_PREVIEW_SCENARIO_KEYS.indexOf(INTERACTIVE_SCENARIO),
+      overlayIndex: null,
+      isCrossfading: false,
+    });
+  }, [onScenarioStateChange]);
 
   return (
     <div className={`rsvp rsvp--preview rsvp--preview-${variant} rsvp--preview-interactive`}>
-      <div className="rsvp-preview__stage">
-        <section className="rsvp-hero">
-          <div className="rsvp-hero__top">
-            <span className="rsvp-hero__eyebrow">{t('rsvp.common.invitation')}</span>
-          </div>
-          <div className="rsvp-hero__content">
-            <h2 className="rsvp-hero__title">{t(`${scenarioBase}.title`)}</h2>
-            <ul className="rsvp-hero__meta">
-              <li className="rsvp-hero__meta-item">
-                <Calendar size={16} aria-hidden="true" />
-                <span>{t(`${scenarioBase}.date`)}</span>
-              </li>
-            </ul>
-          </div>
-        </section>
+      <div className="rsvp__shell">
+        <main className="rsvp__main">
+          <RSVPInvitationHeroSection
+            eventDate={RSVP_PREVIEW_SCENARIO_DATES[INTERACTIVE_SCENARIO]}
+          >
+            <HeroDetails scenarioKey={INTERACTIVE_SCENARIO} />
+          </RSVPInvitationHeroSection>
+        </main>
 
-        <div className="rsvp-form-card">
-          <div className="rsvp-form-card__guest">
-            <div className="rsvp-avatar" aria-hidden="true">
-              {t(`${scenarioBase}.guestInitials`)}
+        <aside className="rsvp__aside">
+          <form className="rsvp-form-card" onSubmit={event => event.preventDefault()}>
+            <div className="rsvp-form-card__guest">
+              <GuestIdentity scenarioKey={INTERACTIVE_SCENARIO} />
             </div>
-            <div className="rsvp-form-card__guest-text">
-              <span className="rsvp-form-card__guest-label">
-                {t('rsvp.common.invitationFor')}
-              </span>
-              <span className="rsvp-form-card__guest-name">
-                {t(`${scenarioBase}.guestName`)}
-              </span>
-              <span className="rsvp-form-card__guest-email">
-                {t(`${scenarioBase}.guestEmail`)}
-              </span>
-            </div>
-          </div>
 
-          <div className="rsvp-form-card__body">
-            <h3 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h3>
-            <div
-              className="rsvp-options"
-              role="radiogroup"
-              aria-label={t('rsvp.form.willYouAttend')}
-            >
-              {statusOptions.map(option => (
-                <label
-                  key={option.value}
-                  className={`rsvp-option rsvp-option--${option.value}${
-                    selectedStatus === option.value ? ' is-selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="landing-rsvp-preview-status"
-                    value={option.value}
-                    checked={selectedStatus === option.value}
-                    onChange={() => setSelectedStatus(option.value)}
-                  />
-                  <span className="rsvp-option__icon">{option.icon}</span>
-                  <span className="rsvp-option__text">
-                    <span className="rsvp-option__label">{option.label}</span>
-                    <span className="rsvp-option__hint">{option.hint}</span>
-                  </span>
-                </label>
-              ))}
+            <div className="rsvp-form-card__body">
+              <h2 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h2>
+              <RSVPStatusOptions
+                options={statusOptions}
+                selectedValue={selectedStatus}
+                interactive
+                radioName="landing-rsvp-preview-status"
+                onSelect={setSelectedStatus}
+              />
             </div>
-          </div>
-        </div>
+
+            <PreviewFormFooter deadline={formattedDate} />
+          </form>
+        </aside>
       </div>
     </div>
   );
@@ -136,8 +156,10 @@ const RSVPInvitationPreviewInteractive: React.FC<{ variant: 'hero' | 'flat' }> =
 const RSVPInvitationPreviewCarousel: React.FC<{
   autoRotate: boolean;
   variant: 'hero' | 'flat';
-}> = ({ autoRotate, variant }) => {
-  const { t } = useTranslation();
+  onScenarioStateChange?: (state: RsvpPreviewScenarioState) => void;
+}> = ({ autoRotate, variant, onScenarioStateChange }) => {
+  const { t, i18n } = useTranslation();
+  const statusOptions = useRsvpStatusOptions();
 
   const {
     index,
@@ -146,78 +168,31 @@ const RSVPInvitationPreviewCarousel: React.FC<{
     completeCrossfade,
     pauseHandlers,
   } = usePreviewCarousel({
-    count: PREVIEW_SCENARIO_KEYS.length,
+    count: RSVP_PREVIEW_SCENARIO_KEYS.length,
     autoRotate,
   });
 
-  const statusOptions = useMemo(
-    () => [
-      {
-        value: 'accepted',
-        label: t('rsvp.status.accepted.label'),
-        hint: t('rsvp.status.accepted.hint'),
-        icon: <CheckCircle size={22} />,
-      },
-      {
-        value: 'maybe',
-        label: t('rsvp.status.maybe.label'),
-        hint: t('rsvp.status.maybe.hint'),
-        icon: <HelpCircle size={22} />,
-      },
-      {
-        value: 'declined',
-        label: t('rsvp.status.declined.label'),
-        hint: t('rsvp.status.declined.hint'),
-        icon: <XCircle size={22} />,
-      },
-    ],
-    [t]
+  useEffect(() => {
+    onScenarioStateChange?.({ index, overlayIndex, isCrossfading });
+  }, [index, overlayIndex, isCrossfading, onScenarioStateChange]);
+
+  const renderHeroContent = (scenarioIndex: number) => (
+    <HeroDetails scenarioKey={RSVP_PREVIEW_SCENARIO_KEYS[scenarioIndex]} />
   );
 
-  const renderHeroContent = (scenarioIndex: number) => {
-    const scenarioKey = PREVIEW_SCENARIO_KEYS[scenarioIndex];
-    const scenarioBase = `landing.previewScenarios.${scenarioKey}`;
-
-    return (
-      <>
-        <h2 className="rsvp-hero__title">{t(`${scenarioBase}.title`)}</h2>
-        <ul className="rsvp-hero__meta">
-          <li className="rsvp-hero__meta-item">
-            <Calendar size={16} aria-hidden="true" />
-            <span>{t(`${scenarioBase}.date`)}</span>
-          </li>
-        </ul>
-      </>
-    );
-  };
-
-  const renderGuestContent = (scenarioIndex: number) => {
-    const scenarioKey = PREVIEW_SCENARIO_KEYS[scenarioIndex];
-    const scenarioBase = `landing.previewScenarios.${scenarioKey}`;
-
-    return (
-      <>
-        <div className="rsvp-avatar" aria-hidden="true">
-          {t(`${scenarioBase}.guestInitials`)}
-        </div>
-        <div className="rsvp-form-card__guest-text">
-          <span className="rsvp-form-card__guest-label">
-            {t('rsvp.common.invitationFor')}
-          </span>
-          <span className="rsvp-form-card__guest-name">
-            {t(`${scenarioBase}.guestName`)}
-          </span>
-          <span className="rsvp-form-card__guest-email">
-            {t(`${scenarioBase}.guestEmail`)}
-          </span>
-        </div>
-      </>
-    );
-  };
-
+  const renderGuestContent = (scenarioIndex: number) => (
+    <GuestIdentity scenarioKey={RSVP_PREVIEW_SCENARIO_KEYS[scenarioIndex]} />
+  );
 
   const selectionScenarioIndex =
     isCrossfading && overlayIndex !== null ? overlayIndex : index;
+  const activeScenarioKey = RSVP_PREVIEW_SCENARIO_KEYS[selectionScenarioIndex];
+  const selectedOptionIndex = RSVP_PREVIEW_SCENARIO_SELECTION[activeScenarioKey];
+  const selectedStatus = statusOptions[selectedOptionIndex]?.value ?? null;
+  const formattedDeadline = formatPreviewScenarioDate(
+    RSVP_PREVIEW_SCENARIO_DATES[activeScenarioKey],
+    i18n.language
+  );
 
   return (
     <div
@@ -231,61 +206,46 @@ const RSVPInvitationPreviewCarousel: React.FC<{
         .join(' ')}
       {...pauseHandlers}
     >
-      <div className="rsvp-preview__stage">
-        <section className="rsvp-hero">
-          <div className="rsvp-hero__top">
-            <span className="rsvp-hero__eyebrow">{t('rsvp.common.invitation')}</span>
-          </div>
-          <div className="rsvp-hero__content">
+      <div className="rsvp__shell">
+        <main className="rsvp__main">
+          <RSVPInvitationHeroSection
+            eventDate={RSVP_PREVIEW_SCENARIO_DATES[activeScenarioKey]}
+          >
             <PreviewMorphSlot
               stagger="hero"
-              minHeight="5.75rem"
               index={index}
               overlayIndex={overlayIndex}
               isCrossfading={isCrossfading}
               render={renderHeroContent}
               onCrossfadeComplete={() => completeCrossfade()}
             />
-          </div>
-        </section>
+          </RSVPInvitationHeroSection>
+        </main>
 
-        <div className="rsvp-form-card">
-          <div className="rsvp-form-card__guest">
-            <PreviewMorphSlot
-              stagger="guest"
-              minHeight="3.5rem"
-              index={index}
-              overlayIndex={overlayIndex}
-              isCrossfading={isCrossfading}
-              render={renderGuestContent}
-            />
-          </div>
-
-          <div className="rsvp-form-card__body">
-            <h3 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h3>
-            <div className="rsvp-options">
-              {statusOptions.map((option, optionIndex) => {
-                const scenarioKey = PREVIEW_SCENARIO_KEYS[selectionScenarioIndex];
-                const selectedOptionIndex = SCENARIO_SELECTED_INDEX[scenarioKey];
-
-                return (
-                  <div
-                    key={option.value}
-                    className={`rsvp-option rsvp-option--${option.value}${
-                      optionIndex === selectedOptionIndex ? ' is-selected' : ''
-                    }`}
-                  >
-                    <span className="rsvp-option__icon">{option.icon}</span>
-                    <span className="rsvp-option__text">
-                      <span className="rsvp-option__label">{option.label}</span>
-                      <span className="rsvp-option__hint">{option.hint}</span>
-                    </span>
-                  </div>
-                );
-              })}
+        <aside className="rsvp__aside">
+          <form className="rsvp-form-card" onSubmit={event => event.preventDefault()}>
+            <div className="rsvp-form-card__guest">
+              <PreviewMorphSlot
+                stagger="guest"
+                index={index}
+                overlayIndex={overlayIndex}
+                isCrossfading={isCrossfading}
+                render={renderGuestContent}
+              />
             </div>
-          </div>
-        </div>
+
+            <div className="rsvp-form-card__body">
+              <h2 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h2>
+              <RSVPStatusOptions
+                options={statusOptions}
+                selectedValue={selectedStatus}
+                radioName="rsvp-preview-status"
+              />
+            </div>
+
+            <PreviewFormFooter deadline={formattedDeadline} />
+          </form>
+        </aside>
       </div>
     </div>
   );
@@ -295,12 +255,24 @@ const RSVPInvitationPreview: React.FC<RSVPInvitationPreviewProps> = ({
   autoRotate = true,
   variant = 'hero',
   interactive = false,
+  onScenarioStateChange,
 }) => {
   if (interactive) {
-    return <RSVPInvitationPreviewInteractive variant={variant} />;
+    return (
+      <RSVPInvitationPreviewInteractive
+        variant={variant}
+        onScenarioStateChange={onScenarioStateChange}
+      />
+    );
   }
 
-  return <RSVPInvitationPreviewCarousel autoRotate={autoRotate} variant={variant} />;
+  return (
+    <RSVPInvitationPreviewCarousel
+      autoRotate={autoRotate}
+      variant={variant}
+      onScenarioStateChange={onScenarioStateChange}
+    />
+  );
 };
 
 export default RSVPInvitationPreview;

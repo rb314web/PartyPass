@@ -1,241 +1,166 @@
-# 🎉 PartyPass - Platforma do Zarządzania Wydarzeniami
+# PartyPass — platforma do zarządzania wydarzeniami
 
-[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-blue.svg)](https://www.typescriptlang.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-10.7.1-orange.svg)](https://firebase.google.com/)
-[![Material--UI](https://img.shields.io/badge/Material--UI-5.14.0-blue.svg)](https://mui.com/)
-[![PWA](https://img.shields.io/badge/PWA-Ready-green.svg)](https://developers.google.com/web/progressive-web-apps)
-[![Tests](https://img.shields.io/badge/Tests-59%20Passed-brightgreen.svg)](https://jestjs.io/)
-[![ESLint](https://img.shields.io/badge/ESLint-Configured-brightgreen.svg)](https://eslint.org/)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF.svg)](https://vitejs.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-12-orange.svg)](https://firebase.google.com/)
+[![Vitest](https://img.shields.io/badge/Tests-Vitest-brightgreen.svg)](https://vitest.dev/)
 
-PartyPass to nowoczesna, responsywna platforma do zarządzania wydarzeniami zbudowana z wykorzystaniem najnowszych technologii webowych. Aplikacja oferuje intuicyjne narzędzia do tworzenia wydarzeń, zarządzania gośćmi, wysyłania zaproszeń oraz śledzenia odpowiedzi RSVP.
+PartyPass to aplikacja do organizacji wydarzeń: kreator wydarzeń, lista gości, zaproszenia e-mail, publiczna strona RSVP, analityka i plany cenowe (Starter / Pro / Enterprise).
 
-## ✨ Główne Funkcjonalności
+## Główne funkcje
 
-### 🎯 Dla Organizatorów Wydarzeń
-- **Intuicyjny kreator wydarzeń** - stwórz wydarzenie w kilka minut
-- **Zaawansowane zarządzanie gośćmi** - dodawaj, edytuj i śledź uczestników
-- **Automatyczne zaproszenia** - spersonalizowane email i SMS
-- **Śledzenie RSVP** - w czasie rzeczywistym monitoruj odpowiedzi
-- **Analityki i raporty** - szczegółowe statystyki wydarzeń
-- **Powiadomienia** - automatyczne przypomnienia dla gości
+**Organizator**
+- Tworzenie i edycja wydarzeń (lokalizacja na mapie, dress code, deadline RSVP)
+- Kontakty i import gości
+- Zaproszenia e-mail (EmailJS + Cloud Functions)
+- Dashboard z analityką, aktywnościami i limitami planu
 
-### 📱 Dla Gości
-- **Prosta rejestracja RSVP** - szybkie potwierdzenie udziału
-- **Personalizowane zaproszenia** - unikalne linki dla każdego gościa
-- **QR kody** - łatwy dostęp do informacji o wydarzeniu
-- **Aktualizacje statusu** - możliwość zmiany decyzji
+**Gość**
+- Publiczny link `/rsvp/:token` bez konta
+- Potwierdzenie / odmowa / „może”, plus-one, preferencje żywieniowe
 
-### 🎨 Dla Użytkowników
-- **Responsywny design** - doskonała obsługa na wszystkich urządzeniach
-- **Tryb ciemny/jasny** - automatyczne dostosowanie do preferencji systemu
-- **PWA (Progressive Web App)** - instalacja jak natywna aplikacja
-- **Dostępność** - zgodność z WCAG AA
-- **Wielojęzyczność** - obsługa polskiego i angielskiego
+**Aplikacja**
+- Landing PL/EN, demo interaktywne, strony prawne (Terms, Privacy, RODO)
+- Tryb jasny/ciemny, przełącznik języka
+- Responsywny panel (sidebar + bottom nav na mobile)
 
-## 🚀 Szybki Start
+## Szybki start
 
-### Wymagania wstępne
+### Wymagania
 - Node.js 18+
-- npm lub yarn
-- Konto Firebase
+- npm
+- Projekt Firebase (Auth, Firestore, Storage; opcjonalnie Functions)
 
 ### Instalacja
 
-1. **Sklonuj repozytorium**
-   ```bash
-   git clone https://github.com/your-username/partypass.git
-   cd partypass
-   ```
-
-2. **Zainstaluj zależności**
-   ```bash
-   npm install
-   ```
-
-3. **Skonfiguruj środowisko**
-   ```bash
-   cp env.example .env
-   # Edytuj .env z właściwymi kluczami Firebase
-   ```
-
-4. **Uruchom aplikację**
-   ```bash
-   npm start
-   ```
-
-Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost:3000).
-
-## 📋 Dostępne Skrypty
-
-### Rozwój
 ```bash
-npm start          # Uruchomienie serwera deweloperskiego
-npm run build      # Budowa produkcyjna
-npm test           # Uruchomienie testów
-npm run lint       # Sprawdzanie jakości kodu
-npm run lint:fix   # Automatyczne naprawianie błędów ESLint
+git clone <repo-url> partypass
+cd partypass
+npm install
+cp .env.example .env
+# Uzupełnij .env — patrz sekcja „Zmienne środowiskowe”
+npm start
 ```
 
-### Dodatkowe narzędzia
-```bash
-npm run analyze    # Analiza bundle size (webpack-bundle-analyzer)
-npm run format     # Formatowanie kodu (Prettier)
-npm run clean-console # Usuwanie console.log z kodu produkcyjnego
-```
+Aplikacja: [http://localhost:3000](http://localhost:3000)
 
-## 🏗️ Architektura Techniczna
+## Skrypty
 
-### Stack Technologiczny
-- **Frontend**: React 18 + TypeScript
-- **UI Framework**: Material-UI v5
-- **Backend**: Firebase (Auth, Firestore, Storage, Functions)
-- **Stylizacja**: SCSS + CSS Modules
-- **Testowanie**: Jest + React Testing Library
-- **Build Tool**: Create React App (webpack)
-- **PWA**: Service Worker + Web App Manifest
+| Polecenie | Opis |
+|-----------|------|
+| `npm start` / `npm run dev` | Serwer deweloperski (Vite, port 3000) |
+| `npm run build` | `tsc --noEmit` + build produkcyjny |
+| `npm test` | Testy (Vitest) |
+| `npm run test:watch` | Vitest w trybie watch |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier |
 
-### Struktura Projektu
+## Stack technologiczny
+
+| Warstwa | Technologia |
+|---------|-------------|
+| UI | React 19, TypeScript, SCSS (design system `pp-*`) |
+| Build | Vite 6 |
+| Routing | React Router 7 |
+| Stan serwera | TanStack React Query |
+| Stan globalny | React Context (auth, theme, language) |
+| Backend | Firebase Auth, Firestore, Storage, Functions |
+| i18n | i18next (pl, en) |
+| Mapy | Leaflet |
+| E-mail | EmailJS |
+| Testy | Vitest + Testing Library |
+
+## Struktura projektu
+
 ```
 src/
-├── components/          # Komponenty React
-│   ├── common/         # Wspólne komponenty (Header, Footer, etc.)
-│   ├── dashboard/      # Komponenty dashboard
-│   ├── landing/        # Strona landingowa
-│   └── auth/           # Komponenty autentyfikacji
-├── hooks/              # Niestandardowe hooki React
-├── services/           # Usługi (Firebase, API)
-├── styles/             # Globalne style i theme
-├── types/              # Definicje TypeScript
-├── utils/              # Narzędzia pomocnicze
-└── config/             # Konfiguracja aplikacji
+├── components/
+│   ├── auth/           # Login, Register, AuthLayout, AuthGuard
+│   ├── common/         # Header, Toast, Theme, i18n UI
+│   ├── dashboard/      # Panel organizatora
+│   ├── landing/        # Marketing
+│   └── rsvp/           # Podgląd zaproszenia
+├── pages/              # Landing, Dashboard, RSVP, Legal, Demo
+├── hooks/              # useAuth, useLanguage, useNotifications…
+├── services/
+│   ├── firebase/       # eventService, guestService, newRSVPService…
+│   └── emailService.ts
+├── constants/          # plany, motion, limity
+├── config/             # firebase.ts, queryClient.ts
+├── i18n/locales/       # pl.json, en.json
+├── types/
+└── styles/globals/     # tokeny, przyciski, formularze
+
+functions/              # Firebase Cloud Functions (RSVP, zaproszenia)
+firestore.rules         # Reguły bezpieczeństwa Firestore
 ```
 
-### Kluczowe Funkcjonalności Techniczne
+## Trasy aplikacji
 
-#### 🔐 Autentyfikacja i Autoryzacja
-- Firebase Authentication z obsługą email/hasło
-- Ochrona tras z AuthGuard
-- Bezpieczeństwo danych użytkowników
+| Ścieżka | Dostęp |
+|---------|--------|
+| `/` | Landing |
+| `/demo` | Interaktywne demo |
+| `/login`, `/register`, `/forgot-password` | Auth (tylko niezalogowani) |
+| `/rsvp/:token` | Publiczne RSVP |
+| `/dashboard/*` | Panel (wymaga logowania) |
+| `/terms`, `/privacy`, `/rodo` | Dokumenty prawne |
 
-#### 📊 Zarządzanie Stanem
-- React Context dla theme i auth
-- Lokalny state dla komponentów
-- Optymalizacja z useMemo/useCallback
+## Zmienne środowiskowe
 
-#### 🎯 Wydajność
-- Code splitting z React.lazy
-- Preloading krytycznych komponentów
-- Lazy loading obrazów
-- Bundle optimization
+Skopiuj `.env.example` → `.env`. Projekt używa prefiksu `REACT_APP_*` (kompatybilność z Vite przez `vite.config.ts`). Stopniowo wprowadzany jest też alias `VITE_*` — oba działają.
 
-#### 🧪 Testowanie
-- 59 testów jednostkowych (100% pass rate)
-- Mockowanie Firebase i browser APIs
-- Testowanie komponentów i hooków
+Wymagane minimum:
+- `REACT_APP_FIREBASE_*` — konfiguracja Firebase
+- `REACT_APP_BASE_URL` — URL aplikacji (linki RSVP)
 
-#### ♿ Dostępność
-- Zgodność z WCAG AA
-- Semantic HTML
-- Keyboard navigation
-- Screen reader support
+Opcjonalne:
+- `REACT_APP_EMAILJS_*` — zaproszenia i formularz kontaktowy
+- `REACT_APP_STRIPE_PUBLISHABLE_KEY` — płatności
+- `REACT_APP_OPENWEATHER_API_KEY` — pogoda (fallback: Open-Meteo)
 
-## 🔧 Konfiguracja Firebase
+## Firebase
 
 1. Utwórz projekt w [Firebase Console](https://console.firebase.google.com/)
-2. Włącz Authentication, Firestore, Storage
-3. Skopiuj klucze API do `.env`:
-   ```env
-   REACT_APP_FIREBASE_API_KEY=your_api_key
-   REACT_APP_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-   REACT_APP_FIREBASE_PROJECT_ID=your_project_id
-   REACT_APP_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-   REACT_APP_FIREBASE_MESSAGING_SENDER_ID=123456789
-   REACT_APP_FIREBASE_APP_ID=1:123456789:web:abcdef123456
-   ```
+2. Włącz Authentication (email + Google), Firestore, Storage
+3. Wdróż reguły: `firebase deploy --only firestore:rules`
+4. Functions (opcjonalnie): `cd functions && npm install && npm run build`
 
-## 📱 PWA Features
-
-- **Offline support** - podstawowa funkcjonalność bez internetu
-- **Install prompt** - automatyczne wyświetlanie opcji instalacji
-- **Push notifications** - powiadomienia o wydarzeniach (planowane)
-- **Background sync** - synchronizacja danych w tle
-
-## 🧪 Testowanie
+## Testowanie
 
 ```bash
-# Uruchom wszystkie testy
 npm test
-
-# Testy z pokryciem
 npm test -- --coverage
-
-# Testy specyficznego komponentu
-npm test -- --testPathPattern=Header
 ```
 
-### Pokrycie Testami
-- ✅ Komponenty React (59 testów)
-- ✅ Hooki niestandardowe
-- ✅ Usługi Firebase
-- ✅ Narzędzia pomocnicze
-- ✅ Obsługa błędów
+Obecnie testy obejmują głównie landing, komponenty wspólne, hooki auth/theme i utils RSVP. Rozszerzanie pokrycia — w toku.
 
-## 🚀 Deployment
+## CI/CD
 
-### Netlify/Vercel (Zalecane)
-1. Połącz repozytorium z platformą
-2. Skonfiguruj zmienne środowiskowe
-3. Wdróż automatycznie przy push do main
+Workflow: `.github/workflows/ci-cd.yml` — na push/PR do `main` i `develop`:
+- ESLint
+- `tsc --noEmit`
+- `npm test`
+- `npm run build`
 
-### Firebase Hosting
+Deploy staging/production — szkielety w workflow (do podpięcia Firebase Hosting / Vercel).
+
+## Deployment
+
 ```bash
 npm run build
 firebase deploy --only hosting
 ```
 
-## 🤝 Jak Przyczynić Się
+Alternatywnie: Netlify / Vercel z katalogiem `dist` i zmiennymi z `.env.example`.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Standardy
 
-### Standardy Kodowania
-- **ESLint + Prettier** - automatyczne formatowanie
-- **TypeScript** - ścisła typizacja
-- **Conventional Commits** - opisowe wiadomości commit
-- **Component naming** - PascalCase dla komponentów
-- **File naming** - kebab-case dla plików
+- ESLint (`eslint-config-react-app`) + Prettier
+- Komponenty: PascalCase; pliki: PascalCase dla komponentów
+- Commity: opisowe, po angielsku lub polsku — spójnie w ramach PR
 
-## 📈 Roadmap
+## Licencja
 
-### Wersja 2.0 (Planowana)
-- [ ] Push notifications
-- [ ] Calendar integration
-- [ ] Advanced analytics dashboard
-- [ ] Multi-language support
-- [ ] API for integrations
-
-### Wersja 1.5 (Aktualna)
-- [x] PWA implementation
-- [x] Offline support
-- [x] Advanced error handling
-- [x] Performance optimization
-- [x] Accessibility improvements
-
-## 📄 Licencja
-
-Ten projekt jest dostępny na licencji MIT. Zobacz plik `LICENSE` dla szczegółów.
-
-## 📞 Kontakt
-
-**PartyPass Team**
-- Website: [https://partypass.app](https://partypass.app)
-- Email: hello@partypass.app
-- LinkedIn: [@partypass](https://linkedin.com/company/partypass)
-
----
-
-⭐ Jeśli podoba Ci się projekt, daj nam gwiazdkę na GitHub!
+MIT — patrz `LICENSE`.
