@@ -1,9 +1,10 @@
 // components/common/Footer/Footer.tsx
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronUp, Mail } from 'lucide-react';
 import Logo from '../Logo/Logo';
+import { trackLandingFooterClick } from '../../../services/landingAnalytics';
 import './Footer.scss';
 
 interface FooterLink {
@@ -19,14 +20,18 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
   const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const isLanding = variant === 'landing';
 
   const siteMapLinks: FooterLink[] = useMemo(
     () => [
       { label: t('landing.footer.home'), to: '/' },
+      { label: t('landing.nav.socialProof'), to: '/#social-proof' },
       { label: t('landing.nav.features'), to: '/#features' },
+      { label: t('landing.nav.howItWorks'), to: '/#how-it-works' },
       { label: t('landing.nav.pricing'), to: '/#pricing' },
-      { label: t('landing.nav.demo'), to: '/demo' },
+      { label: t('landing.nav.faq'), to: '/#faq' },
       { label: t('landing.nav.contact'), to: '/#contact' },
     ],
     [t, i18n.language]
@@ -44,6 +49,37 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const handleAnchorClick = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>, hashPath: string, label: string) => {
+      event.preventDefault();
+      const hash = hashPath.startsWith('/#') ? hashPath.slice(1) : hashPath;
+
+      if (isLanding) {
+        trackLandingFooterClick(label, hashPath);
+      }
+
+      if (location.pathname !== '/') {
+        navigate('/', { state: { scrollTo: hash } });
+        return;
+      }
+
+      const element = document.querySelector(hash);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+    [isLanding, location.pathname, navigate]
+  );
+
+  const handleFooterRouteClick = useCallback(
+    (label: string, to: string) => {
+      if (isLanding) {
+        trackLandingFooterClick(label, to);
+      }
+    },
+    [isLanding]
+  );
 
   return (
     <footer className={`footer${isLanding ? ' footer--landing' : ''}`}>
@@ -74,15 +110,26 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                   {isLanding && <Mail size={16} aria-hidden="true" />}
                   kontakt@partypass.pl
                 </a>
-                <button
-                  type="button"
-                  className="footer__back-to-top"
-                  onClick={scrollToTop}
-                  aria-label={t('landing.footer.backToTop')}
-                >
-                  <ChevronUp size={16} aria-hidden="true" />
-                  <span>{t('landing.footer.backToTop')}</span>
-                </button>
+                {isLanding ? (
+                  <button
+                    type="button"
+                    className="footer__back-to-top footer__back-to-top--icon"
+                    onClick={scrollToTop}
+                    aria-label={t('landing.footer.backToTop')}
+                  >
+                    <ChevronUp size={18} aria-hidden="true" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="footer__back-to-top"
+                    onClick={scrollToTop}
+                    aria-label={t('landing.footer.backToTop')}
+                  >
+                    <ChevronUp size={16} aria-hidden="true" />
+                    <span>{t('landing.footer.backToTop')}</span>
+                  </button>
+                )}
               </div>
             </div>
           </section>
@@ -102,20 +149,15 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                     {link.to.startsWith('/#') ? (
                       <a
                         href={link.to}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const element = document.querySelector(link.to.substring(1));
-                          if (element) {
-                            element.scrollIntoView({ behavior: 'smooth' });
-                          }
-                        }}
+                        onClick={(e) => handleAnchorClick(e, link.to, link.label)}
                       >
                         {link.label}
                       </a>
                     ) : (
-                      <Link 
+                      <Link
                         to={link.to}
                         onClick={() => {
+                          handleFooterRouteClick(link.label, link.to);
                           if (link.to === '/') {
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }
@@ -130,7 +172,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
             </section>
 
           {/* Legal Section */}
-            {legalLinks.length > 0 && (
+            {legalLinks.length > 0 && !isLanding && (
               <section className="footer__section">
             <h4 className="footer__section-title">{t('landing.footer.legal')}</h4>
             <ul className="footer__links">
@@ -152,6 +194,15 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
           <p className="footer__copyright">
             {t('landing.footer.copyright', { year: CURRENT_YEAR })}
           </p>
+          {isLanding && legalLinks.length > 0 && (
+            <ul className="footer__legal-links">
+              {legalLinks.map((link) => (
+                <li key={link.to}>
+                  <Link to={link.to}>{link.label}</Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </footer>

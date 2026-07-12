@@ -19,6 +19,8 @@ import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner/LoadingSpinner';
 import ScrollToTop from './components/common/ScrollToTop/ScrollToTop';
 import LanguageContentTransition from './components/common/LanguageContentTransition/LanguageContentTransition';
+import AnalyticsListener from './components/common/AnalyticsListener/AnalyticsListener';
+import CookieConsent from './components/common/CookieConsent/CookieConsent';
 
 // Import accessibility styles
 import './styles/accessibility.scss';
@@ -32,7 +34,6 @@ const Terms = lazy(() => import('./pages/Legal/Terms'));
 const Privacy = lazy(() => import('./pages/Legal/Privacy'));
 const Rodo = lazy(() => import('./pages/Legal/Rodo'));
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
-const DemoPage = lazy(() => import('./pages/Demo/Demo'));
 const PaymentReturn = lazy(() => import('./pages/PaymentReturn/PaymentReturn'));
 const RSVP = lazy(() => import('./pages/RSVP/RSVP'));
 const Debug = lazy(() => import('./pages/Debug/Debug'));
@@ -51,6 +52,8 @@ function AppContent() {
           <AuthProvider>
             <LanguageProvider>
             <Router>
+              <AnalyticsListener />
+              <CookieConsent />
               <ScrollToTop />
               <LanguageContentTransition>
               <div className="App">
@@ -76,7 +79,6 @@ function AppContent() {
                     {' '}
                     {/* Publiczne strony */}
                     <Route path="/" element={<Landing />} />
-                    <Route path="/demo/*" element={<DemoPage />} />
                     <Route path="/rsvp/:token" element={<RSVP />} />
                     {/* Strony autoryzacji - tylko dla niezalogowanych */}
                     <Route

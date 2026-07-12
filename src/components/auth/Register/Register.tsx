@@ -1,14 +1,13 @@
-// components/auth/Register/Register.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
 import Toast from '../../common/Toast/Toast';
 import { useToast } from '../../../hooks/useToast';
 import { getRegisterPlanOptions } from '../../../constants/plans';
-import AuthLayout from '../AuthLayout/AuthLayout';
+import AuthCanvas from '../ui/AuthCanvas';
 import './Register.scss';
 
 const Register: React.FC = () => {
@@ -16,9 +15,7 @@ const Register: React.FC = () => {
   const [searchParams] = useSearchParams();
   const planFromUrl = searchParams.get('plan');
   const initialPlanType =
-    planFromUrl === 'pro' || planFromUrl === 'enterprise'
-      ? planFromUrl
-      : 'starter';
+    planFromUrl === 'pro' || planFromUrl === 'enterprise' ? planFromUrl : 'starter';
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -36,8 +33,18 @@ const Register: React.FC = () => {
   const { register, loading, error, clearError } = useAuth();
   const { toast, dismiss, showError } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const plans = useMemo(() => getRegisterPlanOptions(t), [t]);
+
+  const stats = useMemo(
+    () => [
+      { value: t('auth.showcase.register.statEventsValue'), label: t('auth.showcase.register.statEvents') },
+      { value: t('auth.showcase.register.statRsvpValue'), label: t('auth.showcase.register.statRsvp') },
+    ],
+    [t]
+  );
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     clearError();
 
     if (formData.password !== formData.confirmPassword) {
@@ -59,51 +66,34 @@ const Register: React.FC = () => {
         planType: formData.planType,
       });
     } catch {
-      // Error is set in auth context
+      // handled in auth context
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = event.target;
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
-  const nextStep = () => {
-    if (
-      step === 1 &&
-      formData.firstName &&
-      formData.lastName &&
-      formData.email
-    ) {
-      setStep(2);
-    }
-  };
-
-  const prevStep = () => {
-    setStep(1);
-  };
-
-  const plans = useMemo(() => getRegisterPlanOptions(t), [t]);
-
   const stepsHeader = (
-    <div className="register__steps" aria-label={t('auth.registrationProgress')}>
+    <div className="register-flow__steps" aria-label={t('auth.registrationProgress')}>
       <div
-        className={`register__step ${step >= 1 ? 'register__step--active' : ''} ${step > 1 ? 'register__step--done' : ''}`}
+        className={`register-flow__step${step >= 1 ? ' register-flow__step--active' : ''}${step > 1 ? ' register-flow__step--done' : ''}`}
       >
-        <span className="register__step-dot">1</span>
+        <span className="register-flow__step-dot">1</span>
         <span>{t('auth.stepPersonal')}</span>
       </div>
       <div
-        className={`register__step-track ${step > 1 ? 'register__step-track--filled' : ''}`}
+        className={`register-flow__track${step > 1 ? ' register-flow__track--filled' : ''}`}
         aria-hidden="true"
       >
         <span />
       </div>
-      <div className={`register__step ${step >= 2 ? 'register__step--active' : ''}`}>
-        <span className="register__step-dot">2</span>
+      <div className={`register-flow__step${step >= 2 ? ' register-flow__step--active' : ''}`}>
+        <span className="register-flow__step-dot">2</span>
         <span>{t('auth.stepAccount')}</span>
       </div>
     </div>
@@ -111,43 +101,45 @@ const Register: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <AuthLayout
-        variant="register"
+      <AuthCanvas
+        wide
+        badge={t('auth.register')}
         title={t('auth.registerTitle')}
         subtitle={t('auth.registerSubtitle')}
+        stats={stats}
         headerExtra={stepsHeader}
         footer={
           <p>
             {t('auth.hasAccount')}{' '}
-            <Link to="/login" className="auth-page__link">
+            <Link to="/login" className="gate__link">
               {t('auth.login')}
             </Link>
           </p>
         }
       >
         {error && (
-          <div className="pp-form-alert pp-form-alert--error auth-page__error">
-            <span>{error}</span>
+          <div className="gate__alert gate__alert--error" role="alert">
+            {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="auth-page__body register__form">
+        <form className="gate__form register-flow" onSubmit={handleSubmit} noValidate>
           {step === 1 && (
-            <div className="register__step-content">
-              <div className="register__field-group">
-                <div className="pp-field">
-                  <label className="pp-label" htmlFor="register-firstName">
+            <>
+              <div className="register-flow__grid">
+                <div className="gate__field">
+                  <label className="gate__label" htmlFor="register-firstName">
                     {t('auth.firstName')}
                   </label>
-                  <div className="pp-input-wrap">
-                    <User size={20} className="pp-input-icon" />
+                  <div className="gate__input-wrap gate__input-wrap--icon">
+                    <User size={17} className="gate__field-icon" aria-hidden="true" />
                     <input
                       id="register-firstName"
                       type="text"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="pp-input pp-input--icon-left"
+                      className="gate__input"
                       placeholder={t('auth.firstNamePlaceholder')}
                       required
                       autoComplete="given-name"
@@ -155,19 +147,19 @@ const Register: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pp-field">
-                  <label className="pp-label" htmlFor="register-lastName">
+                <div className="gate__field">
+                  <label className="gate__label" htmlFor="register-lastName">
                     {t('auth.lastName')}
                   </label>
-                  <div className="pp-input-wrap">
-                    <User size={20} className="pp-input-icon" />
+                  <div className="gate__input-wrap gate__input-wrap--icon">
+                    <User size={17} className="gate__field-icon" aria-hidden="true" />
                     <input
                       id="register-lastName"
                       type="text"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="pp-input pp-input--icon-left"
+                      className="gate__input"
                       placeholder={t('auth.lastNamePlaceholder')}
                       required
                       autoComplete="family-name"
@@ -176,19 +168,19 @@ const Register: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pp-field">
-                <label className="pp-label" htmlFor="register-email">
+              <div className="gate__field">
+                <label className="gate__label" htmlFor="register-email">
                   {t('common.email')}
                 </label>
-                <div className="pp-input-wrap">
-                  <Mail size={20} className="pp-input-icon" />
+                <div className="gate__input-wrap gate__input-wrap--icon">
+                  <Mail size={17} className="gate__field-icon" aria-hidden="true" />
                   <input
                     id="register-email"
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="pp-input pp-input--icon-left"
+                    className="gate__input"
                     placeholder={t('auth.emailPlaceholder')}
                     required
                     autoComplete="email"
@@ -198,91 +190,87 @@ const Register: React.FC = () => {
 
               <button
                 type="button"
-                onClick={nextStep}
-                className="pp-btn pp-btn--primary pp-btn--block register__next"
-                disabled={
-                  !formData.firstName ||
-                  !formData.lastName ||
-                  !formData.email
-                }
+                className="gate__btn gate__btn--block"
+                onClick={() => setStep(2)}
+                disabled={!formData.firstName || !formData.lastName || !formData.email}
               >
-                {t('auth.next')}
-                <ArrowRight size={20} />
+                <span>{t('auth.next')}</span>
+                <ArrowRight size={18} aria-hidden="true" />
               </button>
-            </div>
+            </>
           )}
 
           {step === 2 && (
-            <div className="register__step-content">
-              <div className="pp-field">
-                <label className="pp-label" htmlFor="register-password">
+            <>
+              <div className="gate__field">
+                <label className="gate__label" htmlFor="register-password">
                   {t('common.password')}
                 </label>
-                <div className="pp-input-wrap">
-                  <Lock size={20} className="pp-input-icon" />
+                <div className="gate__input-wrap gate__input-wrap--icon">
+                  <Lock size={17} className="gate__field-icon" aria-hidden="true" />
                   <input
                     id="register-password"
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="pp-input pp-input--icon-left pp-input--icon-right"
+                    className="gate__input"
                     placeholder={t('auth.passwordPlaceholder')}
                     required
                     autoComplete="new-password"
                   />
                   <button
                     type="button"
-                    className="auth-page__password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="gate__icon-btn"
+                    onClick={() => setShowPassword((value) => !value)}
+                    aria-label={
+                      showPassword
+                        ? t('auth.hidePassword', { defaultValue: 'Hide password' })
+                        : t('auth.showPassword', { defaultValue: 'Show password' })
+                    }
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              <div className="pp-field">
-                <label className="pp-label" htmlFor="register-confirmPassword">
+              <div className="gate__field">
+                <label className="gate__label" htmlFor="register-confirmPassword">
                   {t('auth.confirmPassword')}
                 </label>
-                <div className="pp-input-wrap">
-                  <Lock size={20} className="pp-input-icon" />
+                <div className="gate__input-wrap gate__input-wrap--icon">
+                  <Lock size={17} className="gate__field-icon" aria-hidden="true" />
                   <input
                     id="register-confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="pp-input pp-input--icon-left pp-input--icon-right"
+                    className="gate__input"
                     placeholder={t('auth.passwordPlaceholder')}
                     required
                     autoComplete="new-password"
                   />
                   <button
                     type="button"
-                    className="auth-page__password-toggle"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
+                    className="gate__icon-btn"
+                    onClick={() => setShowConfirmPassword((value) => !value)}
                     aria-label={
-                      showConfirmPassword ? 'Hide password' : 'Show password'
+                      showConfirmPassword
+                        ? t('auth.hidePassword', { defaultValue: 'Hide password' })
+                        : t('auth.showPassword', { defaultValue: 'Show password' })
                     }
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} />
-                    ) : (
-                      <Eye size={20} />
-                    )}
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              <div className="pp-field">
-                <span className="pp-label">{t('auth.choosePlan')}</span>
-                <div className="register__plans">
-                  {plans.map(plan => (
-                    <label key={plan.id} className="register__plan">
+              <div className="gate__field">
+                <span className="gate__label">{t('auth.choosePlan')}</span>
+                <div className="register-flow__plans">
+                  {plans.map((plan) => (
+                    <label key={plan.id} className="register-flow__plan">
                       <input
                         type="radio"
                         name="planType"
@@ -290,21 +278,19 @@ const Register: React.FC = () => {
                         checked={formData.planType === plan.id}
                         onChange={handleChange}
                       />
-                      <div className="register__plan-content">
+                      <span className="register-flow__plan-card">
                         {plan.popular && (
-                          <span className="register__plan-badge">
-                            {t('auth.popular')}
-                          </span>
+                          <span className="register-flow__plan-badge">{t('auth.popular')}</span>
                         )}
-                        <div className="register__plan-name">{plan.name}</div>
-                        <div className="register__plan-price">{plan.price}</div>
-                      </div>
+                        <span className="register-flow__plan-name">{plan.name}</span>
+                        <span className="register-flow__plan-price">{plan.price}</span>
+                      </span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <label className="register__terms auth-page__checkbox">
+              <label className="gate__check register-flow__terms">
                 <input
                   type="checkbox"
                   name="acceptTerms"
@@ -312,48 +298,45 @@ const Register: React.FC = () => {
                   onChange={handleChange}
                   required
                 />
-                <span className="auth-page__checkbox-box" />
+                <span className="gate__check-mark" aria-hidden="true" />
                 <Trans
                   i18nKey="auth.acceptTerms"
                   components={{
-                    1: <Link to="/terms" />,
-                    2: <Link to="/privacy" />,
+                    1: <Link to="/terms" className="gate__link" />,
+                    2: <Link to="/privacy" className="gate__link" />,
                   }}
                 />
               </label>
 
-              <div className="register__actions">
+              <div className="register-flow__actions">
                 <button
                   type="button"
-                  onClick={prevStep}
-                  className="pp-btn pp-btn--outline register__back"
+                  className="gate__btn gate__btn--ghost register-flow__back"
+                  onClick={() => setStep(1)}
                 >
                   {t('auth.back')}
                 </button>
-
                 <button
                   type="submit"
-                  className="pp-btn pp-btn--primary register__submit"
+                  className="gate__btn register-flow__submit"
                   disabled={loading || !formData.acceptTerms}
                 >
                   {loading ? (
-                    <span className="auth-page__spinner" />
+                    <span className="gate__spinner" aria-hidden="true" />
                   ) : (
                     <>
-                      {t('auth.createAccount')}
-                      <Check size={20} />
+                      <span>{t('auth.createAccount')}</span>
+                      <Check size={18} aria-hidden="true" />
                     </>
                   )}
                 </button>
               </div>
-            </div>
+            </>
           )}
         </form>
-      </AuthLayout>
+      </AuthCanvas>
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={dismiss} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={dismiss} />}
     </ErrorBoundary>
   );
 };

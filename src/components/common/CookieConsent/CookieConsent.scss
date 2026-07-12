@@ -1,0 +1,101 @@
+.cookie-consent {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 10000;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+  pointer-events: none;
+
+  &__panel {
+    pointer-events: auto;
+    max-width: 56rem;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--l-accent, #1d4ed8) 18%, transparent);
+    background: color-mix(in srgb, var(--bg-primary, #fff) 92%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow:
+      0 12px 40px color-mix(in srgb, #0f172a 12%, transparent),
+      0 0 0 1px color-mix(in srgb, #fff 40%, transparent) inset;
+  }
+
+  &__copy {
+    flex: 1 1 18rem;
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
+  &__link {
+    color: var(--l-accent, #1d4ed8);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: color-mix(in srgb, var(--l-accent, #1d4ed8) 80%, #000);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    flex-shrink: 0;
+  }
+
+  &__btn {
+    border: none;
+    border-radius: 0.625rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+    &--primary {
+      background: var(--l-accent, #1d4ed8);
+      color: #fff;
+
+      &:hover {
+        background: color-mix(in srgb, var(--l-accent, #1d4ed8) 88%, #000);
+      }
+    }
+
+    &--secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid color-mix(in srgb, var(--text-primary) 18%, transparent);
+
+      &:hover {
+        background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+      }
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .cookie-consent__actions {
+    width: 100%;
+
+    .cookie-consent__btn {
+      flex: 1 1 auto;
+    }
+  }
+}

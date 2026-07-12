@@ -28,6 +28,15 @@
     "email": "Email",
     "password": "Password"
   },
+  "accessibility": {
+    "skipToContent": "Skip to content"
+  },
+  "cookieConsent": {
+    "title": "Cookies and analytics",
+    "description": "We use essential cookies and — with your consent — analytics tools (Google Analytics) to improve PartyPass. Learn more in our <privacy>privacy policy</privacy> and <rodo>GDPR notice</rodo>.",
+    "accept": "Accept analytics",
+    "reject": "Essential only"
+  },
   "auth": {
     "loginTitle": "Welcome back!",
     "loginSubtitle": "Sign in to your PartyPass account",
@@ -66,6 +75,7 @@
     "passwordMismatch": "Passwords do not match",
     "termsRequired": "You must accept the terms",
     "registrationProgress": "Registration progress",
+    "secureNote": "Your data is always safe and encrypted",
     "showcase": {
       "previewLabel": "Live RSVP",
       "previewEvent": "Summer garden party",
@@ -141,16 +151,58 @@
   "landing": {
     "heroTitle": "Invitations your guests will <1>love</1>",
     "heroSubtitle": "A beautiful RSVP link, simple confirmations, and peace of mind for you — no messy threads or spreadsheets.",
-    "freeStart": "Free to start",
-    "freeStartLabel": "Starter plan, no credit card required",
-    "rsvpOnline": "Online RSVP",
-    "rsvpOnlineLabel": "Guest confirmations in one link",
-    "emailInvites": "Email invitations",
-    "emailInvitesLabel": "Personalized messages for guests",
-    "startFree": "Get started",
-    "watchDemo": "Watch demo",
     "startFreeLong": "Start for free",
+    "viewPricing": "View pricing",
+    "skeletonLoading": "Loading section…",
+    "seo": {
+      "title": "PartyPass — event management and RSVP",
+      "description": "PartyPass — organize events, manage guests, send email invitations, and collect online RSVPs. Start free with the Starter plan.",
+      "ogDescription": "Manage guests, send invitations, and collect RSVPs from one dashboard. Start free with the Starter plan.",
+      "keywords": "event management, guest list, RSVP, email invitations, PartyPass, event planning"
+    },
     "heroEyebrow": "Organize with ease",
+    "heroPreview": {
+      "title": "Guest RSVP page preview",
+      "description": "Illustrative preview of an invitation that rotates through sample events: birthday, meetup, and gala. The response form is inactive and for demonstration only.",
+      "formLabel": "Sample RSVP response form (inactive)"
+    },
+    "socialProof": {
+      "eyebrow": "Built for event organizers",
+      "title": "From birthdays to galas",
+      "subtitle": "Less chaos in your inbox, more confirmations in one dashboard.",
+      "disclaimer": "The testimonials and metrics below are illustrative — they show typical PartyPass use cases.",
+      "metricsAria": "Key PartyPass benefits",
+      "voicesLabel": "Organizer voices",
+      "statSetupValue": "2 min",
+      "statSetupLabel": "to your first invitation",
+      "statRsvpValue": "1 link",
+      "statRsvpLabel": "RSVP for every guest",
+      "statLiveValue": "Live",
+      "statLiveLabel": "responses in your dashboard",
+      "testimonials": {
+        "birthday": {
+          "tag": "Birthday",
+          "quote": "No more chasing replies in group chats — guests click the link and I see everything in one place.",
+          "initials": "KS",
+          "name": "Karolina S.",
+          "role": "Birthday party organizer"
+        },
+        "meetup": {
+          "tag": "Meetup",
+          "quote": "RSVP link in the email and done. Attendees confirm without signing up — saves me hours.",
+          "initials": "MW",
+          "name": "Michał W.",
+          "role": "Meetup organizer"
+        },
+        "gala": {
+          "tag": "Gala",
+          "quote": "The dashboard showed live who was coming. No last-minute spreadsheets or phone calls.",
+          "initials": "AN",
+          "name": "Anna N.",
+          "role": "Charity gala coordinator"
+        }
+      }
+    },
     "invitation": {
       "label": "Invitation",
       "guestPrompt": "Will you be there?",
@@ -172,25 +224,18 @@
       "step3Desc": "See live who’s coming, who’s unsure, and who can’t make it."
     },
     "nav": {
+      "socialProof": "Testimonials",
+      "socialProofDesc": "Voices from event organizers",
       "features": "Features",
       "featuresDesc": "Discover what PartyPass can do",
       "howItWorks": "How it works",
       "howItWorksDesc": "Three simple steps",
       "pricing": "Pricing",
       "pricingDesc": "Choose the right plan",
-      "demo": "Demo",
-      "demoDesc": "See the organizer dashboard",
+      "faq": "FAQ",
+      "faqDesc": "Answers to common questions",
       "contact": "Contact",
       "contactDesc": "Get in touch with us"
-    },
-    "heroCards": {
-      "birthdayTitle": "🎂 Maria's Birthday",
-      "birthdayDate": "June 14, 8:00 PM",
-      "birthdayRsvp": "28/35 guests confirmed",
-      "meetupTitle": "🏢 UX Meetup",
-      "meetupDate": "June 22, 6:30 PM",
-      "meetupAttendees": "42 attendees",
-      "liveRsvp": "+3 new RSVPs today"
     },
     "previewScenarios": {
       "birthday": {
@@ -237,6 +282,13 @@
       "free": "Free",
       "perMonth": "/month",
       "mostPopular": "Most popular",
+      "billingToggleAria": "Select billing cycle",
+      "billingMonthly": "Monthly",
+      "billingYearly": "Yearly",
+      "yearlySave": "Save {{percent}}%",
+      "yearlyEquivalent": "≈ {{price}} PLN/month, billed yearly",
+      "notIncluded": "Not included:",
+      "footnote": "Change or cancel your plan anytime. No hidden fees.",
       "cta": {
         "starter": "Start for free",
         "pro": "Choose plan",
@@ -280,14 +332,46 @@
         }
       }
     },
+    "faq": {
+      "eyebrow": "Questions & answers",
+      "title": "Frequently asked questions",
+      "subtitle": "Quick answers about plans, RSVP, and invitations — before you sign up.",
+      "items": {
+        "freePlan": {
+          "question": "Is PartyPass free?",
+          "answer": "Yes — the Starter plan is free and lets you start organizing events without a credit card. Pro and Enterprise add higher limits and features for larger events."
+        },
+        "guestAccount": {
+          "question": "Do guests need to create an account?",
+          "answer": "No. Guests respond through an RSVP link in the browser — no sign-up or login required. You manage the event from your organizer dashboard."
+        },
+        "emailInvites": {
+          "question": "Can I send email invitations?",
+          "answer": "Yes. From your dashboard you can send email invitations with an RSVP link. The Pro plan also includes SMS notifications and more personalized invites."
+        },
+        "changePlan": {
+          "question": "Can I change my plan later?",
+          "answer": "Yes — you can upgrade, downgrade, or cancel anytime from account settings. No hidden fees or long-term commitments."
+        },
+        "rsvpLink": {
+          "question": "How does the RSVP link work?",
+          "answer": "Create an event, add guests, and send each one a unique link. The guest opens the invitation page, chooses yes, maybe, or no, and you see responses live in your dashboard."
+        }
+      }
+    },
     "cta": {
       "eyebrow": "Ready to get started?",
       "title": "Host your next event without the stress",
       "subtitle": "Create a free account and send your first invitation today.",
+      "button": "Create your free account",
       "perkFree": "Free starter plan",
       "perkNoCard": "No credit card required",
       "perkFast": "First invitation in 2 minutes",
-      "previewLabel": "This is what your guest sees on the RSVP link"
+      "previewLabel": "Organizer dashboard — everything in one place",
+      "previewMetricEvents": "Events",
+      "previewMetricRsvp": "RSVP rate",
+      "previewMetricContacts": "Contacts",
+      "previewNextEvent": "Next event"
     },
     "contact": {
       "eyebrow": "Contact",
@@ -296,11 +380,11 @@
       "perkResponse": "Reply within 24 hours",
       "perkHelp": "Help with plans, RSVP, and invitations",
       "perkPrivacy": "Your data stays secure",
-      "formTitle": "Write to us",
       "formHint": "Fill out the form and we'll reply to your email.",
       "nameLabel": "Full name *",
       "namePlaceholder": "Enter your name",
       "emailLabel": "Email *",
+      "emailPlaceholder": "you@email.com",
       "messageLabel": "Message *",
       "messagePlaceholder": "How can we help you?",
       "submit": "Send message",
@@ -313,7 +397,11 @@
         "emailRequired": "Email is required",
         "emailInvalid": "Invalid email format",
         "messageRequired": "Message is required",
-        "submitFailed": "Something went wrong while sending your message. Please try again later."
+        "submitFailed": "Something went wrong while sending your message. Please try again later.",
+        "rateLimited": "Your message was already sent. Please wait a moment before trying again.",
+        "offline": "No internet connection. Check your network and try again.",
+        "timeout": "Sending is taking too long. Check your connection and try again.",
+        "captchaRequired": "Complete the security check before sending your message."
       }
     },
     "footer": {

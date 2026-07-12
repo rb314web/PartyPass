@@ -1,87 +1,86 @@
-// components/auth/Login/Login.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import GoogleIcon from './GoogleIcon';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
-import AuthLayout from '../AuthLayout/AuthLayout';
-import './Login.scss';
+import AuthCanvas from '../ui/AuthCanvas';
+import GoogleIcon from './GoogleIcon';
 
 const Login: React.FC = () => {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
   const { login, loginWithGoogle, loading, error, clearError } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const stats = useMemo(
+    () => [
+      { value: t('auth.showcase.login.statEventsValue'), label: t('auth.showcase.login.statEvents') },
+      { value: t('auth.showcase.login.statRsvpValue'), label: t('auth.showcase.login.statRsvp') },
+    ],
+    [t]
+  );
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     clearError();
 
     try {
-      await login(formData.email, formData.password);
+      await login(email, password);
     } catch {
-      // Error is set in auth context
+      // handled in auth context
     }
   };
 
   const handleGoogleLogin = async () => {
     clearError();
+
     try {
       await loginWithGoogle();
     } catch {
-      // Error is set in auth context
+      // handled in auth context
     }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
   };
 
   return (
     <ErrorBoundary>
-      <AuthLayout
-        variant="login"
+      <AuthCanvas
+        badge={t('auth.login')}
         title={t('auth.loginTitle')}
         subtitle={t('auth.loginSubtitle')}
+        stats={stats}
         footer={
           <p>
             {t('auth.noAccount')}{' '}
-            <Link to="/register" className="auth-page__link">
+            <Link to="/register" className="gate__link">
               {t('auth.register')}
             </Link>
           </p>
         }
       >
         {error && (
-          <div className="pp-form-alert pp-form-alert--error auth-page__error">
-            <span>{error}</span>
+          <div className="gate__alert gate__alert--error" role="alert">
+            {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="auth-page__body login__form">
-          <div className="pp-field">
-            <label className="pp-label" htmlFor="login-email">
+        <form className="gate__form" onSubmit={handleSubmit} noValidate>
+          <div className="gate__field">
+            <label className="gate__label" htmlFor="login-email">
               {t('common.email')}
             </label>
-            <div className="pp-input-wrap">
-              <Mail size={20} className="pp-input-icon" />
+            <div className="gate__input-wrap gate__input-wrap--icon">
+              <Mail size={17} className="gate__field-icon" aria-hidden="true" />
               <input
                 id="login-email"
                 type="email"
                 name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="pp-input pp-input--icon-left"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="gate__input"
                 placeholder={t('auth.emailPlaceholder')}
                 required
                 autoComplete="email"
@@ -89,79 +88,79 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          <div className="pp-field">
-            <label className="pp-label" htmlFor="login-password">
+          <div className="gate__field">
+            <label className="gate__label" htmlFor="login-password">
               {t('common.password')}
             </label>
-            <div className="pp-input-wrap">
-              <Lock size={20} className="pp-input-icon" />
+            <div className="gate__input-wrap gate__input-wrap--icon">
+              <Lock size={17} className="gate__field-icon" aria-hidden="true" />
               <input
                 id="login-password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="pp-input pp-input--icon-left pp-input--icon-right"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="gate__input"
                 placeholder={t('auth.passwordPlaceholder')}
                 required
                 autoComplete="current-password"
               />
               <button
                 type="button"
-                className="auth-page__password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="gate__icon-btn"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={
+                  showPassword
+                    ? t('auth.hidePassword', { defaultValue: 'Hide password' })
+                    : t('auth.showPassword', { defaultValue: 'Show password' })
+                }
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
-          <div className="login__options">
-            <label className="auth-page__checkbox">
+          <div className="gate__row">
+            <label className="gate__check">
               <input
                 type="checkbox"
                 checked={rememberMe}
-                onChange={e => setRememberMe(e.target.checked)}
+                onChange={(event) => setRememberMe(event.target.checked)}
               />
-              <span className="auth-page__checkbox-box" />
-              {t('auth.rememberMe')}
+              <span className="gate__check-mark" aria-hidden="true" />
+              <span>{t('auth.rememberMe')}</span>
             </label>
-            <Link to="/forgot-password" className="login__forgot">
+            <Link to="/forgot-password" className="gate__link">
               {t('auth.forgotPassword')}
             </Link>
           </div>
 
-          <button
-            type="submit"
-            className="pp-btn pp-btn--primary pp-btn--block pp-btn--lg login__submit"
-            disabled={loading}
-          >
+          <button type="submit" className="gate__btn gate__btn--block" disabled={loading}>
             {loading ? (
-              <span className="auth-page__spinner" />
+              <span className="gate__spinner" aria-hidden="true" />
             ) : (
               <>
-                {t('auth.login')}
-                <ArrowRight size={20} />
+                <span>{t('auth.login')}</span>
+                <ArrowRight size={18} aria-hidden="true" />
               </>
             )}
           </button>
         </form>
 
-        <div className="auth-page__divider" role="separator">
+        <div className="gate__divider" role="separator">
           <span>{t('auth.or')}</span>
         </div>
 
         <button
           type="button"
-          className="auth-page__social-btn"
+          className="gate__btn gate__btn--ghost gate__btn--block"
           onClick={handleGoogleLogin}
           disabled={loading}
         >
           <GoogleIcon size={20} />
-          {t('auth.googleLogin')}
+          <span>{t('auth.googleLogin')}</span>
         </button>
-      </AuthLayout>
+      </AuthCanvas>
     </ErrorBoundary>
   );
 };

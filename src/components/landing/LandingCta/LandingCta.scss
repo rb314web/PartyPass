@@ -1,0 +1,112 @@
+@use '../../../styles/globals/landing-tokens' as l;
+
+.landing-cta {
+  padding: var(--l-section-pad) 0;
+  background: transparent;
+
+  &__inner {
+    @include l.l-section-container;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.85fr);
+    gap: var(--l-section-split-gap);
+    align-items: center;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__copy {
+    @include l.l-section-header-stack;
+    max-width: 34rem;
+  }
+
+  &__eyebrow {
+    @include l.l-eyebrow-pill;
+  }
+
+  &__title {
+    @include l.l-section-title;
+  }
+
+  &__subtitle {
+    @include l.l-section-subtitle;
+  }
+
+  &__perks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--l-ink);
+
+      svg {
+        flex-shrink: 0;
+        color: var(--l-success);
+      }
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--l-actions-gap);
+    padding-top: var(--l-actions-offset);
+
+    .pp-btn--primary {
+      @include l.l-btn-primary;
+    }
+
+    .pp-btn--outline {
+      @include l.l-btn-outline;
+    }
+
+    @media (max-width: 520px) {
+      flex-direction: column;
+      width: 100%;
+
+      .pp-btn {
+        width: 100%;
+      }
+    }
+  }
+
+  &__visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 26rem;
+    margin-inline: auto;
+
+    @media (max-width: 900px) {
+      order: -1;
+      margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
+    }
+  }
+
+  &__preview-label {
+    margin: 1rem 0 0;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--l-muted);
+    text-align: center;
+    line-height: 1.45;
+    max-width: 22rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--l-bg) 72%, transparent);
+    border: 1px solid var(--l-line);
+  }
+}

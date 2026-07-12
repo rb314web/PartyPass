@@ -2,6 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import type { Analytics } from 'firebase/analytics';
 import type { FirebaseStorage } from 'firebase/storage';
 import type { Functions } from 'firebase/functions';
 import { readEnv } from './env';
@@ -50,6 +51,34 @@ export function getFirebaseStorage(): Promise<FirebaseStorage> {
 
 let functionsInstance: Functions | null = null;
 let functionsLoad: Promise<Functions> | null = null;
+
+let analyticsInstance: Analytics | null = null;
+let analyticsLoad: Promise<Analytics | null> | null = null;
+
+/** Firebase Analytics — tylko w przeglądarce, gdy measurementId jest ustawione. */
+export function getFirebaseAnalytics(): Promise<Analytics | null> {
+  if (typeof window === 'undefined' || !firebaseConfig.measurementId) {
+    return Promise.resolve(null);
+  }
+
+  if (analyticsInstance) {
+    return Promise.resolve(analyticsInstance);
+  }
+
+  if (!analyticsLoad) {
+    analyticsLoad = import('firebase/analytics').then(({ getAnalytics, isSupported }) =>
+      isSupported().then(supported => {
+        if (!supported) {
+          return null;
+        }
+        analyticsInstance = getAnalytics(app);
+        return analyticsInstance;
+      })
+    );
+  }
+
+  return analyticsLoad;
+}
 
 /** Cloud Functions ładowane on-demand (RSVP, zaproszenia). */
 export function getFirebaseFunctions(): Promise<Functions> {

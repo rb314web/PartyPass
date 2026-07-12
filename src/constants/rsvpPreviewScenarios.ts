@@ -18,9 +18,9 @@ export const RSVP_PREVIEW_SCENARIO_SELECTION: Record<RsvpPreviewScenarioKey, num
 };
 
 export const RSVP_PREVIEW_SCENARIO_BACKGROUNDS: Record<RsvpPreviewScenarioKey, string> = {
-  birthday: '/images/hero/birthday.jpg',
-  meetup: '/images/hero/party.jpg',
-  gala: '/images/hero/wedding.jpg',
+  birthday: '/images/hero/birthday-1200.jpg',
+  meetup: '/images/hero/party-1200.jpg',
+  gala: '/images/hero/wedding-1200.jpg',
 };
 
 export interface RsvpPreviewScenarioState {

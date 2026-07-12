@@ -84,9 +84,9 @@ const HeroDetails: React.FC<{ scenarioKey: RsvpPreviewScenarioKey }> = ({
 
   return (
     <>
-      <h1 className="rsvp-hero__title" title={title}>
+      <h3 className="rsvp-hero__title" title={title}>
         {title}
-      </h1>
+      </h3>
       <ul className="rsvp-hero__meta">
         <li className="rsvp-hero__meta-item">
           <Calendar size={16} aria-hidden="true" />
@@ -135,7 +135,7 @@ const RSVPInvitationPreviewInteractive: React.FC<{
             </div>
 
             <div className="rsvp-form-card__body">
-              <h2 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h2>
+              <h3 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h3>
               <RSVPStatusOptions
                 options={statusOptions}
                 selectedValue={selectedStatus}
@@ -223,7 +223,11 @@ const RSVPInvitationPreviewCarousel: React.FC<{
         </main>
 
         <aside className="rsvp__aside">
-          <form className="rsvp-form-card" onSubmit={event => event.preventDefault()}>
+          <form
+            className="rsvp-form-card"
+            onSubmit={event => event.preventDefault()}
+            aria-label={t('landing.heroPreview.formLabel')}
+          >
             <div className="rsvp-form-card__guest">
               <PreviewMorphSlot
                 stagger="guest"
@@ -235,11 +239,12 @@ const RSVPInvitationPreviewCarousel: React.FC<{
             </div>
 
             <div className="rsvp-form-card__body">
-              <h2 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h2>
+              <h3 className="rsvp-form-card__title">{t('rsvp.form.willYouAttend')}</h3>
               <RSVPStatusOptions
                 options={statusOptions}
                 selectedValue={selectedStatus}
                 radioName="rsvp-preview-status"
+                previewOnly
               />
             </div>
 

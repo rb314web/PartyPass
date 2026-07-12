@@ -230,6 +230,7 @@ PartyPass - Zarządzanie wydarzeniami
     message: string;
     subject?: string;
     priority?: string;
+    turnstileToken?: string;
   }): Promise<void> {
     try {
       if (!this.SERVICE_ID || !this.CONTACT_TEMPLATE_ID || !this.PUBLIC_KEY) {
@@ -267,6 +268,7 @@ PartyPass - Zarządzanie wydarzeniami
         subject: subjectLine,
         message: fullMessage,
         priority: priorityLabel,
+        turnstile_token: data.turnstileToken || '',
         time: new Date().toLocaleString('pl-PL', {
           dateStyle: 'medium',
           timeStyle: 'short',

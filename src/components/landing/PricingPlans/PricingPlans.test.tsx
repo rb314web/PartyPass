@@ -7,6 +7,11 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+vi.mock('../../../services/landingAnalytics', () => ({
+  trackLandingCtaClick: vi.fn(),
+  trackLandingPricingSelect: vi.fn(),
+}));
+
 describe('PricingPlans', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
@@ -67,6 +72,44 @@ describe('PricingPlans', () => {
     fireEvent.click(screen.getByRole('button', { name: /rozpocznij za darmo/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith('/register?plan=starter');
+  });
+
+  it('shows yearly prices when yearly billing is selected', () => {
+    render(<PricingPlans />);
+
+    fireEvent.click(screen.getByRole('button', { name: /rocznie/i }));
+
+    expect(screen.getByText('24 PLN')).toBeInTheDocument();
+    expect(screen.getByText('83 PLN')).toBeInTheDocument();
+  });
+
+  it('scrolls to contact section for enterprise plan', () => {
+    const contact = document.createElement('section');
+    contact.id = 'contact';
+    contact.scrollIntoView = vi.fn();
+    document.body.appendChild(contact);
+
+    render(<PricingPlans />);
+    fireEvent.click(screen.getByRole('button', { name: /skontaktuj się/i }));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(contact.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
+    document.body.removeChild(contact);
+  });
+
+  it('renders section with accessible title', () => {
+    render(<PricingPlans />);
+
+    const section = document.getElementById('pricing');
+    expect(section).toHaveAttribute('aria-labelledby', 'pricing-plans-title');
+    expect(screen.getByRole('heading', { level: 2, name: /wybierz plan/i })).toHaveAttribute(
+      'id',
+      'pricing-plans-title'
+    );
   });
 
   it('renders section with proper structure', () => {

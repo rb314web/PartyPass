@@ -684,6 +684,10 @@
     display: flex;
     flex-direction: column;
     gap: 0.625rem;
+
+    &--landing {
+      gap: 0.35rem;
+    }
   }
 
   &__mobile-menu-auth-btn {
@@ -736,6 +740,20 @@
       box-shadow:
         0 4px 12px rgba(37, 99, 235, 0.18),
         inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+    }
+
+    &--link {
+      min-height: 2.25rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border-color: transparent;
+      color: var(--l-muted, #64748b);
+      font-weight: 600;
+
+      &:hover {
+        color: var(--l-ink, #0f172a);
+        background: transparent;
+      }
     }
 
     &:focus-visible {
@@ -917,6 +935,125 @@
     left: 0;
     right: 0;
     width: 100%;
+    background: transparent;
+    border-bottom: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: 1px solid var(--l-line, rgba(229, 231, 235, 0.8));
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+      transition:
+        opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        visibility 0s linear 0.5s,
+        backdrop-filter 0s linear 0.5s,
+        -webkit-backdrop-filter 0s linear 0.5s;
+    }
+
+    &.unified-header--at-top {
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: none;
+      box-shadow: none;
+
+      &::before {
+        opacity: 0;
+        visibility: hidden;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+    }
+
+    &.unified-header--scrolled {
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: none;
+      box-shadow: none;
+
+      &::before {
+        opacity: 1;
+        visibility: visible;
+        backdrop-filter: blur(16px) saturate(160%);
+        -webkit-backdrop-filter: blur(16px) saturate(160%);
+        transition:
+          opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+          visibility 0s linear 0s,
+          backdrop-filter 0s linear 0s,
+          -webkit-backdrop-filter 0s linear 0s;
+      }
+    }
+
+    .unified-header__container {
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  .dark &--landing {
+    &::before {
+      background: rgba(30, 41, 59, 0.68);
+      border-bottom-color: rgba(148, 163, 184, 0.14);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    &.unified-header--scrolled::before {
+      backdrop-filter: blur(20px) saturate(165%);
+      -webkit-backdrop-filter: blur(20px) saturate(165%);
+    }
+
+    &.unified-header--at-top {
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: none;
+    }
+
+    &.unified-header--scrolled {
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: none;
+      box-shadow: none;
+    }
+  }
+
+  .dark .unified-header--landing.unified-header--at-top {
+    .unified-header__logo .logo__text--primary {
+      color: #f8fafc;
+    }
+
+    .unified-header__logo .logo__text--accent {
+      color: var(--l-accent, #60a5fa);
+    }
+
+    .navigation-links__button {
+      color: rgba(248, 250, 252, 0.95) !important;
+      text-shadow: 0 1px 12px rgba(2, 6, 23, 0.55);
+    }
+
+    .unified-header__auth-btn--secondary {
+      color: rgba(248, 250, 252, 0.95);
+      border-color: rgba(248, 250, 252, 0.32);
+      background: rgba(15, 23, 42, 0.28);
+    }
+
+    .unified-header__mobile-menu-toggle {
+      color: #f8fafc;
+    }
   }
 
   // Auth — stałe tło (landing używa ::before + scroll)
@@ -925,25 +1062,24 @@
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--l-line, rgba(229, 231, 235, 0.8));
+
+    &.unified-header--at-top {
+      border-bottom: none;
+    }
   }
 
   // Landing & auth variants — shared public marketing header
   &--landing,
   &--auth {
-    border-bottom: 1px solid var(--l-line, rgba(229, 231, 235, 0.8));
-    box-shadow: none;
-
     &.unified-header--at-top {
-      border-bottom-color: transparent;
       box-shadow: none;
     }
 
-    // Scrolled glass — tło w Landing.scss (::before + --header-glass-opacity)
-
-    // Style overrides for landing - match container width
+    // Style overrides for landing - match section container width
     .unified-header__container {
       @include container;
-      max-width: 1200px;
+      max-width: var(--l-page-max-width, 75rem);
       padding-top: 0;
       padding-bottom: 0;
       gap: 1rem;
@@ -953,6 +1089,37 @@
       background: transparent;
       padding-left: 0.625rem;
       margin-left: auto;
+      gap: 0.5rem;
+    }
+
+    .unified-header__landing-auth {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: 0.25rem;
+    }
+
+    .unified-header__login-link {
+      padding: 0.35rem 0.5rem;
+      border: none;
+      background: transparent;
+      color: var(--l-muted, #6b7280);
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      border-radius: 6px;
+      transition: color 0.2s ease, background-color 0.2s ease;
+
+      &:hover {
+        color: var(--l-ink, #111827);
+        background: color-mix(in srgb, var(--l-accent-soft, #eff6ff) 60%, transparent);
+      }
+
+      &[aria-current='page'] {
+        color: var(--l-accent, #2563eb);
+      }
     }
 
     // Pełna nawigacja inline albo hamburger — decyzja w JS (useHeaderNavLayout)
@@ -989,7 +1156,7 @@
         color: #1f2937 !important;
         font-weight: 500;
         letter-spacing: -0.01em;
-        padding: 0.5rem 1.25rem !important;
+        padding: 0.45rem 0.7rem !important;
         border-radius: 6px;
         background: transparent !important;
 
@@ -1062,7 +1229,6 @@
       // Always visible
     }
 
-    // Scrolled glass — tło w Landing.scss
   }
 
   // Auth pages — minimal header (nav w menu mobilnym)
@@ -1311,10 +1477,33 @@
   }
 }
 
+@media (prefers-reduced-transparency: reduce) {
+  .unified-header--landing {
+    &::before {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    &.unified-header--scrolled::before {
+      background: rgba(255, 255, 255, 0.98);
+    }
+  }
+
+  .dark .unified-header--landing {
+    &.unified-header--scrolled::before {
+      background: rgba(30, 41, 59, 0.95);
+    }
+  }
+}
+
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
   .unified-header {
     transition: none;
+
+    &--landing::before {
+      transition: none;
+    }
 
     &__mobile-overlay {
       animation: none;

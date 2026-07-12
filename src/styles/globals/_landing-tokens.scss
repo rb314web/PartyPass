@@ -1,5 +1,20 @@
 // Tokeny i mixiny landingu — scope: .landing (Landing.scss)
 
+@mixin l-section-container {
+  width: 100%;
+  max-width: var(--l-page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+
+  @media (min-width: 768px) {
+    padding-inline: var(--space-lg);
+  }
+
+  @media (min-width: 1024px) {
+    padding-inline: var(--space-xl);
+  }
+}
+
 @mixin l-eyebrow-pill {
   display: inline-flex;
   padding: 0.35rem 0.75rem;
@@ -115,11 +130,15 @@
 @mixin l-section-title {
   font-size: var(--l-section-title-size, clamp(1.85rem, 3.2vw, 2.5rem));
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: -0.035em;
   color: var(--l-ink);
   margin: 0;
-  text-wrap: balance;
+  text-wrap: pretty;
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 @mixin l-section-subtitle {
@@ -127,7 +146,11 @@
   line-height: 1.65;
   color: var(--l-muted);
   margin: 0;
-  text-wrap: balance;
+  text-wrap: pretty;
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 @mixin l-section-header-stack {
@@ -141,4 +164,98 @@
   @include l-section-header-stack;
   align-items: center;
   text-align: center;
+}
+
+@mixin l-section-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: var(--l-section-split-gap);
+  align-items: start;
+  width: 100%;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: var(--l-section-content-gap);
+  }
+}
+
+@mixin l-glass-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: calc(var(--l-radius-card) + 6px);
+  background: color-mix(in srgb, var(--l-bg) 68%, transparent);
+  border: 1px solid color-mix(in srgb, var(--l-line) 65%, transparent);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    0 24px 60px color-mix(in srgb, var(--l-ink) 8%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--l-bg) 30%, transparent);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--l-accent-soft-border),
+      var(--l-accent-bright),
+      var(--l-accent-soft-border)
+    );
+    pointer-events: none;
+  }
+}
+
+@mixin l-landing-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--l-radius-card);
+  background: var(--l-bg);
+  border: 1px solid var(--l-line);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--l-ink) 5%, transparent);
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: var(--l-radius-card) var(--l-radius-card) 0 0;
+    background: linear-gradient(90deg, var(--l-accent-soft-border), var(--l-accent-bright));
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--l-accent-ring);
+      box-shadow: 0 16px 40px color-mix(in srgb, var(--l-ink) 8%, transparent);
+    }
+  }
+}
+
+@mixin l-landing-icon {
+  @include l-icon-tile;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+
+@mixin l-landing-icon-sm {
+  @include l-icon-tile;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
 }

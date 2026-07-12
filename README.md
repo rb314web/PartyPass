@@ -101,7 +101,6 @@ firestore.rules         # Reguły bezpieczeństwa Firestore
 | Ścieżka | Dostęp |
 |---------|--------|
 | `/` | Landing |
-| `/demo` | Interaktywne demo |
 | `/login`, `/register`, `/forgot-password` | Auth (tylko niezalogowani) |
 | `/rsvp/:token` | Publiczne RSVP |
 | `/dashboard/*` | Panel (wymaga logowania) |

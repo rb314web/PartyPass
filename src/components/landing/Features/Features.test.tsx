@@ -37,7 +37,12 @@ describe('Features', () => {
 
     const section = document.querySelector('section.features');
     expect(section).toBeInTheDocument();
-    expect(section?.tagName).toBe('SECTION');
+    expect(section).toHaveAttribute('id', 'features');
+    expect(section).toHaveAttribute('aria-labelledby', 'features-title');
+    expect(screen.getByRole('heading', { level: 2, name: /ty organizujesz/i })).toHaveAttribute(
+      'id',
+      'features-title'
+    );
   });
 
   it('renders feature icons', () => {

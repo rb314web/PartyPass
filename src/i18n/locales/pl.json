@@ -28,6 +28,15 @@
     "email": "Email",
     "password": "Hasło"
   },
+  "accessibility": {
+    "skipToContent": "Przejdź do treści"
+  },
+  "cookieConsent": {
+    "title": "Pliki cookie i analityka",
+    "description": "Używamy niezbędnych plików cookie oraz — po Twojej zgodzie — narzędzi analitycznych (Google Analytics), aby ulepszać PartyPass. Szczegóły w <privacy>polityce prywatności</privacy> i <rodo>informacji RODO</rodo>.",
+    "accept": "Akceptuję analitykę",
+    "reject": "Tylko niezbędne"
+  },
   "auth": {
     "loginTitle": "Witaj ponownie!",
     "loginSubtitle": "Zaloguj się do swojego konta PartyPass",
@@ -66,6 +75,7 @@
     "passwordMismatch": "Hasła nie są identyczne",
     "termsRequired": "Musisz zaakceptować regulamin",
     "registrationProgress": "Postęp rejestracji",
+    "secureNote": "Twoje dane są zawsze bezpieczne i szyfrowane",
     "showcase": {
       "previewLabel": "RSVP na żywo",
       "previewEvent": "Letnie przyjęcie w ogrodzie",
@@ -141,16 +151,58 @@
   "landing": {
     "heroTitle": "Zaproszenia, które <1>zachwycają</1> gości",
     "heroSubtitle": "Piękny link RSVP, proste potwierdzenia i spokój organizatora — bez chaosu w wiadomościach i arkuszach.",
-    "freeStart": "Darmowy start",
-    "freeStartLabel": "Plan Starter bez karty kredytowej",
-    "rsvpOnline": "RSVP online",
-    "rsvpOnlineLabel": "Potwierdzenia gości w jednym linku",
-    "emailInvites": "Zaproszenia e-mail",
-    "emailInvitesLabel": "Spersonalizowane wiadomości do gości",
-    "startFree": "Rozpocznij",
-    "watchDemo": "Zobacz demo",
     "startFreeLong": "Rozpocznij za darmo",
+    "viewPricing": "Zobacz cennik",
+    "skeletonLoading": "Ładowanie sekcji…",
+    "seo": {
+      "title": "PartyPass — organizacja wydarzeń i RSVP",
+      "description": "PartyPass — organizuj wydarzenia, zarządzaj gośćmi, wysyłaj zaproszenia e-mail i zbieraj potwierdzenia RSVP online. Plan Starter za darmo.",
+      "ogDescription": "Zarządzaj gośćmi, wysyłaj zaproszenia i zbieraj potwierdzenia RSVP z jednego panelu. Zacznij za darmo w planie Starter.",
+      "keywords": "zarządzanie wydarzeniami, organizacja eventów, lista gości, RSVP, zaproszenia email, PartyPass, wydarzenia w Polsce"
+    },
     "heroEyebrow": "Organizuj z lekkością",
+    "heroPreview": {
+      "title": "Podgląd strony RSVP dla gościa",
+      "description": "Ilustracyjny podgląd zaproszenia z automatycznie zmieniającymi się przykładami wydarzeń: urodziny, meetup i gala. Formularz odpowiedzi jest nieaktywny — służy wyłącznie prezentacji.",
+      "formLabel": "Przykładowy formularz odpowiedzi RSVP (nieaktywny)"
+    },
+    "socialProof": {
+      "eyebrow": "Dla organizatorów wydarzeń",
+      "title": "Od urodzin po gale",
+      "subtitle": "Mniej chaosu w wiadomościach, więcej potwierdzeń w jednym panelu.",
+      "disclaimer": "Poniższe opinie i metryki mają charakter ilustracyjny — pokazują typowe scenariusze korzystania z PartyPass.",
+      "metricsAria": "Kluczowe korzyści PartyPass",
+      "voicesLabel": "Głosy organizatorów",
+      "statSetupValue": "2 min",
+      "statSetupLabel": "do pierwszego zaproszenia",
+      "statRsvpValue": "1 link",
+      "statRsvpLabel": "RSVP dla każdego gościa",
+      "statLiveValue": "Na żywo",
+      "statLiveLabel": "odpowiedzi w panelu",
+      "testimonials": {
+        "birthday": {
+          "tag": "Urodziny",
+          "quote": "Wreszcie nie śledzę odpowiedzi w Messengerze — goście klikają link i widzę wszystko w jednym miejscu.",
+          "initials": "KS",
+          "name": "Karolina S.",
+          "role": "Organizatorka urodzin"
+        },
+        "meetup": {
+          "tag": "Meetup",
+          "quote": "Link RSVP w mailu i gotowe. Uczestnicy potwierdzają bez zakładania konta — oszczędzam godziny.",
+          "initials": "MW",
+          "name": "Michał W.",
+          "role": "Organizator meetupów"
+        },
+        "gala": {
+          "tag": "Gala",
+          "quote": "Panel pokazał mi na bieżąco, ile osób potwierdziło obecność. Zero arkuszy w ostatniej chwili.",
+          "initials": "AN",
+          "name": "Anna N.",
+          "role": "Koordynatorka gali charytatywnej"
+        }
+      }
+    },
     "invitation": {
       "label": "Zaproszenie",
       "guestPrompt": "Czy będziesz?",
@@ -172,25 +224,18 @@
       "step3Desc": "Widzisz na żywo, kto przychodzi, kto się waha i kto nie może."
     },
     "nav": {
+      "socialProof": "Opinie",
+      "socialProofDesc": "Głosy organizatorów wydarzeń",
       "features": "Funkcje",
       "featuresDesc": "Poznaj możliwości PartyPass",
       "howItWorks": "Jak to działa",
       "howItWorksDesc": "Trzy proste kroki",
       "pricing": "Cennik",
       "pricingDesc": "Wybierz plan dla siebie",
-      "demo": "Demo",
-      "demoDesc": "Zobacz panel organizatora",
+      "faq": "FAQ",
+      "faqDesc": "Odpowiedzi na najczęstsze pytania",
       "contact": "Kontakt",
       "contactDesc": "Skontaktuj się z nami"
-    },
-    "heroCards": {
-      "birthdayTitle": "🎂 Urodziny Marii",
-      "birthdayDate": "14 czerwca, 20:00",
-      "birthdayRsvp": "28/35 gości potwierdziło",
-      "meetupTitle": "🏢 Meetup UX",
-      "meetupDate": "22 czerwca, 18:30",
-      "meetupAttendees": "42 uczestników",
-      "liveRsvp": "+3 nowe RSVP dziś"
     },
     "previewScenarios": {
       "birthday": {
@@ -237,6 +282,13 @@
       "free": "Darmowy",
       "perMonth": "/miesiąc",
       "mostPopular": "Najpopularniejszy",
+      "billingToggleAria": "Wybierz cykl rozliczeniowy",
+      "billingMonthly": "Miesięcznie",
+      "billingYearly": "Rocznie",
+      "yearlySave": "Oszczędzasz {{percent}}%",
+      "yearlyEquivalent": "≈ {{price}} PLN/miesiąc, rozliczane rocznie",
+      "notIncluded": "Bez:",
+      "footnote": "Możesz zmienić lub anulować plan w dowolnym momencie. Bez ukrytych opłat.",
       "cta": {
         "starter": "Rozpocznij za darmo",
         "pro": "Wybierz plan",
@@ -280,14 +332,46 @@
         }
       }
     },
+    "faq": {
+      "eyebrow": "Pytania i odpowiedzi",
+      "title": "Najczęściej zadawane pytania",
+      "subtitle": "Krótko o planach, RSVP i zaproszeniach — zanim założysz konto.",
+      "items": {
+        "freePlan": {
+          "question": "Czy PartyPass jest darmowy?",
+          "answer": "Tak — plan Starter jest bezpłatny i pozwala rozpocząć organizację wydarzeń bez karty płatniczej. Plany Pro i Enterprise dodają większe limity oraz funkcje dla większych eventów."
+        },
+        "guestAccount": {
+          "question": "Czy goście muszą zakładać konto?",
+          "answer": "Nie. Goście odpowiadają przez link RSVP w przeglądarce — bez rejestracji i logowania. Ty zarządzasz wydarzeniem z panelu organizatora."
+        },
+        "emailInvites": {
+          "question": "Czy mogę wysłać zaproszenia e-mailem?",
+          "answer": "Tak. Z panelu wyślesz zaproszenia e-mail z linkiem RSVP. W planie Pro dostępne są też powiadomienia SMS i bardziej spersonalizowane zaproszenia."
+        },
+        "changePlan": {
+          "question": "Czy mogę zmienić plan później?",
+          "answer": "Tak — plan możesz zmienić lub anulować w dowolnym momencie z ustawień konta. Bez ukrytych opłat i długoterminowych zobowiązań."
+        },
+        "rsvpLink": {
+          "question": "Jak działa link RSVP?",
+          "answer": "Tworzysz wydarzenie, dodajesz gości i wysyłasz im unikalny link. Gość otwiera stronę zaproszenia, wybiera „będę”, „może” lub „nie mogę”, a Ty widzisz odpowiedzi na żywo w panelu."
+        }
+      }
+    },
     "cta": {
       "eyebrow": "Gotowy na start?",
       "title": "Zorganizuj następne wydarzenie bez stresu",
       "subtitle": "Załóż konto za darmo i wyślij pierwsze zaproszenie jeszcze dziś.",
+      "button": "Załóż darmowe konto",
       "perkFree": "Darmowy plan startowy",
       "perkNoCard": "Bez karty kredytowej",
       "perkFast": "Pierwsze zaproszenie w 2 min",
-      "previewLabel": "Tak wygląda link RSVP dla gościa"
+      "previewLabel": "Panel organizatora — wszystko w jednym miejscu",
+      "previewMetricEvents": "Wydarzenia",
+      "previewMetricRsvp": "Odpowiedzi RSVP",
+      "previewMetricContacts": "Kontakty",
+      "previewNextEvent": "Następne wydarzenie"
     },
     "contact": {
       "eyebrow": "Kontakt",
@@ -296,11 +380,11 @@
       "perkResponse": "Odpowiedź w ciągu 24 godzin",
       "perkHelp": "Pomoc z planami, RSVP i zaproszeniami",
       "perkPrivacy": "Twoje dane są bezpieczne",
-      "formTitle": "Napisz do nas",
       "formHint": "Wypełnij formularz — odezwiemy się na podany email.",
       "nameLabel": "Imię i nazwisko *",
       "namePlaceholder": "Wprowadź swoje imię",
       "emailLabel": "Email *",
+      "emailPlaceholder": "np. twoj@email.pl",
       "messageLabel": "Wiadomość *",
       "messagePlaceholder": "W czym możemy Ci pomóc?",
       "submit": "Wyślij wiadomość",
@@ -313,7 +397,11 @@
         "emailRequired": "Email jest wymagany",
         "emailInvalid": "Nieprawidłowy format email",
         "messageRequired": "Wiadomość jest wymagana",
-        "submitFailed": "Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie później."
+        "submitFailed": "Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie później.",
+        "rateLimited": "Wiadomość została już wysłana. Poczekaj chwilę przed kolejną próbą.",
+        "offline": "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.",
+        "timeout": "Wysyłanie trwa zbyt długo. Sprawdź połączenie i spróbuj ponownie.",
+        "captchaRequired": "Potwierdź, że nie jesteś botem, aby wysłać wiadomość."
       }
     },
     "footer": {

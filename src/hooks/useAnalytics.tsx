@@ -1,30 +1,36 @@
 import { useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-
-// Google Analytics setup
+import { readEnv } from '../config/env';
+import { hasAnalyticsConsent } from '../services/cookieConsent';
 
 declare global {
   interface Window {
-    dataLayer: any[];
+    dataLayer: unknown[];
+    gtag?: (...args: any[]) => void;
   }
 }
 
-// Analytics configuration
-const GA_TRACKING_ID = process.env.REACT_APP_GA_TRACKING_ID || 'GA_MEASUREMENT_ID';
+const GA_TRACKING_ID =
+  readEnv('GA_TRACKING_ID') ||
+  readEnv('FIREBASE_MEASUREMENT_ID') ||
+  'GA_MEASUREMENT_ID';
 
-// Initialize Google Analytics
+let analyticsInitialized = false;
+
+export const getGaTrackingId = () => GA_TRACKING_ID;
+
 export const initAnalytics = () => {
-  if (!GA_TRACKING_ID || GA_TRACKING_ID === 'GA_MEASUREMENT_ID') {
+  if (analyticsInitialized || !GA_TRACKING_ID || GA_TRACKING_ID === 'GA_MEASUREMENT_ID') {
     return;
   }
 
-  // Load Google Analytics script
+  analyticsInitialized = true;
+
   const script = document.createElement('script');
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
   document.head.appendChild(script);
 
-  // Initialize gtag
   window.dataLayer = window.dataLayer || [];
   function gtag(...args: any[]) {
     window.dataLayer.push(args);
@@ -33,35 +39,44 @@ export const initAnalytics = () => {
   gtag('config', GA_TRACKING_ID, {
     page_title: document.title,
     page_location: window.location.href,
+    send_page_view: false,
   });
 
-  // Make gtag available globally
-  (window as any).gtag = gtag;
+  window.gtag = gtag;
 };
 
 // Track page views
 export const trackPageView = (pagePath: string, pageTitle?: string) => {
-  const gtag = (window as any).gtag;
-  if (gtag) {
-    gtag('config', GA_TRACKING_ID, {
-      page_path: pagePath,
-      page_title: pageTitle || document.title,
-    });
+  if (!hasAnalyticsConsent() || !window.gtag) {
+    return;
   }
+
+  window.gtag('event', 'page_view', {
+    page_path: pagePath,
+    page_title: pageTitle || document.title,
+    page_location: window.location.href,
+  });
 };
 
-// Track events
 export const trackEvent = (
   eventName: string,
-  parameters: Record<string, any> = {}
+  parameters: Record<string, string | number | boolean> = {}
 ) => {
-  const gtag = (window as any).gtag;
-  if (gtag) {
-    gtag('event', eventName, {
-      ...parameters,
-      timestamp: new Date().toISOString(),
-    });
+  if (!hasAnalyticsConsent()) {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Analytics]', eventName, parameters);
+    }
+    return;
   }
+
+  if (!window.gtag) {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Analytics]', eventName, parameters);
+    }
+    return;
+  }
+
+  window.gtag('event', eventName, parameters);
 };
 
 // Custom hook for analytics
@@ -77,8 +92,8 @@ export const useAnalytics = () => {
     trackEvent('user_action', {
       action,
       category,
-      label,
-      value,
+      ...(label !== undefined && { label }),
+      ...(value !== undefined && { value }),
     });
   }, []);
 
@@ -100,7 +115,7 @@ export const useAnalytics = () => {
     trackEvent('error', {
       error_type: errorType,
       error_message: errorMessage,
-      error_code: errorCode,
+      ...(errorCode !== undefined && { error_code: errorCode }),
     });
   }, []);
 

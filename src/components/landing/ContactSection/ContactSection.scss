@@ -3,16 +3,20 @@
 @use '../../../styles/globals/landing-tokens' as l;
 
 .contact-section {
+  position: relative;
   padding: var(--l-section-pad) 0;
-  background: var(--l-bg);
+  background: transparent;
   color: var(--l-ink);
+  overflow: hidden;
+  isolation: isolate;
 
   &__inner {
-    @include container;
+    @include l.l-section-container;
+    position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     gap: var(--l-section-split-gap);
-    align-items: start;
+    align-items: center;
 
     @media (max-width: 900px) {
       grid-template-columns: 1fr;
@@ -45,7 +49,6 @@
 
   &__subtitle {
     @include l.l-section-subtitle;
-    text-wrap: unset;
   }
 
   &__perks {
@@ -56,29 +59,66 @@
     margin: 0;
     padding: 0;
     list-style: none;
+    width: 100%;
 
     li {
       display: inline-flex;
       align-items: center;
-      gap: var(--l-stack-tight);
-      font-size: 0.9rem;
+      gap: 0.7rem;
+      padding: 0.55rem 0.85rem 0.55rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
       font-weight: 600;
       color: var(--l-ink);
+      background: color-mix(in srgb, var(--l-bg) 55%, transparent);
+      border: 1px solid color-mix(in srgb, var(--l-line) 70%, transparent);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 
-      svg {
-        flex-shrink: 0;
-        color: var(--l-success);
+      &:hover {
+        transform: translateX(2px);
+        border-color: var(--l-accent-soft-border);
       }
     }
   }
 
+  &__perk-icon {
+    @include l.l-icon-tile;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+  }
+
   &__form-area {
+    position: relative;
     width: 100%;
     min-width: 0;
-    padding: var(--l-card-pad);
-    border-radius: var(--l-radius-card);
-    background: var(--l-surface);
-    border: 1px solid var(--l-line);
+    padding: calc(var(--l-card-pad) + 0.5rem);
+    border-radius: calc(var(--l-radius-card) + 10px);
+    background: color-mix(in srgb, var(--l-bg) 68%, transparent);
+    border: 1px solid color-mix(in srgb, var(--l-line) 65%, transparent);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow:
+      0 24px 60px rgba(15, 23, 42, 0.1),
+      0 0 0 1px color-mix(in srgb, var(--l-bg) 30%, transparent);
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--l-accent-soft-border), var(--l-accent-bright), var(--l-accent-soft-border));
+      opacity: 0.75;
+    }
 
     @media (max-width: 900px) {
       max-width: none;
@@ -101,6 +141,41 @@
     }
   }
 
+  &__control {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    &--textarea {
+      align-items: flex-start;
+    }
+  }
+
+  &__control-icon {
+    position: absolute;
+    left: 0.9rem;
+    color: var(--l-muted);
+    pointer-events: none;
+    transition: color 0.2s ease;
+
+    .contact-section__control--textarea & {
+      top: 0.95rem;
+    }
+  }
+
+  &__control:focus-within &__control-icon {
+    color: var(--l-accent);
+  }
+
+  &__honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
   &__form {
     display: flex;
     flex-direction: column;
@@ -119,11 +194,12 @@
 
     .pp-input,
     .pp-textarea {
-      min-height: 46px;
-      padding: 0.75rem 0.9rem;
+      width: 100%;
+      min-height: 48px;
+      padding: 0.75rem 0.9rem 0.75rem 2.6rem;
       font-size: 0.9375rem;
-      border-radius: var(--l-radius-input);
-      background: var(--l-bg);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--l-bg) 80%, transparent);
       border: 1px solid var(--l-line);
       color: var(--l-ink);
       transition:
@@ -154,9 +230,10 @@
 
     .pp-textarea {
       min-height: 140px;
+      padding-top: 0.85rem;
 
       @media (min-width: 900px) {
-        min-height: 180px;
+        min-height: 170px;
       }
 
       line-height: 1.55;
@@ -164,8 +241,15 @@
     }
 
     .pp-field-error {
+      display: block;
+      min-height: 1.3em;
       font-size: 0.8125rem;
+      line-height: 1.3;
       color: #dc2626;
+
+      &--empty {
+        visibility: hidden;
+      }
     }
   }
 
@@ -175,6 +259,12 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--l-actions-gap);
+    padding-top: 0.25rem;
+
+    .turnstile-widget {
+      flex: 1 1 100%;
+      min-height: 65px;
+    }
 
     .pp-btn--outline {
       @include l.l-btn-outline;
@@ -215,10 +305,7 @@
     gap: var(--l-card-inner-gap);
     padding: clamp(0.5rem, 2vw, 1rem) 0;
     text-align: left;
-
-    svg {
-      color: var(--l-success);
-    }
+    animation: contact-success-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 
     h3 {
       margin: 0;
@@ -241,6 +328,19 @@
       margin-top: var(--l-actions-offset);
     }
   }
+
+  &__success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    color: var(--l-success);
+    background: color-mix(in srgb, var(--l-success) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--l-success) 30%, transparent);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--l-success) 22%, transparent);
+  }
 }
 
 @keyframes contact-spin {
@@ -249,21 +349,50 @@
   }
 }
 
+@keyframes contact-success-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .dark {
   .contact-section {
+    &__perks li {
+      background: color-mix(in srgb, var(--l-surface) 55%, transparent);
+    }
+
     &__form-area {
-      background: color-mix(in srgb, var(--l-surface) 88%, transparent);
+      background: color-mix(in srgb, var(--l-surface) 55%, transparent);
+      box-shadow:
+        0 28px 64px rgba(0, 0, 0, 0.4),
+        0 0 0 1px var(--l-line);
     }
 
     &__form {
       .pp-input,
       .pp-textarea {
-        background: color-mix(in srgb, var(--l-bg) 72%, transparent);
+        background: color-mix(in srgb, var(--l-surface) 70%, var(--l-bg));
 
         &:focus {
           background: var(--l-bg);
         }
       }
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-section__success {
+    animation: none;
+  }
+
+  .contact-section__perks li {
+    transition: none;
   }
 }

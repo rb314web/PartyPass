@@ -87,20 +87,26 @@
   .rsvp__shell {
     width: 100%;
     max-width: 100%;
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: clamp(0.875rem, 2vw, 1.25rem);
   }
 
-  // Na landingu: zaproszenie (hero) nad formularzem wyboru
   .rsvp__main {
-    grid-column: 1;
-    grid-row: 1;
+    order: 1;
+    grid-column: unset;
+    grid-row: unset;
     min-width: 0;
+    background: transparent;
   }
 
   .rsvp__aside {
-    grid-column: 1;
-    grid-row: 2;
+    order: 2;
+    grid-column: unset;
+    grid-row: unset;
     position: static;
+    top: auto;
     min-width: 0;
   }
 
@@ -219,7 +225,7 @@
 .rsvp--preview-hero {
   @media (max-width: 900px) {
     width: 100%;
-    max-width: var(--hero-mobile-content-width, clamp(18rem, 92vw, 26rem));
+    max-width: var(--hero-mobile-content-width, clamp(15.5rem, 86vw, 21rem));
     margin-inline: auto;
   }
 
@@ -270,12 +276,25 @@
     max-height: 5.25rem;
   }
 
-  .rsvp-form-card__guest {
-    padding: clamp(1rem, 2.2vw, 1.2rem);
-  }
+  @media (max-width: 900px) {
+    .rsvp-hero {
+      padding: 0.95rem 1rem;
+    }
 
-  .rsvp-form-card__body {
-    padding: clamp(1rem, 2.2vw, 1.2rem);
+    .rsvp-hero__title {
+      font-size: clamp(1.15rem, 4.8vw, 1.45rem);
+    }
+
+    .rsvp-preview__morph-slot--hero {
+      height: 4.5rem;
+      min-height: 4.5rem;
+      max-height: 4.5rem;
+    }
+
+    .rsvp-form-card__guest,
+    .rsvp-form-card__body {
+      padding: 0.85rem 1rem;
+    }
   }
 
   @media (max-width: 420px) {

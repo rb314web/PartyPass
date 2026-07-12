@@ -10,7 +10,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <meta name="theme-color" content="#6366f1" />
+    <meta name="theme-color" content="#1d4ed8" />
 
     <meta
 
@@ -35,6 +35,7 @@
     <meta property="og:image" content="https://partypass.pl/og-image.jpg" />
 
     <meta property="og:locale" content="pl_PL" />
+    <meta property="og:locale:alternate" content="en_US" />
 
 
 
@@ -59,6 +60,11 @@
     <meta name="author" content="PartyPass" />
 
     <link rel="canonical" href="https://partypass.pl/" />
+    <link rel="alternate" hreflang="pl" href="https://partypass.pl/" />
+    <link rel="alternate" hreflang="en" href="https://partypass.pl/?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://partypass.pl/" />
+
+    <link rel="preload" href="/images/hero/birthday-1200.webp" as="image" type="image/webp" fetchpriority="high" />
 
 
 
@@ -70,93 +76,169 @@
 
       "@context": "https://schema.org",
 
-      "@type": "SoftwareApplication",
-
-      "name": "PartyPass",
-
-      "description": "Platforma do organizacji wydarzeń: lista gości, zaproszenia e-mail, linki RSVP i analityka frekwencji.",
-
-      "url": "https://partypass.pl",
-
-      "applicationCategory": "BusinessApplication",
-
-      "operatingSystem": "Web Browser",
-
-      "offers": [
+      "@graph": [
 
         {
 
-          "@type": "Offer",
+          "@type": "Organization",
 
-          "name": "Starter",
+          "@id": "https://partypass.pl/#organization",
 
-          "price": "0",
+          "name": "PartyPass",
 
-          "priceCurrency": "PLN"
+          "url": "https://partypass.pl",
+
+          "logo": "https://partypass.pl/party-pass-logo.svg",
+
+          "email": "kontakt@partypass.pl"
 
         },
 
         {
 
-          "@type": "Offer",
+          "@type": "WebSite",
 
-          "name": "Pro",
+          "@id": "https://partypass.pl/#website",
 
-          "price": "29",
+          "url": "https://partypass.pl",
 
-          "priceCurrency": "PLN",
+          "name": "PartyPass",
 
-          "priceSpecification": {
+          "description": "Platforma do organizacji wydarzeń: lista gości, zaproszenia e-mail, linki RSVP i analityka frekwencji.",
 
-            "@type": "UnitPriceSpecification",
+          "inLanguage": "pl-PL",
 
-            "price": "29",
+          "publisher": { "@id": "https://partypass.pl/#organization" }
 
-            "priceCurrency": "PLN",
+        },
 
-            "referenceQuantity": {
+        {
 
-              "@type": "QuantitativeValue",
+          "@type": "SoftwareApplication",
 
-              "value": "1",
+          "@id": "https://partypass.pl/#software",
 
-              "unitText": "month"
+          "name": "PartyPass",
+
+          "description": "Platforma do organizacji wydarzeń: lista gości, zaproszenia e-mail, linki RSVP i analityka frekwencji.",
+
+          "url": "https://partypass.pl",
+
+          "applicationCategory": "BusinessApplication",
+
+          "operatingSystem": "Web",
+
+          "browserRequirements": "Requires JavaScript",
+
+          "isPartOf": { "@id": "https://partypass.pl/#website" },
+
+          "publisher": { "@id": "https://partypass.pl/#organization" },
+
+          "offers": [
+
+            {
+
+              "@type": "Offer",
+
+              "name": "Starter",
+
+              "price": "0",
+
+              "priceCurrency": "PLN",
+
+              "availability": "https://schema.org/InStock"
+
+            },
+
+            {
+
+              "@type": "Offer",
+
+              "name": "Pro",
+
+              "price": "29",
+
+              "priceCurrency": "PLN",
+
+              "availability": "https://schema.org/InStock",
+
+              "priceSpecification": {
+
+                "@type": "UnitPriceSpecification",
+
+                "price": "29",
+
+                "priceCurrency": "PLN",
+
+                "referenceQuantity": {
+
+                  "@type": "QuantitativeValue",
+
+                  "value": "1",
+
+                  "unitText": "month"
+
+                }
+
+              }
+
+            },
+
+            {
+
+              "@type": "Offer",
+
+              "name": "Enterprise",
+
+              "price": "99",
+
+              "priceCurrency": "PLN",
+
+              "availability": "https://schema.org/InStock",
+
+              "priceSpecification": {
+
+                "@type": "UnitPriceSpecification",
+
+                "price": "99",
+
+                "priceCurrency": "PLN",
+
+                "referenceQuantity": {
+
+                  "@type": "QuantitativeValue",
+
+                  "value": "1",
+
+                  "unitText": "month"
+
+                }
+
+              }
 
             }
 
-          }
+          ],
+
+          "featureList": [
+
+            "Zarządzanie wydarzeniami",
+
+            "Lista gości i RSVP online",
+
+            "Zaproszenia e-mail",
+
+            "Analityki frekwencji",
+
+            "QR kody dla gości",
+
+            "SMS powiadomienia (plan Pro)"
+
+          ]
 
         }
 
-      ],
-
-      "featureList": [
-
-        "Zarządzanie wydarzeniami",
-
-        "Lista gości i RSVP online",
-
-        "Zaproszenia e-mail",
-
-        "Analityki frekwencji",
-
-        "QR kody dla gości",
-
-        "SMS powiadomienia (plan Pro)"
-
-      ],
-
-      "publisher": {
-
-        "@type": "Organization",
-
-        "name": "PartyPass",
-
-        "url": "https://partypass.pl",
-
-        "email": "kontakt@partypass.pl"
-
-      }
+      ]
 
     }
 
@@ -168,14 +250,20 @@
 
     <link rel="manifest" href="/manifest.json" />
 
-    <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
-    <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      />
+    </noscript>
 
     <title>PartyPass — organizacja wydarzeń i RSVP</title>
 

@@ -6,6 +6,7 @@ interface RSVPStatusOptionsProps {
   options: RsvpStatusOption[];
   selectedValue: string | null;
   interactive?: boolean;
+  previewOnly?: boolean;
   radioName?: string;
   onSelect?: (value: string) => void;
 }
@@ -14,13 +15,19 @@ const RSVPStatusOptions: React.FC<RSVPStatusOptionsProps> = ({
   options,
   selectedValue,
   interactive = false,
+  previewOnly = false,
   radioName = 'rsvp-status',
   onSelect,
 }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="rsvp-options" role="radiogroup" aria-label={t('rsvp.form.willYouAttend')}>
+    <div
+      className="rsvp-options"
+      role="radiogroup"
+      aria-label={t('rsvp.form.willYouAttend')}
+      aria-readonly={previewOnly || undefined}
+    >
       {options.map(option => (
         <label
           key={option.value}

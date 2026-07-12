@@ -1,13 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import Hero from './Hero';
 
 const mockNavigate = vi.fn();
-
-vi.mock('../Demo/Demo', () => ({
-  default: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div>PartyPass Dashboard - Demo</div> : null,
-}));
 
 vi.mock('../../common/LanguageSwitcher/LanguageSwitcher', () => ({
   default: () => <div data-testid="language-switcher">PL / EN</div>,
@@ -24,6 +19,10 @@ vi.mock('react-router-dom', () => ({
   NavLink: ({ children, to, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { to: string }) => (
     <a href={to} {...props}>{children}</a>
   ),
+}));
+
+vi.mock('../../../services/landingAnalytics', () => ({
+  trackLandingCtaClick: vi.fn(),
 }));
 
 describe('Hero', () => {
@@ -45,6 +44,17 @@ describe('Hero', () => {
     expect(screen.getByText(/piękny link rsvp/i)).toBeInTheDocument();
   });
 
+  it('exposes invitation preview to assistive technology', () => {
+    render(<Hero />);
+
+    const previewRegion = screen.getByRole('group', {
+      name: /podgląd strony rsvp/i,
+    });
+    expect(previewRegion).toBeInTheDocument();
+    expect(previewRegion).not.toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByText(/ilustracyjny podgląd zaproszenia/i)).toHaveClass('sr-only');
+  });
+
   it('renders invitation preview with RSVP options', () => {
     render(<Hero />);
 
@@ -55,28 +65,18 @@ describe('Hero', () => {
     expect(screen.getByText(/z przyjemnością/i)).toBeInTheDocument();
   });
 
-  it('renders CTA buttons', () => {
+  it('renders primary CTA button', () => {
     render(<Hero />);
 
-    expect(screen.getByRole('button', { name: /rozpocznij/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /zobacz demo/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /rozpocznij za darmo/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /zobacz cennik/i })).toBeInTheDocument();
   });
 
   it('navigates to register page when start is clicked', () => {
     render(<Hero />);
 
-    fireEvent.click(screen.getByRole('button', { name: /rozpocznij/i }));
+    fireEvent.click(screen.getByRole('button', { name: /rozpocznij za darmo/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith('/register?plan=starter');
-  });
-
-  it('renders demo modal when demo is clicked', async () => {
-    render(<Hero />);
-
-    fireEvent.click(screen.getByRole('button', { name: /zobacz demo/i }));
-
-    expect(
-      await screen.findByText(/PartyPass Dashboard - Demo/i)
-    ).toBeInTheDocument();
   });
 });

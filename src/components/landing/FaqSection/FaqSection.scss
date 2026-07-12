@@ -1,0 +1,118 @@
+@use '../../../styles/globals/mixins' as *;
+@use '../../../styles/globals/landing-tokens' as l;
+
+.faq {
+  position: relative;
+  isolation: isolate;
+  padding: var(--l-section-pad) 0;
+  background: transparent;
+
+  &__container {
+    @include l.l-section-container;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  &__header {
+    @include l.l-section-header-stack-centered;
+    width: 100%;
+    max-width: 38rem;
+    margin-inline: auto;
+  }
+
+  &__eyebrow {
+    @include l.l-eyebrow-pill;
+  }
+
+  &__title {
+    @include l.l-section-title;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+  }
+
+  &__subtitle {
+    @include l.l-section-subtitle;
+    line-height: 1.6;
+  }
+
+  &__panel {
+    @include l.l-glass-panel;
+    width: 100%;
+    max-width: 46rem;
+    margin-inline: auto;
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  &__item {
+    border: 1px solid color-mix(in srgb, var(--l-line) 120%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--l-bg) 72%, transparent);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &[open] {
+      border-color: color-mix(in srgb, var(--l-accent) 28%, var(--l-line));
+      box-shadow: 0 8px 24px color-mix(in srgb, var(--l-accent-shadow) 35%, transparent);
+    }
+  }
+
+  &__question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.125rem;
+    font-size: 0.975rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--l-ink);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::after {
+      content: '+';
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--l-accent-soft);
+      color: var(--l-accent);
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+
+    .faq__item[open] &::after {
+      content: '−';
+      transform: rotate(180deg);
+    }
+  }
+
+  &__answer {
+    margin: 0;
+    padding: 0 1.125rem 1.125rem;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--l-muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq__item,
+  .faq__question::after {
+    transition: none;
+  }
+}

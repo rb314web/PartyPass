@@ -1,8 +1,9 @@
 // components/common/UnifiedHeader/components/NavigationLinks/NavigationLinks.tsx
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useLocation } from 'react-router-dom';
-import { Zap, Sparkles, MessageCircle, Play, ListOrdered } from 'lucide-react';
+import { Zap, Sparkles, MessageCircle, ListOrdered, Users, CircleHelp } from 'lucide-react';
 import './NavigationLinks.scss';
 
 export interface NavigationItem {
@@ -12,11 +13,65 @@ export interface NavigationItem {
   description: string;
 }
 
+export type LandingNavScope = 'header' | 'full';
+
+const LANDING_HEADER_HREFS = new Set(['#pricing', '#faq', '#contact']);
+
+export function buildLandingNavItems(
+  t: TFunction,
+  scope: LandingNavScope
+): NavigationItem[] {
+  const items: NavigationItem[] = [
+    {
+      label: t('landing.nav.socialProof'),
+      href: '#social-proof',
+      icon: <Users size={16} />,
+      description: t('landing.nav.socialProofDesc'),
+    },
+    {
+      label: t('landing.nav.features'),
+      href: '#features',
+      icon: <Zap size={16} />,
+      description: t('landing.nav.featuresDesc'),
+    },
+    {
+      label: t('landing.nav.howItWorks'),
+      href: '#how-it-works',
+      icon: <ListOrdered size={16} />,
+      description: t('landing.nav.howItWorksDesc'),
+    },
+    {
+      label: t('landing.nav.pricing'),
+      href: '#pricing',
+      icon: <Sparkles size={16} />,
+      description: t('landing.nav.pricingDesc'),
+    },
+    {
+      label: t('landing.nav.faq'),
+      href: '#faq',
+      icon: <CircleHelp size={16} />,
+      description: t('landing.nav.faqDesc'),
+    },
+    {
+      label: t('landing.nav.contact'),
+      href: '#contact',
+      icon: <MessageCircle size={16} />,
+      description: t('landing.nav.contactDesc'),
+    },
+  ];
+
+  if (scope === 'header') {
+    return items.filter((item) => LANDING_HEADER_HREFS.has(item.href));
+  }
+
+  return items;
+}
+
 export interface NavigationLinksProps {
   /**
    * Click handler for navigation items
    */
-  onItemClick: (item: NavigationItem) => void;
+  onItemClick: (item: NavigationItem, placement?: 'header' | 'mobile') => void;
 
   /**
    * Custom navigation items (optional)
@@ -60,38 +115,7 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
 
   // Default navigation items for landing page
   const defaultItems: NavigationItem[] = useMemo(
-    () => [
-      {
-        label: t('landing.nav.features'),
-        href: '#features',
-        icon: <Zap size={16} />,
-        description: t('landing.nav.featuresDesc'),
-      },
-      {
-        label: t('landing.nav.howItWorks'),
-        href: '#how-it-works',
-        icon: <ListOrdered size={16} />,
-        description: t('landing.nav.howItWorksDesc'),
-      },
-      {
-        label: t('landing.nav.pricing'),
-        href: '#pricing',
-        icon: <Sparkles size={16} />,
-        description: t('landing.nav.pricingDesc'),
-      },
-      {
-        label: t('landing.nav.demo'),
-        href: '/demo',
-        icon: <Play size={16} />,
-        description: t('landing.nav.demoDesc'),
-      },
-      {
-        label: t('landing.nav.contact'),
-        href: '#contact',
-        icon: <MessageCircle size={16} />,
-        description: t('landing.nav.contactDesc'),
-      },
-    ],
+    () => buildLandingNavItems(t, 'full'),
     [t, i18n.language]
   );
 
@@ -114,12 +138,12 @@ const NavigationLinks: React.FC<NavigationLinksProps> = ({
     >
       <ul className={`navigation-links__list ${vertical ? 'navigation-links__list--vertical' : ''}`}>
         {navigationItems.map((item, index) => (
-          <li key={index} className="navigation-links__item">
+          <li key={item.href} className="navigation-links__item">
             <button
               ref={index === 0 && firstItemRef ? firstItemRef : undefined}
               className={`navigation-links__button ${isActive(item.href) ? 'navigation-links__button--active' : ''}`}
-              onClick={() => onItemClick(item)}
-              aria-label={item.description}
+              onClick={() => onItemClick(item, vertical ? 'mobile' : 'header')}
+              aria-label={showDescriptions ? item.description : item.label}
             >
               <span className="navigation-links__content">
                 {showIcons && (

@@ -3,12 +3,47 @@ import {
   PREVIEW_CROSSFADE_MS,
 } from '../../../constants/landingMotion';
 import {
-  getRsvpPreviewScenarioBackgroundByIndex,
-  RSVP_PREVIEW_SCENARIO_BACKGROUNDS,
+  getHeroResponsiveImage,
+  HERO_IMAGE_WIDTHS,
+} from '../../../constants/heroImages';
+import {
+  RSVP_PREVIEW_SCENARIO_KEYS,
   type RsvpPreviewScenarioState,
 } from '../../../constants/rsvpPreviewScenarios';
 
 interface HeroBackgroundProps extends RsvpPreviewScenarioState {}
+
+const HERO_BACKDROP_SIZES = `(max-width: 900px) ${HERO_IMAGE_WIDTHS[0]}px, ${HERO_IMAGE_WIDTHS[1]}px`;
+
+interface HeroBackdropSlideProps {
+  scenarioIndex: number;
+  className: string;
+  fetchPriority?: 'high' | 'low' | 'auto';
+}
+
+const HeroBackdropSlide: React.FC<HeroBackdropSlideProps> = ({
+  scenarioIndex,
+  className,
+  fetchPriority = 'auto',
+}) => {
+  const scenarioKey = RSVP_PREVIEW_SCENARIO_KEYS[scenarioIndex];
+  const { webpSrcSet, jpegSrcSet, fallbackSrc } = getHeroResponsiveImage(scenarioKey);
+
+  return (
+    <picture>
+      <source type="image/webp" srcSet={webpSrcSet} sizes={HERO_BACKDROP_SIZES} />
+      <source type="image/jpeg" srcSet={jpegSrcSet} sizes={HERO_BACKDROP_SIZES} />
+      <img
+        src={fallbackSrc}
+        alt=""
+        className={className}
+        loading="eager"
+        decoding="async"
+        fetchPriority={fetchPriority}
+      />
+    </picture>
+  );
+};
 
 const HeroBackground: React.FC<HeroBackgroundProps> = ({
   index,
@@ -16,17 +51,13 @@ const HeroBackground: React.FC<HeroBackgroundProps> = ({
   isCrossfading,
 }) => {
   useEffect(() => {
-    Object.values(RSVP_PREVIEW_SCENARIO_BACKGROUNDS).forEach((src) => {
-      const image = new Image();
-      image.src = src;
+    RSVP_PREVIEW_SCENARIO_KEYS.forEach((scenarioKey) => {
+      getHeroResponsiveImage(scenarioKey).preloadCandidates.forEach((src) => {
+        const image = new Image();
+        image.src = src;
+      });
     });
   }, []);
-
-  const baseSrc = getRsvpPreviewScenarioBackgroundByIndex(index);
-  const overlaySrc =
-    overlayIndex !== null
-      ? getRsvpPreviewScenarioBackgroundByIndex(overlayIndex)
-      : null;
 
   return (
     <div
@@ -39,24 +70,19 @@ const HeroBackground: React.FC<HeroBackgroundProps> = ({
       }
     >
       <div className="hero__backdrop-stage">
-        <img
-          src={baseSrc}
-          alt=""
+        <HeroBackdropSlide
+          scenarioIndex={index}
           className={`hero__backdrop-slide hero__backdrop-slide--base${
             isCrossfading ? ' is-dimming' : ''
           }`}
-          loading="eager"
-          decoding="async"
+          fetchPriority="high"
         />
-        {overlaySrc && (
-          <img
-            src={overlaySrc}
-            alt=""
+        {overlayIndex !== null && (
+          <HeroBackdropSlide
+            scenarioIndex={overlayIndex}
             className={`hero__backdrop-slide hero__backdrop-slide--overlay${
               isCrossfading ? ' is-visible' : ''
             }`}
-            loading="eager"
-            decoding="async"
           />
         )}
       </div>

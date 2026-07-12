@@ -1,6 +1,6 @@
 // components/common/Logo/Logo.tsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import logoImage from '../../../assets/logo/party-pass-logo.svg';
 import './Logo.scss';
 
@@ -57,6 +57,20 @@ const Logo: React.FC<LogoProps> = ({
   wordmark = false,
   tone = 'default',
 }) => {
+  const location = useLocation();
+
+  const handleHomeClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (href !== '/') return;
+
+    if (location.pathname === '/') {
+      event.preventDefault();
+      if (location.hash) {
+        window.history.replaceState(null, '', '/');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const logoClasses = [
     'logo',
     `logo--${size}`,
@@ -135,6 +149,7 @@ const Logo: React.FC<LogoProps> = ({
       to={href}
       className={logoClasses}
       aria-label="PartyPass - przejdź do strony głównej"
+      onClick={handleHomeClick}
     >
       {content}
     </Link>

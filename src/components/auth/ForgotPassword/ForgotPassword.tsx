@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
-import { Mail, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, KeyRound, Mail } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
-import AuthLayout from '../AuthLayout/AuthLayout';
+import AuthCanvas from '../ui/AuthCanvas';
 
 const ForgotPassword: React.FC = () => {
   const { t } = useTranslation();
@@ -12,35 +12,44 @@ const ForgotPassword: React.FC = () => {
   const [sent, setSent] = useState(false);
   const { resetPassword, loading, error, clearError } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     clearError();
 
     try {
       await resetPassword(email.trim());
       setSent(true);
     } catch {
-      // error from context
+      // handled in auth context
     }
   };
 
   return (
     <ErrorBoundary>
-      <AuthLayout
-        variant="forgot"
+      <AuthCanvas
+        badge={t('auth.forgotPassword')}
         title={t('auth.forgotTitle')}
         subtitle={sent ? t('auth.forgotSubtitleSent') : t('auth.forgotSubtitle')}
+        footer={
+          !sent ? (
+            <p>
+              <Link to="/login" className="gate__link">
+                {t('auth.backToLogin')}
+              </Link>
+            </p>
+          ) : undefined
+        }
       >
         {error && !sent && (
-          <div className="pp-form-alert pp-form-alert--error auth-page__error">
-            <span>{error}</span>
+          <div className="gate__alert gate__alert--error" role="alert">
+            {error}
           </div>
         )}
 
         {sent ? (
-          <div className="auth-page__body">
-            <div className="pp-form-alert pp-form-alert--success">
-              <CheckCircle size={18} />
+          <div className="gate__form">
+            <div className="gate__alert gate__alert--success" role="status">
+              <CheckCircle size={18} aria-hidden="true" />
               <span>
                 <Trans
                   i18nKey="auth.forgotSentMessage"
@@ -49,29 +58,26 @@ const ForgotPassword: React.FC = () => {
                 />
               </span>
             </div>
-            <Link
-              to="/login"
-              className="pp-btn pp-btn--primary pp-btn--block pp-btn--lg"
-            >
-              {t('auth.backToLogin')}
-              <ArrowRight size={20} />
+            <Link to="/login" className="gate__btn gate__btn--block">
+              <span>{t('auth.backToLogin')}</span>
+              <ArrowRight size={18} aria-hidden="true" />
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="auth-page__body">
-            <div className="pp-field">
-              <label className="pp-label" htmlFor="forgot-email">
+          <form className="gate__form" onSubmit={handleSubmit} noValidate>
+            <div className="gate__field">
+              <label className="gate__label" htmlFor="forgot-email">
                 {t('common.email')}
               </label>
-              <div className="pp-input-wrap">
-                <Mail size={20} className="pp-input-icon" />
+              <div className="gate__input-wrap gate__input-wrap--icon">
+                <Mail size={17} className="gate__field-icon" aria-hidden="true" />
                 <input
                   id="forgot-email"
                   type="email"
                   name="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="pp-input pp-input--icon-left"
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="gate__input"
                   placeholder={t('auth.emailPlaceholder')}
                   required
                   autoComplete="email"
@@ -81,27 +87,21 @@ const ForgotPassword: React.FC = () => {
 
             <button
               type="submit"
-              className="pp-btn pp-btn--primary pp-btn--block pp-btn--lg"
+              className="gate__btn gate__btn--block"
               disabled={loading || !email.trim()}
             >
               {loading ? (
-                <span className="auth-page__spinner" />
+                <span className="gate__spinner" aria-hidden="true" />
               ) : (
                 <>
-                  {t('auth.forgotSubmit')}
-                  <ArrowRight size={20} />
+                  <KeyRound size={18} aria-hidden="true" />
+                  <span>{t('auth.forgotSubmit')}</span>
                 </>
               )}
             </button>
-
-            <p className="auth-page__footer auth-page__footer--inline">
-              <Link to="/login" className="auth-page__link">
-                {t('auth.backToLogin')}
-              </Link>
-            </p>
           </form>
         )}
-      </AuthLayout>
+      </AuthCanvas>
     </ErrorBoundary>
   );
 };

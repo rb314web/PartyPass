@@ -1,22 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useHeaderNavLayout } from '../../../hooks/useHeaderNavLayout';
-import NavigationLinks, { NavigationItem } from './components/NavigationLinks/NavigationLinks';
+import NavigationLinks, {
+  NavigationItem,
+  buildLandingNavItems,
+} from './components/NavigationLinks/NavigationLinks';
+import { trackLandingNavClick } from '../../../services/landingAnalytics';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import UserMenu from '../UserMenu/UserMenu';
 import '../LanguageSwitcher/LanguageSwitcher.scss';
 import './UnifiedHeader.scss';
-
-// Extend Window interface for gtag
-declare global {
-  interface Window {
-    gtag?: (command: string, targetId: string, config?: any) => void;
-  }
-}
 
 const LogoText: React.FC = () => (
   <span className="logo__text">
@@ -63,7 +60,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     useCompactNav,
   } = useHeaderNavLayout({
     enabled: isMarketingHeader,
-    hasInlineNav: variant === 'landing',
+    hasInlineNav: variant === 'landing' || variant === 'auth',
     measureKey: `${i18n.language}:${user?.id ?? 'guest'}:${location.pathname}`,
   });
 
@@ -77,12 +74,10 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   const firstMenuItemRef = useRef<HTMLButtonElement>(null);
 
   const [isScrolled, setIsScrolled] = useState(false);
-  const [headerGlassOpacity, setHeaderGlassOpacity] = useState(0);
   const scrollRafRef = useRef<number>(0);
 
-  const HEADER_GLASS_FADE_START = 0;
-  const HEADER_GLASS_FADE_END = 72;
-  const HEADER_TEXT_SWITCH = 0.42;
+  const SCROLL_DOWN_THRESHOLD = 28;
+  const SCROLL_UP_THRESHOLD = 8;
 
   const getScrollY = useCallback(() => {
     return (
@@ -93,40 +88,30 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     );
   }, []);
 
-  // Landing: glass fades in with scroll progress (not a hard threshold)
+  // Landing: transparent at top, solid glass background after scroll
   useEffect(() => {
     if (!enableScrollEffects || variant !== 'landing') {
       setIsScrolled(false);
-      setHeaderGlassOpacity(0);
       return;
     }
 
     const updateScrollState = () => {
-      if (scrollRafRef.current) return;
-
-      scrollRafRef.current = window.requestAnimationFrame(() => {
-        scrollRafRef.current = 0;
-        const y = getScrollY();
-        const range = HEADER_GLASS_FADE_END - HEADER_GLASS_FADE_START;
-        const progress = Math.min(
-          1,
-          Math.max(0, (y - HEADER_GLASS_FADE_START) / range)
-        );
-
-        setHeaderGlassOpacity(progress);
-        setIsScrolled(progress >= HEADER_TEXT_SWITCH);
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = requestAnimationFrame(() => {
+        const scrollY = getScrollY();
+        setIsScrolled((prev) => {
+          if (!prev && scrollY > SCROLL_DOWN_THRESHOLD) return true;
+          if (prev && scrollY < SCROLL_UP_THRESHOLD) return false;
+          return prev;
+        });
       });
     };
 
     updateScrollState();
     window.addEventListener('scroll', updateScrollState, { passive: true });
-    document.addEventListener('scroll', updateScrollState, { passive: true, capture: true });
     return () => {
       window.removeEventListener('scroll', updateScrollState);
-      document.removeEventListener('scroll', updateScrollState, true);
-      if (scrollRafRef.current) {
-        window.cancelAnimationFrame(scrollRafRef.current);
-      }
+      cancelAnimationFrame(scrollRafRef.current);
     };
   }, [enableScrollEffects, variant, getScrollY]);
 
@@ -155,7 +140,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   }, []);
 
   // Handle navigation item click
-  const handleNavigationClick = useCallback((item: NavigationItem) => {
+  const handleNavigationClick = useCallback((item: NavigationItem, placement: 'header' | 'mobile' = 'header') => {
     if (item.href.startsWith('#')) {
       // Anchor link - scroll to section
       if (location.pathname !== '/') {
@@ -174,6 +159,11 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     // Close mobile menu if open
     if (isMobileMenuOpen) {
       handleMobileMenuClose();
+    }
+
+    if (variant === 'landing') {
+      trackLandingNavClick(item.label, item.href, placement);
+      return;
     }
 
     // Analytics tracking
@@ -297,6 +287,16 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 
   const isLoginPage = location.pathname === '/login';
   const isRegisterPage = location.pathname === '/register';
+  const isForgotPage = location.pathname === '/forgot-password';
+
+  const landingHeaderNavItems = useMemo(
+    () => buildLandingNavItems(t, 'header'),
+    [t, i18n.language]
+  );
+  const landingFullNavItems = useMemo(
+    () => buildLandingNavItems(t, 'full'),
+    [t, i18n.language]
+  );
 
   const navigateToAuth = useCallback(
     (path: '/login' | '/register') => {
@@ -306,6 +306,18 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     },
     [location.pathname, navigate]
   );
+
+  const handleLogoClick = useCallback(() => {
+    if (location.pathname === '/') {
+      if (location.hash) {
+        navigate('/', { replace: true });
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    navigate('/');
+  }, [location.hash, location.pathname, navigate]);
 
   // Render auth buttons
   const renderAuthButtons = () => (
@@ -336,6 +348,59 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       </button>
     </div>
   );
+
+  const renderLandingAuthActions = () => (
+    <div className="unified-header__landing-auth">
+      <button
+        type="button"
+        className="unified-header__login-link"
+        onClick={() => navigateToAuth('/login')}
+        aria-current={isLoginPage ? 'page' : undefined}
+      >
+        {t('auth.login')}
+      </button>
+      <button
+        type="button"
+        className="pp-btn pp-btn--sm pp-btn--primary"
+        onClick={() => navigateToAuth('/register')}
+        aria-current={isRegisterPage ? 'page' : undefined}
+      >
+        {t('landing.startFreeLong')}
+      </button>
+    </div>
+  );
+
+  const renderAuthPageActions = () => {
+    if (isLoginPage || isForgotPage) {
+      return (
+        <div className="unified-header__landing-auth">
+          <button
+            type="button"
+            className="pp-btn pp-btn--sm pp-btn--primary"
+            onClick={() => navigateToAuth('/register')}
+          >
+            {t('landing.startFreeLong')}
+          </button>
+        </div>
+      );
+    }
+
+    if (isRegisterPage) {
+      return (
+        <div className="unified-header__landing-auth">
+          <button
+            type="button"
+            className="unified-header__login-link"
+            onClick={() => navigateToAuth('/login')}
+          >
+            {t('auth.login')}
+          </button>
+        </div>
+      );
+    }
+
+    return renderAuthButtons();
+  };
 
   // Render greeting section
   const renderGreetingSection = () => (
@@ -388,9 +453,11 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           className="unified-header__language-switcher"
         />
       )}
-      {!(useCompactNav && isMarketingHeader) && <ThemeToggle />}
-      {(variant === 'landing' || variant === 'auth') && !user && !useCompactNav && renderAuthButtons()}
-      {(variant === 'landing' || variant === 'auth') && user && !useCompactNav && renderUserMenu()}
+      {variant !== 'landing' && !(useCompactNav && isMarketingHeader) && <ThemeToggle />}
+      {variant === 'landing' && !user && !useCompactNav && renderLandingAuthActions()}
+      {variant === 'landing' && user && !useCompactNav && renderUserMenu()}
+      {variant === 'auth' && !user && !useCompactNav && renderAuthPageActions()}
+      {variant === 'auth' && user && !useCompactNav && renderUserMenu()}
       {isMarketingHeader && useCompactNav && (
         <button
           className="unified-header__mobile-menu-toggle"
@@ -419,13 +486,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
         ]
           .filter(Boolean)
           .join(' ')}
-        style={
-          variant === 'landing' && enableScrollEffects
-            ? ({
-                '--header-glass-opacity': String(headerGlassOpacity),
-              } as React.CSSProperties)
-            : undefined
-        }
         role="banner"
       >
         <div className="unified-header__container" ref={containerRef}>
@@ -435,7 +495,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
               <div className="unified-header__logo">
                 <h1
                   className="logo"
-                  onClick={() => navigate('/')}
+                  onClick={handleLogoClick}
                   style={{ cursor: 'pointer' }}
                 >
                   <LogoText />
@@ -455,9 +515,10 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 
           {/* Center Section - Navigation or Greeting */}
           <div className="unified-header__nav" ref={inlineNavRef}>
-            {variant === 'landing' && (
+            {(variant === 'landing' || variant === 'auth') && (
               <NavigationLinks
                 onItemClick={handleNavigationClick}
+                items={landingHeaderNavItems}
                 showDescriptions={false}
                 showIcons={false}
               />
@@ -482,10 +543,11 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 </h1>
               </div>
             </div>
-            {variant === 'landing' && (
+            {(variant === 'landing' || variant === 'auth') && (
               <div ref={navMeasureRef} className="unified-header__nav-measure">
                 <NavigationLinks
                   onItemClick={() => undefined}
+                  items={landingHeaderNavItems}
                   showDescriptions={false}
                   showIcons={false}
                 />
@@ -496,8 +558,16 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 compact
                 className="unified-header__language-switcher"
               />
-              <ThemeToggle />
-              {!user ? renderAuthButtons() : renderUserMenu()}
+              {variant === 'landing' ? (
+                !user ? renderLandingAuthActions() : renderUserMenu()
+              ) : variant === 'auth' ? (
+                !user ? renderAuthPageActions() : renderUserMenu()
+              ) : (
+                <>
+                  <ThemeToggle />
+                  {!user ? renderAuthButtons() : renderUserMenu()}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -525,7 +595,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 type="button"
                 className="unified-header__mobile-menu-logo"
                 onClick={() => {
-                  navigate('/');
+                  handleLogoClick();
                   handleMobileMenuClose();
                 }}
                 aria-label={t('landing.footer.home', { defaultValue: 'Home' })}
@@ -549,6 +619,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 </h2>
                 <NavigationLinks
                   onItemClick={handleNavigationClick}
+                  items={landingFullNavItems}
                   vertical
                   showDescriptions={false}
                   showIcons
@@ -561,35 +632,89 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                   <h2 className="unified-header__mobile-menu-section-title">
                     {t('header.mobileMenu.account')}
                   </h2>
-                  <div className="unified-header__mobile-menu-auth">
-                    <button
-                      ref={firstMenuItemRef}
-                      type="button"
-                      className={`unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--secondary${
-                        isLoginPage ? ' unified-header__mobile-menu-auth-btn--current' : ''
-                      }`}
-                      onClick={() => {
-                        navigateToAuth('/login');
-                        handleMobileMenuClose();
-                      }}
-                      aria-current={isLoginPage ? 'page' : undefined}
-                    >
-                      {t('auth.login')}
-                    </button>
-                    <button
-                      type="button"
-                      className={`unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary${
-                        isRegisterPage ? ' unified-header__mobile-menu-auth-btn--current' : ''
-                      }`}
-                      onClick={() => {
-                        navigateToAuth('/register');
-                        handleMobileMenuClose();
-                      }}
-                      aria-current={isRegisterPage ? 'page' : undefined}
-                    >
-                      {t('auth.joinUs')}
-                    </button>
-                  </div>
+                  {variant === 'landing' ? (
+                    <div className="unified-header__mobile-menu-auth unified-header__mobile-menu-auth--landing">
+                      <button
+                        ref={firstMenuItemRef}
+                        type="button"
+                        className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
+                        onClick={() => {
+                          navigateToAuth('/register');
+                          handleMobileMenuClose();
+                        }}
+                      >
+                        {t('landing.startFreeLong')}
+                      </button>
+                      <button
+                        type="button"
+                        className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--link"
+                        onClick={() => {
+                          navigateToAuth('/login');
+                          handleMobileMenuClose();
+                        }}
+                      >
+                        {t('auth.login')}
+                      </button>
+                    </div>
+                  ) : variant === 'auth' ? (
+                    <div className="unified-header__mobile-menu-auth unified-header__mobile-menu-auth--landing">
+                      {isRegisterPage ? (
+                        <button
+                          ref={firstMenuItemRef}
+                          type="button"
+                          className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
+                          onClick={() => {
+                            navigateToAuth('/login');
+                            handleMobileMenuClose();
+                          }}
+                        >
+                          {t('auth.login')}
+                        </button>
+                      ) : (
+                        <button
+                          ref={firstMenuItemRef}
+                          type="button"
+                          className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
+                          onClick={() => {
+                            navigateToAuth('/register');
+                            handleMobileMenuClose();
+                          }}
+                        >
+                          {t('landing.startFreeLong')}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="unified-header__mobile-menu-auth">
+                      <button
+                        ref={firstMenuItemRef}
+                        type="button"
+                        className={`unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--secondary${
+                          isLoginPage ? ' unified-header__mobile-menu-auth-btn--current' : ''
+                        }`}
+                        onClick={() => {
+                          navigateToAuth('/login');
+                          handleMobileMenuClose();
+                        }}
+                        aria-current={isLoginPage ? 'page' : undefined}
+                      >
+                        {t('auth.login')}
+                      </button>
+                      <button
+                        type="button"
+                        className={`unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary${
+                          isRegisterPage ? ' unified-header__mobile-menu-auth-btn--current' : ''
+                        }`}
+                        onClick={() => {
+                          navigateToAuth('/register');
+                          handleMobileMenuClose();
+                        }}
+                        aria-current={isRegisterPage ? 'page' : undefined}
+                      >
+                        {t('auth.joinUs')}
+                      </button>
+                    </div>
+                  )}
                 </section>
               ) : (
                 <div className="unified-header__mobile-menu-user">

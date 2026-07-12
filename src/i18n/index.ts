@@ -18,6 +18,9 @@ export const normalizeLanguage = (value?: string | null): AppLanguage => {
 const getInitialLanguage = (): AppLanguage => {
   if (typeof window === 'undefined') return DEFAULT_LANGUAGE;
 
+  const urlLang = new URLSearchParams(window.location.search).get('lang');
+  if (urlLang) return normalizeLanguage(urlLang);
+
   const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
   if (stored) return normalizeLanguage(stored);
 

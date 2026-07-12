@@ -1,12 +1,20 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import ContactSection from './ContactSection';
+import { EmailService } from '../../../services/emailService';
 
 // Mock EmailJS
 vi.mock('@emailjs/browser', () => ({
   send: vi.fn(),
   init: vi.fn(),
+}));
+
+vi.mock('../../../services/landingAnalytics', () => ({
+  trackLandingContactSubmit: vi.fn(),
+}));
+
+vi.mock('../../../config/turnstile', () => ({
+  isTurnstileEnabled: () => false,
 }));
 
 describe('ContactSection', () => {
@@ -41,7 +49,7 @@ describe('ContactSection', () => {
     render(<ContactSection />);
 
     expect(screen.getByPlaceholderText('Wprowadź swoje imię')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('twoj@email.com')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('np. twoj@email.pl')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('W czym możemy Ci pomóc?')).toBeInTheDocument();
   });
 
@@ -61,5 +69,31 @@ describe('ContactSection', () => {
     expect(await screen.findByText('Imię jest wymagane')).toBeInTheDocument();
     expect(screen.getByText('Email jest wymagany')).toBeInTheDocument();
     expect(screen.getByText('Wiadomość jest wymagana')).toBeInTheDocument();
+  });
+
+  it('ignores bot submissions when honeypot is filled', async () => {
+    const sendContactForm = vi.spyOn(EmailService, 'sendContactForm');
+
+    render(<ContactSection />);
+
+    fireEvent.change(screen.getByPlaceholderText('Wprowadź swoje imię'), {
+      target: { value: 'Jan Test' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('np. twoj@email.pl'), {
+      target: { value: 'jan@example.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('W czym możemy Ci pomóc?'), {
+      target: { value: 'Test' },
+    });
+    fireEvent.change(document.querySelector('.contact-section__honeypot') as HTMLInputElement, {
+      target: { value: 'https://spam.example' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /wyślij wiadomość/i }));
+
+    expect(sendContactForm).not.toHaveBeenCalled();
+    expect(screen.queryByText(/dziękujemy za wiadomość/i)).not.toBeInTheDocument();
+
+    sendContactForm.mockRestore();
   });
 });
