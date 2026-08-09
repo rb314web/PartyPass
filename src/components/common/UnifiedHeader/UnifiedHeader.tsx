@@ -287,7 +287,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
 
   const isLoginPage = location.pathname === '/login';
   const isRegisterPage = location.pathname === '/register';
-  const isForgotPage = location.pathname === '/forgot-password';
 
   const landingHeaderNavItems = useMemo(
     () => buildLandingNavItems(t, 'header'),
@@ -370,38 +369,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     </div>
   );
 
-  const renderAuthPageActions = () => {
-    if (isLoginPage || isForgotPage) {
-      return (
-        <div className="unified-header__landing-auth">
-          <button
-            type="button"
-            className="pp-btn pp-btn--sm pp-btn--primary"
-            onClick={() => navigateToAuth('/register')}
-          >
-            {t('landing.startFreeLong')}
-          </button>
-        </div>
-      );
-    }
-
-    if (isRegisterPage) {
-      return (
-        <div className="unified-header__landing-auth">
-          <button
-            type="button"
-            className="unified-header__login-link"
-            onClick={() => navigateToAuth('/login')}
-          >
-            {t('auth.login')}
-          </button>
-        </div>
-      );
-    }
-
-    return renderAuthButtons();
-  };
-
   // Render greeting section
   const renderGreetingSection = () => (
     <div className="unified-header__greeting-section">
@@ -453,11 +420,12 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           className="unified-header__language-switcher"
         />
       )}
-      {variant !== 'landing' && !(useCompactNav && isMarketingHeader) && <ThemeToggle />}
-      {variant === 'landing' && !user && !useCompactNav && renderLandingAuthActions()}
-      {variant === 'landing' && user && !useCompactNav && renderUserMenu()}
-      {variant === 'auth' && !user && !useCompactNav && renderAuthPageActions()}
-      {variant === 'auth' && user && !useCompactNav && renderUserMenu()}
+      {(variant === 'dashboard' ||
+        ((variant === 'landing' || variant === 'auth') && !useCompactNav)) && (
+        <ThemeToggle />
+      )}
+      {isMarketingHeader && !user && !useCompactNav && renderLandingAuthActions()}
+      {isMarketingHeader && user && !useCompactNav && renderUserMenu()}
       {isMarketingHeader && useCompactNav && (
         <button
           className="unified-header__mobile-menu-toggle"
@@ -558,15 +526,11 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                 compact
                 className="unified-header__language-switcher"
               />
-              {variant === 'landing' ? (
+              <ThemeToggle />
+              {isMarketingHeader ? (
                 !user ? renderLandingAuthActions() : renderUserMenu()
-              ) : variant === 'auth' ? (
-                !user ? renderAuthPageActions() : renderUserMenu()
               ) : (
-                <>
-                  <ThemeToggle />
-                  {!user ? renderAuthButtons() : renderUserMenu()}
-                </>
+                !user ? renderAuthButtons() : renderUserMenu()
               )}
             </div>
           </div>
@@ -632,7 +596,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                   <h2 className="unified-header__mobile-menu-section-title">
                     {t('header.mobileMenu.account')}
                   </h2>
-                  {variant === 'landing' ? (
+                  {isMarketingHeader ? (
                     <div className="unified-header__mobile-menu-auth unified-header__mobile-menu-auth--landing">
                       <button
                         ref={firstMenuItemRef}
@@ -655,34 +619,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                       >
                         {t('auth.login')}
                       </button>
-                    </div>
-                  ) : variant === 'auth' ? (
-                    <div className="unified-header__mobile-menu-auth unified-header__mobile-menu-auth--landing">
-                      {isRegisterPage ? (
-                        <button
-                          ref={firstMenuItemRef}
-                          type="button"
-                          className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
-                          onClick={() => {
-                            navigateToAuth('/login');
-                            handleMobileMenuClose();
-                          }}
-                        >
-                          {t('auth.login')}
-                        </button>
-                      ) : (
-                        <button
-                          ref={firstMenuItemRef}
-                          type="button"
-                          className="unified-header__mobile-menu-auth-btn unified-header__mobile-menu-auth-btn--primary"
-                          onClick={() => {
-                            navigateToAuth('/register');
-                            handleMobileMenuClose();
-                          }}
-                        >
-                          {t('landing.startFreeLong')}
-                        </button>
-                      )}
                     </div>
                   ) : (
                     <div className="unified-header__mobile-menu-auth">

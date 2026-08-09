@@ -13,6 +13,7 @@ import { LanguageProvider } from './hooks/useLanguage';
 import { useAccentColor } from './hooks/useAccentColor';
 import { ThemeProvider } from './components/common/ThemeProvider/ThemeProvider';
 import AuthGuard from './components/auth/AuthGuard/AuthGuard';
+import AuthShell from './components/auth/ui/AuthShell';
 import BottomNavigation from './components/common/BottomNavigation/BottomNavigation';
 import { setupGlobalErrorHandlers } from './utils/errorUtils';
 import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
@@ -82,29 +83,16 @@ function AppContent() {
                     <Route path="/rsvp/:token" element={<RSVP />} />
                     {/* Strony autoryzacji - tylko dla niezalogowanych */}
                     <Route
-                      path="/login"
                       element={
                         <AuthGuard requireAuth={false}>
-                          <Login />
+                          <AuthShell />
                         </AuthGuard>
                       }
-                    />
-                    <Route
-                      path="/register"
-                      element={
-                        <AuthGuard requireAuth={false}>
-                          <Register />
-                        </AuthGuard>
-                      }
-                    />
-                    <Route
-                      path="/forgot-password"
-                      element={
-                        <AuthGuard requireAuth={false}>
-                          <ForgotPassword />
-                        </AuthGuard>
-                      }
-                    />
+                    >
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                    </Route>
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/rodo" element={<Rodo />} />

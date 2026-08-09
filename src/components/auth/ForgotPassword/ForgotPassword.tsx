@@ -4,7 +4,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { ArrowRight, CheckCircle, KeyRound, Mail } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import ErrorBoundary from '../../common/ErrorBoundary/ErrorBoundary';
-import AuthCanvas from '../ui/AuthCanvas';
+import AuthSheet from '../ui/AuthSheet';
 
 const ForgotPassword: React.FC = () => {
   const { t } = useTranslation();
@@ -26,8 +26,7 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <AuthCanvas
-        badge={t('auth.forgotPassword')}
+      <AuthSheet
         title={t('auth.forgotTitle')}
         subtitle={sent ? t('auth.forgotSubtitleSent') : t('auth.forgotSubtitle')}
         footer={
@@ -76,7 +75,7 @@ const ForgotPassword: React.FC = () => {
                   type="email"
                   name="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={event => setEmail(event.target.value)}
                   className="gate__input"
                   placeholder={t('auth.emailPlaceholder')}
                   required
@@ -101,7 +100,7 @@ const ForgotPassword: React.FC = () => {
             </button>
           </form>
         )}
-      </AuthCanvas>
+      </AuthSheet>
     </ErrorBoundary>
   );
 };

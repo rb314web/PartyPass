@@ -1,95 +1,104 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ShieldCheck } from 'lucide-react';
+import { Check } from 'lucide-react';
 import UnifiedHeader from '../../common/UnifiedHeader/UnifiedHeader';
 import Footer from '../../common/Footer/Footer';
 import './AuthCanvas.scss';
 
-export interface AuthCanvasStat {
-  value: string;
-  label: string;
-}
+export type AuthShowcaseKey = 'login' | 'register' | 'forgot';
 
 export interface AuthCanvasProps {
-  badge?: string;
   title: string;
   subtitle: string;
   headerExtra?: React.ReactNode;
   footer?: React.ReactNode;
-  stats?: AuthCanvasStat[];
+  showcase?: AuthShowcaseKey;
   wide?: boolean;
   children: React.ReactNode;
 }
 
 const AuthCanvas: React.FC<AuthCanvasProps> = ({
-  badge,
   title,
   subtitle,
   headerExtra,
   footer,
-  stats,
+  showcase,
   wide = false,
   children,
 }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const features = showcase
+    ? [
+        t(`auth.showcase.${showcase}.feature1`),
+        t(`auth.showcase.${showcase}.feature2`),
+        t(`auth.showcase.${showcase}.feature3`),
+      ]
+    : [];
 
   return (
     <div className="gate">
       <UnifiedHeader variant="auth" />
 
       <main id="main-content" className="gate__main" tabIndex={-1}>
-        <div className="gate__ambient" aria-hidden="true">
-          <div className="gate__orb gate__orb--one" />
-          <div className="gate__orb gate__orb--two" />
-          <div className="gate__grid" />
-        </div>
+        <div
+          className={`gate__layout${wide ? ' gate__layout--wide' : ''}${
+            showcase ? ' gate__layout--split' : ''
+          }`}
+        >
+          {showcase && (
+            <aside className="gate__intro">
+              <div className="gate__intro-top">
+                <p className="gate__intro-kicker">
+                  {t(`auth.showcase.${showcase}.eyebrow`)}
+                </p>
+                <h2 className="gate__intro-title">
+                  {t(`auth.showcase.${showcase}.title`)}
+                </h2>
+                <p className="gate__intro-copy">
+                  {t(`auth.showcase.${showcase}.subtitle`)}
+                </p>
+              </div>
 
-        <div className="gate__stage">
-          <div className={`gate__card${wide ? ' gate__card--wide' : ''}`}>
-            <button type="button" className="gate__logo" onClick={() => navigate('/')}>
-              <span className="gate__logo-mark" aria-hidden="true">
-                PP
-              </span>
-              <span className="gate__logo-text">
-                <span className="gate__logo-primary">Party</span>
-                <span className="gate__logo-accent">Pass</span>
-              </span>
-            </button>
+              <ul className="gate__intro-list">
+                {features.map(feature => (
+                  <li key={feature}>
+                    <span className="gate__intro-check" aria-hidden="true">
+                      <Check size={14} strokeWidth={2.75} />
+                    </span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
 
-            <header className="gate__head">
-              {badge && <span className="gate__badge">{badge}</span>}
-              <h1 className="gate__title">{title}</h1>
-              <p className="gate__subtitle">{subtitle}</p>
+              <dl className="gate__intro-stats">
+                <div>
+                  <dd>{t(`auth.showcase.${showcase}.statEventsValue`)}</dd>
+                  <dt>{t(`auth.showcase.${showcase}.statEvents`)}</dt>
+                </div>
+                <div>
+                  <dd>{t(`auth.showcase.${showcase}.statRsvpValue`)}</dd>
+                  <dt>{t(`auth.showcase.${showcase}.statRsvp`)}</dt>
+                </div>
+              </dl>
+            </aside>
+          )}
+
+          <section className={`gate__sheet${wide ? ' gate__sheet--wide' : ''}`}>
+            <header className="gate__sheet-head">
+              <h1 className="gate__sheet-title">{title}</h1>
+              <p className="gate__sheet-subtitle">{subtitle}</p>
               {headerExtra}
             </header>
 
-            <div className="gate__body">{children}</div>
+            <div className="gate__sheet-body">{children}</div>
 
-            {footer && <footer className="gate__foot">{footer}</footer>}
-          </div>
-
-          <div className="gate__trust">
-            {stats && stats.length > 0 && (
-              <div className="gate__stats">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="gate__stat">
-                    <span className="gate__stat-value">{stat.value}</span>
-                    <span className="gate__stat-label">{stat.label}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="gate__secure">
-              <ShieldCheck size={14} aria-hidden="true" />
-              <span>{t('auth.secureNote')}</span>
-            </div>
-          </div>
+            {footer && <div className="gate__sheet-foot">{footer}</div>}
+          </section>
         </div>
       </main>
 
-      <Footer />
+      <Footer variant="landing" />
     </div>
   );
 };

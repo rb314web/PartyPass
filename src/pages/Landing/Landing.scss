@@ -201,9 +201,10 @@
     background: transparent;
   }
 
-  // Separator w szerokości kontenera sekcji — gradient + romb w centrum
+  // Separator w szerokości kontenera sekcji — gradient + koło w centrum
   > main > section:not(#hero) {
     position: relative;
+    overflow: visible;
 
     &::before {
       content: '';
@@ -231,10 +232,10 @@
       position: absolute;
       top: 0;
       left: 50%;
-      transform: translate(-50%, -50%) rotate(45deg);
-      width: 5px;
-      height: 5px;
-      border-radius: 1px;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
       pointer-events: none;
       background: linear-gradient(
         135deg,
@@ -263,8 +264,9 @@
   }
 
   > main > section#social-proof::after {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
     box-shadow:
       0 0 0 5px color-mix(in srgb, var(--l-accent-soft) 42%, transparent),
       0 0 14px color-mix(in srgb, var(--l-accent) 20%, transparent);

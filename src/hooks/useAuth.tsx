@@ -11,7 +11,11 @@ import { AuthService, AuthError } from '../services/firebase/authService';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    rememberMe?: boolean
+  ) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -24,7 +28,10 @@ interface AuthContextType {
   ) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: (options?: {
+    planType?: 'starter' | 'pro' | 'enterprise';
+    rememberMe?: boolean;
+  }) => Promise<void>;
 }
 
 interface RegisterData {
@@ -66,12 +73,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (
+    email: string,
+    password: string,
+    rememberMe = true
+  ): Promise<void> => {
     setLoading(true);
     setError(null);
 
     try {
-      const user = await AuthService.login(email, password);
+      const user = await AuthService.login(email, password, rememberMe);
       setUser(user);
     } catch (err) {
       const authError = err as AuthError;
@@ -178,12 +189,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const loginWithGoogle = async (): Promise<void> => {
+  const loginWithGoogle = async (options?: {
+    planType?: 'starter' | 'pro' | 'enterprise';
+    rememberMe?: boolean;
+  }): Promise<void> => {
     setLoading(true);
     setError(null);
 
     try {
-      const user = await AuthService.loginWithGoogle();
+      const user = await AuthService.loginWithGoogle(options);
       setUser(user);
     } catch (err) {
       const authError = err as AuthError;

@@ -1056,17 +1056,27 @@
     }
   }
 
-  // Auth — stałe tło (landing używa ::before + scroll)
+  // Auth — blur jak scrolled landing (szare tło strony)
   &--auth {
-    background: color-mix(in srgb, var(--l-hero-bg, #f0f9ff) 94%, transparent);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border-bottom: 1px solid var(--l-line, rgba(229, 231, 235, 0.8));
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+    border-bottom: 1px solid var(--l-line, rgba(15, 23, 42, 0.08));
 
     &.unified-header--at-top {
-      border-bottom: none;
+      border-bottom: 1px solid var(--l-line, rgba(15, 23, 42, 0.08));
     }
+  }
+
+  .dark &--auth {
+    background: rgba(30, 41, 59, 0.68);
+    border-bottom-color: rgba(148, 163, 184, 0.14);
+    backdrop-filter: blur(20px) saturate(165%);
+    -webkit-backdrop-filter: blur(20px) saturate(165%);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   // Landing & auth variants — shared public marketing header

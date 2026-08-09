@@ -124,6 +124,11 @@
       animation-name: l-reveal-scale;
     }
 
+    // Ukryj dzieci przed wejściem w viewport — bez tego stagger flashuje treść
+    &--stagger:not(.landing-reveal--visible) > * {
+      opacity: 0;
+    }
+
     &--stagger.landing-reveal--visible > * {
       opacity: 0;
       animation: l-stagger-up 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -140,21 +145,19 @@
 }
 
 .landing {
-  .landing-reveal--visible {
-    .features__panel::before,
-    .how-it-works__panel::before,
-    .social-proof__quotes-panel::before,
-    .pricing-plans__panel::before {
-      @media (prefers-reduced-motion: no-preference) {
-        animation: l-panel-accent-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
-      }
+  // Panel = ten sam element co LandingReveal (nie potomek)
+  .features__panel.landing-reveal--visible::before,
+  .how-it-works__panel.landing-reveal--visible::before,
+  .social-proof__quotes-panel.landing-reveal--visible::before {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: l-panel-accent-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
     }
+  }
 
-    .how-it-works__steps::after {
-      @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
-        transform-origin: left center;
-        animation: l-timeline-draw 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.35s forwards;
-      }
+  .how-it-works__panel.landing-reveal--visible .how-it-works__steps::after {
+    @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+      transform-origin: left center;
+      animation: l-timeline-draw 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.35s forwards;
     }
   }
 

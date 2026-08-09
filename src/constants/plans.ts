@@ -103,12 +103,14 @@ export function getLandingPlans(t: TFunction): Plan[] {
 export function getRegisterPlanOptions(t: TFunction): Array<{
   id: PlanType;
   name: string;
+  description: string;
   price: string;
   popular: boolean;
 }> {
   return getPlanCatalog(t).map(entry => ({
     id: entry.id,
     name: entry.name,
+    description: entry.description,
     price:
       entry.pricing.monthly === 0
         ? t(`plans.catalog.${entry.id}.priceFree`)

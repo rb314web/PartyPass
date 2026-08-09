@@ -13,6 +13,9 @@ import {
   EmailAuthProvider,
   GoogleAuthProvider,
   signInWithPopup,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
 import {
   doc,
@@ -102,8 +105,17 @@ export class AuthService {
   }
 
   // Login user
-  static async login(email: string, password: string): Promise<User> {
+  static async login(
+    email: string,
+    password: string,
+    rememberMe = true
+  ): Promise<User> {
     try {
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence
+      );
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -133,9 +145,19 @@ export class AuthService {
     }
   }
 
-  // Login with Google
-  static async loginWithGoogle(): Promise<User> {
+  // Login / register with Google
+  static async loginWithGoogle(options?: {
+    planType?: 'starter' | 'pro' | 'enterprise';
+    rememberMe?: boolean;
+  }): Promise<User> {
     try {
+      await setPersistence(
+        auth,
+        options?.rememberMe === false
+          ? browserSessionPersistence
+          : browserLocalPersistence
+      );
+
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
@@ -152,7 +174,7 @@ export class AuthService {
           firstName: firebaseUser.displayName?.split(' ')[0] || '',
           lastName:
             firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
-          planType: 'starter',
+          planType: options?.planType ?? 'starter',
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
           isEmailVerified: firebaseUser.emailVerified,
