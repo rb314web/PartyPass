@@ -1,5 +1,11 @@
 // components/dashboard/Sidebar/Sidebar.tsx
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -71,6 +77,58 @@ const Sidebar: React.FC<SidebarProps> = ({
     return location.pathname.startsWith(path);
   };
 
+  // Przesuwany wskaźnik aktywnej karty
+  const menuRef = useRef<HTMLUListElement>(null);
+  const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [indicator, setIndicator] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+    visible: boolean;
+  }>({ top: 0, left: 0, width: 0, height: 0, visible: false });
+  const [indicatorReady, setIndicatorReady] = useState(false);
+
+  const activePath =
+    menuItems.find(item => isActive(item.path, item.exact))?.path ?? null;
+
+  const measureIndicator = useCallback(() => {
+    const el = activePath ? linkRefs.current[activePath] : null;
+    if (!el) {
+      setIndicator(prev => ({ ...prev, visible: false }));
+      return;
+    }
+    setIndicator({
+      top: el.offsetTop,
+      left: el.offsetLeft,
+      width: el.offsetWidth,
+      height: el.offsetHeight,
+      visible: true,
+    });
+  }, [activePath]);
+
+  useLayoutEffect(() => {
+    measureIndicator();
+  }, [measureIndicator, isCollapsed]);
+
+  // Włącz animację dopiero po pierwszym pomiarze (bez „wjazdu” od góry)
+  useEffect(() => {
+    if (indicator.visible && !indicatorReady) {
+      const id = requestAnimationFrame(() => setIndicatorReady(true));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [indicator.visible, indicatorReady]);
+
+  useEffect(() => {
+    const menu = menuRef.current;
+    if (!menu || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const observer = new ResizeObserver(() => measureIndicator());
+    observer.observe(menu);
+    return () => observer.disconnect();
+  }, [measureIndicator]);
+
   const getPlanBadge = () => {
     const badges = {
       starter: { label: 'Starter', color: 'gray' },
@@ -100,11 +158,26 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <nav className="sidebar__nav">
-          <ul className="sidebar__menu">
+          <ul className="sidebar__menu" ref={menuRef}>
+            <li
+              aria-hidden="true"
+              className={`sidebar__indicator ${indicatorReady ? 'sidebar__indicator--animated' : ''} ${indicator.visible ? '' : 'sidebar__indicator--hidden'}`}
+              style={{
+                transform: `translate3d(${indicator.left}px, ${indicator.top}px, 0)`,
+                width: indicator.width,
+                height: indicator.height,
+              }}
+            />
             {menuItems.map(item => (
               <li key={item.path}>
                 <Link
                   to={item.path}
+                  ref={el => {
+                    linkRefs.current[item.path] = el;
+                  }}
+                  aria-current={
+                    activePath === item.path ? 'page' : undefined
+                  }
                   className={`sidebar__link ${isActive(item.path, item.exact) ? 'sidebar__link--active' : ''}`}
                   title={item.label}
                   onMouseEnter={() => preloadDashboardRoute(item.path)}

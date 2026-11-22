@@ -338,6 +338,53 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    position: relative;
+  }
+
+  // Wspólne tło aktywnej karty — przesuwa się między pozycjami
+  &__indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 0.625rem;
+    background: var(--dashboard-sidebar-active);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    opacity: 1;
+    will-change: transform;
+
+    // Akcent po lewej stronie
+    &::before {
+      content: '';
+      position: absolute;
+      left: -0.75rem;
+      top: 50%;
+      width: 3px;
+      height: 24px;
+      margin-top: -12px;
+      border-radius: 999px;
+      background: var(--dashboard-accent);
+    }
+
+    &--animated {
+      transition:
+        transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.2s ease,
+        background-color var(--transition-colors, 0.2s ease);
+    }
+
+    &--hidden {
+      opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &--animated {
+        transition: opacity 0.15s ease;
+      }
+    }
   }
 
   &__link {
@@ -347,12 +394,14 @@
     padding: 0.75rem;
     color: var(--dashboard-sidebar-muted);
     text-decoration: none;
-    transition: all 0.2s ease,
-                background-color var(--transition-colors, 0.2s ease),
-                color var(--transition-colors, 0.2s ease);
+    transition:
+      background-color 0.2s ease,
+      color 0.25s ease;
     position: relative;
+    z-index: 1;
     min-height: 44px;
     border-radius: 0.625rem;
+    border: 1px solid transparent; // stała ramka = brak przeskoku tekstu
     font-weight: 500;
     margin: 0.125rem 0;
 
@@ -362,7 +411,9 @@
     }
 
     svg {
-      transition: color var(--transition-colors, 0.2s ease);
+      transition:
+        color 0.25s ease,
+        transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     &:hover {
@@ -376,24 +427,11 @@
       }
     }
 
+    // Tło rysuje .sidebar__indicator — tu tylko kolor treści.
+    // font-weight bez zmiany, żeby szerokość tekstu nie skakała.
     &--active {
-      background: var(--dashboard-sidebar-active);
       color: var(--dashboard-sidebar-active-ink);
-      font-weight: 600;
-      border: 1px solid rgba(96, 165, 250, 0.2);
       box-shadow: none;
-
-      &::before {
-        content: '';
-        position: absolute;
-        left: -0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 3px;
-        height: 24px;
-        border-radius: 999px;
-        background: var(--dashboard-accent);
-      }
 
       span {
         color: inherit;
@@ -401,16 +439,27 @@
 
       svg {
         color: #93c5fd;
+        transform: scale(1.08);
       }
 
       &:hover {
-        background: var(--dashboard-sidebar-active);
+        background: transparent;
         color: var(--dashboard-sidebar-active-ink);
         transform: none;
 
         svg {
           color: #93c5fd;
         }
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      svg {
+        transition: color 0.15s ease;
+      }
+
+      &--active svg {
+        transform: none;
       }
     }
   }
@@ -429,6 +478,15 @@
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 1rem;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus,
+    &:visited {
+      color: inherit;
+      text-decoration: none;
+    }
 
     &-avatar {
       width: 40px;
