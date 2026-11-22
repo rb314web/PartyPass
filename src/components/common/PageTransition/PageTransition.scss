@@ -1,4 +1,13 @@
 // components/common/PageTransition/PageTransition.scss
+//
+// Przełączanie kart dashboardu:
+//  exiting  — szybki fade-out + minimalny ruch w górę
+//  entering — fade-in + wjazd od dołu; sekcje widoku z lekkim stagger
+//
+// Uwaga: animacje mają fill-mode `backwards` (nie `both`), żeby po
+// zakończeniu nie zostawał `transform` — inaczej modale z position: fixed
+// wewnątrz widoku liczyłyby pozycję względem karty, a nie okna.
+
 .page-transition {
   width: 100%;
   position: relative;
@@ -8,16 +17,78 @@
   -webkit-font-smoothing: antialiased;
   transform: translateZ(0);
   opacity: 1;
-  transition: opacity var(--dashboard-route-crossfade, 0.25s)
-    cubic-bezier(0.33, 1, 0.68, 1);
 
   &--idle {
-    opacity: 1;
     pointer-events: auto;
   }
 
   &--exiting {
-    opacity: 0;
     pointer-events: none;
+    animation: page-transition-exit var(--dashboard-route-exit, 0.14s)
+      cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+
+  &--entering {
+    animation: page-transition-enter var(--dashboard-route-enter, 0.36s)
+      var(--dashboard-route-ease-out, cubic-bezier(0.22, 1, 0.36, 1))
+      backwards;
+
+    // Sekcje widoku (nagłówek strony, treść…) — kolejno
+    > * > * {
+      animation: page-transition-section var(--dashboard-route-enter, 0.36s)
+        var(--dashboard-route-ease-out, cubic-bezier(0.22, 1, 0.36, 1))
+        backwards;
+    }
+
+    @for $i from 1 through 5 {
+      > * > *:nth-child(#{$i}) {
+        animation-delay: #{($i - 1) * 60}ms;
+      }
+    }
+
+    > * > *:nth-child(n + 6) {
+      animation-delay: 240ms;
+    }
+  }
+}
+
+@keyframes page-transition-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+@keyframes page-transition-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes page-transition-section {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition--exiting,
+  .page-transition--entering,
+  .page-transition--entering > * > * {
+    animation: none;
   }
 }

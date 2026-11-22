@@ -171,6 +171,10 @@
   --dashboard-view-fade-duration: 0.25s;
   // Cross-fade obszaru treści przy zmianie trasy (PageTransition)
   --dashboard-route-crossfade: 0.25s;
+  // Zmiana karty: wyjście / wejście (zsynchronizuj z DASHBOARD_ROUTE_EXIT_MS / _ENTER_MS)
+  --dashboard-route-exit: 0.14s;
+  --dashboard-route-enter: 0.36s;
+  --dashboard-route-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
   // ============================================
   // ROZMIARY KOMPONENTÓW

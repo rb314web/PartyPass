@@ -12,6 +12,18 @@ export const DASHBOARD_ROUTE_CROSSFADE_MS = 250;
 
 
 
+/** Wyjście starej karty (krótkie — nie blokuje nawigacji) */
+
+export const DASHBOARD_ROUTE_EXIT_MS = 140;
+
+
+
+/** Wejście nowej karty (fade + lekki ruch w górę) */
+
+export const DASHBOARD_ROUTE_ENTER_MS = 360;
+
+
+
 /** Zgodne z cross-fade (shell nie dodaje osobnego fade) */
 
 export const DASHBOARD_SHELL_FADE_MS = DASHBOARD_ROUTE_CROSSFADE_MS;
