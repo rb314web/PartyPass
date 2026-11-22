@@ -142,15 +142,21 @@ const EventLocationMap: React.FC<EventLocationMapProps> = ({
       }
 
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(target)}&limit=1&countrycodes=pl`
-        );
+        const baseUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(target)}&limit=1`;
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch coordinates');
+        const search = async (url: string) => {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error('Failed to fetch coordinates');
+          }
+          return response.json();
+        };
+
+        // Najpierw Polska (najczęstszy przypadek), potem bez ograniczenia kraju
+        let data = await search(`${baseUrl}&countrycodes=pl`);
+        if ((!Array.isArray(data) || data.length === 0) && isActive) {
+          data = await search(baseUrl);
         }
-
-        const data = await response.json();
 
         if (!Array.isArray(data) || data.length === 0) {
           if (isActive) {
